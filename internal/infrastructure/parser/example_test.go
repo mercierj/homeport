@@ -101,8 +101,8 @@ func ExampleParseWithOptions() {
 	fmt.Printf("Found %d resources\n", len(infra.Resources))
 }
 
-// ExampleWorkingWithResources demonstrates various resource operations
-func ExampleWorkingWithResources() {
+// Example_workingWithResources demonstrates various resource operations
+func Example_workingWithResources() {
 	infra, err := parser.ParseState("/path/to/terraform.tfstate")
 	if err != nil {
 		log.Fatal(err)
