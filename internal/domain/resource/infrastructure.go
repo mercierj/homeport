@@ -89,10 +89,17 @@ func (i *Infrastructure) hasCyclicDependency(resourceID string, visited, recStac
 
 	r, err := i.GetResource(resourceID)
 	if err != nil {
+		// Resource doesn't exist, clean up recStack and return no cycle
+		recStack[resourceID] = false
 		return false
 	}
 
 	for _, depID := range r.Dependencies {
+		// Skip dependencies that don't exist in our infrastructure
+		if _, exists := i.Resources[depID]; !exists {
+			continue
+		}
+
 		if !visited[depID] {
 			if i.hasCyclicDependency(depID, visited, recStack) {
 				return true
