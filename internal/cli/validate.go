@@ -6,7 +6,7 @@ import (
 	"path/filepath"
 	"strings"
 
-	"github.com/cloudexit/cloudexit/internal/cli/ui"
+	"github.com/agnostech/agnostech/internal/cli/ui"
 	"github.com/spf13/cobra"
 )
 

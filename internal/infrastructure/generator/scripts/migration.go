@@ -8,9 +8,9 @@ import (
 	"text/template"
 	"time"
 
-	"github.com/cloudexit/cloudexit/internal/domain/generator"
-	"github.com/cloudexit/cloudexit/internal/domain/mapper"
-	"github.com/cloudexit/cloudexit/internal/domain/resource"
+	"github.com/agnostech/agnostech/internal/domain/generator"
+	"github.com/agnostech/agnostech/internal/domain/mapper"
+	"github.com/agnostech/agnostech/internal/domain/resource"
 )
 
 // MigrationGenerator generates migration scripts for various AWS services.

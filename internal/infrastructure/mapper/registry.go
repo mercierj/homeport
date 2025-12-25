@@ -6,16 +6,16 @@ import (
 	"fmt"
 	"sync"
 
-	"github.com/cloudexit/cloudexit/internal/domain/mapper"
-	"github.com/cloudexit/cloudexit/internal/domain/resource"
-	"github.com/cloudexit/cloudexit/internal/infrastructure/mapper/azure"
-	"github.com/cloudexit/cloudexit/internal/infrastructure/mapper/compute"
-	"github.com/cloudexit/cloudexit/internal/infrastructure/mapper/database"
-	"github.com/cloudexit/cloudexit/internal/infrastructure/mapper/gcp"
-	"github.com/cloudexit/cloudexit/internal/infrastructure/mapper/messaging"
-	"github.com/cloudexit/cloudexit/internal/infrastructure/mapper/networking"
-	"github.com/cloudexit/cloudexit/internal/infrastructure/mapper/security"
-	"github.com/cloudexit/cloudexit/internal/infrastructure/mapper/storage"
+	"github.com/agnostech/agnostech/internal/domain/mapper"
+	"github.com/agnostech/agnostech/internal/domain/resource"
+	"github.com/agnostech/agnostech/internal/infrastructure/mapper/azure"
+	"github.com/agnostech/agnostech/internal/infrastructure/mapper/compute"
+	"github.com/agnostech/agnostech/internal/infrastructure/mapper/database"
+	"github.com/agnostech/agnostech/internal/infrastructure/mapper/gcp"
+	"github.com/agnostech/agnostech/internal/infrastructure/mapper/messaging"
+	"github.com/agnostech/agnostech/internal/infrastructure/mapper/networking"
+	"github.com/agnostech/agnostech/internal/infrastructure/mapper/security"
+	"github.com/agnostech/agnostech/internal/infrastructure/mapper/storage"
 )
 
 // Registry manages all available resource mappers.

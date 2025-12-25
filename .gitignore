@@ -40,7 +40,7 @@ analysis.json
 *.tfstate
 *.tfstate.*
 .env
-.cloudexit.yaml
+.agnostech.yaml
 
 # Temporary files
 *.tmp

@@ -5,8 +5,8 @@ import (
 	"context"
 	"fmt"
 
-	"github.com/cloudexit/cloudexit/internal/domain/mapper"
-	"github.com/cloudexit/cloudexit/internal/domain/resource"
+	"github.com/agnostech/agnostech/internal/domain/mapper"
+	"github.com/agnostech/agnostech/internal/domain/resource"
 )
 
 // EBSMapper converts AWS EBS volumes to Docker volumes.

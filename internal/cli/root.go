@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"os"
 
-	"github.com/cloudexit/cloudexit/internal/cli/ui"
+	"github.com/agnostech/agnostech/internal/cli/ui"
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
 )

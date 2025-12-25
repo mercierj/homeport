@@ -2,13 +2,13 @@
 package gcp
 
 import (
-	"github.com/cloudexit/cloudexit/internal/domain/mapper"
-	"github.com/cloudexit/cloudexit/internal/infrastructure/mapper/gcp/compute"
-	"github.com/cloudexit/cloudexit/internal/infrastructure/mapper/gcp/database"
-	"github.com/cloudexit/cloudexit/internal/infrastructure/mapper/gcp/messaging"
-	"github.com/cloudexit/cloudexit/internal/infrastructure/mapper/gcp/networking"
-	"github.com/cloudexit/cloudexit/internal/infrastructure/mapper/gcp/security"
-	"github.com/cloudexit/cloudexit/internal/infrastructure/mapper/gcp/storage"
+	"github.com/agnostech/agnostech/internal/domain/mapper"
+	"github.com/agnostech/agnostech/internal/infrastructure/mapper/gcp/compute"
+	"github.com/agnostech/agnostech/internal/infrastructure/mapper/gcp/database"
+	"github.com/agnostech/agnostech/internal/infrastructure/mapper/gcp/messaging"
+	"github.com/agnostech/agnostech/internal/infrastructure/mapper/gcp/networking"
+	"github.com/agnostech/agnostech/internal/infrastructure/mapper/gcp/security"
+	"github.com/agnostech/agnostech/internal/infrastructure/mapper/gcp/storage"
 )
 
 // MapperRegistrar is an interface for registering mappers.

@@ -1,6 +1,6 @@
 FROM golang:1.22-alpine AS builder
 
-LABEL org.opencontainers.image.source="https://github.com/cloudexit/cloudexit"
+LABEL org.opencontainers.image.source="https://github.com/agnostech/agnostech"
 LABEL org.opencontainers.image.description="AWS to Self-Hosted Migration Tool"
 LABEL org.opencontainers.image.licenses="AGPL-3.0"
 
@@ -17,7 +17,7 @@ RUN go mod download
 COPY . .
 
 # Build the binary
-RUN CGO_ENABLED=0 GOOS=linux go build -ldflags="-s -w" -o cloudexit ./cmd/cloudexit
+RUN CGO_ENABLED=0 GOOS=linux go build -ldflags="-s -w" -o agnostech ./cmd/agnostech
 
 # Final stage
 FROM alpine:3.19
@@ -26,16 +26,16 @@ FROM alpine:3.19
 RUN apk add --no-cache ca-certificates tzdata
 
 # Create non-root user
-RUN adduser -D -u 1000 cloudexit
+RUN adduser -D -u 1000 agnostech
 
 # Copy binary from builder
-COPY --from=builder /build/cloudexit /usr/local/bin/cloudexit
+COPY --from=builder /build/agnostech /usr/local/bin/agnostech
 
 # Switch to non-root user
-USER cloudexit
+USER agnostech
 
 # Set working directory
 WORKDIR /workspace
 
-ENTRYPOINT ["cloudexit"]
+ENTRYPOINT ["agnostech"]
 CMD ["--help"]

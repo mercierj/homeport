@@ -5,7 +5,7 @@ import (
 	"context"
 	"errors"
 
-	"github.com/cloudexit/cloudexit/internal/domain/resource"
+	"github.com/agnostech/agnostech/internal/domain/resource"
 )
 
 // Parser defines the interface for parsing cloud infrastructure.

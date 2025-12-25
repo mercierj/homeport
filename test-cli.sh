@@ -1,6 +1,6 @@
 #!/bin/bash
 
-# CloudExit CLI Test Script
+# AgnosTech CLI Test Script
 # This script tests all CLI commands and features
 
 set -e  # Exit on error
@@ -9,7 +9,7 @@ SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 cd "$SCRIPT_DIR"
 
 echo "================================"
-echo "CloudExit CLI Test Suite"
+echo "AgnosTech CLI Test Suite"
 echo "================================"
 echo ""
 
@@ -67,41 +67,41 @@ echo "Step 4: Running CLI tests..."
 echo ""
 
 # Test 1: Help command
-test_command "Help command" "./bin/cloudexit --help"
+test_command "Help command" "./bin/agnostech --help"
 
 # Test 2: Version command
-test_command "Version command" "./bin/cloudexit version"
+test_command "Version command" "./bin/agnostech version"
 
 # Test 3: Analyze help
-test_command "Analyze help" "./bin/cloudexit analyze --help"
+test_command "Analyze help" "./bin/agnostech analyze --help"
 
 # Test 4: Migrate help
-test_command "Migrate help" "./bin/cloudexit migrate --help"
+test_command "Migrate help" "./bin/agnostech migrate --help"
 
 # Test 5: Validate help
-test_command "Validate help" "./bin/cloudexit validate --help"
+test_command "Validate help" "./bin/agnostech validate --help"
 
 # Test 6: Analyze with sample data (if exists)
 if [ -f "./test/fixtures/sample.tfstate" ]; then
-    test_command "Analyze sample state" "./bin/cloudexit analyze ./test/fixtures/sample.tfstate --output /tmp/test-analysis.json"
+    test_command "Analyze sample state" "./bin/agnostech analyze ./test/fixtures/sample.tfstate --output /tmp/test-analysis.json"
 
     # Test 7: Analyze with table format
-    test_command "Analyze with table format" "./bin/cloudexit analyze ./test/fixtures/sample.tfstate --format table --output /tmp/test-analysis-table.json"
+    test_command "Analyze with table format" "./bin/agnostech analyze ./test/fixtures/sample.tfstate --format table --output /tmp/test-analysis-table.json"
 
     # Test 8: Migrate sample state
-    test_command "Migrate sample state" "./bin/cloudexit migrate ./test/fixtures/sample.tfstate --output /tmp/test-output"
+    test_command "Migrate sample state" "./bin/agnostech migrate ./test/fixtures/sample.tfstate --output /tmp/test-output"
 
     # Test 9: Validate generated stack
     if [ -d "/tmp/test-output" ]; then
-        test_command "Validate generated stack" "./bin/cloudexit validate /tmp/test-output"
+        test_command "Validate generated stack" "./bin/agnostech validate /tmp/test-output"
     fi
 fi
 
 # Test 10: Verbose flag
-test_command "Verbose flag" "./bin/cloudexit --verbose version"
+test_command "Verbose flag" "./bin/agnostech --verbose version"
 
 # Test 11: Quiet flag
-test_command "Quiet flag" "./bin/cloudexit --quiet version"
+test_command "Quiet flag" "./bin/agnostech --quiet version"
 
 echo ""
 echo "================================"
@@ -121,7 +121,7 @@ if [ $TESTS_FAILED -eq 0 ]; then
     echo -e "${GREEN}All tests passed!${NC}"
     echo ""
     echo "You can now use the CLI:"
-    echo "  ./bin/cloudexit --help"
+    echo "  ./bin/agnostech --help"
     exit 0
 else
     echo -e "${RED}Some tests failed!${NC}"

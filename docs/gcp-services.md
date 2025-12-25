@@ -1,10 +1,10 @@
 # GCP Service Mapping Reference
 
-This document provides a comprehensive reference for all Google Cloud Platform services supported by CloudExit and their self-hosted equivalents.
+This document provides a comprehensive reference for all Google Cloud Platform services supported by AgnosTech and their self-hosted equivalents.
 
 ## Overview
 
-CloudExit analyzes your GCP infrastructure (via Terraform state or HCL files) and generates Docker Compose configurations using open-source, self-hosted alternatives. GCP support was added to enable organizations to migrate from any major cloud provider.
+AgnosTech analyzes your GCP infrastructure (via Terraform state or HCL files) and generates Docker Compose configurations using open-source, self-hosted alternatives. GCP support was added to enable organizations to migrate from any major cloud provider.
 
 ## Service Mapping Summary
 
@@ -68,10 +68,10 @@ services:
     image: debian:11
     restart: unless-stopped
     labels:
-      cloudexit.source: google_compute_instance
-      cloudexit.zone: us-central1-a
+      agnostech.source: google_compute_instance
+      agnostech.zone: us-central1-a
     networks:
-      - cloudexit
+      - agnostech
 ```
 
 ### Cloud Run
@@ -117,12 +117,12 @@ services:
           cpus: "1.0"
           memory: 512M
     labels:
-      cloudexit.source: google_cloud_run_service
+      agnostech.source: google_cloud_run_service
       traefik.enable: "true"
       traefik.http.routers.api-service.rule: "Host(`api.localhost`)"
       traefik.http.services.api-service.loadbalancer.server.port: "8080"
     networks:
-      - cloudexit
+      - agnostech
 ```
 
 ### Cloud Functions
@@ -139,7 +139,7 @@ services:
       FUNCTION_NAME: my-function
       FUNCTION_TRIGGER: http
     labels:
-      cloudexit.source: google_cloudfunctions_function
+      agnostech.source: google_cloudfunctions_function
       traefik.enable: "true"
       traefik.http.routers.my-function.rule: "PathPrefix(`/function`)"
 ```
@@ -201,8 +201,8 @@ services:
       timeout: 5s
       retries: 3
     labels:
-      cloudexit.source: google_storage_bucket
-      cloudexit.bucket: my-assets-bucket
+      agnostech.source: google_storage_bucket
+      agnostech.bucket: my-assets-bucket
 ```
 
 **Migration Script Generated:**
@@ -272,7 +272,7 @@ services:
       timeout: 5s
       retries: 5
     labels:
-      cloudexit.source: google_sql_database_instance
+      agnostech.source: google_sql_database_instance
 ```
 
 ### Firestore

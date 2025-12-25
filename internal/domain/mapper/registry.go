@@ -3,7 +3,7 @@ package mapper
 import (
 	"sync"
 
-	"github.com/cloudexit/cloudexit/internal/domain/resource"
+	"github.com/agnostech/agnostech/internal/domain/resource"
 )
 
 // Registry manages the collection of available mappers.

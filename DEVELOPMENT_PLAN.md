@@ -1,4 +1,4 @@
-# CloudExit Development Plan
+# AgnosTech Development Plan
 
 **Last Updated:** 2025-12-25
 **Status:** 95% Complete - Core Implementation Done
@@ -7,7 +7,7 @@
 
 ## Executive Summary
 
-CloudExit is an AWS-to-self-hosted migration tool that transforms Terraform infrastructure into deployable Docker Compose stacks. The project uses Go with clean architecture principles.
+AgnosTech is an AWS-to-self-hosted migration tool that transforms Terraform infrastructure into deployable Docker Compose stacks. The project uses Go with clean architecture principles.
 
 ---
 
@@ -45,8 +45,8 @@ CloudExit is an AWS-to-self-hosted migration tool that transforms Terraform infr
 ## Architecture Overview
 
 ```
-cloudexit/
-├── cmd/cloudexit/          # CLI entry point
+agnostech/
+├── cmd/agnostech/          # CLI entry point
 ├── internal/
 │   ├── app/                # Application services (TODO)
 │   ├── cli/                # CLI commands ✅
@@ -84,10 +84,10 @@ cloudexit/
 
 | Command | Description | Implementation |
 |---------|-------------|----------------|
-| `cloudexit analyze` | Analyze Terraform infrastructure | ⚠️ Uses placeholder data |
-| `cloudexit migrate` | Generate Docker stack | ⚠️ Uses placeholder data |
-| `cloudexit validate` | Validate generated stack | ✅ Working |
-| `cloudexit version` | Show version info | ✅ Working |
+| `agnostech analyze` | Analyze Terraform infrastructure | ⚠️ Uses placeholder data |
+| `agnostech migrate` | Generate Docker stack | ⚠️ Uses placeholder data |
+| `agnostech validate` | Validate generated stack | ✅ Working |
+| `agnostech version` | Show version info | ✅ Working |
 
 ---
 

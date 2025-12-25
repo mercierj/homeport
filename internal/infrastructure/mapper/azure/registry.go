@@ -2,13 +2,13 @@
 package azure
 
 import (
-	"github.com/cloudexit/cloudexit/internal/domain/mapper"
-	"github.com/cloudexit/cloudexit/internal/infrastructure/mapper/azure/compute"
-	"github.com/cloudexit/cloudexit/internal/infrastructure/mapper/azure/database"
-	"github.com/cloudexit/cloudexit/internal/infrastructure/mapper/azure/messaging"
-	"github.com/cloudexit/cloudexit/internal/infrastructure/mapper/azure/networking"
-	"github.com/cloudexit/cloudexit/internal/infrastructure/mapper/azure/security"
-	"github.com/cloudexit/cloudexit/internal/infrastructure/mapper/azure/storage"
+	"github.com/agnostech/agnostech/internal/domain/mapper"
+	"github.com/agnostech/agnostech/internal/infrastructure/mapper/azure/compute"
+	"github.com/agnostech/agnostech/internal/infrastructure/mapper/azure/database"
+	"github.com/agnostech/agnostech/internal/infrastructure/mapper/azure/messaging"
+	"github.com/agnostech/agnostech/internal/infrastructure/mapper/azure/networking"
+	"github.com/agnostech/agnostech/internal/infrastructure/mapper/azure/security"
+	"github.com/agnostech/agnostech/internal/infrastructure/mapper/azure/storage"
 )
 
 // MapperRegistrar is an interface for registering mappers.

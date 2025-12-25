@@ -6,7 +6,7 @@ import (
 	"os"
 	"path/filepath"
 
-	"github.com/cloudexit/cloudexit/internal/infrastructure/parser"
+	"github.com/agnostech/agnostech/internal/infrastructure/parser"
 )
 
 func main() {

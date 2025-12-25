@@ -1,14 +1,14 @@
 .PHONY: help build install clean test run deps version
 
 # Build variables
-BINARY_NAME=cloudexit
+BINARY_NAME=agnostech
 VERSION?=dev
 COMMIT?=$(shell git rev-parse --short HEAD 2>/dev/null || echo "none")
 BUILD_DATE?=$(shell date -u '+%Y-%m-%d_%H:%M:%S')
-LDFLAGS=-ldflags "-X github.com/cloudexit/cloudexit/pkg/version.Version=$(VERSION) -X github.com/cloudexit/cloudexit/pkg/version.Commit=$(COMMIT) -X github.com/cloudexit/cloudexit/pkg/version.Date=$(BUILD_DATE)"
+LDFLAGS=-ldflags "-X github.com/agnostech/agnostech/pkg/version.Version=$(VERSION) -X github.com/agnostech/agnostech/pkg/version.Commit=$(COMMIT) -X github.com/agnostech/agnostech/pkg/version.Date=$(BUILD_DATE)"
 
 help: ## Display this help message
-	@echo "CloudExit CLI - Available Commands:"
+	@echo "AgnosTech CLI - Available Commands:"
 	@echo ""
 	@grep -E '^[a-zA-Z_-]+:.*?## .*$$' $(MAKEFILE_LIST) | sort | awk 'BEGIN {FS = ":.*?## "}; {printf "  \033[36m%-15s\033[0m %s\n", $$1, $$2}'
 	@echo ""
@@ -22,12 +22,12 @@ deps: ## Download dependencies
 build: deps ## Build the CLI binary
 	@echo "Building $(BINARY_NAME)..."
 	@mkdir -p bin
-	@go build $(LDFLAGS) -o bin/$(BINARY_NAME) ./cmd/cloudexit
+	@go build $(LDFLAGS) -o bin/$(BINARY_NAME) ./cmd/agnostech
 	@echo "Build complete: bin/$(BINARY_NAME)"
 
 install: build ## Install the CLI to GOPATH/bin
 	@echo "Installing $(BINARY_NAME)..."
-	@go install $(LDFLAGS) ./cmd/cloudexit
+	@go install $(LDFLAGS) ./cmd/agnostech
 	@echo "Installed to $(shell go env GOPATH)/bin/$(BINARY_NAME)"
 
 clean: ## Clean build artifacts
@@ -61,14 +61,14 @@ example-validate: build ## Run example validate command
 	@./bin/$(BINARY_NAME) validate ./example-output
 
 dev: ## Run in development mode with verbose output
-	@go run ./cmd/cloudexit --verbose --help
+	@go run ./cmd/agnostech --verbose --help
 
 # Build for multiple platforms
 build-all: ## Build for all platforms
 	@echo "Building for all platforms..."
 	@mkdir -p bin
-	@GOOS=linux GOARCH=amd64 go build $(LDFLAGS) -o bin/$(BINARY_NAME)-linux-amd64 ./cmd/cloudexit
-	@GOOS=darwin GOARCH=amd64 go build $(LDFLAGS) -o bin/$(BINARY_NAME)-darwin-amd64 ./cmd/cloudexit
-	@GOOS=darwin GOARCH=arm64 go build $(LDFLAGS) -o bin/$(BINARY_NAME)-darwin-arm64 ./cmd/cloudexit
-	@GOOS=windows GOARCH=amd64 go build $(LDFLAGS) -o bin/$(BINARY_NAME)-windows-amd64.exe ./cmd/cloudexit
+	@GOOS=linux GOARCH=amd64 go build $(LDFLAGS) -o bin/$(BINARY_NAME)-linux-amd64 ./cmd/agnostech
+	@GOOS=darwin GOARCH=amd64 go build $(LDFLAGS) -o bin/$(BINARY_NAME)-darwin-amd64 ./cmd/agnostech
+	@GOOS=darwin GOARCH=arm64 go build $(LDFLAGS) -o bin/$(BINARY_NAME)-darwin-arm64 ./cmd/agnostech
+	@GOOS=windows GOARCH=amd64 go build $(LDFLAGS) -o bin/$(BINARY_NAME)-windows-amd64.exe ./cmd/agnostech
 	@echo "Build complete for all platforms"

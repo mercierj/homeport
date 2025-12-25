@@ -1,4 +1,4 @@
-module github.com/cloudexit/cloudexit
+module github.com/agnostech/agnostech
 
 go 1.23
 

@@ -7,12 +7,12 @@ import (
 	"os"
 	"path/filepath"
 
-	"github.com/cloudexit/cloudexit/internal/cli/ui"
-	"github.com/cloudexit/cloudexit/internal/domain/parser"
-	"github.com/cloudexit/cloudexit/internal/domain/resource"
-	_ "github.com/cloudexit/cloudexit/internal/infrastructure/parser/aws"   // Register AWS parsers
-	_ "github.com/cloudexit/cloudexit/internal/infrastructure/parser/azure" // Register Azure parsers
-	_ "github.com/cloudexit/cloudexit/internal/infrastructure/parser/gcp"   // Register GCP parsers
+	"github.com/agnostech/agnostech/internal/cli/ui"
+	"github.com/agnostech/agnostech/internal/domain/parser"
+	"github.com/agnostech/agnostech/internal/domain/resource"
+	_ "github.com/agnostech/agnostech/internal/infrastructure/parser/aws"   // Register AWS parsers
+	_ "github.com/agnostech/agnostech/internal/infrastructure/parser/azure" // Register Azure parsers
+	_ "github.com/agnostech/agnostech/internal/infrastructure/parser/gcp"   // Register GCP parsers
 	"github.com/spf13/cobra"
 	"gopkg.in/yaml.v3"
 )

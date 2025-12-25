@@ -6,8 +6,8 @@ import (
 	"text/template"
 	"time"
 
-	"github.com/cloudexit/cloudexit/internal/domain/generator"
-	"github.com/cloudexit/cloudexit/internal/domain/mapper"
+	"github.com/agnostech/agnostech/internal/domain/generator"
+	"github.com/agnostech/agnostech/internal/domain/mapper"
 )
 
 // BackupGenerator generates backup scripts for data services.

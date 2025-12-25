@@ -1,5 +1,5 @@
-# CloudExit Configuration Example
-# Copy this file to ~/.cloudexit.yaml or .cloudexit.yaml in your project
+# AgnosTech Configuration Example
+# Copy this file to ~/.agnostech.yaml or .agnostech.yaml in your project
 
 # Default output directory for generated stacks
 output: ./output

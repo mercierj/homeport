@@ -1,11 +1,11 @@
-CloudExit CLI - Complete File Listing
+AgnosTech CLI - Complete File Listing
 ======================================
 
 Total Files Created: 24
 
 CORE CLI FILES (10)
 -------------------
-1.  cmd/cloudexit/main.go                         - Main entry point
+1.  cmd/agnostech/main.go                         - Main entry point
 2.  internal/cli/root.go                           - Root command with global flags
 3.  internal/cli/analyze.go                        - Analyze command (9,001 bytes)
 4.  internal/cli/migrate.go                        - Migrate command (8,958 bytes)
@@ -24,7 +24,7 @@ BUILD & CONFIGURATION FILES (8)
 14. test-cli.sh                                    - Test script
 15. verify-build.sh                                - Build verification script
 16. .gitignore                                     - Git ignore rules
-17. .cloudexit.example.yaml                        - Example configuration
+17. .agnostech.example.yaml                        - Example configuration
 18. FILES_CREATED.txt                              - This file
 
 DOCUMENTATION (6)
@@ -50,15 +50,15 @@ DEPENDENCIES ADDED TO go.mod
 
 COMMANDS IMPLEMENTED
 --------------------
-✓ cloudexit --help                                 - Show help
-✓ cloudexit version                                - Show version info
-✓ cloudexit analyze <path> [flags]                 - Analyze infrastructure
-✓ cloudexit migrate <path> [flags]                 - Generate stack
-✓ cloudexit validate <path> [flags]                - Validate stack
+✓ agnostech --help                                 - Show help
+✓ agnostech version                                - Show version info
+✓ agnostech analyze <path> [flags]                 - Analyze infrastructure
+✓ agnostech migrate <path> [flags]                 - Generate stack
+✓ agnostech validate <path> [flags]                - Validate stack
 
 GLOBAL FLAGS
 ------------
---config string      Config file (default: ~/.cloudexit.yaml)
+--config string      Config file (default: ~/.agnostech.yaml)
 --verbose, -v        Verbose output
 --quiet, -q          Quiet output (errors only)
 
@@ -94,7 +94,7 @@ QUICK START
 -----------
 cd /Users/jo/Prog/exit_gafam
 make build
-./bin/cloudexit --help
+./bin/agnostech --help
 
 VERIFICATION
 ------------

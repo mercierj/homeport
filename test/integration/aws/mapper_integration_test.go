@@ -7,14 +7,14 @@ import (
 	"strings"
 	"testing"
 
-	domainmapper "github.com/cloudexit/cloudexit/internal/domain/mapper"
-	"github.com/cloudexit/cloudexit/internal/domain/parser"
-	"github.com/cloudexit/cloudexit/internal/domain/resource"
-	"github.com/cloudexit/cloudexit/internal/infrastructure/mapper"
-	"github.com/cloudexit/cloudexit/internal/infrastructure/mapper/compute"
-	"github.com/cloudexit/cloudexit/internal/infrastructure/mapper/database"
-	"github.com/cloudexit/cloudexit/internal/infrastructure/mapper/storage"
-	awsparser "github.com/cloudexit/cloudexit/internal/infrastructure/parser/aws"
+	domainmapper "github.com/agnostech/agnostech/internal/domain/mapper"
+	"github.com/agnostech/agnostech/internal/domain/parser"
+	"github.com/agnostech/agnostech/internal/domain/resource"
+	"github.com/agnostech/agnostech/internal/infrastructure/mapper"
+	"github.com/agnostech/agnostech/internal/infrastructure/mapper/compute"
+	"github.com/agnostech/agnostech/internal/infrastructure/mapper/database"
+	"github.com/agnostech/agnostech/internal/infrastructure/mapper/storage"
+	awsparser "github.com/agnostech/agnostech/internal/infrastructure/parser/aws"
 )
 
 // TestMapperIntegration_ParserToMapper tests the complete workflow from parsing to mapping.

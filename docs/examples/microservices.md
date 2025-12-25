@@ -38,7 +38,7 @@ This example demonstrates migrating a microservices-based application from AWS t
 │                                                                       │
 └──────────────────────────────────────────────────────────────────────┘
 
-                            ▼ CloudExit ▼
+                            ▼ AgnosTech ▼
 
                      Self-Hosted Architecture
 ┌──────────────────────────────────────────────────────────────────────┐
@@ -241,10 +241,10 @@ resource "aws_lb" "main" {
 }
 ```
 
-## CloudExit Migration
+## AgnosTech Migration
 
 ```bash
-cloudexit migrate ./terraform \
+agnostech migrate ./terraform \
   --output ./microservices-stack \
   --domain api.example.com \
   --include-monitoring
@@ -296,7 +296,7 @@ services:
       - frontend
       - backend
     labels:
-      - "cloudexit.source=aws_ecs_service"
+      - "agnostech.source=aws_ecs_service"
       - "traefik.enable=true"
       - "traefik.http.routers.api.rule=Host(`api.example.com`) && PathPrefix(`/api`)"
       - "traefik.http.routers.api.entrypoints=websecure"
@@ -323,7 +323,7 @@ services:
     networks:
       - backend
     labels:
-      - "cloudexit.source=aws_ecs_service"
+      - "agnostech.source=aws_ecs_service"
       - "traefik.enable=true"
       - "traefik.http.routers.orders.rule=Host(`api.example.com`) && PathPrefix(`/orders`)"
       - "traefik.http.services.orders.loadbalancer.server.port=8080"
@@ -347,7 +347,7 @@ services:
     networks:
       - backend
     labels:
-      - "cloudexit.source=aws_ecs_service"
+      - "agnostech.source=aws_ecs_service"
       - "traefik.enable=true"
       - "traefik.http.routers.users.rule=Host(`api.example.com`) && PathPrefix(`/users`)"
       - "traefik.http.services.users.loadbalancer.server.port=8080"
@@ -423,7 +423,7 @@ services:
     networks:
       - backend
     labels:
-      - "cloudexit.source=aws_sqs_queue"
+      - "agnostech.source=aws_sqs_queue"
 
   # Cache (ElastiCache replacement)
   redis:
@@ -440,7 +440,7 @@ services:
     networks:
       - backend
     labels:
-      - "cloudexit.source=aws_elasticache_cluster"
+      - "agnostech.source=aws_elasticache_cluster"
 
 networks:
   frontend:

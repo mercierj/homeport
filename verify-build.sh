@@ -1,10 +1,10 @@
 #!/bin/bash
 
-# CloudExit CLI - Build Verification Script
+# AgnosTech CLI - Build Verification Script
 # This script verifies that the CLI can be built successfully
 
 echo "================================"
-echo "CloudExit CLI Build Verification"
+echo "AgnosTech CLI Build Verification"
 echo "================================"
 echo ""
 
@@ -48,7 +48,7 @@ echo ""
 # Verify all files exist
 echo "Verifying source files..."
 files=(
-    "cmd/cloudexit/main.go"
+    "cmd/agnostech/main.go"
     "internal/cli/root.go"
     "internal/cli/analyze.go"
     "internal/cli/migrate.go"
@@ -96,9 +96,9 @@ if command -v git &> /dev/null; then
     fi
 fi
 
-LDFLAGS="-X github.com/cloudexit/cloudexit/pkg/version.Version=$VERSION -X github.com/cloudexit/cloudexit/pkg/version.Commit=$COMMIT -X github.com/cloudexit/cloudexit/pkg/version.Date=$DATE"
+LDFLAGS="-X github.com/agnostech/agnostech/pkg/version.Version=$VERSION -X github.com/agnostech/agnostech/pkg/version.Commit=$COMMIT -X github.com/agnostech/agnostech/pkg/version.Date=$DATE"
 
-if go build -ldflags "$LDFLAGS" -o bin/cloudexit ./cmd/cloudexit; then
+if go build -ldflags "$LDFLAGS" -o bin/agnostech ./cmd/agnostech; then
     echo ""
     echo "✓ Build successful!"
     echo ""
@@ -113,19 +113,19 @@ fi
 echo "Testing the binary..."
 echo ""
 
-if [ -x "bin/cloudexit" ]; then
+if [ -x "bin/agnostech" ]; then
     echo "✓ Binary is executable"
 else
     echo "✗ Binary is not executable"
-    chmod +x bin/cloudexit
+    chmod +x bin/agnostech
     echo "  → Made executable"
 fi
 echo ""
 
 # Run help command
-echo "Running: ./bin/cloudexit --help"
+echo "Running: ./bin/agnostech --help"
 echo "---"
-if ./bin/cloudexit --help; then
+if ./bin/agnostech --help; then
     echo "---"
     echo "✓ Help command works"
 else
@@ -136,9 +136,9 @@ fi
 echo ""
 
 # Run version command
-echo "Running: ./bin/cloudexit version"
+echo "Running: ./bin/agnostech version"
 echo "---"
-if ./bin/cloudexit version; then
+if ./bin/agnostech version; then
     echo "---"
     echo "✓ Version command works"
 else
@@ -155,15 +155,15 @@ echo "================================"
 echo ""
 echo "The CLI has been built successfully!"
 echo ""
-echo "Binary location: ./bin/cloudexit"
-echo "Binary size: $(du -h bin/cloudexit | cut -f1)"
+echo "Binary location: ./bin/agnostech"
+echo "Binary size: $(du -h bin/agnostech | cut -f1)"
 echo ""
 echo "You can now run:"
-echo "  ./bin/cloudexit --help"
-echo "  ./bin/cloudexit version"
-echo "  ./bin/cloudexit analyze <path>"
-echo "  ./bin/cloudexit migrate <path>"
-echo "  ./bin/cloudexit validate <path>"
+echo "  ./bin/agnostech --help"
+echo "  ./bin/agnostech version"
+echo "  ./bin/agnostech analyze <path>"
+echo "  ./bin/agnostech migrate <path>"
+echo "  ./bin/agnostech validate <path>"
 echo ""
 echo "For more information:"
 echo "  - Quick Start: cat QUICKSTART.md"

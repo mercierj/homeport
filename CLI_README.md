@@ -1,6 +1,6 @@
-# CloudExit CLI
+# AgnosTech CLI
 
-CloudExit is a command-line tool that helps you migrate from AWS infrastructure to a self-hosted Docker-based stack.
+AgnosTech is a command-line tool that helps you migrate from AWS infrastructure to a self-hosted Docker-based stack.
 
 ## Features
 
@@ -16,8 +16,8 @@ CloudExit is a command-line tool that helps you migrate from AWS infrastructure 
 
 ```bash
 # Clone the repository
-git clone https://github.com/cloudexit/cloudexit.git
-cd cloudexit
+git clone https://github.com/agnostech/agnostech.git
+cd agnostech
 
 # Build the CLI
 make build
@@ -48,13 +48,13 @@ Analyze your AWS infrastructure to see what resources will be migrated:
 
 ```bash
 # Analyze Terraform state file
-cloudexit analyze terraform.tfstate
+agnostech analyze terraform.tfstate
 
 # Analyze with table output
-cloudexit analyze ./infrastructure --format table
+agnostech analyze ./infrastructure --format table
 
 # Save analysis to custom file
-cloudexit analyze ./infrastructure --output my-analysis.json
+agnostech analyze ./infrastructure --output my-analysis.json
 ```
 
 ### 2. Generate Self-Hosted Stack
@@ -63,13 +63,13 @@ Generate a complete Docker stack from your AWS infrastructure:
 
 ```bash
 # Basic migration
-cloudexit migrate terraform.tfstate
+agnostech migrate terraform.tfstate
 
 # With domain configuration
-cloudexit migrate ./infrastructure --domain example.com
+agnostech migrate ./infrastructure --domain example.com
 
 # With migration tools and monitoring
-cloudexit migrate ./infrastructure \
+agnostech migrate ./infrastructure \
   --output ./my-stack \
   --domain example.com \
   --include-migration \
@@ -82,10 +82,10 @@ Validate the generated configuration before deployment:
 
 ```bash
 # Validate the generated stack
-cloudexit validate ./output
+agnostech validate ./output
 
 # Validate with verbose output
-cloudexit validate ./output --verbose
+agnostech validate ./output --verbose
 ```
 
 ## Commands
@@ -95,7 +95,7 @@ cloudexit validate ./output --verbose
 Analyze AWS infrastructure from Terraform state/files.
 
 ```bash
-cloudexit analyze <path> [flags]
+agnostech analyze <path> [flags]
 ```
 
 **Flags:**
@@ -104,9 +104,9 @@ cloudexit analyze <path> [flags]
 
 **Examples:**
 ```bash
-cloudexit analyze terraform.tfstate
-cloudexit analyze ./infrastructure --format yaml
-cloudexit analyze ./infrastructure --output report.json --format table
+agnostech analyze terraform.tfstate
+agnostech analyze ./infrastructure --format yaml
+agnostech analyze ./infrastructure --output report.json --format table
 ```
 
 ### migrate
@@ -114,7 +114,7 @@ cloudexit analyze ./infrastructure --output report.json --format table
 Generate self-hosted stack from AWS infrastructure.
 
 ```bash
-cloudexit migrate <path> [flags]
+agnostech migrate <path> [flags]
 ```
 
 **Flags:**
@@ -125,9 +125,9 @@ cloudexit migrate <path> [flags]
 
 **Examples:**
 ```bash
-cloudexit migrate terraform.tfstate
-cloudexit migrate ./infrastructure --domain myapp.com
-cloudexit migrate ./infrastructure --output ./prod-stack --include-monitoring
+agnostech migrate terraform.tfstate
+agnostech migrate ./infrastructure --domain myapp.com
+agnostech migrate ./infrastructure --output ./prod-stack --include-monitoring
 ```
 
 ### validate
@@ -135,13 +135,13 @@ cloudexit migrate ./infrastructure --output ./prod-stack --include-monitoring
 Validate generated stack configuration.
 
 ```bash
-cloudexit validate <path>
+agnostech validate <path>
 ```
 
 **Examples:**
 ```bash
-cloudexit validate ./output
-cloudexit validate ./output --verbose
+agnostech validate ./output
+agnostech validate ./output --verbose
 ```
 
 ### version
@@ -149,20 +149,20 @@ cloudexit validate ./output --verbose
 Print version information.
 
 ```bash
-cloudexit version
+agnostech version
 ```
 
 ## Global Flags
 
 These flags are available for all commands:
 
-- `--config` - Config file (default: $HOME/.cloudexit.yaml)
+- `--config` - Config file (default: $HOME/.agnostech.yaml)
 - `-v, --verbose` - Verbose output
 - `-q, --quiet` - Quiet output (errors only)
 
 ## Configuration File
 
-You can create a configuration file at `~/.cloudexit.yaml`:
+You can create a configuration file at `~/.agnostech.yaml`:
 
 ```yaml
 # Default output directory
@@ -196,19 +196,19 @@ output/
 
 1. **Analyze** your AWS infrastructure:
    ```bash
-   cloudexit analyze terraform.tfstate --format table
+   agnostech analyze terraform.tfstate --format table
    ```
 
 2. **Review** the analysis output to understand what will be migrated
 
 3. **Generate** the self-hosted stack:
    ```bash
-   cloudexit migrate terraform.tfstate --domain myapp.com --output ./my-stack
+   agnostech migrate terraform.tfstate --domain myapp.com --output ./my-stack
    ```
 
 4. **Validate** the generated configuration:
    ```bash
-   cloudexit validate ./my-stack --verbose
+   agnostech validate ./my-stack --verbose
    ```
 
 5. **Configure** environment variables:
@@ -226,7 +226,7 @@ output/
 
 ## Supported AWS Resources
 
-CloudExit currently supports migrating:
+AgnosTech currently supports migrating:
 
 - **Compute**: EC2 instances, ECS containers
 - **Database**: RDS (PostgreSQL, MySQL), DynamoDB
@@ -255,7 +255,7 @@ The version information is injected at build time using ldflags.
 make dev
 
 # Or with custom flags
-go run ./cmd/cloudexit --verbose analyze ./test/fixtures
+go run ./cmd/agnostech --verbose analyze ./test/fixtures
 ```
 
 ## Troubleshooting
@@ -287,5 +287,5 @@ MIT License - see LICENSE file for details.
 ## Support
 
 For issues and questions:
-- GitHub Issues: https://github.com/cloudexit/cloudexit/issues
-- Documentation: https://cloudexit.github.io
+- GitHub Issues: https://github.com/agnostech/agnostech/issues
+- Documentation: https://agnostech.github.io

@@ -8,8 +8,8 @@ import (
 	"regexp"
 	"strings"
 
-	"github.com/cloudexit/cloudexit/internal/domain/parser"
-	"github.com/cloudexit/cloudexit/internal/domain/resource"
+	"github.com/agnostech/agnostech/internal/domain/parser"
+	"github.com/agnostech/agnostech/internal/domain/resource"
 )
 
 // BicepParser parses Azure Bicep (.bicep) files.

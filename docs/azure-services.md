@@ -1,10 +1,10 @@
 # Azure Service Mapping Reference
 
-This document provides a comprehensive reference for all Microsoft Azure services supported by CloudExit and their self-hosted equivalents.
+This document provides a comprehensive reference for all Microsoft Azure services supported by AgnosTech and their self-hosted equivalents.
 
 ## Overview
 
-CloudExit analyzes your Azure infrastructure (via Terraform state or HCL files) and generates Docker Compose configurations using open-source, self-hosted alternatives. Azure support enables organizations to achieve digital sovereignty by migrating away from Microsoft cloud services.
+AgnosTech analyzes your Azure infrastructure (via Terraform state or HCL files) and generates Docker Compose configurations using open-source, self-hosted alternatives. Azure support enables organizations to achieve digital sovereignty by migrating away from Microsoft cloud services.
 
 ## Service Mapping Summary
 
@@ -81,10 +81,10 @@ services:
     image: ubuntu:22.04
     restart: unless-stopped
     labels:
-      cloudexit.source: azurerm_linux_virtual_machine
-      cloudexit.size: Standard_B2s
+      agnostech.source: azurerm_linux_virtual_machine
+      agnostech.size: Standard_B2s
     networks:
-      - cloudexit
+      - agnostech
 ```
 
 ### Azure Functions
@@ -117,11 +117,11 @@ services:
     environment:
       FUNCTIONS_WORKER_RUNTIME: node
     labels:
-      cloudexit.source: azurerm_function_app
+      agnostech.source: azurerm_function_app
       traefik.enable: "true"
       traefik.http.routers.api-functions.rule: "Host(`api.localhost`)"
     networks:
-      - cloudexit
+      - agnostech
 ```
 
 ### AKS (Azure Kubernetes Service)
@@ -177,7 +177,7 @@ services:
       timeout: 5s
       retries: 3
     labels:
-      cloudexit.source: azurerm_storage_account
+      agnostech.source: azurerm_storage_account
 ```
 
 ### Azure Files
@@ -234,7 +234,7 @@ services:
       timeout: 5s
       retries: 5
     labels:
-      cloudexit.source: azurerm_mssql_server
+      agnostech.source: azurerm_mssql_server
 ```
 
 ### PostgreSQL Flexible Server
@@ -276,7 +276,7 @@ services:
       timeout: 5s
       retries: 5
     labels:
-      cloudexit.source: azurerm_postgresql_flexible_server
+      agnostech.source: azurerm_postgresql_flexible_server
 ```
 
 ### CosmosDB
@@ -344,7 +344,7 @@ services:
       - /var/run/docker.sock:/var/run/docker.sock:ro
       - ./traefik:/etc/traefik
     labels:
-      cloudexit.source: azurerm_lb
+      agnostech.source: azurerm_lb
 ```
 
 ### Azure Front Door
@@ -464,7 +464,7 @@ services:
     depends_on:
       - postgres
     labels:
-      cloudexit.source: azurerm_aadb2c_directory
+      agnostech.source: azurerm_aadb2c_directory
 ```
 
 ### Key Vault

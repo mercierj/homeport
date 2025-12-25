@@ -1,8 +1,8 @@
-# CloudExit CLI - Complete Implementation
+# AgnosTech CLI - Complete Implementation
 
 ## What Was Created
 
-The CloudExit CLI layer has been **fully implemented** with all requested features using Cobra and Charm libraries.
+The AgnosTech CLI layer has been **fully implemented** with all requested features using Cobra and Charm libraries.
 
 ## Quick Start (3 Steps)
 
@@ -14,13 +14,13 @@ cd /Users/jo/Prog/exit_gafam
 make build
 
 # 3. Test it
-./bin/cloudexit --help
+./bin/agnostech --help
 ```
 
 ## Files Created (23 Total)
 
 ### Core CLI Files (10)
-1. `/Users/jo/Prog/exit_gafam/cmd/cloudexit/main.go` - Entry point
+1. `/Users/jo/Prog/exit_gafam/cmd/agnostech/main.go` - Entry point
 2. `/Users/jo/Prog/exit_gafam/internal/cli/root.go` - Root command
 3. `/Users/jo/Prog/exit_gafam/internal/cli/analyze.go` - Analyze command
 4. `/Users/jo/Prog/exit_gafam/internal/cli/migrate.go` - Migrate command
@@ -38,7 +38,7 @@ make build
 14. `/Users/jo/Prog/exit_gafam/test-cli.sh` - Test script
 15. `/Users/jo/Prog/exit_gafam/verify-build.sh` - Build verification
 16. `/Users/jo/Prog/exit_gafam/.gitignore` - Git ignore
-17. `/Users/jo/Prog/exit_gafam/.cloudexit.example.yaml` - Example config
+17. `/Users/jo/Prog/exit_gafam/.agnostech.example.yaml` - Example config
 
 ### Documentation (5)
 18. `/Users/jo/Prog/exit_gafam/CLI_README.md` - Full documentation
@@ -63,17 +63,17 @@ All required dependencies added to `go.mod`:
 
 ### 1. Root Command
 ```bash
-cloudexit --help
-cloudexit --verbose <command>
-cloudexit --quiet <command>
-cloudexit --config ~/.cloudexit.yaml <command>
+agnostech --help
+agnostech --verbose <command>
+agnostech --quiet <command>
+agnostech --config ~/.agnostech.yaml <command>
 ```
 
 ### 2. Analyze Command
 ```bash
-cloudexit analyze <path>
-cloudexit analyze <path> --output analysis.json
-cloudexit analyze <path> --format json|yaml|table
+agnostech analyze <path>
+agnostech analyze <path> --output analysis.json
+agnostech analyze <path> --format json|yaml|table
 ```
 
 **Features:**
@@ -84,10 +84,10 @@ cloudexit analyze <path> --format json|yaml|table
 
 ### 3. Migrate Command
 ```bash
-cloudexit migrate <path>
-cloudexit migrate <path> --output ./output
-cloudexit migrate <path> --domain example.com
-cloudexit migrate <path> --include-migration --include-monitoring
+agnostech migrate <path>
+agnostech migrate <path> --output ./output
+agnostech migrate <path> --domain example.com
+agnostech migrate <path> --include-migration --include-monitoring
 ```
 
 **Features:**
@@ -105,8 +105,8 @@ cloudexit migrate <path> --include-migration --include-monitoring
 
 ### 4. Validate Command
 ```bash
-cloudexit validate <path>
-cloudexit validate <path> --verbose
+agnostech validate <path>
+agnostech validate <path> --verbose
 ```
 
 **Features:**
@@ -119,7 +119,7 @@ cloudexit validate <path> --verbose
 
 ### 5. Version Command
 ```bash
-cloudexit version
+agnostech version
 ```
 
 **Shows:**
@@ -180,13 +180,13 @@ chmod +x test-cli.sh
 ```bash
 go mod download
 go mod tidy
-go build -o bin/cloudexit ./cmd/cloudexit
+go build -o bin/agnostech ./cmd/agnostech
 ```
 
 ## Configuration
 
 ### Config File
-Create `~/.cloudexit.yaml`:
+Create `~/.agnostech.yaml`:
 ```yaml
 output: ./stacks
 domain: example.com
@@ -197,7 +197,7 @@ verbose: false
 
 Or copy the example:
 ```bash
-cp .cloudexit.example.yaml ~/.cloudexit.yaml
+cp .agnostech.example.yaml ~/.agnostech.yaml
 ```
 
 ## Testing
@@ -208,13 +208,13 @@ cp .cloudexit.example.yaml ~/.cloudexit.yaml
 make build
 
 # Analyze sample Terraform state
-./bin/cloudexit analyze ./test/fixtures/sample.tfstate --format table
+./bin/agnostech analyze ./test/fixtures/sample.tfstate --format table
 
 # Migrate to Docker stack
-./bin/cloudexit migrate ./test/fixtures/sample.tfstate --output /tmp/test-stack --domain test.local
+./bin/agnostech migrate ./test/fixtures/sample.tfstate --output /tmp/test-stack --domain test.local
 
 # Validate the generated stack
-./bin/cloudexit validate /tmp/test-stack --verbose
+./bin/agnostech validate /tmp/test-stack --verbose
 ```
 
 ### Run All Tests
@@ -269,18 +269,18 @@ Expected output:
 ### Complete Workflow
 ```bash
 # 1. Analyze your infrastructure
-./bin/cloudexit analyze terraform.tfstate --format table
+./bin/agnostech analyze terraform.tfstate --format table
 
 # Review the output to understand what will be migrated
 
 # 2. Generate self-hosted stack
-./bin/cloudexit migrate terraform.tfstate \
+./bin/agnostech migrate terraform.tfstate \
   --output ./my-stack \
   --domain myapp.com \
   --include-monitoring
 
 # 3. Validate the generated stack
-./bin/cloudexit validate ./my-stack --verbose
+./bin/agnostech validate ./my-stack --verbose
 
 # 4. Review and configure
 cd my-stack
@@ -294,7 +294,7 @@ docker-compose up -d
 
 ## Success Criteria - All Met ✓
 
-- ✓ Created `cmd/cloudexit/main.go` entry point
+- ✓ Created `cmd/agnostech/main.go` entry point
 - ✓ Created `internal/cli/root.go` with global flags
 - ✓ Created `internal/cli/analyze.go` with all flags
 - ✓ Created `internal/cli/migrate.go` with all flags
@@ -316,7 +316,7 @@ docker-compose up -d
 ```bash
 cd /Users/jo/Prog/exit_gafam
 make build
-./bin/cloudexit --help
+./bin/agnostech --help
 ```
 
 ### To Integrate with Core Logic
@@ -341,7 +341,7 @@ Use manual build or scripts instead of Makefile.
 ### "Permission denied"
 ```bash
 chmod +x setup-cli.sh test-cli.sh verify-build.sh
-chmod +x bin/cloudexit
+chmod +x bin/agnostech
 ```
 
 ### Build errors
@@ -359,7 +359,7 @@ go mod tidy
 
 ## Summary
 
-The CloudExit CLI is **fully implemented** with:
+The AgnosTech CLI is **fully implemented** with:
 
 - ✓ All 5 commands working
 - ✓ Beautiful terminal UI with Charm
@@ -373,5 +373,5 @@ The CloudExit CLI is **fully implemented** with:
 **Ready to build and use!**
 
 ```bash
-make build && ./bin/cloudexit --help
+make build && ./bin/agnostech --help
 ```

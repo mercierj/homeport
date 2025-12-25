@@ -1,15 +1,15 @@
-# CloudExit Architecture
+# AgnosTech Architecture
 
-This document describes the technical architecture of CloudExit, including its design principles, component structure, and data flow.
+This document describes the technical architecture of AgnosTech, including its design principles, component structure, and data flow.
 
 ## Overview
 
-CloudExit follows a **clean hexagonal architecture** (ports and adapters) with clear separation between domain logic, application services, and infrastructure implementations.
+AgnosTech follows a **clean hexagonal architecture** (ports and adapters) with clear separation between domain logic, application services, and infrastructure implementations.
 
 ```
 ┌─────────────────────────────────────────────────────────────────────┐
 │                              CLI Layer                               │
-│                         (cmd/cloudexit, internal/cli)                │
+│                         (cmd/agnostech, internal/cli)                │
 └─────────────────────────────────┬───────────────────────────────────┘
                                   │
 ┌─────────────────────────────────▼───────────────────────────────────┐
@@ -55,8 +55,8 @@ CloudExit follows a **clean hexagonal architecture** (ports and adapters) with c
 ## Directory Structure
 
 ```
-cloudexit/
-├── cmd/cloudexit/              # CLI entry point
+agnostech/
+├── cmd/agnostech/              # CLI entry point
 │   └── main.go                 # Application bootstrap
 │
 ├── internal/                   # Private application code
@@ -316,7 +316,7 @@ Generators transform mapping results into deployable artifacts.
 ```
 1. INPUT PHASE
    ┌─────────────────────────────────────────────────────────┐
-   │  User runs: cloudexit migrate ./terraform -o ./output   │
+   │  User runs: agnostech migrate ./terraform -o ./output   │
    └─────────────────────────────────┬───────────────────────┘
                                      │
 2. PARSING PHASE                     ▼

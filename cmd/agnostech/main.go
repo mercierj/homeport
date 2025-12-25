@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"os"
 
-	"github.com/cloudexit/cloudexit/internal/cli"
+	"github.com/agnostech/agnostech/internal/cli"
 )
 
 func main() {

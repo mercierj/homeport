@@ -1,6 +1,6 @@
 # Example: Multi-Cloud Migration
 
-This example demonstrates migrating applications from GCP and Azure to a self-hosted Docker stack using CloudExit.
+This example demonstrates migrating applications from GCP and Azure to a self-hosted Docker stack using AgnosTech.
 
 ## GCP Migration Example
 
@@ -30,7 +30,7 @@ This example demonstrates migrating applications from GCP and Azure to a self-ho
 │                                                             │
 └────────────────────────────────────────────────────────────┘
 
-                          ▼ CloudExit ▼
+                          ▼ AgnosTech ▼
 
                     Self-Hosted Architecture
 ┌────────────────────────────────────────────────────────────┐
@@ -137,10 +137,10 @@ resource "google_compute_url_map" "main" {
 }
 ```
 
-### CloudExit Migration
+### AgnosTech Migration
 
 ```bash
-cloudexit migrate ./terraform \
+agnostech migrate ./terraform \
   --output ./gcp-stack \
   --domain api.example.com
 ```
@@ -161,9 +161,9 @@ services:
       - /var/run/docker.sock:/var/run/docker.sock:ro
       - ./traefik:/etc/traefik
     networks:
-      - cloudexit
+      - agnostech
     labels:
-      - "cloudexit.source=google_compute_url_map"
+      - "agnostech.source=google_compute_url_map"
 
   api:
     image: gcr.io/my-project/api:latest
@@ -184,9 +184,9 @@ services:
       - redis
       - minio
     networks:
-      - cloudexit
+      - agnostech
     labels:
-      - "cloudexit.source=google_cloud_run_service"
+      - "agnostech.source=google_cloud_run_service"
       - "traefik.enable=true"
       - "traefik.http.routers.api.rule=Host(`api.example.com`)"
       - "traefik.http.routers.api.tls.certresolver=letsencrypt"
@@ -206,9 +206,9 @@ services:
       timeout: 5s
       retries: 5
     networks:
-      - cloudexit
+      - agnostech
     labels:
-      - "cloudexit.source=google_sql_database_instance"
+      - "agnostech.source=google_sql_database_instance"
 
   minio:
     image: minio/minio:latest
@@ -222,9 +222,9 @@ services:
     volumes:
       - ./data/minio:/data
     networks:
-      - cloudexit
+      - agnostech
     labels:
-      - "cloudexit.source=google_storage_bucket"
+      - "agnostech.source=google_storage_bucket"
 
   redis:
     image: redis:7-alpine
@@ -233,12 +233,12 @@ services:
     volumes:
       - ./data/redis:/data
     networks:
-      - cloudexit
+      - agnostech
     labels:
-      - "cloudexit.source=google_redis_instance"
+      - "agnostech.source=google_redis_instance"
 
 networks:
-  cloudexit:
+  agnostech:
     driver: bridge
 ```
 
@@ -272,7 +272,7 @@ networks:
 │                                                             │
 └────────────────────────────────────────────────────────────┘
 
-                          ▼ CloudExit ▼
+                          ▼ AgnosTech ▼
 
                     Self-Hosted Architecture
 ┌────────────────────────────────────────────────────────────┐
@@ -380,10 +380,10 @@ resource "azurerm_application_gateway" "main" {
 }
 ```
 
-### CloudExit Migration
+### AgnosTech Migration
 
 ```bash
-cloudexit migrate ./terraform \
+agnostech migrate ./terraform \
   --output ./azure-stack \
   --domain api.example.com
 ```
@@ -404,9 +404,9 @@ services:
       - /var/run/docker.sock:/var/run/docker.sock:ro
       - ./traefik:/etc/traefik
     networks:
-      - cloudexit
+      - agnostech
     labels:
-      - "cloudexit.source=azurerm_application_gateway"
+      - "agnostech.source=azurerm_application_gateway"
 
   api:
     image: node:18-alpine
@@ -428,9 +428,9 @@ services:
       - redis
       - minio
     networks:
-      - cloudexit
+      - agnostech
     labels:
-      - "cloudexit.source=azurerm_function_app"
+      - "agnostech.source=azurerm_function_app"
       - "traefik.enable=true"
       - "traefik.http.routers.api.rule=Host(`api.example.com`)"
       - "traefik.http.routers.api.tls.certresolver=letsencrypt"
@@ -452,9 +452,9 @@ services:
       timeout: 5s
       retries: 5
     networks:
-      - cloudexit
+      - agnostech
     labels:
-      - "cloudexit.source=azurerm_mssql_database"
+      - "agnostech.source=azurerm_mssql_database"
 
   # Alternative: Use MSSQL for full Azure SQL compatibility
   # mssql:
@@ -475,9 +475,9 @@ services:
     volumes:
       - ./data/minio:/data
     networks:
-      - cloudexit
+      - agnostech
     labels:
-      - "cloudexit.source=azurerm_storage_account"
+      - "agnostech.source=azurerm_storage_account"
 
   redis:
     image: redis:7-alpine
@@ -486,12 +486,12 @@ services:
     volumes:
       - ./data/redis:/data
     networks:
-      - cloudexit
+      - agnostech
     labels:
-      - "cloudexit.source=azurerm_redis_cache"
+      - "agnostech.source=azurerm_redis_cache"
 
 networks:
-  cloudexit:
+  agnostech:
     driver: bridge
 ```
 
@@ -597,7 +597,7 @@ async function uploadFile(file) {
 
 ### Migration
 
-- [ ] Run CloudExit analysis
+- [ ] Run AgnosTech analysis
 - [ ] Generate self-hosted stack
 - [ ] Configure environment variables
 - [ ] Set up SSL certificates

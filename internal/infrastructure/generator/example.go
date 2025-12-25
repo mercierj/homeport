@@ -5,11 +5,11 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/cloudexit/cloudexit/internal/domain/mapper"
-	"github.com/cloudexit/cloudexit/internal/infrastructure/generator/compose"
-	"github.com/cloudexit/cloudexit/internal/infrastructure/generator/docs"
-	"github.com/cloudexit/cloudexit/internal/infrastructure/generator/scripts"
-	"github.com/cloudexit/cloudexit/internal/infrastructure/generator/traefik"
+	"github.com/agnostech/agnostech/internal/domain/mapper"
+	"github.com/agnostech/agnostech/internal/infrastructure/generator/compose"
+	"github.com/agnostech/agnostech/internal/infrastructure/generator/docs"
+	"github.com/agnostech/agnostech/internal/infrastructure/generator/scripts"
+	"github.com/agnostech/agnostech/internal/infrastructure/generator/traefik"
 )
 
 // Example demonstrates how to use the generators.

@@ -1,6 +1,6 @@
-# CloudExit CLI - Quick Start Guide
+# AgnosTech CLI - Quick Start Guide
 
-This guide will help you get started with the CloudExit CLI in 5 minutes.
+This guide will help you get started with the AgnosTech CLI in 5 minutes.
 
 ## Prerequisites
 
@@ -19,7 +19,7 @@ cd /Users/jo/Prog/exit_gafam
 # Build the CLI
 make build
 
-# The binary will be available at: ./bin/cloudexit
+# The binary will be available at: ./bin/agnostech
 ```
 
 ### Option 2: Using the Setup Script
@@ -40,10 +40,10 @@ go mod download
 go mod tidy
 
 # Build the binary
-go build -o bin/cloudexit ./cmd/cloudexit
+go build -o bin/agnostech ./cmd/agnostech
 
 # Test it
-./bin/cloudexit --help
+./bin/agnostech --help
 ```
 
 ## Quick Test
@@ -62,7 +62,7 @@ chmod +x test-cli.sh
 
 ```bash
 # Analyze the sample Terraform state
-./bin/cloudexit analyze ./test/fixtures/sample.tfstate --format table
+./bin/agnostech analyze ./test/fixtures/sample.tfstate --format table
 
 # Output:
 # - Shows EC2 instances, RDS databases, S3 buckets
@@ -73,7 +73,7 @@ chmod +x test-cli.sh
 
 ```bash
 # Generate a Docker stack
-./bin/cloudexit migrate ./test/fixtures/sample.tfstate \
+./bin/agnostech migrate ./test/fixtures/sample.tfstate \
   --output ./my-stack \
   --domain myapp.local \
   --include-monitoring
@@ -89,7 +89,7 @@ chmod +x test-cli.sh
 
 ```bash
 # Validate the generated configuration
-./bin/cloudexit validate ./my-stack --verbose
+./bin/agnostech validate ./my-stack --verbose
 
 # Check all configurations are valid
 ```
@@ -120,18 +120,18 @@ docker-compose ps
 
 ```bash
 # General help
-./bin/cloudexit --help
+./bin/agnostech --help
 
 # Command-specific help
-./bin/cloudexit analyze --help
-./bin/cloudexit migrate --help
-./bin/cloudexit validate --help
+./bin/agnostech analyze --help
+./bin/agnostech migrate --help
+./bin/agnostech validate --help
 ```
 
 ### Version
 
 ```bash
-./bin/cloudexit version
+./bin/agnostech version
 ```
 
 ### Using Make Commands
@@ -150,7 +150,7 @@ make example-validate  # Run example validate
 
 ## Configuration
 
-Create a configuration file at `~/.cloudexit.yaml`:
+Create a configuration file at `~/.agnostech.yaml`:
 
 ```yaml
 output: ./stacks
@@ -162,14 +162,14 @@ format: table
 Or copy the example:
 
 ```bash
-cp .cloudexit.example.yaml ~/.cloudexit.yaml
+cp .agnostech.example.yaml ~/.agnostech.yaml
 ```
 
 ## Next Steps
 
 1. Read the full documentation: [CLI_README.md](./CLI_README.md)
 2. Try analyzing your own Terraform state files
-3. Customize the configuration in `.cloudexit.yaml`
+3. Customize the configuration in `.agnostech.yaml`
 4. Explore the generated Docker configurations
 5. Deploy to your server!
 
@@ -179,20 +179,20 @@ cp .cloudexit.example.yaml ~/.cloudexit.yaml
 
 Make sure you're using the correct path:
 ```bash
-./bin/cloudexit --help
+./bin/agnostech --help
 ```
 
 Or add to PATH:
 ```bash
 export PATH=$PATH:$(pwd)/bin
-cloudexit --help
+agnostech --help
 ```
 
 ### "Permission denied"
 
 Make the binary executable:
 ```bash
-chmod +x bin/cloudexit
+chmod +x bin/agnostech
 ```
 
 ### "Module not found"
@@ -220,7 +220,7 @@ make build
 
 ## Support
 
-- GitHub Issues: https://github.com/cloudexit/cloudexit/issues
+- GitHub Issues: https://github.com/agnostech/agnostech/issues
 - Documentation: [CLI_README.md](./CLI_README.md)
 
 ## What's Next?

@@ -1,8 +1,8 @@
 #!/bin/bash
 
-# CloudExit CLI Setup Script
+# AgnosTech CLI Setup Script
 
-echo "CloudExit CLI Setup"
+echo "AgnosTech CLI Setup"
 echo "==================="
 echo ""
 
@@ -15,7 +15,7 @@ fi
 
 echo ""
 echo "Step 2: Building the CLI..."
-go build -o bin/cloudexit ./cmd/cloudexit
+go build -o bin/agnostech ./cmd/agnostech
 if [ $? -ne 0 ]; then
     echo "Error: Failed to build CLI"
     exit 1
@@ -23,7 +23,7 @@ fi
 
 echo ""
 echo "Step 3: Testing the CLI..."
-./bin/cloudexit --help
+./bin/agnostech --help
 if [ $? -ne 0 ]; then
     echo "Error: Failed to run CLI"
     exit 1
@@ -33,11 +33,11 @@ echo ""
 echo "==================="
 echo "Setup completed successfully!"
 echo ""
-echo "You can now run the CLI with: ./bin/cloudexit"
+echo "You can now run the CLI with: ./bin/agnostech"
 echo ""
 echo "Available commands:"
-echo "  ./bin/cloudexit analyze <path>   - Analyze AWS infrastructure"
-echo "  ./bin/cloudexit migrate <path>   - Generate self-hosted stack"
-echo "  ./bin/cloudexit validate <path>  - Validate generated stack"
-echo "  ./bin/cloudexit version          - Show version information"
+echo "  ./bin/agnostech analyze <path>   - Analyze AWS infrastructure"
+echo "  ./bin/agnostech migrate <path>   - Generate self-hosted stack"
+echo "  ./bin/agnostech validate <path>  - Validate generated stack"
+echo "  ./bin/agnostech version          - Show version information"
 echo ""

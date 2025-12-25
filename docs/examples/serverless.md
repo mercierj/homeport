@@ -29,7 +29,7 @@ This example demonstrates migrating a serverless application (Lambda + API Gatew
 │                                                             │
 └────────────────────────────────────────────────────────────┘
 
-                          ▼ CloudExit ▼
+                          ▼ AgnosTech ▼
 
                     Self-Hosted Architecture
 ┌────────────────────────────────────────────────────────────┐
@@ -194,9 +194,9 @@ resource "aws_s3_bucket" "uploads" {
 }
 ```
 
-## CloudExit Migration Strategy
+## AgnosTech Migration Strategy
 
-For serverless applications, CloudExit offers two approaches:
+For serverless applications, AgnosTech offers two approaches:
 
 ### Option 1: Containerized Functions (Recommended)
 
@@ -206,10 +206,10 @@ Convert each Lambda to a Docker container that handles HTTP requests.
 
 Combine all Lambdas into a single API container.
 
-## CloudExit Migration
+## AgnosTech Migration
 
 ```bash
-cloudexit migrate ./terraform \
+agnostech migrate ./terraform \
   --output ./serverless-stack \
   --domain api.example.com \
   --serverless-mode=containerized
@@ -263,7 +263,7 @@ services:
       - frontend
       - backend
     labels:
-      - "cloudexit.source=aws_lambda_function"
+      - "agnostech.source=aws_lambda_function"
       - "traefik.enable=true"
       - "traefik.http.routers.api.rule=Host(`api.example.com`)"
       - "traefik.http.routers.api.entrypoints=websecure"
@@ -288,7 +288,7 @@ services:
     networks:
       - backend
     labels:
-      - "cloudexit.source=aws_dynamodb_table"
+      - "agnostech.source=aws_dynamodb_table"
     healthcheck:
       test: ["CMD-SHELL", "nodetool status"]
       interval: 30s
@@ -310,7 +310,7 @@ services:
     networks:
       - backend
     labels:
-      - "cloudexit.source=aws_s3_bucket"
+      - "agnostech.source=aws_s3_bucket"
     healthcheck:
       test: ["CMD", "curl", "-f", "http://localhost:9000/minio/health/live"]
       interval: 30s
@@ -326,7 +326,7 @@ networks:
 
 ### API Wrapper Code
 
-CloudExit generates an Express.js wrapper to replace Lambda handlers:
+AgnosTech generates an Express.js wrapper to replace Lambda handlers:
 
 `api/server.js`:
 

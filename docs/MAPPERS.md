@@ -1,6 +1,6 @@
-# CloudExit Mappers Documentation
+# AgnosTech Mappers Documentation
 
-This document describes all AWS to self-hosted service mappers implemented in the CloudExit project.
+This document describes all AWS to self-hosted service mappers implemented in the AgnosTech project.
 
 ## Overview
 
@@ -262,8 +262,8 @@ if registry.HasMapper(resource.TypeS3Bucket) {
 import (
     "context"
 
-    "github.com/cloudexit/cloudexit/internal/domain/resource"
-    "github.com/cloudexit/cloudexit/internal/infrastructure/mapper"
+    "github.com/agnostech/agnostech/internal/domain/resource"
+    "github.com/agnostech/agnostech/internal/infrastructure/mapper"
 )
 
 func main() {
@@ -373,8 +373,8 @@ package database
 
 import (
     "context"
-    "github.com/cloudexit/cloudexit/internal/domain/mapper"
-    "github.com/cloudexit/cloudexit/internal/domain/resource"
+    "github.com/agnostech/agnostech/internal/domain/mapper"
+    "github.com/agnostech/agnostech/internal/domain/resource"
 )
 
 type DynamoDBMapper struct {
@@ -425,4 +425,4 @@ Planned mapper additions:
 
 ## License
 
-Part of the CloudExit project.
+Part of the AgnosTech project.

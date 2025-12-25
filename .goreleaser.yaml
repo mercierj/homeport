@@ -1,7 +1,7 @@
 # yaml-language-server: $schema=https://goreleaser.com/static/schema.json
 version: 2
 
-project_name: cloudexit
+project_name: agnostech
 
 before:
   hooks:
@@ -9,9 +9,9 @@ before:
     - go generate ./...
 
 builds:
-  - id: cloudexit
-    main: ./cmd/cloudexit
-    binary: cloudexit
+  - id: agnostech
+    main: ./cmd/agnostech
+    binary: agnostech
     env:
       - CGO_ENABLED=0
     goos:
@@ -23,9 +23,9 @@ builds:
       - arm64
     ldflags:
       - -s -w
-      - -X github.com/cloudexit/cloudexit/pkg/version.Version={{.Version}}
-      - -X github.com/cloudexit/cloudexit/pkg/version.Commit={{.Commit}}
-      - -X github.com/cloudexit/cloudexit/pkg/version.Date={{.Date}}
+      - -X github.com/agnostech/agnostech/pkg/version.Version={{.Version}}
+      - -X github.com/agnostech/agnostech/pkg/version.Commit={{.Commit}}
+      - -X github.com/agnostech/agnostech/pkg/version.Date={{.Date}}
 
 archives:
   - id: default
@@ -53,32 +53,32 @@ signs:
       - "${artifact}"
 
 brews:
-  - name: cloudexit
+  - name: agnostech
     repository:
-      owner: cloudexit
+      owner: agnostech
       name: homebrew-tap
-    homepage: https://cloudexit.dev
+    homepage: https://agnostech.dev
     description: "Migrate AWS infrastructure to self-hosted Docker stack"
     license: "AGPL-3.0"
     install: |
-      bin.install "cloudexit"
+      bin.install "agnostech"
     test: |
-      system "#{bin}/cloudexit", "--version"
+      system "#{bin}/agnostech", "--version"
 
 scoops:
   - repository:
-      owner: cloudexit
+      owner: agnostech
       name: scoop-bucket
-    homepage: https://cloudexit.dev
+    homepage: https://agnostech.dev
     description: "Migrate AWS infrastructure to self-hosted Docker stack"
     license: AGPL-3.0
 
 nfpms:
   - id: packages
-    package_name: cloudexit
-    vendor: CloudExit
-    homepage: https://cloudexit.dev
-    maintainer: CloudExit <maintainers@cloudexit.dev>
+    package_name: agnostech
+    vendor: AgnosTech
+    homepage: https://agnostech.dev
+    maintainer: AgnosTech <maintainers@agnostech.dev>
     description: "Migrate AWS infrastructure to self-hosted Docker stack"
     license: AGPL-3.0
     formats:
@@ -88,21 +88,21 @@ nfpms:
     bindir: /usr/bin
 
 aurs:
-  - name: cloudexit-bin
-    homepage: https://cloudexit.dev
+  - name: agnostech-bin
+    homepage: https://agnostech.dev
     description: "Migrate AWS infrastructure to self-hosted Docker stack"
     maintainers:
-      - "CloudExit <maintainers@cloudexit.dev>"
+      - "AgnosTech <maintainers@agnostech.dev>"
     license: AGPL-3.0
     private_key: "{{ .Env.AUR_SSH_KEY }}"
-    git_url: "ssh://aur@aur.archlinux.org/cloudexit-bin.git"
+    git_url: "ssh://aur@aur.archlinux.org/agnostech-bin.git"
 
 dockers:
   - image_templates:
-      - "cloudexit/cloudexit:{{ .Tag }}"
-      - "cloudexit/cloudexit:latest"
-      - "ghcr.io/cloudexit/cloudexit:{{ .Tag }}"
-      - "ghcr.io/cloudexit/cloudexit:latest"
+      - "agnostech/agnostech:{{ .Tag }}"
+      - "agnostech/agnostech:latest"
+      - "ghcr.io/agnostech/agnostech:{{ .Tag }}"
+      - "ghcr.io/agnostech/agnostech:latest"
     dockerfile: Dockerfile
     build_flag_templates:
       - "--pull"
@@ -128,20 +128,20 @@ changelog:
 
 release:
   github:
-    owner: cloudexit
-    name: cloudexit
+    owner: agnostech
+    name: agnostech
   prerelease: auto
   footer: |
     ## Installation
 
     **Homebrew (macOS/Linux):**
     ```bash
-    brew install cloudexit/tap/cloudexit
+    brew install agnostech/tap/agnostech
     ```
 
     **Docker:**
     ```bash
-    docker pull cloudexit/cloudexit:{{ .Tag }}
+    docker pull agnostech/agnostech:{{ .Tag }}
     ```
 
     **Binary:**

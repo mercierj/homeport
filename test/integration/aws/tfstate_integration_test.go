@@ -6,9 +6,9 @@ import (
 	"path/filepath"
 	"testing"
 
-	"github.com/cloudexit/cloudexit/internal/domain/parser"
-	"github.com/cloudexit/cloudexit/internal/domain/resource"
-	awsparser "github.com/cloudexit/cloudexit/internal/infrastructure/parser/aws"
+	"github.com/agnostech/agnostech/internal/domain/parser"
+	"github.com/agnostech/agnostech/internal/domain/resource"
+	awsparser "github.com/agnostech/agnostech/internal/infrastructure/parser/aws"
 )
 
 // TestTFStateParser_Integration tests the Terraform state file parser with real fixtures.

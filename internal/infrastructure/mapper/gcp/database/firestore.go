@@ -6,8 +6,8 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/cloudexit/cloudexit/internal/domain/mapper"
-	"github.com/cloudexit/cloudexit/internal/domain/resource"
+	"github.com/agnostech/agnostech/internal/domain/mapper"
+	"github.com/agnostech/agnostech/internal/domain/resource"
 )
 
 // FirestoreMapper converts GCP Firestore to MongoDB containers.

@@ -1,12 +1,12 @@
-# CloudExit
+# AgnosTech
 
-**Escape the Cloud. Own your infrastructure.**
+**Reclaim your infrastructure.**
 
-CloudExit transforms your AWS, GCP, or Azure infrastructure into a self-hosted Docker stack. Zero US dependencies. Full sovereignty. One command.
+AgnosTech transforms your AWS, GCP, or Azure infrastructure into a self-hosted Docker stack. Zero US dependencies. Full sovereignty. One command.
 
 [![License: AGPL v3](https://img.shields.io/badge/License-AGPL%20v3-blue.svg)](https://www.gnu.org/licenses/agpl-3.0)
 [![Go Version](https://img.shields.io/badge/Go-1.23+-00ADD8?logo=go)](https://go.dev/)
-[![Release](https://img.shields.io/github/v/release/cloudexit/cloudexit?include_prereleases)](https://github.com/cloudexit/cloudexit/releases)
+[![Release](https://img.shields.io/github/v/release/agnostech/agnostech?include_prereleases)](https://github.com/agnostech/agnostech/releases)
 
 ---
 
@@ -24,13 +24,13 @@ CloudExit transforms your AWS, GCP, or Azure infrastructure into a self-hosted D
 
 ```bash
 # 1. Install
-brew install cloudexit/tap/cloudexit
+brew install agnostech/tap/agnostech
 
 # 2. Analyze your infrastructure
-cloudexit analyze ./terraform
+agnostech analyze ./terraform
 
 # 3. Generate self-hosted stack
-cloudexit migrate ./terraform --output ./my-stack --domain myapp.com
+agnostech migrate ./terraform --output ./my-stack --domain myapp.com
 
 # 4. Deploy
 cd my-stack && docker compose up -d
@@ -41,29 +41,29 @@ cd my-stack && docker compose up -d
 ### Homebrew (macOS/Linux)
 
 ```bash
-brew install cloudexit/tap/cloudexit
+brew install agnostech/tap/agnostech
 ```
 
 ### Go Install
 
 ```bash
-go install github.com/cloudexit/cloudexit/cmd/cloudexit@latest
+go install github.com/agnostech/agnostech/cmd/agnostech@latest
 ```
 
 ### From Source
 
 ```bash
-git clone https://github.com/cloudexit/cloudexit.git
-cd cloudexit
+git clone https://github.com/agnostech/agnostech.git
+cd agnostech
 make build
-./bin/cloudexit --help
+./bin/agnostech --help
 ```
 
 ### Docker
 
 ```bash
-docker pull cloudexit/cloudexit:latest
-docker run -v $(pwd):/workspace cloudexit/cloudexit migrate /workspace/terraform -o /workspace/output
+docker pull agnostech/agnostech:latest
+docker run -v $(pwd):/workspace agnostech/agnostech migrate /workspace/terraform -o /workspace/output
 ```
 
 ## Usage
@@ -72,33 +72,33 @@ docker run -v $(pwd):/workspace cloudexit/cloudexit migrate /workspace/terraform
 
 ```bash
 # Analyze from Terraform state
-cloudexit analyze ./terraform --format table
+agnostech analyze ./terraform --format table
 
 # JSON output for CI/CD
-cloudexit analyze ./terraform --format json -o analysis.json
+agnostech analyze ./terraform --format json -o analysis.json
 ```
 
 ### Generate Docker Stack
 
 ```bash
 # Basic migration
-cloudexit migrate ./terraform --output ./my-stack --domain myapp.com
+agnostech migrate ./terraform --output ./my-stack --domain myapp.com
 
 # With monitoring stack
-cloudexit migrate ./terraform -o ./my-stack -d myapp.com --include-monitoring
+agnostech migrate ./terraform -o ./my-stack -d myapp.com --include-monitoring
 
 # Skip migration scripts
-cloudexit migrate ./terraform -o ./my-stack --include-migration=false
+agnostech migrate ./terraform -o ./my-stack --include-migration=false
 ```
 
 ### Validate Configuration
 
 ```bash
 # Validate generated stack
-cloudexit validate ./my-stack
+agnostech validate ./my-stack
 
 # Strict mode (fail on warnings)
-cloudexit validate ./my-stack --strict
+agnostech validate ./my-stack --strict
 ```
 
 ## Supported Services
@@ -160,7 +160,7 @@ cloudexit validate ./my-stack --strict
 
 ## Output Structure
 
-Running `cloudexit migrate` generates:
+Running `agnostech migrate` generates:
 
 ```
 my-stack/
@@ -187,7 +187,7 @@ my-stack/
 
 ## Configuration
 
-Create `.cloudexit.yaml` in your project or home directory:
+Create `.agnostech.yaml` in your project or home directory:
 
 ```yaml
 output:
@@ -224,10 +224,10 @@ monitoring:
 ## CLI Reference
 
 ```
-cloudexit - Cloud to Self-Hosted Migration Tool
+agnostech - Cloud to Self-Hosted Migration Tool
 
 Usage:
-  cloudexit [command]
+  agnostech [command]
 
 Available Commands:
   analyze     Analyze cloud infrastructure from Terraform
@@ -237,8 +237,8 @@ Available Commands:
   help        Help about any command
 
 Flags:
-      --config string   Config file (default: ~/.cloudexit.yaml)
-  -h, --help            Help for cloudexit
+      --config string   Config file (default: ~/.agnostech.yaml)
+  -h, --help            Help for agnostech
   -v, --verbose         Enable verbose output
   -q, --quiet           Suppress non-essential output
 ```
@@ -279,8 +279,8 @@ make build-all
 ### Project Structure
 
 ```
-cloudexit/
-├── cmd/cloudexit/          # CLI entry point
+agnostech/
+├── cmd/agnostech/          # CLI entry point
 ├── internal/
 │   ├── app/                # Application services
 │   ├── cli/                # CLI commands
@@ -321,7 +321,7 @@ Quick start:
 
 ## License
 
-CloudExit is licensed under the [GNU Affero General Public License v3.0](LICENSE).
+AgnosTech is licensed under the [GNU Affero General Public License v3.0](LICENSE).
 
 This means:
 - Free to use, modify, and distribute
@@ -332,8 +332,8 @@ This means:
 ## Support
 
 - **Documentation**: [docs/](docs/)
-- **Issues**: [GitHub Issues](https://github.com/cloudexit/cloudexit/issues)
-- **Discussions**: [GitHub Discussions](https://github.com/cloudexit/cloudexit/discussions)
+- **Issues**: [GitHub Issues](https://github.com/agnostech/agnostech/issues)
+- **Discussions**: [GitHub Discussions](https://github.com/agnostech/agnostech/discussions)
 
 ---
 

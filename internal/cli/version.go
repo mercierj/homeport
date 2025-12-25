@@ -3,7 +3,7 @@ package cli
 import (
 	"fmt"
 
-	"github.com/cloudexit/cloudexit/pkg/version"
+	"github.com/agnostech/agnostech/pkg/version"
 	"github.com/spf13/cobra"
 )
 

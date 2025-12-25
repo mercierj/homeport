@@ -1,6 +1,6 @@
-# Contributing to CloudExit
+# Contributing to AgnosTech
 
-Thank you for your interest in contributing to CloudExit! This guide will help you get started with development and understand our contribution process.
+Thank you for your interest in contributing to AgnosTech! This guide will help you get started with development and understand our contribution process.
 
 ## Table of Contents
 
@@ -28,9 +28,9 @@ Thank you for your interest in contributing to CloudExit! This guide will help y
 
 ```bash
 # Fork the repository on GitHub, then:
-git clone https://github.com/YOUR_USERNAME/cloudexit.git
-cd cloudexit
-git remote add upstream https://github.com/cloudexit/cloudexit.git
+git clone https://github.com/YOUR_USERNAME/agnostech.git
+cd agnostech
+git remote add upstream https://github.com/agnostech/agnostech.git
 ```
 
 ## Development Setup
@@ -49,7 +49,7 @@ This runs `go mod download` and `go mod tidy` to fetch all dependencies.
 make build
 ```
 
-The binary will be created at `bin/cloudexit`.
+The binary will be created at `bin/agnostech`.
 
 ### Run Tests
 
@@ -60,8 +60,8 @@ make test
 ### Run the CLI
 
 ```bash
-./bin/cloudexit --help
-./bin/cloudexit analyze ./test/fixtures/sample.tfstate
+./bin/agnostech --help
+./bin/agnostech analyze ./test/fixtures/sample.tfstate
 ```
 
 ### Development Mode
@@ -69,14 +69,14 @@ make test
 ```bash
 make dev
 # or
-go run ./cmd/cloudexit --verbose --help
+go run ./cmd/agnostech --verbose --help
 ```
 
 ## Project Structure
 
 ```
-cloudexit/
-├── cmd/cloudexit/          # CLI entry point
+agnostech/
+├── cmd/agnostech/          # CLI entry point
 ├── internal/
 │   ├── app/                # Application services
 │   ├── cli/                # CLI commands
@@ -176,8 +176,8 @@ import (
     "fmt"
     "time"
 
-    "github.com/cloudexit/cloudexit/internal/domain/mapper"
-    "github.com/cloudexit/cloudexit/internal/domain/resource"
+    "github.com/agnostech/agnostech/internal/domain/mapper"
+    "github.com/agnostech/agnostech/internal/domain/resource"
 )
 
 // KinesisMapper converts AWS Kinesis streams to self-hosted alternatives.
@@ -213,8 +213,8 @@ func (m *KinesisMapper) Map(ctx context.Context, res *resource.AWSResource) (*ma
         // ... more configuration
     }
     svc.Labels = map[string]string{
-        "cloudexit.source": "aws_kinesis_stream",
-        "cloudexit.stream": streamName,
+        "agnostech.source": "aws_kinesis_stream",
+        "agnostech.stream": streamName,
     }
 
     // Add warnings for feature gaps
@@ -264,8 +264,8 @@ import (
     "context"
     "testing"
 
-    "github.com/cloudexit/cloudexit/internal/domain/resource"
-    "github.com/cloudexit/cloudexit/internal/infrastructure/mapper/messaging"
+    "github.com/agnostech/agnostech/internal/domain/resource"
+    "github.com/agnostech/agnostech/internal/infrastructure/mapper/messaging"
 )
 
 func TestKinesisMapper_Map(t *testing.T) {
@@ -329,7 +329,7 @@ Create `internal/infrastructure/generator/kubernetes/`:
 package kubernetes
 
 import (
-    "github.com/cloudexit/cloudexit/internal/domain/mapper"
+    "github.com/agnostech/agnostech/internal/domain/mapper"
 )
 
 type Generator struct {
@@ -520,7 +520,7 @@ How was this tested?
 ### Bug Reports
 
 Include:
-- CloudExit version
+- AgnosTech version
 - Go version
 - OS/platform
 - Steps to reproduce
@@ -553,4 +553,4 @@ Be respectful and inclusive. We follow the [Contributor Covenant](https://www.co
 
 ---
 
-Thank you for contributing to CloudExit!
+Thank you for contributing to AgnosTech!

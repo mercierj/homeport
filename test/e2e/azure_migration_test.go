@@ -8,14 +8,14 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/cloudexit/cloudexit/internal/domain/mapper"
-	"github.com/cloudexit/cloudexit/internal/domain/parser"
-	"github.com/cloudexit/cloudexit/internal/domain/resource"
-	"github.com/cloudexit/cloudexit/internal/infrastructure/generator/compose"
-	_ "github.com/cloudexit/cloudexit/internal/infrastructure/mapper/azure/compute"
-	_ "github.com/cloudexit/cloudexit/internal/infrastructure/mapper/azure/database"
-	_ "github.com/cloudexit/cloudexit/internal/infrastructure/mapper/azure/storage"
-	_ "github.com/cloudexit/cloudexit/internal/infrastructure/parser/azure"
+	"github.com/agnostech/agnostech/internal/domain/mapper"
+	"github.com/agnostech/agnostech/internal/domain/parser"
+	"github.com/agnostech/agnostech/internal/domain/resource"
+	"github.com/agnostech/agnostech/internal/infrastructure/generator/compose"
+	_ "github.com/agnostech/agnostech/internal/infrastructure/mapper/azure/compute"
+	_ "github.com/agnostech/agnostech/internal/infrastructure/mapper/azure/database"
+	_ "github.com/agnostech/agnostech/internal/infrastructure/mapper/azure/storage"
+	_ "github.com/agnostech/agnostech/internal/infrastructure/parser/azure"
 )
 
 // TestAzureMigration_ARMTemplate tests complete Azure to self-hosted migration using ARM templates.

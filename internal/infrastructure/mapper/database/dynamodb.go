@@ -7,8 +7,8 @@ import (
 	"strings"
 	"time"
 
-	"github.com/cloudexit/cloudexit/internal/domain/mapper"
-	"github.com/cloudexit/cloudexit/internal/domain/resource"
+	"github.com/agnostech/agnostech/internal/domain/mapper"
+	"github.com/agnostech/agnostech/internal/domain/resource"
 )
 
 // DynamoDBMapper converts AWS DynamoDB tables to ScyllaDB containers.

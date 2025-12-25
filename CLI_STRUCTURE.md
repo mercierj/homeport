@@ -1,4 +1,4 @@
-# CloudExit CLI - File Structure
+# AgnosTech CLI - File Structure
 
 This document shows the complete file structure of the CLI layer.
 
@@ -7,7 +7,7 @@ This document shows the complete file structure of the CLI layer.
 ```
 exit_gafam/
 ├── cmd/
-│   └── cloudexit/
+│   └── agnostech/
 │       └── main.go                    # Entry point
 │
 ├── internal/
@@ -35,7 +35,7 @@ exit_gafam/
 ├── setup-cli.sh                       # Setup script
 ├── test-cli.sh                        # Test script
 ├── .gitignore                         # Git ignore rules
-├── .cloudexit.example.yaml            # Example configuration
+├── .agnostech.example.yaml            # Example configuration
 ├── CLI_README.md                      # CLI documentation
 └── QUICKSTART.md                      # Quick start guide
 ```
@@ -44,7 +44,7 @@ exit_gafam/
 
 ### Core CLI Files
 
-#### cmd/cloudexit/main.go
+#### cmd/agnostech/main.go
 - Entry point for the CLI application
 - Initializes and executes the root command
 - Handles fatal errors
@@ -130,10 +130,10 @@ exit_gafam/
 
 ### Configuration
 
-#### .cloudexit.example.yaml
+#### .agnostech.example.yaml
 - Example configuration file
 - Shows all available options
-- Can be copied to ~/.cloudexit.yaml
+- Can be copied to ~/.agnostech.yaml
 
 #### .gitignore
 - Ignores binaries, build output
@@ -156,10 +156,10 @@ The CLI uses the following main dependencies:
 go mod download
 
 # Build with version info
-go build -ldflags "-X github.com/cloudexit/cloudexit/pkg/version.Version=1.0.0 \
-  -X github.com/cloudexit/cloudexit/pkg/version.Commit=$(git rev-parse --short HEAD) \
-  -X github.com/cloudexit/cloudexit/pkg/version.Date=$(date -u '+%Y-%m-%d_%H:%M:%S')" \
-  -o bin/cloudexit ./cmd/cloudexit
+go build -ldflags "-X github.com/agnostech/agnostech/pkg/version.Version=1.0.0 \
+  -X github.com/agnostech/agnostech/pkg/version.Commit=$(git rev-parse --short HEAD) \
+  -X github.com/agnostech/agnostech/pkg/version.Date=$(date -u '+%Y-%m-%d_%H:%M:%S')" \
+  -o bin/agnostech ./cmd/agnostech
 ```
 
 ## Command Flow

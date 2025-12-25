@@ -1,7 +1,7 @@
 package azure
 
 import (
-	"github.com/cloudexit/cloudexit/internal/domain/parser"
+	"github.com/agnostech/agnostech/internal/domain/parser"
 )
 
 // RegisterAll registers all Azure parsers with the provided registry.

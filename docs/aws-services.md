@@ -1,10 +1,10 @@
 # AWS Service Mapping Reference
 
-This document provides a comprehensive reference for all AWS services supported by CloudExit and their self-hosted equivalents.
+This document provides a comprehensive reference for all AWS services supported by AgnosTech and their self-hosted equivalents.
 
 ## Overview
 
-CloudExit analyzes your AWS infrastructure (via Terraform state or HCL files) and generates Docker Compose configurations using open-source, self-hosted alternatives. Each mapper handles the translation of AWS-specific configurations to their Docker equivalents.
+AgnosTech analyzes your AWS infrastructure (via Terraform state or HCL files) and generates Docker Compose configurations using open-source, self-hosted alternatives. Each mapper handles the translation of AWS-specific configurations to their Docker equivalents.
 
 ## Service Mapping Summary
 
@@ -44,7 +44,7 @@ CloudExit analyzes your AWS infrastructure (via Terraform state or HCL files) an
 
 **Self-Hosted Alternative:** Docker Containers
 
-CloudExit converts EC2 instances to Docker containers, preserving:
+AgnosTech converts EC2 instances to Docker containers, preserving:
 - Instance configuration (environment variables)
 - Security group rules (as Docker network policies)
 - User data scripts (as container initialization)
@@ -74,10 +74,10 @@ services:
     image: ubuntu:22.04
     restart: unless-stopped
     labels:
-      cloudexit.source: aws_instance
-      cloudexit.instance: web-server
+      agnostech.source: aws_instance
+      agnostech.instance: web-server
     networks:
-      - cloudexit
+      - agnostech
 ```
 
 ### Lambda
@@ -111,7 +111,7 @@ services:
         limits:
           memory: 256M
     labels:
-      cloudexit.source: aws_lambda_function
+      agnostech.source: aws_lambda_function
 ```
 
 ### ECS/EKS
@@ -128,7 +128,7 @@ ECS task definitions are converted to Docker Compose services. EKS clusters gene
 
 **Self-Hosted Alternative:** MinIO
 
-MinIO is an S3-compatible object storage server. CloudExit preserves:
+MinIO is an S3-compatible object storage server. AgnosTech preserves:
 - Bucket configurations
 - CORS rules
 - Lifecycle policies
@@ -168,8 +168,8 @@ services:
       timeout: 5s
       retries: 3
     labels:
-      cloudexit.source: aws_s3_bucket
-      cloudexit.bucket: my-assets-bucket
+      agnostech.source: aws_s3_bucket
+      agnostech.bucket: my-assets-bucket
 ```
 
 **Migration Script Generated:**
@@ -234,8 +234,8 @@ services:
       timeout: 5s
       retries: 5
     labels:
-      cloudexit.source: aws_db_instance
-      cloudexit.engine: postgres
+      agnostech.source: aws_db_instance
+      agnostech.engine: postgres
 ```
 
 ### DynamoDB

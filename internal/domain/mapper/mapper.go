@@ -5,7 +5,7 @@ package mapper
 import (
 	"context"
 
-	"github.com/cloudexit/cloudexit/internal/domain/resource"
+	"github.com/agnostech/agnostech/internal/domain/resource"
 )
 
 // Mapper converts an AWS resource to a self-hosted alternative.

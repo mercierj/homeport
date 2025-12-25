@@ -4,7 +4,7 @@ package templates
 import (
 	"embed"
 
-	infratemplates "github.com/cloudexit/cloudexit/internal/infrastructure/templates"
+	infratemplates "github.com/agnostech/agnostech/internal/infrastructure/templates"
 )
 
 // FS embeds all template files from this directory.

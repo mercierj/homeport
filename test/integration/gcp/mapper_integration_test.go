@@ -4,12 +4,12 @@ import (
 	"context"
 	"testing"
 
-	"github.com/cloudexit/cloudexit/internal/domain/mapper"
-	"github.com/cloudexit/cloudexit/internal/domain/resource"
-	"github.com/cloudexit/cloudexit/internal/infrastructure/mapper/gcp/compute"
-	"github.com/cloudexit/cloudexit/internal/infrastructure/mapper/gcp/database"
-	"github.com/cloudexit/cloudexit/internal/infrastructure/mapper/gcp/messaging"
-	"github.com/cloudexit/cloudexit/internal/infrastructure/mapper/gcp/storage"
+	"github.com/agnostech/agnostech/internal/domain/mapper"
+	"github.com/agnostech/agnostech/internal/domain/resource"
+	"github.com/agnostech/agnostech/internal/infrastructure/mapper/gcp/compute"
+	"github.com/agnostech/agnostech/internal/infrastructure/mapper/gcp/database"
+	"github.com/agnostech/agnostech/internal/infrastructure/mapper/gcp/messaging"
+	"github.com/agnostech/agnostech/internal/infrastructure/mapper/gcp/storage"
 )
 
 // TestGCSToMinIO_BasicMapping tests GCS bucket to MinIO mapping.

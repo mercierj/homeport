@@ -21,7 +21,7 @@ Generates `docker-compose.yml` files with:
 **Usage:**
 
 ```go
-import "github.com/cloudexit/cloudexit/internal/infrastructure/generator/compose"
+import "github.com/agnostech/agnostech/internal/infrastructure/generator/compose"
 
 gen := compose.NewGenerator("myproject")
 output, err := gen.Generate(mappingResults)
@@ -45,7 +45,7 @@ Generates Traefik reverse proxy configurations:
 **Usage:**
 
 ```go
-import "github.com/cloudexit/cloudexit/internal/infrastructure/generator/traefik"
+import "github.com/agnostech/agnostech/internal/infrastructure/generator/traefik"
 
 config := &traefik.Config{
     Email:           "admin@example.com",
@@ -77,7 +77,7 @@ Generates shell scripts for migrating data from AWS:
 **Usage:**
 
 ```go
-import "github.com/cloudexit/cloudexit/internal/infrastructure/generator/scripts"
+import "github.com/agnostech/agnostech/internal/infrastructure/generator/scripts"
 
 gen := scripts.NewMigrationGenerator("myproject", "us-east-1")
 output, err := gen.Generate(mappingResults)
@@ -122,7 +122,7 @@ Generates comprehensive documentation:
 **Usage:**
 
 ```go
-import "github.com/cloudexit/cloudexit/internal/infrastructure/generator/docs"
+import "github.com/agnostech/agnostech/internal/infrastructure/generator/docs"
 
 gen := docs.NewGenerator("myproject", "example.com")
 output, err := gen.Generate(mappingResults)
@@ -159,11 +159,11 @@ import (
     "os"
     "path/filepath"
 
-    "github.com/cloudexit/cloudexit/internal/domain/mapper"
-    "github.com/cloudexit/cloudexit/internal/infrastructure/generator/compose"
-    "github.com/cloudexit/cloudexit/internal/infrastructure/generator/traefik"
-    "github.com/cloudexit/cloudexit/internal/infrastructure/generator/scripts"
-    "github.com/cloudexit/cloudexit/internal/infrastructure/generator/docs"
+    "github.com/agnostech/agnostech/internal/domain/mapper"
+    "github.com/agnostech/agnostech/internal/infrastructure/generator/compose"
+    "github.com/agnostech/agnostech/internal/infrastructure/generator/traefik"
+    "github.com/agnostech/agnostech/internal/infrastructure/generator/scripts"
+    "github.com/agnostech/agnostech/internal/infrastructure/generator/docs"
 )
 
 func main() {

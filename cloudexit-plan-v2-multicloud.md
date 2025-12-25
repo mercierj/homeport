@@ -1,4 +1,4 @@
-# CloudExit — Plan Multi-Cloud & High Availability
+# AgnosTech — Plan Multi-Cloud & High Availability
 
 **Extension du plan initial : GCP, Azure, Multi-AZ, Providers EU**
 
@@ -12,7 +12,7 @@ Version 2.0 | Décembre 2025
 
 ```
 ┌─────────────────────────────────────────────────────────────────┐
-│                      CloudExit v2 Vision                         │
+│                      AgnosTech v2 Vision                         │
 ├─────────────────────────────────────────────────────────────────┤
 │                                                                 │
 │  SOURCES (Input)                                                │
@@ -50,24 +50,24 @@ Version 2.0 | Décembre 2025
 
 ```bash
 # Analyze depuis n'importe quelle source
-cloudexit analyze ./terraform                    # Auto-detect
-cloudexit analyze ./terraform --source=aws
-cloudexit analyze ./terraform --source=gcp
-cloudexit analyze ./terraform --source=azure
-cloudexit analyze --api --source=aws             # Via API directe
+agnostech analyze ./terraform                    # Auto-detect
+agnostech analyze ./terraform --source=aws
+agnostech analyze ./terraform --source=gcp
+agnostech analyze ./terraform --source=azure
+agnostech analyze --api --source=aws             # Via API directe
 
 # Migrate vers différentes cibles
-cloudexit migrate ./terraform --target=self-hosted
-cloudexit migrate ./terraform --target=scaleway
-cloudexit migrate ./terraform --target=ovh
-cloudexit migrate ./terraform --target=hetzner
+agnostech migrate ./terraform --target=self-hosted
+agnostech migrate ./terraform --target=scaleway
+agnostech migrate ./terraform --target=ovh
+agnostech migrate ./terraform --target=hetzner
 
 # Options HA
-cloudexit migrate ./terraform --target=self-hosted --ha=multi-server
-cloudexit migrate ./terraform --target=scaleway --ha=multi-az
+agnostech migrate ./terraform --target=self-hosted --ha=multi-server
+agnostech migrate ./terraform --target=scaleway --ha=multi-az
 
 # Mode interactif (wizard)
-cloudexit migrate ./terraform --interactive
+agnostech migrate ./terraform --interactive
 ```
 
 ---
@@ -358,7 +358,7 @@ En self-hosted, il faut le construire soi-même.
 
 ```
 ┌─────────────────────────────────────────────────────────────────┐
-│                    HA Levels in CloudExit                        │
+│                    HA Levels in AgnosTech                        │
 ├─────────────────────────────────────────────────────────────────┤
 │                                                                 │
 │  LEVEL 0: Single Server (--ha=none)                             │
@@ -608,7 +608,7 @@ configs:
 ```yaml
 # ansible/playbook-ha.yml
 
-- name: Setup CloudExit HA Cluster
+- name: Setup AgnosTech HA Cluster
   hosts: all
   become: yes
   
@@ -668,9 +668,9 @@ configs:
 
     - name: Deploy stack
       docker_stack:
-        name: cloudexit
+        name: agnostech
         compose:
-          - /opt/cloudexit/docker-compose.ha.yml
+          - /opt/agnostech/docker-compose.ha.yml
         state: present
       delegate_to: "{{ swarm_manager }}"
       when: inventory_hostname == swarm_manager
@@ -690,7 +690,7 @@ node5 ansible_host=10.0.1.5
 
 [all:vars]
 ansible_user=ubuntu
-ansible_ssh_private_key_file=~/.ssh/cloudexit
+ansible_ssh_private_key_file=~/.ssh/agnostech
 ```
 
 ---
@@ -1517,8 +1517,8 @@ package generator
 
 import (
     "context"
-    "github.com/cloudexit/cloudexit/internal/domain/resource"
-    "github.com/cloudexit/cloudexit/internal/domain/target"
+    "github.com/agnostech/agnostech/internal/domain/resource"
+    "github.com/agnostech/agnostech/internal/domain/target"
 )
 
 // Generator generates deployment artifacts for a target

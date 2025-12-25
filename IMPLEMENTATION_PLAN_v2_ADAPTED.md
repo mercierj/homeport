@@ -1,4 +1,4 @@
-# CloudExit v2 - Plan d'Implementation Adapte
+# AgnosTech v2 - Plan d'Implementation Adapte
 
 **Status: Domain Layer Complete - Infrastructure Layer Needs Update**
 
@@ -753,16 +753,16 @@ func migrateCmd() *cobra.Command {
         Short: "Migrate cloud infrastructure to target platform",
         Example: `
   # Auto-detect source, migrate to self-hosted
-  cloudexit migrate ./terraform
+  agnostech migrate ./terraform
 
   # Explicit source and target
-  cloudexit migrate ./terraform --source=aws --target=scaleway
+  agnostech migrate ./terraform --source=aws --target=scaleway
 
   # With HA configuration
-  cloudexit migrate ./terraform --target=self-hosted --ha=cluster --deployment=swarm
+  agnostech migrate ./terraform --target=self-hosted --ha=cluster --deployment=swarm
 
   # Interactive wizard
-  cloudexit migrate ./terraform --interactive
+  agnostech migrate ./terraform --interactive
 `,
         RunE: func(cmd *cobra.Command, args []string) error {
             // ...

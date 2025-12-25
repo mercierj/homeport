@@ -1,6 +1,6 @@
 # Terraform Parser
 
-This package provides functionality to parse Terraform state files and HCL configuration files, converting them into the CloudExit infrastructure model.
+This package provides functionality to parse Terraform state files and HCL configuration files, converting them into the AgnosTech infrastructure model.
 
 ## Features
 
@@ -10,7 +10,7 @@ This package provides functionality to parse Terraform state files and HCL confi
 - Extract resource configurations and attributes
 - Build dependency graphs between resources
 - Extract variables, locals, and outputs
-- Map Terraform resource types to CloudExit resource types
+- Map Terraform resource types to AgnosTech resource types
 
 ## Supported AWS Resources
 
@@ -53,7 +53,7 @@ The parser supports mapping for the following AWS resource types:
 ### Parse State File Only
 
 ```go
-import "github.com/cloudexit/cloudexit/internal/infrastructure/parser"
+import "github.com/agnostech/agnostech/internal/infrastructure/parser"
 
 // Parse a Terraform state file
 infra, err := parser.ParseState("/path/to/terraform.tfstate")

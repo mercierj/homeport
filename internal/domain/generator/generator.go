@@ -9,8 +9,8 @@ import (
 	"sync"
 	"time"
 
-	"github.com/cloudexit/cloudexit/internal/domain/mapper"
-	"github.com/cloudexit/cloudexit/internal/domain/target"
+	"github.com/agnostech/agnostech/internal/domain/mapper"
+	"github.com/agnostech/agnostech/internal/domain/target"
 )
 
 // Generator defines the interface for generating output artifacts from mapping results.

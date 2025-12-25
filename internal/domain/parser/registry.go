@@ -7,7 +7,7 @@ import (
 	"sort"
 	"sync"
 
-	"github.com/cloudexit/cloudexit/internal/domain/resource"
+	"github.com/agnostech/agnostech/internal/domain/resource"
 )
 
 // Registry manages parser implementations.

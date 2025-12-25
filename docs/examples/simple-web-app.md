@@ -26,7 +26,7 @@ This example demonstrates migrating a simple web application from AWS to a self-
 │                                                      │
 └─────────────────────────────────────────────────────┘
 
-                        ▼ CloudExit ▼
+                        ▼ AgnosTech ▼
 
                   Self-Hosted Architecture
 ┌─────────────────────────────────────────────────────┐
@@ -155,17 +155,17 @@ resource "aws_lb" "main" {
 }
 ```
 
-## CloudExit Migration
+## AgnosTech Migration
 
 ### Step 1: Analyze Infrastructure
 
 ```bash
-cloudexit analyze ./terraform --format table
+agnostech analyze ./terraform --format table
 ```
 
 **Output:**
 ```
-CloudExit - Infrastructure Analysis
+AgnosTech - Infrastructure Analysis
 ===================================
 
 Provider: AWS
@@ -188,7 +188,7 @@ Fully Supported: 6/6 (100%)
 ### Step 2: Generate Docker Stack
 
 ```bash
-cloudexit migrate ./terraform \
+agnostech migrate ./terraform \
   --output ./webapp-stack \
   --domain webapp.example.com \
   --include-monitoring
@@ -238,7 +238,7 @@ services:
       - ./traefik:/etc/traefik
       - traefik-certs:/letsencrypt
     networks:
-      - cloudexit
+      - agnostech
     labels:
       - "traefik.enable=true"
       - "traefik.http.routers.dashboard.rule=Host(`traefik.webapp.example.com`)"
@@ -259,9 +259,9 @@ services:
       - redis
       - minio
     networks:
-      - cloudexit
+      - agnostech
     labels:
-      - "cloudexit.source=aws_instance"
+      - "agnostech.source=aws_instance"
       - "traefik.enable=true"
       - "traefik.http.routers.webapp.rule=Host(`webapp.example.com`)"
       - "traefik.http.routers.webapp.entrypoints=websecure"
@@ -283,9 +283,9 @@ services:
       timeout: 5s
       retries: 5
     networks:
-      - cloudexit
+      - agnostech
     labels:
-      - "cloudexit.source=aws_db_instance"
+      - "agnostech.source=aws_db_instance"
 
   minio:
     image: minio/minio:latest
@@ -304,9 +304,9 @@ services:
       timeout: 5s
       retries: 3
     networks:
-      - cloudexit
+      - agnostech
     labels:
-      - "cloudexit.source=aws_s3_bucket"
+      - "agnostech.source=aws_s3_bucket"
       - "traefik.enable=true"
       - "traefik.http.routers.minio.rule=Host(`s3.webapp.example.com`)"
       - "traefik.http.services.minio.loadbalancer.server.port=9000"
@@ -323,12 +323,12 @@ services:
       timeout: 5s
       retries: 5
     networks:
-      - cloudexit
+      - agnostech
     labels:
-      - "cloudexit.source=aws_elasticache_cluster"
+      - "agnostech.source=aws_elasticache_cluster"
 
 networks:
-  cloudexit:
+  agnostech:
     driver: bridge
 
 volumes:

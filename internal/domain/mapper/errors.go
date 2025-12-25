@@ -3,7 +3,7 @@ package mapper
 import (
 	"fmt"
 
-	"github.com/cloudexit/cloudexit/internal/domain/resource"
+	"github.com/agnostech/agnostech/internal/domain/resource"
 )
 
 // Domain errors for the mapper package.

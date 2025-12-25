@@ -1,15 +1,15 @@
-# CloudExit CLI - Implementation Summary
+# AgnosTech CLI - Implementation Summary
 
 ## Overview
 
-The CloudExit CLI layer has been successfully created using Cobra and Charm libraries. This document summarizes what was implemented and how to use it.
+The AgnosTech CLI layer has been successfully created using Cobra and Charm libraries. This document summarizes what was implemented and how to use it.
 
 ## What Was Created
 
 ### 1. Core CLI Commands (10 files)
 
 #### Entry Point
-- `/Users/jo/Prog/exit_gafam/cmd/cloudexit/main.go` - Main entry point
+- `/Users/jo/Prog/exit_gafam/cmd/agnostech/main.go` - Main entry point
 
 #### CLI Commands
 - `/Users/jo/Prog/exit_gafam/internal/cli/root.go` - Root command with global flags
@@ -33,7 +33,7 @@ The CloudExit CLI layer has been successfully created using Cobra and Charm libr
 - `/Users/jo/Prog/exit_gafam/setup-cli.sh` - Setup script
 - `/Users/jo/Prog/exit_gafam/test-cli.sh` - Test script
 - `/Users/jo/Prog/exit_gafam/.gitignore` - Git ignore rules
-- `/Users/jo/Prog/exit_gafam/.cloudexit.example.yaml` - Example config
+- `/Users/jo/Prog/exit_gafam/.agnostech.example.yaml` - Example config
 
 ### 3. Documentation (4 files)
 
@@ -64,17 +64,17 @@ gopkg.in/yaml.v3 v3.0.1
 ## Features Implemented
 
 ### Root Command
-- App name: `cloudexit`
+- App name: `agnostech`
 - Description: "Migrate AWS infrastructure to self-hosted Docker stack"
 - Global flags:
   - `--config` - Configuration file path
   - `--verbose` / `-v` - Verbose output
   - `--quiet` / `-q` - Quiet mode (errors only)
 - Persistent pre-run for config loading
-- Configuration from file (~/.cloudexit.yaml) or environment
+- Configuration from file (~/.agnostech.yaml) or environment
 
 ### Analyze Command
-- Usage: `cloudexit analyze <path>`
+- Usage: `agnostech analyze <path>`
 - Flags:
   - `--output` / `-o` - Output file (default: analysis.json)
   - `--format` / `-f` - Output format: json, yaml, table (default: json)
@@ -90,7 +90,7 @@ gopkg.in/yaml.v3 v3.0.1
   - Table - Terminal display with styled tables
 
 ### Migrate Command
-- Usage: `cloudexit migrate <path>`
+- Usage: `agnostech migrate <path>`
 - Flags:
   - `--output` / `-o` - Output directory (default: ./output)
   - `--domain` / `-d` - Domain name for services
@@ -109,7 +109,7 @@ gopkg.in/yaml.v3 v3.0.1
   - README.md
 
 ### Validate Command
-- Usage: `cloudexit validate <path>`
+- Usage: `agnostech validate <path>`
 - Features:
   - Validates Docker Compose syntax
   - Checks required files exist
@@ -125,7 +125,7 @@ gopkg.in/yaml.v3 v3.0.1
   - Detailed messages and suggestions
 
 ### Version Command
-- Usage: `cloudexit version`
+- Usage: `agnostech version`
 - Displays:
   - Version (set via ldflags)
   - Commit hash (set via ldflags)
@@ -216,7 +216,7 @@ chmod +x setup-cli.sh
 # Option 3: Manual
 go mod download
 go mod tidy
-go build -o bin/cloudexit ./cmd/cloudexit
+go build -o bin/agnostech ./cmd/agnostech
 ```
 
 ### Running Tests
@@ -236,19 +236,19 @@ chmod +x test-cli.sh
 make build
 
 # Test help
-./bin/cloudexit --help
+./bin/agnostech --help
 
 # Test version
-./bin/cloudexit version
+./bin/agnostech version
 
 # Test analyze
-./bin/cloudexit analyze ./test/fixtures/sample.tfstate --format table
+./bin/agnostech analyze ./test/fixtures/sample.tfstate --format table
 
 # Test migrate
-./bin/cloudexit migrate ./test/fixtures/sample.tfstate --output /tmp/test-stack
+./bin/agnostech migrate ./test/fixtures/sample.tfstate --output /tmp/test-stack
 
 # Test validate
-./bin/cloudexit validate /tmp/test-stack
+./bin/agnostech validate /tmp/test-stack
 ```
 
 ## Configuration
@@ -256,8 +256,8 @@ make build
 ### Config File Locations
 
 1. Flag: `--config /path/to/config.yaml`
-2. Current directory: `./.cloudexit.yaml`
-3. Home directory: `~/.cloudexit.yaml`
+2. Current directory: `./.agnostech.yaml`
+3. Home directory: `~/.agnostech.yaml`
 
 ### Example Configuration
 
@@ -271,7 +271,7 @@ verbose: false
 
 Copy example:
 ```bash
-cp .cloudexit.example.yaml ~/.cloudexit.yaml
+cp .agnostech.example.yaml ~/.agnostech.yaml
 ```
 
 ## Next Steps
@@ -293,21 +293,21 @@ make build
 ### 3. Test It
 
 ```bash
-./bin/cloudexit --help
-./bin/cloudexit version
+./bin/agnostech --help
+./bin/agnostech version
 ```
 
 ### 4. Try the Examples
 
 ```bash
 # Analyze sample state
-./bin/cloudexit analyze ./test/fixtures/sample.tfstate --format table
+./bin/agnostech analyze ./test/fixtures/sample.tfstate --format table
 
 # Generate a stack
-./bin/cloudexit migrate ./test/fixtures/sample.tfstate --output /tmp/my-stack --domain test.local
+./bin/agnostech migrate ./test/fixtures/sample.tfstate --output /tmp/my-stack --domain test.local
 
 # Validate it
-./bin/cloudexit validate /tmp/my-stack --verbose
+./bin/agnostech validate /tmp/my-stack --verbose
 ```
 
 ### 5. Integration with Core Logic
@@ -377,7 +377,7 @@ Infrastructure Layer (parsers, generators)
 - **Full Docs**: See `CLI_README.md`
 - **Structure**: See `CLI_STRUCTURE.md`
 - **Examples**: Run `make example-*` commands
-- **Help**: Run `./bin/cloudexit --help`
+- **Help**: Run `./bin/agnostech --help`
 
 ## Success Criteria
 
@@ -392,7 +392,7 @@ The CLI implementation is complete when:
 7. ✓ Documentation complete
 8. ✓ Sample data for testing
 9. ⏳ CLI compiles without errors (run `make build`)
-10. ⏳ `go run cmd/cloudexit/main.go --help` works
+10. ⏳ `go run cmd/agnostech/main.go --help` works
 
 ## Final Steps to Complete
 
@@ -414,14 +414,14 @@ make build
 ./test-cli.sh
 
 # Try it out
-./bin/cloudexit --help
-./bin/cloudexit version
-./bin/cloudexit analyze ./test/fixtures/sample.tfstate --format table
+./bin/agnostech --help
+./bin/agnostech version
+./bin/agnostech analyze ./test/fixtures/sample.tfstate --format table
 ```
 
 ## Conclusion
 
-The CloudExit CLI layer has been fully implemented with:
+The AgnosTech CLI layer has been fully implemented with:
 - 10 core CLI files
 - 7 build/config files
 - 4 documentation files

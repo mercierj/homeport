@@ -108,11 +108,11 @@ jobs:
 
       - name: Build binaries
         run: |
-          GOOS=linux GOARCH=amd64 go build -o dist/cloudexit-linux-amd64 ./cmd/cloudexit
-          GOOS=linux GOARCH=arm64 go build -o dist/cloudexit-linux-arm64 ./cmd/cloudexit
-          GOOS=darwin GOARCH=amd64 go build -o dist/cloudexit-darwin-amd64 ./cmd/cloudexit
-          GOOS=darwin GOARCH=arm64 go build -o dist/cloudexit-darwin-arm64 ./cmd/cloudexit
-          GOOS=windows GOARCH=amd64 go build -o dist/cloudexit-windows-amd64.exe ./cmd/cloudexit
+          GOOS=linux GOARCH=amd64 go build -o dist/agnostech-linux-amd64 ./cmd/agnostech
+          GOOS=linux GOARCH=arm64 go build -o dist/agnostech-linux-arm64 ./cmd/agnostech
+          GOOS=darwin GOARCH=amd64 go build -o dist/agnostech-darwin-amd64 ./cmd/agnostech
+          GOOS=darwin GOARCH=arm64 go build -o dist/agnostech-darwin-arm64 ./cmd/agnostech
+          GOOS=windows GOARCH=amd64 go build -o dist/agnostech-windows-amd64.exe ./cmd/agnostech
 
       - name: Upload artifacts
         uses: actions/upload-artifact@v4

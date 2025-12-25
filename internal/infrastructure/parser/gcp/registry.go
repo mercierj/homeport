@@ -1,7 +1,7 @@
 package gcp
 
 import (
-	"github.com/cloudexit/cloudexit/internal/domain/parser"
+	"github.com/agnostech/agnostech/internal/domain/parser"
 )
 
 // RegisterAll registers all GCP parsers with the provided registry.

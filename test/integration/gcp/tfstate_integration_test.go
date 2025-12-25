@@ -7,9 +7,9 @@ import (
 	"path/filepath"
 	"testing"
 
-	"github.com/cloudexit/cloudexit/internal/domain/parser"
-	"github.com/cloudexit/cloudexit/internal/domain/resource"
-	gcpparser "github.com/cloudexit/cloudexit/internal/infrastructure/parser/gcp"
+	"github.com/agnostech/agnostech/internal/domain/parser"
+	"github.com/agnostech/agnostech/internal/domain/resource"
+	gcpparser "github.com/agnostech/agnostech/internal/infrastructure/parser/gcp"
 )
 
 // TestTFStateParser_ParsesValidState tests parsing of GCP Terraform state files.

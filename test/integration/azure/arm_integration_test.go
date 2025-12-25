@@ -6,9 +6,9 @@ import (
 	"path/filepath"
 	"testing"
 
-	"github.com/cloudexit/cloudexit/internal/domain/parser"
-	"github.com/cloudexit/cloudexit/internal/domain/resource"
-	azureparser "github.com/cloudexit/cloudexit/internal/infrastructure/parser/azure"
+	"github.com/agnostech/agnostech/internal/domain/parser"
+	"github.com/agnostech/agnostech/internal/domain/resource"
+	azureparser "github.com/agnostech/agnostech/internal/infrastructure/parser/azure"
 )
 
 // TestARMParserIntegration_BasicTemplate tests parsing a basic ARM template with storage account.

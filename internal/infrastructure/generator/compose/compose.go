@@ -8,8 +8,8 @@ import (
 	"strings"
 	"time"
 
-	"github.com/cloudexit/cloudexit/internal/domain/generator"
-	"github.com/cloudexit/cloudexit/internal/domain/mapper"
+	"github.com/agnostech/agnostech/internal/domain/generator"
+	"github.com/agnostech/agnostech/internal/domain/mapper"
 )
 
 // Generator generates Docker Compose files.
