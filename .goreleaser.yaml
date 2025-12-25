@@ -1,0 +1,148 @@
+# yaml-language-server: $schema=https://goreleaser.com/static/schema.json
+version: 2
+
+project_name: cloudexit
+
+before:
+  hooks:
+    - go mod tidy
+    - go generate ./...
+
+builds:
+  - id: cloudexit
+    main: ./cmd/cloudexit
+    binary: cloudexit
+    env:
+      - CGO_ENABLED=0
+    goos:
+      - linux
+      - darwin
+      - windows
+    goarch:
+      - amd64
+      - arm64
+    ldflags:
+      - -s -w
+      - -X github.com/cloudexit/cloudexit/pkg/version.Version={{.Version}}
+      - -X github.com/cloudexit/cloudexit/pkg/version.Commit={{.Commit}}
+      - -X github.com/cloudexit/cloudexit/pkg/version.Date={{.Date}}
+
+archives:
+  - id: default
+    format: tar.gz
+    format_overrides:
+      - goos: windows
+        format: zip
+    name_template: "{{ .ProjectName }}_{{ .Version }}_{{ .Os }}_{{ .Arch }}"
+    files:
+      - LICENSE
+      - README.md
+
+checksum:
+  name_template: 'checksums.txt'
+
+signs:
+  - artifacts: checksum
+    args:
+      - "--batch"
+      - "--local-user"
+      - "{{ .Env.GPG_FINGERPRINT }}"
+      - "--output"
+      - "${signature}"
+      - "--detach-sign"
+      - "${artifact}"
+
+brews:
+  - name: cloudexit
+    repository:
+      owner: cloudexit
+      name: homebrew-tap
+    homepage: https://cloudexit.dev
+    description: "Migrate AWS infrastructure to self-hosted Docker stack"
+    license: "AGPL-3.0"
+    install: |
+      bin.install "cloudexit"
+    test: |
+      system "#{bin}/cloudexit", "--version"
+
+scoops:
+  - repository:
+      owner: cloudexit
+      name: scoop-bucket
+    homepage: https://cloudexit.dev
+    description: "Migrate AWS infrastructure to self-hosted Docker stack"
+    license: AGPL-3.0
+
+nfpms:
+  - id: packages
+    package_name: cloudexit
+    vendor: CloudExit
+    homepage: https://cloudexit.dev
+    maintainer: CloudExit <maintainers@cloudexit.dev>
+    description: "Migrate AWS infrastructure to self-hosted Docker stack"
+    license: AGPL-3.0
+    formats:
+      - deb
+      - rpm
+      - apk
+    bindir: /usr/bin
+
+aurs:
+  - name: cloudexit-bin
+    homepage: https://cloudexit.dev
+    description: "Migrate AWS infrastructure to self-hosted Docker stack"
+    maintainers:
+      - "CloudExit <maintainers@cloudexit.dev>"
+    license: AGPL-3.0
+    private_key: "{{ .Env.AUR_SSH_KEY }}"
+    git_url: "ssh://aur@aur.archlinux.org/cloudexit-bin.git"
+
+dockers:
+  - image_templates:
+      - "cloudexit/cloudexit:{{ .Tag }}"
+      - "cloudexit/cloudexit:latest"
+      - "ghcr.io/cloudexit/cloudexit:{{ .Tag }}"
+      - "ghcr.io/cloudexit/cloudexit:latest"
+    dockerfile: Dockerfile
+    build_flag_templates:
+      - "--pull"
+      - "--label=org.opencontainers.image.created={{.Date}}"
+      - "--label=org.opencontainers.image.revision={{.FullCommit}}"
+      - "--label=org.opencontainers.image.version={{.Version}}"
+
+changelog:
+  sort: asc
+  use: github
+  filters:
+    exclude:
+      - "^docs:"
+      - "^test:"
+      - "^ci:"
+  groups:
+    - title: "Features"
+      regexp: "^feat"
+    - title: "Bug Fixes"
+      regexp: "^fix"
+    - title: "Dependencies"
+      regexp: "^deps"
+
+release:
+  github:
+    owner: cloudexit
+    name: cloudexit
+  prerelease: auto
+  footer: |
+    ## Installation
+
+    **Homebrew (macOS/Linux):**
+    ```bash
+    brew install cloudexit/tap/cloudexit
+    ```
+
+    **Docker:**
+    ```bash
+    docker pull cloudexit/cloudexit:{{ .Tag }}
+    ```
+
+    **Binary:**
+    Download from assets below and add to PATH.

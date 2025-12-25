@@ -1,0 +1,76 @@
+# CloudExit Configuration Example
+# Copy this file to ~/.cloudexit.yaml or .cloudexit.yaml in your project
+
+# Default output directory for generated stacks
+output: ./output
+
+# Default domain name for services
+domain: example.com
+
+# Output format for analysis (json, yaml, table)
+format: json
+
+# Include migration tools and scripts by default
+include-migration: false
+
+# Include monitoring stack (Prometheus, Grafana) by default
+include-monitoring: false
+
+# Verbose output
+verbose: false
+
+# Quiet mode (errors only)
+quiet: false
+
+# Custom configuration options
+config:
+  # Traefik version
+  traefik_version: "v2.10"
+
+  # Docker Compose version
+  compose_version: "3.8"
+
+  # Default timezone
+  timezone: "UTC"
+
+  # Enable SSL by default
+  ssl_enabled: true
+
+  # SSL provider (letsencrypt, custom)
+  ssl_provider: "letsencrypt"
+
+  # ACME email for Let's Encrypt
+  acme_email: "admin@example.com"
+
+# Resource mappings (customize how AWS resources are migrated)
+mappings:
+  # EC2 instance to Docker service
+  ec2:
+    image_prefix: "app"
+    restart_policy: "unless-stopped"
+
+  # RDS to Docker database
+  rds:
+    postgres:
+      image: "postgres:14-alpine"
+    mysql:
+      image: "mysql:8.0"
+
+  # S3 to MinIO
+  s3:
+    image: "minio/minio:latest"
+    enable_console: true
+
+# Network configuration
+network:
+  name: "web"
+  driver: "bridge"
+  ipam:
+    subnet: "172.20.0.0/16"
+
+# Logging configuration
+logging:
+  driver: "json-file"
+  options:
+    max-size: "10m"
+    max-file: "3"

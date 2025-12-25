@@ -1,0 +1,74 @@
+.PHONY: help build install clean test run deps version
+
+# Build variables
+BINARY_NAME=cloudexit
+VERSION?=dev
+COMMIT?=$(shell git rev-parse --short HEAD 2>/dev/null || echo "none")
+BUILD_DATE?=$(shell date -u '+%Y-%m-%d_%H:%M:%S')
+LDFLAGS=-ldflags "-X github.com/cloudexit/cloudexit/pkg/version.Version=$(VERSION) -X github.com/cloudexit/cloudexit/pkg/version.Commit=$(COMMIT) -X github.com/cloudexit/cloudexit/pkg/version.Date=$(BUILD_DATE)"
+
+help: ## Display this help message
+	@echo "CloudExit CLI - Available Commands:"
+	@echo ""
+	@grep -E '^[a-zA-Z_-]+:.*?## .*$$' $(MAKEFILE_LIST) | sort | awk 'BEGIN {FS = ":.*?## "}; {printf "  \033[36m%-15s\033[0m %s\n", $$1, $$2}'
+	@echo ""
+
+deps: ## Download dependencies
+	@echo "Downloading dependencies..."
+	@go mod download
+	@go mod tidy
+	@echo "Dependencies installed successfully"
+
+build: deps ## Build the CLI binary
+	@echo "Building $(BINARY_NAME)..."
+	@mkdir -p bin
+	@go build $(LDFLAGS) -o bin/$(BINARY_NAME) ./cmd/cloudexit
+	@echo "Build complete: bin/$(BINARY_NAME)"
+
+install: build ## Install the CLI to GOPATH/bin
+	@echo "Installing $(BINARY_NAME)..."
+	@go install $(LDFLAGS) ./cmd/cloudexit
+	@echo "Installed to $(shell go env GOPATH)/bin/$(BINARY_NAME)"
+
+clean: ## Clean build artifacts
+	@echo "Cleaning build artifacts..."
+	@rm -rf bin/
+	@rm -f $(BINARY_NAME)
+	@go clean
+	@echo "Clean complete"
+
+test: ## Run tests
+	@echo "Running tests..."
+	@go test -v ./...
+
+run: build ## Build and run the CLI with --help
+	@./bin/$(BINARY_NAME) --help
+
+version: build ## Display version information
+	@./bin/$(BINARY_NAME) version
+
+# Example commands
+example-analyze: build ## Run example analyze command
+	@echo "Running example analyze command..."
+	@./bin/$(BINARY_NAME) analyze ./test/fixtures/sample.tfstate --format table
+
+example-migrate: build ## Run example migrate command
+	@echo "Running example migrate command..."
+	@./bin/$(BINARY_NAME) migrate ./test/fixtures/sample.tfstate --output ./example-output
+
+example-validate: build ## Run example validate command
+	@echo "Running example validate command..."
+	@./bin/$(BINARY_NAME) validate ./example-output
+
+dev: ## Run in development mode with verbose output
+	@go run ./cmd/cloudexit --verbose --help
+
+# Build for multiple platforms
+build-all: ## Build for all platforms
+	@echo "Building for all platforms..."
+	@mkdir -p bin
+	@GOOS=linux GOARCH=amd64 go build $(LDFLAGS) -o bin/$(BINARY_NAME)-linux-amd64 ./cmd/cloudexit
+	@GOOS=darwin GOARCH=amd64 go build $(LDFLAGS) -o bin/$(BINARY_NAME)-darwin-amd64 ./cmd/cloudexit
+	@GOOS=darwin GOARCH=arm64 go build $(LDFLAGS) -o bin/$(BINARY_NAME)-darwin-arm64 ./cmd/cloudexit
+	@GOOS=windows GOARCH=amd64 go build $(LDFLAGS) -o bin/$(BINARY_NAME)-windows-amd64.exe ./cmd/cloudexit
+	@echo "Build complete for all platforms"

@@ -1,0 +1,60 @@
+{{.Name}}:
+  image: {{.Image}}
+  {{- if .Restart}}
+  restart: {{.Restart}}
+  {{- end}}
+  {{- if .Environment}}
+  environment:
+    {{- range $key, $value := .Environment}}
+    {{$key}}: {{$value}}
+    {{- end}}
+  {{- end}}
+  {{- if .Ports}}
+  ports:
+    {{- range .Ports}}
+    - "{{.}}"
+    {{- end}}
+  {{- end}}
+  {{- if .Volumes}}
+  volumes:
+    {{- range .Volumes}}
+    - {{.}}
+    {{- end}}
+  {{- end}}
+  {{- if .Networks}}
+  networks:
+    {{- range .Networks}}
+    - {{.}}
+    {{- end}}
+  {{- end}}
+  {{- if .DependsOn}}
+  depends_on:
+    {{- range .DependsOn}}
+    - {{.}}
+    {{- end}}
+  {{- end}}
+  {{- if .Command}}
+  command:
+    {{- range .Command}}
+    - {{.}}
+    {{- end}}
+  {{- end}}
+  {{- if .HealthCheck}}
+  healthcheck:
+    test:
+      {{- range .HealthCheck.Test}}
+      - {{.}}
+      {{- end}}
+    interval: {{.HealthCheck.Interval}}
+    timeout: {{.HealthCheck.Timeout}}
+    retries: {{.HealthCheck.Retries}}
+    {{- if .HealthCheck.StartPeriod}}
+    start_period: {{.HealthCheck.StartPeriod}}
+    {{- end}}
+  {{- end}}
+  {{- if .Labels}}
+  labels:
+    {{- range $key, $value := .Labels}}
+    {{$key}}: "{{$value}}"
+    {{- end}}
+  {{- end}}

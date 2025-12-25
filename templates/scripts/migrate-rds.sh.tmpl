@@ -1,0 +1,71 @@
+#!/bin/bash
+# RDS Migration Script
+# Generated: {{.GeneratedAt}}
+# Project: {{.ProjectName}}
+
+set -e
+
+RED='\033[0;31m'
+GREEN='\033[0;32m'
+YELLOW='\033[1;33m'
+NC='\033[0m'
+
+RDS_ENDPOINT="${RDS_ENDPOINT}"
+RDS_DATABASE="${RDS_DATABASE}"
+RDS_USERNAME="${RDS_USERNAME}"
+RDS_PASSWORD="${RDS_PASSWORD}"
+DB_ENGINE="${DB_ENGINE:-{{.Engine}}}"
+
+TARGET_HOST="${TARGET_HOST:-localhost}"
+TARGET_PORT="${TARGET_PORT:-{{.Port}}}"
+TARGET_DATABASE="${TARGET_DATABASE:-$RDS_DATABASE}"
+TARGET_USERNAME="${TARGET_USERNAME:-$RDS_USERNAME}"
+TARGET_PASSWORD="${TARGET_PASSWORD}"
+
+BACKUP_DIR="${BACKUP_DIR:-./backups}"
+TIMESTAMP=$(date +%Y%m%d_%H%M%S)
+
+mkdir -p "$BACKUP_DIR"
+
+echo -e "${GREEN}Starting RDS migration${NC}"
+echo -e "${YELLOW}Engine: $DB_ENGINE${NC}"
+
+migrate_{{.Engine}}() {
+    echo -e "${YELLOW}Dumping database...${NC}"
+    {{if eq .Engine "postgres"}}
+    PGPASSWORD="$RDS_PASSWORD" pg_dump \
+        -h "$RDS_ENDPOINT" \
+        -U "$RDS_USERNAME" \
+        -d "$RDS_DATABASE" \
+        -F c \
+        -f "$BACKUP_DIR/${RDS_DATABASE}_${TIMESTAMP}.dump"
+
+    echo -e "${YELLOW}Restoring database...${NC}"
+    PGPASSWORD="$TARGET_PASSWORD" pg_restore \
+        -h "$TARGET_HOST" \
+        -p "$TARGET_PORT" \
+        -U "$TARGET_USERNAME" \
+        -d "$TARGET_DATABASE" \
+        "$BACKUP_DIR/${RDS_DATABASE}_${TIMESTAMP}.dump"
+    {{else if eq .Engine "mysql"}}
+    mysqldump \
+        -h "$RDS_ENDPOINT" \
+        -u "$RDS_USERNAME" \
+        -p"$RDS_PASSWORD" \
+        "$RDS_DATABASE" \
+        > "$BACKUP_DIR/${RDS_DATABASE}_${TIMESTAMP}.sql"
+
+    echo -e "${YELLOW}Restoring database...${NC}"
+    mysql \
+        -h "$TARGET_HOST" \
+        -P "$TARGET_PORT" \
+        -u "$TARGET_USERNAME" \
+        -p"$TARGET_PASSWORD" \
+        "$TARGET_DATABASE" \
+        < "$BACKUP_DIR/${RDS_DATABASE}_${TIMESTAMP}.sql"
+    {{end}}
+
+    echo -e "${GREEN}Migration complete!${NC}"
+}
+
+migrate_{{.Engine}}
