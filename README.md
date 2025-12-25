@@ -1,38 +1,57 @@
 # CloudExit
 
-**Escape AWS. Own your infrastructure.**
+**Escape the Cloud. Own your infrastructure.**
 
-CloudExit transforms your AWS infrastructure into a self-hosted Docker stack. Zero US dependencies. Full sovereignty. One command.
+CloudExit transforms your AWS, GCP, or Azure infrastructure into a self-hosted Docker stack. Zero US dependencies. Full sovereignty. One command.
 
 [![License: AGPL v3](https://img.shields.io/badge/License-AGPL%20v3-blue.svg)](https://www.gnu.org/licenses/agpl-3.0)
-[![Go Version](https://img.shields.io/badge/Go-1.21+-00ADD8?logo=go)](https://go.dev/)
+[![Go Version](https://img.shields.io/badge/Go-1.23+-00ADD8?logo=go)](https://go.dev/)
+[![Release](https://img.shields.io/github/v/release/cloudexit/cloudexit?include_prereleases)](https://github.com/cloudexit/cloudexit/releases)
 
 ---
 
 ## Features
 
-- **70+ AWS services supported** - Full mapping to self-hosted equivalents
-- **One command** - Complete Docker Compose stack generation
-- **Zero US cloud** - 100% self-hosted, GDPR compliant
-- **Migration scripts** - Automated S3, RDS, DynamoDB data transfer
-- **Monitoring included** - Prometheus, Grafana, Loki stack
+- **Multi-Cloud Support** - AWS, GCP, and Azure infrastructure migration
+- **70+ Services Mapped** - Comprehensive mapping to self-hosted equivalents
+- **One Command** - Complete Docker Compose stack generation
+- **Zero Cloud Dependencies** - 100% self-hosted, GDPR compliant
+- **Migration Scripts** - Automated data transfer (S3, RDS, DynamoDB, etc.)
+- **Monitoring Included** - Prometheus, Grafana, Loki stack ready
 - **Extensible** - Plugin system for custom mappers
 
 ## Quick Start
 
-### Installation
+```bash
+# 1. Install
+brew install cloudexit/tap/cloudexit
 
-**Homebrew (macOS/Linux):**
+# 2. Analyze your infrastructure
+cloudexit analyze ./terraform
+
+# 3. Generate self-hosted stack
+cloudexit migrate ./terraform --output ./my-stack --domain myapp.com
+
+# 4. Deploy
+cd my-stack && docker compose up -d
+```
+
+## Installation
+
+### Homebrew (macOS/Linux)
+
 ```bash
 brew install cloudexit/tap/cloudexit
 ```
 
-**Go Install:**
+### Go Install
+
 ```bash
 go install github.com/cloudexit/cloudexit/cmd/cloudexit@latest
 ```
 
-**From Source:**
+### From Source
+
 ```bash
 git clone https://github.com/cloudexit/cloudexit.git
 cd cloudexit
@@ -40,47 +59,106 @@ make build
 ./bin/cloudexit --help
 ```
 
-### Usage
+### Docker
 
 ```bash
-# Analyze your AWS infrastructure
-cloudexit analyze ./terraform
+docker pull cloudexit/cloudexit:latest
+docker run -v $(pwd):/workspace cloudexit/cloudexit migrate /workspace/terraform -o /workspace/output
+```
 
-# Generate self-hosted stack
+## Usage
+
+### Analyze Infrastructure
+
+```bash
+# Analyze from Terraform state
+cloudexit analyze ./terraform --format table
+
+# JSON output for CI/CD
+cloudexit analyze ./terraform --format json -o analysis.json
+```
+
+### Generate Docker Stack
+
+```bash
+# Basic migration
 cloudexit migrate ./terraform --output ./my-stack --domain myapp.com
 
-# Validate generated configuration
+# With monitoring stack
+cloudexit migrate ./terraform -o ./my-stack -d myapp.com --include-monitoring
+
+# Skip migration scripts
+cloudexit migrate ./terraform -o ./my-stack --include-migration=false
+```
+
+### Validate Configuration
+
+```bash
+# Validate generated stack
 cloudexit validate ./my-stack
 
-# Deploy
-cd my-stack
-cp .env.example .env
-docker compose up -d
+# Strict mode (fail on warnings)
+cloudexit validate ./my-stack --strict
 ```
 
 ## Supported Services
 
-| AWS Service | Self-Hosted Equivalent | Status |
-|-------------|------------------------|--------|
-| EC2 | Docker Containers | ✅ |
-| Lambda | OpenFaaS / Docker | ✅ |
-| S3 | MinIO | ✅ |
-| RDS (PostgreSQL) | PostgreSQL Docker | ✅ |
-| RDS (MySQL) | MySQL Docker | ✅ |
-| DynamoDB | ScyllaDB | ✅ |
-| ElastiCache (Redis) | Redis Docker | ✅ |
-| ElastiCache (Memcached) | Memcached Docker | ✅ |
-| ALB/NLB | Traefik | ✅ |
-| API Gateway | Traefik + Middleware | ✅ |
-| Cognito | Keycloak | ✅ |
-| SQS | RabbitMQ | ✅ |
-| SNS | RabbitMQ Exchanges | ✅ |
-| CloudWatch | Prometheus + Grafana + Loki | ✅ |
-| Secrets Manager | HashiCorp Vault / .env | ✅ |
-| Route53 | PowerDNS / DNS Export | ✅ |
-| ACM | Let's Encrypt (via Traefik) | ✅ |
+### AWS Services
 
-## Example Output
+| Service | Self-Hosted | Status |
+|---------|-------------|--------|
+| EC2 | Docker Containers | Full |
+| Lambda | OpenFaaS / Docker | Full |
+| ECS/EKS | Docker / K8s | Full |
+| S3 | MinIO | Full |
+| RDS (PostgreSQL/MySQL) | PostgreSQL/MySQL | Full |
+| DynamoDB | ScyllaDB | Full |
+| ElastiCache | Redis/Memcached | Full |
+| ALB/NLB | Traefik | Full |
+| API Gateway | Traefik + Middleware | Full |
+| Cognito | Keycloak | Full |
+| SQS/SNS | RabbitMQ | Full |
+| CloudWatch | Prometheus + Grafana | Full |
+| Secrets Manager | Vault / .env | Full |
+| Route53 | PowerDNS | Full |
+
+[Full AWS Service Reference](docs/aws-services.md)
+
+### GCP Services
+
+| Service | Self-Hosted | Status |
+|---------|-------------|--------|
+| Compute Engine | Docker | Full |
+| Cloud Run | Docker | Full |
+| Cloud Functions | Docker | Full |
+| GKE | Kubernetes | Full |
+| Cloud Storage | MinIO | Full |
+| Cloud SQL | PostgreSQL/MySQL | Full |
+| Firestore | MongoDB | Full |
+| Memorystore | Redis | Full |
+| Pub/Sub | RabbitMQ | Full |
+| Cloud DNS | PowerDNS | Full |
+
+[Full GCP Service Reference](docs/gcp-services.md)
+
+### Azure Services
+
+| Service | Self-Hosted | Status |
+|---------|-------------|--------|
+| Virtual Machines | Docker | Full |
+| Azure Functions | Docker | Full |
+| AKS | Kubernetes | Full |
+| Blob Storage | MinIO | Full |
+| Azure SQL | MSSQL/PostgreSQL | Full |
+| CosmosDB | MongoDB/ScyllaDB | Full |
+| Azure Cache | Redis | Full |
+| Service Bus | RabbitMQ | Full |
+| Azure DNS | PowerDNS | Full |
+| Key Vault | Vault / .env | Full |
+
+[Full Azure Service Reference](docs/azure-services.md)
+
+## Output Structure
 
 Running `cloudexit migrate` generates:
 
@@ -91,14 +169,14 @@ my-stack/
 ├── .env.example              # Environment template
 ├── traefik/
 │   ├── traefik.yml           # Traefik configuration
-│   └── dynamic/              # Dynamic routing
+│   └── dynamic/              # Dynamic routing rules
 ├── configs/
 │   ├── postgres/             # DB init scripts
 │   ├── minio/                # S3 policies
 │   └── keycloak/             # Auth realm
 ├── scripts/
-│   ├── migrate-s3.sh         # S3 → MinIO migration
-│   ├── migrate-rds.sh        # RDS → PostgreSQL migration
+│   ├── migrate-s3.sh         # S3 -> MinIO migration
+│   ├── migrate-rds.sh        # RDS -> PostgreSQL migration
 │   └── backup.sh             # Backup automation
 ├── monitoring/
 │   ├── prometheus.yml
@@ -114,7 +192,7 @@ Create `.cloudexit.yaml` in your project or home directory:
 ```yaml
 output:
   directory: "./output"
-  format: "compose"  # compose, swarm, k8s (future)
+  format: "compose"  # compose, swarm, k8s (planned)
 
 domain: "myapp.com"
 
@@ -122,7 +200,7 @@ resources:
   database:
     rds:
       engine_mapping:
-        postgres: "postgres:15-alpine"
+        postgres: "postgres:16-alpine"
         mysql: "mysql:8.0"
 
   storage:
@@ -134,19 +212,26 @@ ssl:
   enabled: true
   provider: "letsencrypt"
   email: "admin@myapp.com"
+
+monitoring:
+  enabled: true
+  prometheus:
+    retention: "15d"
+  grafana:
+    admin_password: "${GRAFANA_PASSWORD}"
 ```
 
 ## CLI Reference
 
 ```
-cloudexit - AWS to Self-Hosted Migration Tool
+cloudexit - Cloud to Self-Hosted Migration Tool
 
 Usage:
   cloudexit [command]
 
 Available Commands:
-  analyze     Analyze AWS infrastructure from Terraform
-  migrate     Generate self-hosted stack from AWS infrastructure
+  analyze     Analyze cloud infrastructure from Terraform
+  migrate     Generate self-hosted stack from cloud infrastructure
   validate    Validate generated stack configuration
   version     Show version information
   help        Help about any command
@@ -158,52 +243,26 @@ Flags:
   -q, --quiet           Suppress non-essential output
 ```
 
-### Analyze Command
+## Documentation
 
-```bash
-cloudexit analyze ./terraform [flags]
-
-Flags:
-  -o, --output string   Output file for analysis (default: stdout)
-  -f, --format string   Output format: table, json, yaml (default: table)
-```
-
-### Migrate Command
-
-```bash
-cloudexit migrate ./terraform [flags]
-
-Flags:
-  -o, --output string    Output directory (default: ./output)
-  -d, --domain string    Base domain for services (default: localhost)
-      --include-migration    Generate migration scripts (default: true)
-      --include-monitoring   Include monitoring stack (default: true)
-```
-
-### Validate Command
-
-```bash
-cloudexit validate ./output [flags]
-
-Flags:
-      --strict   Enable strict validation mode
-```
+- [Architecture](docs/architecture.md) - Technical architecture overview
+- [AWS Services](docs/aws-services.md) - AWS service mapping reference
+- [GCP Services](docs/gcp-services.md) - GCP service mapping reference
+- [Azure Services](docs/azure-services.md) - Azure service mapping reference
+- [Contributing](docs/contributing.md) - Contribution guide
+- [Examples](docs/examples/) - Example migration projects
 
 ## Development
 
 ### Prerequisites
 
-- Go 1.21+
+- Go 1.23+
 - Docker (for testing)
 - Make
 
 ### Building
 
 ```bash
-# Clone repository
-git clone https://github.com/cloudexit/cloudexit.git
-cd cloudexit
-
 # Install dependencies
 make deps
 
@@ -228,7 +287,9 @@ cloudexit/
 │   ├── domain/             # Core domain models
 │   └── infrastructure/     # Implementations
 │       ├── parser/         # Terraform/HCL parsing
-│       ├── mapper/         # AWS → Docker mapping
+│       ├── mapper/         # Cloud -> Docker mapping
+│       │   ├── gcp/        # GCP mappers
+│       │   └── azure/      # Azure mappers
 │       └── generator/      # Output generation
 ├── pkg/                    # Public packages
 ├── templates/              # Go templates
@@ -237,7 +298,7 @@ cloudexit/
 
 ## Contributing
 
-We welcome contributions! Please see [CONTRIBUTING.md](CONTRIBUTING.md) for guidelines.
+We welcome contributions! See [docs/contributing.md](docs/contributing.md) for guidelines.
 
 Quick start:
 1. Fork the repository
@@ -248,11 +309,13 @@ Quick start:
 ## Roadmap
 
 - [x] Core Terraform parser
-- [x] Essential AWS service mappers
+- [x] AWS service mappers (17 services)
+- [x] GCP service mappers (15 services)
+- [x] Azure service mappers (22 services)
 - [x] Docker Compose generation
 - [x] Migration scripts
+- [x] Monitoring stack
 - [ ] Kubernetes output format
-- [ ] GCP/Azure support
 - [ ] Web UI dashboard
 - [ ] Plugin marketplace
 
@@ -261,16 +324,16 @@ Quick start:
 CloudExit is licensed under the [GNU Affero General Public License v3.0](LICENSE).
 
 This means:
-- ✅ Free to use, modify, and distribute
-- ✅ Commercial use allowed
-- ✅ Modifications must remain open source
-- ✅ Network use requires source disclosure
+- Free to use, modify, and distribute
+- Commercial use allowed
+- Modifications must remain open source
+- Network use requires source disclosure
 
 ## Support
 
-- **Documentation**: [docs.cloudexit.dev](https://docs.cloudexit.dev)
+- **Documentation**: [docs/](docs/)
 - **Issues**: [GitHub Issues](https://github.com/cloudexit/cloudexit/issues)
-- **Discord**: [Join our community](https://discord.gg/cloudexit)
+- **Discussions**: [GitHub Discussions](https://github.com/cloudexit/cloudexit/discussions)
 
 ---
 
