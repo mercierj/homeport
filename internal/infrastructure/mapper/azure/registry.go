@@ -5,6 +5,7 @@ import (
 	"github.com/cloudexit/cloudexit/internal/domain/mapper"
 	"github.com/cloudexit/cloudexit/internal/infrastructure/mapper/azure/compute"
 	"github.com/cloudexit/cloudexit/internal/infrastructure/mapper/azure/database"
+	"github.com/cloudexit/cloudexit/internal/infrastructure/mapper/azure/messaging"
 	"github.com/cloudexit/cloudexit/internal/infrastructure/mapper/azure/networking"
 	"github.com/cloudexit/cloudexit/internal/infrastructure/mapper/azure/security"
 	"github.com/cloudexit/cloudexit/internal/infrastructure/mapper/azure/storage"
@@ -50,6 +51,9 @@ func RegisterAll(registry MapperRegistrar) {
 	registry.Register(security.NewFirewallMapper())
 
 	// Messaging mappers
-	// registry.Register(messaging.NewServiceBusMapper())
-	// registry.Register(messaging.NewEventHubMapper())
+	registry.Register(messaging.NewServiceBusMapper())
+	registry.Register(messaging.NewServiceBusQueueMapper())
+	registry.Register(messaging.NewEventHubMapper())
+	registry.Register(messaging.NewEventGridMapper())
+	registry.Register(messaging.NewLogicAppMapper())
 }
