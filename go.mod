@@ -3,7 +3,6 @@ module github.com/agnostech/agnostech
 go 1.23
 
 require (
-
 	// GCP SDK
 	cloud.google.com/go/compute v1.25.1
 	cloud.google.com/go/redis v1.14.2
@@ -43,6 +42,11 @@ require (
 	golang.org/x/oauth2 v0.17.0
 	google.golang.org/api v0.169.0
 	gopkg.in/yaml.v3 v3.0.1
+)
+
+require (
+	github.com/go-chi/chi/v5 v5.2.3
+	github.com/go-chi/cors v1.2.2
 )
 
 require (

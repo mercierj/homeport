@@ -72,3 +72,28 @@ build-all: ## Build for all platforms
 	@GOOS=darwin GOARCH=arm64 go build $(LDFLAGS) -o bin/$(BINARY_NAME)-darwin-arm64 ./cmd/agnostech
 	@GOOS=windows GOARCH=amd64 go build $(LDFLAGS) -o bin/$(BINARY_NAME)-windows-amd64.exe ./cmd/agnostech
 	@echo "Build complete for all platforms"
+
+# Web dashboard targets
+.PHONY: serve web-install web-build web-dev web-clean
+
+WEB_DIR = web
+
+serve: build ## Start the web dashboard
+	./bin/$(BINARY_NAME) serve
+
+web-install: ## Install web dependencies
+	cd $(WEB_DIR) && npm install
+
+web-build: web-install ## Build web frontend
+	cd $(WEB_DIR) && npm run build
+	mkdir -p internal/api/static
+	cp -r $(WEB_DIR)/dist/* internal/api/static/
+
+web-dev: ## Run web frontend in dev mode
+	cd $(WEB_DIR) && npm run dev
+
+web-clean: ## Clean web build artifacts
+	rm -rf $(WEB_DIR)/node_modules $(WEB_DIR)/dist
+	rm -rf internal/api/static
+
+build-with-web: web-build build ## Build with embedded web frontend
