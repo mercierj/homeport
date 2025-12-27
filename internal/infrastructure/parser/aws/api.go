@@ -77,6 +77,11 @@ func (p *APIParser) Validate(path string) error {
 
 // AutoDetect checks for AWS credentials availability.
 func (p *APIParser) AutoDetect(path string) (bool, float64) {
+	// Check if this is an API path for AWS
+	if strings.HasPrefix(path, "api://aws") {
+		return true, 1.0
+	}
+
 	// Check if we have AWS credentials available
 	source := DetectCredentialSource()
 	if source != CredentialSourceDefault {
@@ -100,6 +105,25 @@ func (p *APIParser) AutoDetect(path string) (bool, float64) {
 	return true, 0.6
 }
 
+// getAllRegions fetches all enabled AWS regions for the account.
+func (p *APIParser) getAllRegions(ctx context.Context, cfg aws.Config) ([]string, error) {
+	client := ec2.NewFromConfig(cfg)
+
+	result, err := client.DescribeRegions(ctx, &ec2.DescribeRegionsInput{
+		AllRegions: aws.Bool(false), // Only enabled regions
+	})
+	if err != nil {
+		return nil, fmt.Errorf("failed to describe regions: %w", err)
+	}
+
+	var regions []string
+	for _, r := range result.Regions {
+		regions = append(regions, aws.ToString(r.RegionName))
+	}
+
+	return regions, nil
+}
+
 // Parse discovers AWS infrastructure via API.
 func (p *APIParser) Parse(ctx context.Context, path string, opts *parser.ParseOptions) (*resource.Infrastructure, error) {
 	// Initialize credential config from options
@@ -107,9 +131,9 @@ func (p *APIParser) Parse(ctx context.Context, path string, opts *parser.ParseOp
 		p.credConfig = FromParseOptions(opts.APICredentials, opts.Regions)
 	}
 
-	// Set region from options if not already set
-	if opts != nil && len(opts.Regions) > 0 && p.credConfig.Region == "" {
-		p.credConfig.Region = opts.Regions[0]
+	// Set a default region for initial connection if not set
+	if p.credConfig.Region == "" {
+		p.credConfig.Region = "us-east-1"
 	}
 
 	// Load AWS configuration
@@ -133,9 +157,18 @@ func (p *APIParser) Parse(ctx context.Context, path string, opts *parser.ParseOp
 	infra.Metadata["caller_arn"] = identity.ARN
 
 	// Determine regions to scan
-	regions := []string{p.credConfig.Region}
-	if opts != nil && len(opts.Regions) > 1 {
+	var regions []string
+	if opts != nil && len(opts.Regions) > 0 {
 		regions = opts.Regions
+	} else {
+		// No regions specified - scan all enabled regions
+		allRegions, err := p.getAllRegions(ctx, cfg)
+		if err != nil {
+			// Fallback to default region if we can't list regions
+			regions = []string{p.credConfig.Region}
+		} else {
+			regions = allRegions
+		}
 	}
 
 	// Scan resources across all regions
@@ -440,6 +473,27 @@ func (p *APIParser) scanLambda(ctx context.Context, cfg aws.Config, infra *resou
 				res.Config["environment"] = fn.Environment.Variables
 			}
 
+			// Layers
+			if len(fn.Layers) > 0 {
+				layers := make([]map[string]interface{}, 0, len(fn.Layers))
+				for _, layer := range fn.Layers {
+					layers = append(layers, map[string]interface{}{
+						"arn":       aws.ToString(layer.Arn),
+						"code_size": layer.CodeSize,
+					})
+				}
+				res.Config["layers"] = layers
+			}
+
+			// Get function code location for migration
+			fnDetails, err := client.GetFunction(ctx, &lambda.GetFunctionInput{
+				FunctionName: fn.FunctionName,
+			})
+			if err == nil && fnDetails.Code != nil {
+				res.Config["code_location"] = aws.ToString(fnDetails.Code.Location)
+				res.Config["code_repository_type"] = aws.ToString(fnDetails.Code.RepositoryType)
+			}
+
 			// Get tags
 			tagsResult, err := client.ListTags(ctx, &lambda.ListTagsInput{
 				Resource: fn.FunctionArn,
@@ -729,9 +783,13 @@ func (p *APIParser) scanDynamoDB(ctx context.Context, cfg aws.Config, infra *res
 			res.Region = cfg.Region
 			res.ARN = aws.ToString(table.Table.TableArn)
 
-			// Config
-			res.Config["table_class"] = string(table.Table.TableClassSummary.TableClass)
-			res.Config["billing_mode"] = string(table.Table.BillingModeSummary.BillingMode)
+			// Config (with nil checks for optional fields)
+			if table.Table.TableClassSummary != nil {
+				res.Config["table_class"] = string(table.Table.TableClassSummary.TableClass)
+			}
+			if table.Table.BillingModeSummary != nil {
+				res.Config["billing_mode"] = string(table.Table.BillingModeSummary.BillingMode)
+			}
 			res.Config["item_count"] = table.Table.ItemCount
 			res.Config["table_size_bytes"] = table.Table.TableSizeBytes
 
