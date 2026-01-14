@@ -282,11 +282,14 @@ func (h *PolicyHandler) HandleExportOriginal(w http.ResponseWriter, r *http.Requ
 	}
 
 	// Set content type based on format
-	contentType := "application/json"
-	if format == "yaml" {
+	var contentType string
+	switch format {
+	case "yaml":
 		contentType = "application/x-yaml"
-	} else if format == "hcl" {
+	case "hcl":
 		contentType = "text/plain"
+	default:
+		contentType = "application/json"
 	}
 
 	w.Header().Set("Content-Type", contentType)

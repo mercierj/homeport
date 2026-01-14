@@ -192,8 +192,8 @@ func (h *DataMigrationHandler) HandleStream(w http.ResponseWriter, r *http.Reque
 				continue
 			}
 
-			fmt.Fprintf(w, "event: %s\n", event.Type)
-			fmt.Fprintf(w, "data: %s\n\n", data)
+			_, _ = fmt.Fprintf(w, "event: %s\n", event.Type)
+			_, _ = fmt.Fprintf(w, "data: %s\n\n", data)
 			flusher.Flush()
 		}
 	}

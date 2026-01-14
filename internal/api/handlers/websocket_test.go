@@ -283,7 +283,7 @@ func TestWebSocketIntegration(t *testing.T) {
 			t.Logf("Failed to upgrade: %v", err)
 			return
 		}
-		defer conn.Close()
+		defer func() { _ = conn.Close() }()
 
 		// Send a test message
 		msg := WSBroadcastMessage{
@@ -302,7 +302,7 @@ func TestWebSocketIntegration(t *testing.T) {
 	if err != nil {
 		t.Fatalf("Failed to connect: %v", err)
 	}
-	defer conn.Close()
+	defer func() { _ = conn.Close() }()
 
 	// Read the message
 	_, message, err := conn.ReadMessage()

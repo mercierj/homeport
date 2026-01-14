@@ -17,7 +17,7 @@ func TestTFStateParserIntegration_BasicAzureResources(t *testing.T) {
 	if err != nil {
 		t.Fatalf("failed to create temp dir: %v", err)
 	}
-	defer os.RemoveAll(tmpDir)
+	defer func() { _ = os.RemoveAll(tmpDir) }()
 
 	tfstateContent := `{
 		"version": 4,
@@ -107,7 +107,7 @@ func TestTFStateParserIntegration_AzurermResourceTypes(t *testing.T) {
 	if err != nil {
 		t.Fatalf("failed to create temp dir: %v", err)
 	}
-	defer os.RemoveAll(tmpDir)
+	defer func() { _ = os.RemoveAll(tmpDir) }()
 
 	tfstateContent := `{
 		"version": 4,
@@ -265,7 +265,7 @@ func TestTFStateParserIntegration_ComputeResources(t *testing.T) {
 	if err != nil {
 		t.Fatalf("failed to create temp dir: %v", err)
 	}
-	defer os.RemoveAll(tmpDir)
+	defer func() { _ = os.RemoveAll(tmpDir) }()
 
 	tfstateContent := `{
 		"version": 4,
@@ -408,7 +408,7 @@ func TestTFStateParserIntegration_Dependencies(t *testing.T) {
 	if err != nil {
 		t.Fatalf("failed to create temp dir: %v", err)
 	}
-	defer os.RemoveAll(tmpDir)
+	defer func() { _ = os.RemoveAll(tmpDir) }()
 
 	tfstateContent := `{
 		"version": 4,
@@ -512,7 +512,7 @@ func TestTFStateParserIntegration_DirectoryParsing(t *testing.T) {
 	if err != nil {
 		t.Fatalf("failed to create temp dir: %v", err)
 	}
-	defer os.RemoveAll(tmpDir)
+	defer func() { _ = os.RemoveAll(tmpDir) }()
 
 	tfstateContent := `{
 		"version": 4,
@@ -579,7 +579,7 @@ func TestTFStateParserIntegration_MixedProviders(t *testing.T) {
 	if err != nil {
 		t.Fatalf("failed to create temp dir: %v", err)
 	}
-	defer os.RemoveAll(tmpDir)
+	defer func() { _ = os.RemoveAll(tmpDir) }()
 
 	tfstateContent := `{
 		"version": 4,
@@ -686,7 +686,7 @@ func TestTFStateParserIntegration_IndexedResources(t *testing.T) {
 	if err != nil {
 		t.Fatalf("failed to create temp dir: %v", err)
 	}
-	defer os.RemoveAll(tmpDir)
+	defer func() { _ = os.RemoveAll(tmpDir) }()
 
 	tfstateContent := `{
 		"version": 4,
@@ -764,7 +764,7 @@ func TestTFStateParserIntegration_UnsupportedVersion(t *testing.T) {
 	if err != nil {
 		t.Fatalf("failed to create temp dir: %v", err)
 	}
-	defer os.RemoveAll(tmpDir)
+	defer func() { _ = os.RemoveAll(tmpDir) }()
 
 	// Version 2 is not supported
 	tfstateContent := `{

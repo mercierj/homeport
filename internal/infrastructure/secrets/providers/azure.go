@@ -113,7 +113,7 @@ func (p *AzureKeyVaultProvider) Resolve(ctx context.Context, ref *secrets.Secret
 func (p *AzureKeyVaultProvider) ValidateConfig() error {
 	// Check if az CLI is available
 	if _, err := exec.LookPath("az"); err != nil {
-		return fmt.Errorf("Azure CLI (az) not found in PATH: %w", err)
+		return fmt.Errorf("azure CLI (az) not found in PATH: %w", err)
 	}
 
 	// Check authentication
@@ -124,7 +124,7 @@ func (p *AzureKeyVaultProvider) ValidateConfig() error {
 
 	cmd := exec.Command("az", args...)
 	if err := cmd.Run(); err != nil {
-		return fmt.Errorf("Azure CLI not authenticated: %w", err)
+		return fmt.Errorf("azure CLI not authenticated: %w", err)
 	}
 
 	return nil

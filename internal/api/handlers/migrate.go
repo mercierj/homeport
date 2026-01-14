@@ -108,7 +108,7 @@ func (h *MigrateHandler) HandleDiscoverStream(w http.ResponseWriter, r *http.Req
 		if err != nil {
 			return
 		}
-		fmt.Fprintf(w, "event: progress\ndata: %s\n\n", data)
+		_, _ = fmt.Fprintf(w, "event: progress\ndata: %s\n\n", data)
 		flusher.Flush()
 	}
 
@@ -120,7 +120,7 @@ func (h *MigrateHandler) HandleDiscoverStream(w http.ResponseWriter, r *http.Req
 			Message: err.Error(),
 		}
 		data, _ := json.Marshal(errEvent)
-		fmt.Fprintf(w, "event: error\ndata: %s\n\n", data)
+		_, _ = fmt.Fprintf(w, "event: error\ndata: %s\n\n", data)
 		flusher.Flush()
 		return
 	}
@@ -131,7 +131,7 @@ func (h *MigrateHandler) HandleDiscoverStream(w http.ResponseWriter, r *http.Req
 		httputil.InternalError(w, r, err)
 		return
 	}
-	fmt.Fprintf(w, "event: complete\ndata: %s\n\n", data)
+	_, _ = fmt.Fprintf(w, "event: complete\ndata: %s\n\n", data)
 	flusher.Flush()
 }
 

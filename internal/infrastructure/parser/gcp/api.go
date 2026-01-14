@@ -264,7 +264,7 @@ func (p *APIParser) scanComputeInstances(ctx context.Context, infra *resource.In
 	if err != nil {
 		return fmt.Errorf("failed to create compute client: %w", err)
 	}
-	defer client.Close()
+	defer func() { _ = client.Close() }()
 
 	for _, region := range regions {
 		// List all zones in the region
@@ -353,7 +353,7 @@ func (p *APIParser) scanGCSBuckets(ctx context.Context, infra *resource.Infrastr
 	if err != nil {
 		return fmt.Errorf("failed to create storage client: %w", err)
 	}
-	defer client.Close()
+	defer func() { _ = client.Close() }()
 
 	it := client.Buckets(ctx, p.project)
 	for {
@@ -472,7 +472,7 @@ func (p *APIParser) scanCloudRun(ctx context.Context, infra *resource.Infrastruc
 	if err != nil {
 		return fmt.Errorf("failed to create Cloud Run client: %w", err)
 	}
-	defer client.Close()
+	defer func() { _ = client.Close() }()
 
 	for _, region := range regions {
 		req := &runpb.ListServicesRequest{
@@ -557,7 +557,7 @@ func (p *APIParser) scanMemorystore(ctx context.Context, infra *resource.Infrast
 	if err != nil {
 		return fmt.Errorf("failed to create Memorystore client: %w", err)
 	}
-	defer client.Close()
+	defer func() { _ = client.Close() }()
 
 	for _, region := range regions {
 		req := &redispb.ListInstancesRequest{
@@ -615,7 +615,7 @@ func (p *APIParser) scanGKE(ctx context.Context, infra *resource.Infrastructure,
 	if err != nil {
 		return fmt.Errorf("failed to create GKE client: %w", err)
 	}
-	defer client.Close()
+	defer func() { _ = client.Close() }()
 
 	for _, region := range regions {
 		// List clusters in this region (using "-" to get all zones in region)
@@ -744,7 +744,7 @@ func (p *APIParser) scanCloudCDN(ctx context.Context, infra *resource.Infrastruc
 	if err != nil {
 		return fmt.Errorf("failed to create backend services client: %w", err)
 	}
-	defer client.Close()
+	defer func() { _ = client.Close() }()
 
 	// List all backend services (global)
 	req := &computepb.ListBackendServicesRequest{
@@ -852,7 +852,7 @@ func (p *APIParser) scanCloudLB(ctx context.Context, infra *resource.Infrastruct
 	if err != nil {
 		return fmt.Errorf("failed to create URL maps client: %w", err)
 	}
-	defer globalClient.Close()
+	defer func() { _ = globalClient.Close() }()
 
 	req := &computepb.ListUrlMapsRequest{
 		Project: p.project,
@@ -933,7 +933,7 @@ func (p *APIParser) scanCloudLB(ctx context.Context, infra *resource.Infrastruct
 		// Non-fatal, just skip regional
 		return nil
 	}
-	defer regionalClient.Close()
+	defer func() { _ = regionalClient.Close() }()
 
 	for _, region := range regions {
 		regionalReq := &computepb.ListRegionUrlMapsRequest{
@@ -993,7 +993,7 @@ func (p *APIParser) scanFirestore(ctx context.Context, infra *resource.Infrastru
 	if err != nil {
 		return fmt.Errorf("failed to create Firestore admin client: %w", err)
 	}
-	defer client.Close()
+	defer func() { _ = client.Close() }()
 
 	req := &adminpb.ListDatabasesRequest{
 		Parent: fmt.Sprintf("projects/%s", p.project),
@@ -1049,7 +1049,7 @@ func (p *APIParser) scanBigtable(ctx context.Context, infra *resource.Infrastruc
 	if err != nil {
 		return fmt.Errorf("failed to create Bigtable admin client: %w", err)
 	}
-	defer client.Close()
+	defer func() { _ = client.Close() }()
 
 	instances, err := client.Instances(ctx)
 	if err != nil {
@@ -1118,7 +1118,7 @@ func (p *APIParser) scanSpanner(ctx context.Context, infra *resource.Infrastruct
 	if err != nil {
 		return fmt.Errorf("failed to create Spanner admin client: %w", err)
 	}
-	defer client.Close()
+	defer func() { _ = client.Close() }()
 
 	req := &instancepb.ListInstancesRequest{
 		Parent: fmt.Sprintf("projects/%s", p.project),
@@ -1279,7 +1279,7 @@ func (p *APIParser) scanPubSub(ctx context.Context, infra *resource.Infrastructu
 	if err != nil {
 		return fmt.Errorf("failed to create Pub/Sub client: %w", err)
 	}
-	defer client.Close()
+	defer func() { _ = client.Close() }()
 
 	// List topics
 	topicIt := client.Topics(ctx)
@@ -1379,7 +1379,7 @@ func (p *APIParser) scanCloudTasks(ctx context.Context, infra *resource.Infrastr
 	if err != nil {
 		return fmt.Errorf("failed to create Cloud Tasks client: %w", err)
 	}
-	defer client.Close()
+	defer func() { _ = client.Close() }()
 
 	for _, region := range regions {
 		req := &cloudtaskspb.ListQueuesRequest{
@@ -1561,7 +1561,7 @@ func (p *APIParser) scanSecretManager(ctx context.Context, infra *resource.Infra
 	if err != nil {
 		return fmt.Errorf("failed to create Secret Manager client: %w", err)
 	}
-	defer client.Close()
+	defer func() { _ = client.Close() }()
 
 	req := &secretmanagerpb.ListSecretsRequest{
 		Parent: fmt.Sprintf("projects/%s", p.project),
@@ -1665,7 +1665,7 @@ func (p *APIParser) scanPersistentDisk(ctx context.Context, infra *resource.Infr
 	if err != nil {
 		return fmt.Errorf("failed to create disks client: %w", err)
 	}
-	defer client.Close()
+	defer func() { _ = client.Close() }()
 
 	// Use aggregated list to get disks across all zones
 	req := &computepb.AggregatedListDisksRequest{
@@ -1767,7 +1767,7 @@ func (p *APIParser) scanFilestore(ctx context.Context, infra *resource.Infrastru
 	if err != nil {
 		return fmt.Errorf("failed to create Filestore client: %w", err)
 	}
-	defer client.Close()
+	defer func() { _ = client.Close() }()
 
 	for _, region := range regions {
 		// List instances in this location (region includes all zones)
@@ -1885,7 +1885,7 @@ func (p *APIParser) scanCloudFunctions(ctx context.Context, infra *resource.Infr
 	if err != nil {
 		return fmt.Errorf("failed to create Cloud Functions client: %w", err)
 	}
-	defer client.Close()
+	defer func() { _ = client.Close() }()
 
 	for _, region := range regions {
 		req := &functionspb.ListFunctionsRequest{
@@ -2050,7 +2050,7 @@ func (p *APIParser) scanCloudArmor(ctx context.Context, infra *resource.Infrastr
 	if err != nil {
 		return fmt.Errorf("failed to create security policies client: %w", err)
 	}
-	defer client.Close()
+	defer func() { _ = client.Close() }()
 
 	// List all security policies (global)
 	req := &computepb.ListSecurityPoliciesRequest{
@@ -2263,7 +2263,7 @@ func (p *APIParser) scanGCPVPCNetwork(ctx context.Context, infra *resource.Infra
 	if err != nil {
 		return fmt.Errorf("failed to create networks client: %w", err)
 	}
-	defer client.Close()
+	defer func() { _ = client.Close() }()
 
 	req := &computepb.ListNetworksRequest{
 		Project: p.project,
@@ -2463,7 +2463,7 @@ func (p *APIParser) scanCloudScheduler(ctx context.Context, infra *resource.Infr
 	if err != nil {
 		return fmt.Errorf("failed to create Cloud Scheduler client: %w", err)
 	}
-	defer client.Close()
+	defer func() { _ = client.Close() }()
 
 	for _, region := range regions {
 		req := &schedulerpb.ListJobsRequest{
@@ -2626,7 +2626,7 @@ func (p *APIParser) getZonesForRegion(ctx context.Context, region string) ([]str
 	if err != nil {
 		return nil, err
 	}
-	defer client.Close()
+	defer func() { _ = client.Close() }()
 
 	req := &computepb.ListZonesRequest{
 		Project: p.project,

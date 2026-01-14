@@ -164,7 +164,7 @@ func (p *HashiCorpVaultProvider) Resolve(ctx context.Context, ref *secrets.Secre
 func (p *HashiCorpVaultProvider) ValidateConfig() error {
 	// Check if vault CLI is available
 	if _, err := exec.LookPath("vault"); err != nil {
-		return fmt.Errorf("Vault CLI not found in PATH: %w", err)
+		return fmt.Errorf("vault CLI not found in PATH: %w", err)
 	}
 
 	// Check authentication

@@ -161,7 +161,7 @@ func (e *BlobToMinIOExecutor) Execute(ctx context.Context, m *Migration, config 
 	if err != nil {
 		return fmt.Errorf("failed to create staging directory: %w", err)
 	}
-	defer os.RemoveAll(stagingDir)
+	defer func() { _ = os.RemoveAll(stagingDir) }()
 
 	localPath := filepath.Join(stagingDir, container)
 

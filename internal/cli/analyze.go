@@ -276,12 +276,12 @@ func performAnalysis(inputPath string) (*AnalysisResult, error) {
 		}
 		p, pErr := parser.DefaultRegistry().GetByFormat(resource.ProviderAzure, parser.FormatAPI)
 		if pErr != nil {
-			return nil, fmt.Errorf("Azure API parser not available: %w", pErr)
+			return nil, fmt.Errorf("azure API parser not available: %w", pErr)
 		}
 		var parseErr error
 		infra, parseErr = p.Parse(ctx, "", opts)
 		if parseErr != nil {
-			return nil, fmt.Errorf("Azure API scan failed: %w", parseErr)
+			return nil, fmt.Errorf("azure API scan failed: %w", parseErr)
 		}
 
 	case "cloudformation":
@@ -323,7 +323,7 @@ func performAnalysis(inputPath string) (*AnalysisResult, error) {
 		var parseErr error
 		infra, parseErr = parser.DefaultRegistry().ParseMulti(ctx, inputPath, opts)
 		if parseErr != nil {
-			return nil, fmt.Errorf("Terraform parsing failed: %w", parseErr)
+			return nil, fmt.Errorf("terraform parsing failed: %w", parseErr)
 		}
 
 	default:

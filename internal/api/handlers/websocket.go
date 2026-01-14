@@ -259,7 +259,7 @@ func (c *WebSocketClient) Close() {
 
 	c.closed = true
 	close(c.done)
-	c.conn.Close()
+	_ = c.conn.Close()
 }
 
 // writePump pumps messages from the hub to the WebSocket connection
@@ -267,7 +267,7 @@ func (c *WebSocketClient) writePump() {
 	ticker := time.NewTicker(30 * time.Second)
 	defer func() {
 		ticker.Stop()
-		c.conn.Close()
+		_ = c.conn.Close()
 	}()
 
 	for {

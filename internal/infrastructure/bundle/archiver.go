@@ -31,7 +31,7 @@ func (a *Archiver) CreateArchive(b *bundle.Bundle, outputPath string) error {
 	if err != nil {
 		return fmt.Errorf("failed to create archive file: %w", err)
 	}
-	defer file.Close()
+	defer func() { _ = file.Close() }()
 
 	return a.WriteArchive(b, file)
 }
@@ -42,10 +42,10 @@ func (a *Archiver) WriteArchive(b *bundle.Bundle, w io.Writer) error {
 	if err != nil {
 		return fmt.Errorf("failed to create gzip writer: %w", err)
 	}
-	defer gzWriter.Close()
+	defer func() { _ = gzWriter.Close() }()
 
 	tarWriter := tar.NewWriter(gzWriter)
-	defer tarWriter.Close()
+	defer func() { _ = tarWriter.Close() }()
 
 	// Write manifest.json first
 	manifestData, err := b.Manifest.ToJSON()
@@ -97,7 +97,7 @@ func (a *Archiver) ExtractArchive(archivePath string) (*bundle.Bundle, error) {
 	if err != nil {
 		return nil, fmt.Errorf("failed to open archive: %w", err)
 	}
-	defer file.Close()
+	defer func() { _ = file.Close() }()
 
 	return a.ReadArchive(file)
 }
@@ -108,7 +108,7 @@ func (a *Archiver) ReadArchive(r io.Reader) (*bundle.Bundle, error) {
 	if err != nil {
 		return nil, fmt.Errorf("failed to create gzip reader: %w", err)
 	}
-	defer gzReader.Close()
+	defer func() { _ = gzReader.Close() }()
 
 	tarReader := tar.NewReader(gzReader)
 

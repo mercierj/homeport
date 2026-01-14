@@ -52,15 +52,16 @@ func main() {
 			fmt.Printf("  - %s (name: %s)\n", id, res.Name)
 
 			// Print some key attributes
-			if res.Type == "aws_instance" {
+			switch res.Type {
+			case "aws_instance":
 				fmt.Printf("    Instance type: %s\n", res.GetConfigString("instance_type"))
 				fmt.Printf("    AMI: %s\n", res.GetConfigString("ami"))
-			} else if res.Type == "aws_db_instance" {
+			case "aws_db_instance":
 				fmt.Printf("    Engine: %s %s\n", res.GetConfigString("engine"), res.GetConfigString("engine_version"))
 				fmt.Printf("    Instance class: %s\n", res.GetConfigString("instance_class"))
-			} else if res.Type == "aws_s3_bucket" {
+			case "aws_s3_bucket":
 				fmt.Printf("    Bucket: %s\n", res.GetConfigString("bucket"))
-			} else if res.Type == "aws_lb" {
+			case "aws_lb":
 				fmt.Printf("    Type: %s\n", res.GetConfigString("load_balancer_type"))
 				fmt.Printf("    DNS: %s\n", res.GetConfigString("dns_name"))
 			}

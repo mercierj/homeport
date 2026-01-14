@@ -336,7 +336,7 @@ func (h *CutoverHandler) StreamProgress(w http.ResponseWriter, r *http.Request) 
 			}
 		case <-time.After(30 * time.Second):
 			// Send keepalive
-			fmt.Fprintf(w, ": keepalive\n\n")
+			_, _ = fmt.Fprintf(w, ": keepalive\n\n")
 			flusher.Flush()
 		}
 	}

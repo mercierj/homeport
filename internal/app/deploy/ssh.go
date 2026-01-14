@@ -61,7 +61,7 @@ func (s *SSHDeployer) Deploy(ctx context.Context, d *Deployment) error {
 	if err != nil {
 		return fmt.Errorf("SSH connection failed: %w", err)
 	}
-	defer client.Close()
+	defer func() { _ = client.Close() }()
 
 	EmitLog(d, "info", fmt.Sprintf("Connected to %s@%s:%d", config.Username, config.Host, config.Port))
 	EmitProgress(d, 15)
@@ -75,7 +75,7 @@ func (s *SSHDeployer) Deploy(ctx context.Context, d *Deployment) error {
 	EmitProgress(d, 20)
 
 	if err := s.checkDocker(client, d); err != nil {
-		return fmt.Errorf("Docker check failed: %w", err)
+		return fmt.Errorf("docker check failed: %w", err)
 	}
 	EmitProgress(d, 25)
 
@@ -190,7 +190,7 @@ func (s *SSHDeployer) runCommand(client *ssh.Client, cmd string) (string, error)
 	if err != nil {
 		return "", err
 	}
-	defer session.Close()
+	defer func() { _ = session.Close() }()
 
 	output, err := session.CombinedOutput(cmd)
 	return string(output), err
@@ -199,7 +199,7 @@ func (s *SSHDeployer) runCommand(client *ssh.Client, cmd string) (string, error)
 func (s *SSHDeployer) checkDocker(client *ssh.Client, d *Deployment) error {
 	output, err := s.runCommand(client, "docker --version")
 	if err != nil {
-		return fmt.Errorf("Docker not installed or not accessible: %s", output)
+		return fmt.Errorf("docker not installed or not accessible: %s", output)
 	}
 	EmitLog(d, "info", strings.TrimSpace(output))
 
@@ -208,7 +208,7 @@ func (s *SSHDeployer) checkDocker(client *ssh.Client, d *Deployment) error {
 		// Try docker-compose (v1)
 		output, err = s.runCommand(client, "docker-compose --version")
 		if err != nil {
-			return fmt.Errorf("Docker Compose not installed: %s", output)
+			return fmt.Errorf("docker compose not installed: %s", output)
 		}
 	}
 	EmitLog(d, "info", strings.TrimSpace(output))
@@ -221,7 +221,7 @@ func (s *SSHDeployer) transferFiles(client *ssh.Client, config *SSHConfig, d *De
 	if err != nil {
 		return fmt.Errorf("failed to create SFTP client: %w", err)
 	}
-	defer sftpClient.Close()
+	defer func() { _ = sftpClient.Close() }()
 
 	remoteDir := config.RemoteDir
 	if remoteDir == "" {
@@ -260,7 +260,7 @@ func (s *SSHDeployer) writeRemoteFile(client *sftp.Client, path, content string)
 	if err != nil {
 		return err
 	}
-	defer file.Close()
+	defer func() { _ = file.Close() }()
 
 	_, err = io.WriteString(file, content)
 	return err

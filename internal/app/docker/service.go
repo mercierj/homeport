@@ -163,7 +163,7 @@ func (s *Service) GetContainerLogs(ctx context.Context, containerID string, tail
 	if err != nil {
 		return "", err
 	}
-	defer reader.Close()
+	defer func() { _ = reader.Close() }()
 
 	logs, err := io.ReadAll(reader)
 	if err != nil {

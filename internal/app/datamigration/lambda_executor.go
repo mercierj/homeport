@@ -216,7 +216,7 @@ func (e *LambdaToDockerExecutor) Execute(ctx context.Context, m *Migration, conf
 	if err != nil {
 		return fmt.Errorf("failed to create staging directory: %w", err)
 	}
-	defer os.RemoveAll(stagingDir)
+	defer func() { _ = os.RemoveAll(stagingDir) }()
 
 	codeZipPath := filepath.Join(stagingDir, "function.zip")
 	codePath := filepath.Join(stagingDir, "function")
@@ -543,7 +543,7 @@ func downloadFile(ctx context.Context, url, destPath string) error {
 	if err != nil {
 		return fmt.Errorf("failed to download: %w", err)
 	}
-	defer resp.Body.Close()
+	defer func() { _ = resp.Body.Close() }()
 
 	if resp.StatusCode != http.StatusOK {
 		return fmt.Errorf("download failed with status: %d", resp.StatusCode)
@@ -553,7 +553,7 @@ func downloadFile(ctx context.Context, url, destPath string) error {
 	if err != nil {
 		return fmt.Errorf("failed to create file: %w", err)
 	}
-	defer out.Close()
+	defer func() { _ = out.Close() }()
 
 	_, err = io.Copy(out, resp.Body)
 	if err != nil {
@@ -569,7 +569,7 @@ func extractZip(zipPath, destPath string) error {
 	if err != nil {
 		return fmt.Errorf("failed to open zip: %w", err)
 	}
-	defer r.Close()
+	defer func() { _ = r.Close() }()
 
 	for _, f := range r.File {
 		fpath := filepath.Join(destPath, f.Name)
@@ -595,13 +595,13 @@ func extractZip(zipPath, destPath string) error {
 
 		rc, err := f.Open()
 		if err != nil {
-			outFile.Close()
+			_ = outFile.Close()
 			return fmt.Errorf("failed to open file in zip: %w", err)
 		}
 
 		_, err = io.Copy(outFile, rc)
-		rc.Close()
-		outFile.Close()
+		_ = rc.Close()
+		_ = outFile.Close()
 
 		if err != nil {
 			return fmt.Errorf("failed to extract file: %w", err)
@@ -617,13 +617,13 @@ func copyFile(src, dst string) error {
 	if err != nil {
 		return err
 	}
-	defer sourceFile.Close()
+	defer func() { _ = sourceFile.Close() }()
 
 	destFile, err := os.Create(dst)
 	if err != nil {
 		return err
 	}
-	defer destFile.Close()
+	defer func() { _ = destFile.Close() }()
 
 	_, err = io.Copy(destFile, sourceFile)
 	return err

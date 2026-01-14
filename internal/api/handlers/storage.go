@@ -253,7 +253,7 @@ func (h *StorageHandler) HandleUpload(w http.ResponseWriter, r *http.Request) {
 		httputil.BadRequest(w, r, "No file provided")
 		return
 	}
-	defer file.Close()
+	defer func() { _ = file.Close() }()
 
 	key := r.FormValue("key")
 	if key == "" {
@@ -315,7 +315,7 @@ func (h *StorageHandler) HandleDownload(w http.ResponseWriter, r *http.Request) 
 		httputil.NotFound(w, r, err.Error())
 		return
 	}
-	defer reader.Close()
+	defer func() { _ = reader.Close() }()
 
 	// Escape filename for Content-Disposition header (RFC 5987)
 	filename := filepath.Base(cleanKey)

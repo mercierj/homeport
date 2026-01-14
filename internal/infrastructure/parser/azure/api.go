@@ -2991,7 +2991,7 @@ func (p *APIParser) scanADB2C(ctx context.Context, cred interface{}, infra *reso
 	if err != nil {
 		return fmt.Errorf("failed to list B2C directories: %w", err)
 	}
-	defer resp.Body.Close()
+	defer func() { _ = resp.Body.Close() }()
 
 	if resp.StatusCode != http.StatusOK {
 		body, _ := io.ReadAll(resp.Body)

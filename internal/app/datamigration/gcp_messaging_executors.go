@@ -144,13 +144,13 @@ func (e *PubSubToRabbitMQExecutor) Execute(ctx context.Context, m *Migration, co
 			return fmt.Errorf("failed to create temp credentials file: %w", err)
 		}
 		tempCredFile = tmpFile.Name()
-		defer os.Remove(tempCredFile)
+		defer func() { _ = os.Remove(tempCredFile) }()
 
 		if _, err := tmpFile.WriteString(serviceAccountJSON); err != nil {
-			tmpFile.Close()
+			_ = tmpFile.Close()
 			return fmt.Errorf("failed to write credentials: %w", err)
 		}
-		tmpFile.Close()
+		_ = tmpFile.Close()
 
 		gcloudEnv = append(os.Environ(),
 			"GOOGLE_APPLICATION_CREDENTIALS="+tempCredFile,
@@ -347,7 +347,7 @@ func (e *PubSubToRabbitMQExecutor) Execute(ctx context.Context, m *Migration, co
 			EmitLog(m, "warn", fmt.Sprintf("rabbitmqadmin exchange creation: %s", string(output)))
 		}
 	} else {
-		resp.Body.Close()
+		_ = resp.Body.Close()
 		if resp.StatusCode >= 200 && resp.StatusCode < 300 {
 			EmitLog(m, "info", fmt.Sprintf("Created exchange: %s (type: %s)", destExchange, exchangeType))
 		} else if resp.StatusCode == 204 {
@@ -388,7 +388,7 @@ func (e *PubSubToRabbitMQExecutor) Execute(ctx context.Context, m *Migration, co
 			EmitLog(m, "warn", fmt.Sprintf("rabbitmqadmin queue creation: %s", string(output)))
 		}
 	} else {
-		resp.Body.Close()
+		_ = resp.Body.Close()
 		if resp.StatusCode >= 200 && resp.StatusCode < 300 {
 			EmitLog(m, "info", fmt.Sprintf("Created queue: %s", destQueue))
 		}
@@ -427,7 +427,7 @@ func (e *PubSubToRabbitMQExecutor) Execute(ctx context.Context, m *Migration, co
 			EmitLog(m, "warn", fmt.Sprintf("rabbitmqadmin binding creation: %s", string(output)))
 		}
 	} else {
-		resp.Body.Close()
+		_ = resp.Body.Close()
 		EmitLog(m, "info", fmt.Sprintf("Created binding: %s -> %s", destExchange, destQueue))
 	}
 
@@ -546,7 +546,7 @@ func (e *PubSubToRabbitMQExecutor) Execute(ctx context.Context, m *Migration, co
 					EmitLog(m, "error", fmt.Sprintf("Failed to publish message %s: %v", msg.Message.MessageID, err))
 					continue
 				}
-				resp.Body.Close()
+				_ = resp.Body.Close()
 
 				if resp.StatusCode >= 200 && resp.StatusCode < 300 {
 					messagesMigrated++
@@ -587,7 +587,7 @@ func (e *PubSubToRabbitMQExecutor) Execute(ctx context.Context, m *Migration, co
 		if err != nil {
 			EmitLog(m, "warn", fmt.Sprintf("Failed to verify queue: %v", err))
 		} else {
-			defer resp.Body.Close()
+			defer func() { _ = resp.Body.Close() }()
 			if resp.StatusCode == 200 {
 				var queueInfo struct {
 					Name     string `json:"name"`
@@ -726,13 +726,13 @@ func (e *CloudTasksToRabbitMQExecutor) Execute(ctx context.Context, m *Migration
 			return fmt.Errorf("failed to create temp credentials file: %w", err)
 		}
 		tempCredFile = tmpFile.Name()
-		defer os.Remove(tempCredFile)
+		defer func() { _ = os.Remove(tempCredFile) }()
 
 		if _, err := tmpFile.WriteString(serviceAccountJSON); err != nil {
-			tmpFile.Close()
+			_ = tmpFile.Close()
 			return fmt.Errorf("failed to write credentials: %w", err)
 		}
-		tmpFile.Close()
+		_ = tmpFile.Close()
 
 		gcloudEnv = append(os.Environ(),
 			"GOOGLE_APPLICATION_CREDENTIALS="+tempCredFile,
@@ -908,7 +908,7 @@ func (e *CloudTasksToRabbitMQExecutor) Execute(ctx context.Context, m *Migration
 			EmitLog(m, "warn", fmt.Sprintf("rabbitmqadmin exchange creation: %s", string(output)))
 		}
 	} else {
-		resp.Body.Close()
+		_ = resp.Body.Close()
 		if resp.StatusCode >= 200 && resp.StatusCode < 300 {
 			EmitLog(m, "info", fmt.Sprintf("Created exchange: %s (type: direct)", destExchange))
 		} else if resp.StatusCode == 204 {
@@ -940,7 +940,7 @@ func (e *CloudTasksToRabbitMQExecutor) Execute(ctx context.Context, m *Migration
 	dlqReq.SetBasicAuth(rabbitUser, rabbitPass)
 	dlqReq.Header.Set("Content-Type", "application/json")
 	if dlqResp, err := client.Do(dlqReq); err == nil {
-		dlqResp.Body.Close()
+		_ = dlqResp.Body.Close()
 		EmitLog(m, "info", fmt.Sprintf("Created dead letter queue: %s", dlqName))
 
 		// Add DLQ configuration to main queue
@@ -974,7 +974,7 @@ func (e *CloudTasksToRabbitMQExecutor) Execute(ctx context.Context, m *Migration
 			EmitLog(m, "warn", fmt.Sprintf("rabbitmqadmin queue creation: %s", string(output)))
 		}
 	} else {
-		resp.Body.Close()
+		_ = resp.Body.Close()
 		if resp.StatusCode >= 200 && resp.StatusCode < 300 {
 			EmitLog(m, "info", fmt.Sprintf("Created queue: %s", destQueue))
 		}
@@ -1013,7 +1013,7 @@ func (e *CloudTasksToRabbitMQExecutor) Execute(ctx context.Context, m *Migration
 			EmitLog(m, "warn", fmt.Sprintf("rabbitmqadmin binding creation: %s", string(output)))
 		}
 	} else {
-		resp.Body.Close()
+		_ = resp.Body.Close()
 		EmitLog(m, "info", fmt.Sprintf("Created binding: %s -> %s", destExchange, destQueue))
 	}
 
@@ -1094,7 +1094,7 @@ func (e *CloudTasksToRabbitMQExecutor) Execute(ctx context.Context, m *Migration
 		if err != nil {
 			EmitLog(m, "warn", fmt.Sprintf("Failed to verify queue: %v", err))
 		} else {
-			defer resp.Body.Close()
+			defer func() { _ = resp.Body.Close() }()
 			if resp.StatusCode == 200 {
 				var queueInfo struct {
 					Name      string                 `json:"name"`
@@ -1119,7 +1119,7 @@ func (e *CloudTasksToRabbitMQExecutor) Execute(ctx context.Context, m *Migration
 		req.SetBasicAuth(rabbitUser, rabbitPass)
 		resp, err = client.Do(req)
 		if err == nil {
-			defer resp.Body.Close()
+			defer func() { _ = resp.Body.Close() }()
 			if resp.StatusCode == 200 {
 				EmitLog(m, "info", fmt.Sprintf("Dead letter queue verified: %s", dlqName))
 			}

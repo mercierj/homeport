@@ -106,7 +106,7 @@ func (p *ManualProvider) Resolve(ctx context.Context, ref *secrets.SecretReferen
 func (p *ManualProvider) prompt(ref *secrets.SecretReference) (string, error) {
 	// Display prompt
 	promptText := p.buildPrompt(ref)
-	fmt.Fprint(p.Writer, promptText)
+	_, _ = fmt.Fprint(p.Writer, promptText)
 
 	var value string
 	var err error
@@ -121,7 +121,7 @@ func (p *ManualProvider) prompt(ref *secrets.SecretReference) (string, error) {
 			return "", fmt.Errorf("failed to read password: %w", err)
 		}
 		value = string(bytePassword)
-		fmt.Fprintln(p.Writer) // Add newline after hidden input
+		_, _ = fmt.Fprintln(p.Writer) // Add newline after hidden input
 	} else {
 		value, err = p.Reader.ReadString('\n')
 		if err != nil {
@@ -231,9 +231,9 @@ func (p *ManualProvider) PromptFunc() func(*secrets.SecretReference) (string, er
 func (p *ManualProvider) PromptBatch(ctx context.Context, refs []*secrets.SecretReference) (*secrets.ResolvedSecrets, error) {
 	resolved := secrets.NewResolvedSecrets()
 
-	fmt.Fprintln(p.Writer, "")
-	fmt.Fprintln(p.Writer, "=== Secret Entry ===")
-	fmt.Fprintf(p.Writer, "Please provide values for %d secrets:\n", len(refs))
+	_, _ = fmt.Fprintln(p.Writer, "")
+	_, _ = fmt.Fprintln(p.Writer, "=== Secret Entry ===")
+	_, _ = fmt.Fprintf(p.Writer, "Please provide values for %d secrets:\n", len(refs))
 
 	for _, ref := range refs {
 		value, err := p.Resolve(ctx, ref)
@@ -246,28 +246,28 @@ func (p *ManualProvider) PromptBatch(ctx context.Context, refs []*secrets.Secret
 		resolved.Add(ref.Name, value, "manual", ref)
 	}
 
-	fmt.Fprintln(p.Writer, "=== Secret Entry Complete ===")
-	fmt.Fprintln(p.Writer, "")
+	_, _ = fmt.Fprintln(p.Writer, "=== Secret Entry Complete ===")
+	_, _ = fmt.Fprintln(p.Writer, "")
 
 	return resolved, nil
 }
 
 // ConfirmSecrets displays entered secrets (masked) and asks for confirmation.
 func (p *ManualProvider) ConfirmSecrets(refs []*secrets.SecretReference) (bool, error) {
-	fmt.Fprintln(p.Writer, "\nSecrets to be used:")
+	_, _ = fmt.Fprintln(p.Writer, "\nSecrets to be used:")
 
 	for _, ref := range refs {
 		value, ok := p.cache[ref.Name]
 		if !ok {
-			fmt.Fprintf(p.Writer, "  %s: (not set)\n", ref.Name)
+			_, _ = fmt.Fprintf(p.Writer, "  %s: (not set)\n", ref.Name)
 			continue
 		}
 
 		masked := maskValue(value)
-		fmt.Fprintf(p.Writer, "  %s: %s\n", ref.Name, masked)
+		_, _ = fmt.Fprintf(p.Writer, "  %s: %s\n", ref.Name, masked)
 	}
 
-	fmt.Fprint(p.Writer, "\nProceed with these secrets? [y/N]: ")
+	_, _ = fmt.Fprint(p.Writer, "\nProceed with these secrets? [y/N]: ")
 
 	answer, err := p.Reader.ReadString('\n')
 	if err != nil {

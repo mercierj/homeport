@@ -228,7 +228,7 @@ func (s *Service) CreateStack(ctx context.Context, name, description, composeFil
 
 	// Write compose file and env
 	if err := s.writeStackFiles(stack); err != nil {
-		os.RemoveAll(stackDir)
+		_ = os.RemoveAll(stackDir)
 		return nil, fmt.Errorf("failed to write stack files: %w", err)
 	}
 
@@ -773,7 +773,7 @@ services:
 
 	// Write placeholder compose file
 	if err := s.writeStackFiles(stack); err != nil {
-		os.RemoveAll(stackDir)
+		_ = os.RemoveAll(stackDir)
 		return nil, fmt.Errorf("failed to write stack files: %w", err)
 	}
 

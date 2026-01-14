@@ -217,7 +217,7 @@ func performExport() error {
 	if err != nil {
 		return fmt.Errorf("failed to create temp directory: %w", err)
 	}
-	defer os.RemoveAll(tempDir)
+	defer func() { _ = os.RemoveAll(tempDir) }()
 
 	if err := generateExportFiles(tempDir, analysis, mappingResults, consolidatedResult); err != nil {
 		return fmt.Errorf("failed to generate files: %w", err)

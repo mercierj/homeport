@@ -71,7 +71,7 @@ Examples:
 		if err != nil {
 			return fmt.Errorf("failed to list services: %w", err)
 		}
-		defer resp.Body.Close()
+		defer func() { _ = resp.Body.Close() }()
 
 		if resp.StatusCode != http.StatusOK {
 			return handleServiceAPIError(resp)
@@ -185,7 +185,7 @@ Examples:
 		if err != nil {
 			return fmt.Errorf("failed to restart service: %w", err)
 		}
-		defer resp.Body.Close()
+		defer func() { _ = resp.Body.Close() }()
 
 		if resp.StatusCode != http.StatusOK {
 			return handleServiceAPIError(resp)
@@ -240,7 +240,7 @@ Examples:
 		if err != nil {
 			return fmt.Errorf("failed to scale service: %w", err)
 		}
-		defer resp.Body.Close()
+		defer func() { _ = resp.Body.Close() }()
 
 		if resp.StatusCode != http.StatusOK {
 			return handleServiceAPIError(resp)
@@ -286,7 +286,7 @@ Examples:
 		if err != nil {
 			return fmt.Errorf("failed to start service: %w", err)
 		}
-		defer resp.Body.Close()
+		defer func() { _ = resp.Body.Close() }()
 
 		if resp.StatusCode != http.StatusOK {
 			return handleServiceAPIError(resp)
@@ -331,7 +331,7 @@ Examples:
 		if err != nil {
 			return fmt.Errorf("failed to stop service: %w", err)
 		}
-		defer resp.Body.Close()
+		defer func() { _ = resp.Body.Close() }()
 
 		if resp.StatusCode != http.StatusOK {
 			return handleServiceAPIError(resp)
@@ -460,7 +460,7 @@ func fetchServiceLogs(serviceName string) error {
 	if err != nil {
 		return fmt.Errorf("failed to get logs: %w", err)
 	}
-	defer resp.Body.Close()
+	defer func() { _ = resp.Body.Close() }()
 
 	if resp.StatusCode != http.StatusOK {
 		return handleServiceAPIError(resp)
@@ -523,7 +523,7 @@ func fetchAndPrintLogs(serviceName string, tail int, lastLine *string) error {
 	if err != nil {
 		return err
 	}
-	defer resp.Body.Close()
+	defer func() { _ = resp.Body.Close() }()
 
 	if resp.StatusCode != http.StatusOK {
 		return handleServiceAPIError(resp)

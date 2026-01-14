@@ -289,13 +289,13 @@ func (s *Service) runBackup(backup *Backup) {
 		s.failBackup(backup, fmt.Errorf("failed to create backup file: %w", err))
 		return
 	}
-	defer file.Close()
+	defer func() { _ = file.Close() }()
 
 	gzWriter := gzip.NewWriter(file)
-	defer gzWriter.Close()
+	defer func() { _ = gzWriter.Close() }()
 
 	tarWriter := tar.NewWriter(gzWriter)
-	defer tarWriter.Close()
+	defer func() { _ = tarWriter.Close() }()
 
 	// Backup each volume
 	for _, volName := range backup.Volumes {
@@ -306,9 +306,9 @@ func (s *Service) runBackup(backup *Backup) {
 	}
 
 	// Close writers to flush data
-	tarWriter.Close()
-	gzWriter.Close()
-	file.Close()
+	_ = tarWriter.Close()
+	_ = gzWriter.Close()
+	_ = file.Close()
 
 	// Get file size
 	info, err := os.Stat(backup.FilePath)
@@ -380,7 +380,7 @@ func (s *Service) backupVolume(ctx context.Context, volumeName string, tarWriter
 	if err != nil {
 		return fmt.Errorf("failed to get container logs: %w", err)
 	}
-	defer logsReader.Close()
+	defer func() { _ = logsReader.Close() }()
 
 	// Write volume header to our tar
 	header := &tar.Header{
@@ -397,7 +397,7 @@ func (s *Service) backupVolume(ctx context.Context, volumeName string, tarWriter
 	// First, strip the docker multiplexing header
 	pr, pw := io.Pipe()
 	go func() {
-		defer pw.Close()
+		defer func() { _ = pw.Close() }()
 		_, _ = stdcopy.StdCopy(pw, io.Discard, logsReader)
 	}()
 
@@ -455,13 +455,13 @@ func (s *Service) RestoreBackup(ctx context.Context, backupID, targetStackID str
 	if err != nil {
 		return fmt.Errorf("failed to open backup file: %w", err)
 	}
-	defer file.Close()
+	defer func() { _ = file.Close() }()
 
 	gzReader, err := gzip.NewReader(file)
 	if err != nil {
 		return fmt.Errorf("failed to create gzip reader: %w", err)
 	}
-	defer gzReader.Close()
+	defer func() { _ = gzReader.Close() }()
 
 	tarReader := tar.NewReader(gzReader)
 
@@ -529,21 +529,21 @@ func (s *Service) restoreVolume(ctx context.Context, volumeName, backupPath stri
 	if err != nil {
 		return fmt.Errorf("failed to open backup: %w", err)
 	}
-	defer file.Close()
+	defer func() { _ = file.Close() }()
 
 	gzReader, err := gzip.NewReader(file)
 	if err != nil {
 		return fmt.Errorf("failed to create gzip reader: %w", err)
 	}
-	defer gzReader.Close()
+	defer func() { _ = gzReader.Close() }()
 
 	// Create a temporary tar file with just this volume's data
 	tmpFile, err := os.CreateTemp("", "restore-*.tar")
 	if err != nil {
 		return fmt.Errorf("failed to create temp file: %w", err)
 	}
-	defer os.Remove(tmpFile.Name())
-	defer tmpFile.Close()
+	defer func() { _ = os.Remove(tmpFile.Name()) }()
+	defer func() { _ = tmpFile.Close() }()
 
 	tarReader := tar.NewReader(gzReader)
 	tarWriter := tar.NewWriter(tmpFile)
@@ -582,8 +582,8 @@ func (s *Service) restoreVolume(ctx context.Context, volumeName, backupPath stri
 			}
 		}
 	}
-	tarWriter.Close()
-	tmpFile.Close()
+	_ = tarWriter.Close()
+	_ = tmpFile.Close()
 
 	// Ensure volume exists
 	_, err = s.dockerClient.VolumeInspect(ctx, volumeName)
@@ -697,7 +697,7 @@ func (s *Service) ensureAlpineImage(ctx context.Context) error {
 	if err != nil {
 		return err
 	}
-	defer reader.Close()
+	defer func() { _ = reader.Close() }()
 	_, _ = io.Copy(io.Discard, reader)
 	return nil
 }

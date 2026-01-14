@@ -496,7 +496,7 @@ func (h *LogsHandler) HandleStreamContainerLogs(w http.ResponseWriter, r *http.R
 	entryChan, errChan := h.service.StreamContainerLogs(ctx, containerID, toLogsQueryOptions(opts))
 
 	// Send initial connection event
-	fmt.Fprintf(w, "event: connected\ndata: {\"container_id\":\"%s\"}\n\n", containerID)
+	_, _ = fmt.Fprintf(w, "event: connected\ndata: {\"container_id\":\"%s\"}\n\n", containerID)
 	flusher.Flush()
 
 	// Stream logs
@@ -504,7 +504,7 @@ func (h *LogsHandler) HandleStreamContainerLogs(w http.ResponseWriter, r *http.R
 		select {
 		case <-ctx.Done():
 			// Client disconnected
-			fmt.Fprintf(w, "event: disconnected\ndata: {\"reason\":\"client_closed\"}\n\n")
+			_, _ = fmt.Fprintf(w, "event: disconnected\ndata: {\"reason\":\"client_closed\"}\n\n")
 			flusher.Flush()
 			return
 
@@ -514,7 +514,7 @@ func (h *LogsHandler) HandleStreamContainerLogs(w http.ResponseWriter, r *http.R
 				continue
 			}
 			if err != nil {
-				fmt.Fprintf(w, "event: error\ndata: {\"error\":\"%s\"}\n\n", escapeSSEData(err.Error()))
+				_, _ = fmt.Fprintf(w, "event: error\ndata: {\"error\":\"%s\"}\n\n", escapeSSEData(err.Error()))
 				flusher.Flush()
 				return
 			}
@@ -522,7 +522,7 @@ func (h *LogsHandler) HandleStreamContainerLogs(w http.ResponseWriter, r *http.R
 		case entry, ok := <-entryChan:
 			if !ok {
 				// Channel closed, send completion event
-				fmt.Fprintf(w, "event: complete\ndata: {\"reason\":\"stream_ended\"}\n\n")
+				_, _ = fmt.Fprintf(w, "event: complete\ndata: {\"reason\":\"stream_ended\"}\n\n")
 				flusher.Flush()
 				return
 			}
@@ -532,7 +532,7 @@ func (h *LogsHandler) HandleStreamContainerLogs(w http.ResponseWriter, r *http.R
 			if err != nil {
 				continue
 			}
-			fmt.Fprintf(w, "event: log\ndata: %s\n\n", data)
+			_, _ = fmt.Fprintf(w, "event: log\ndata: %s\n\n", data)
 			flusher.Flush()
 		}
 	}

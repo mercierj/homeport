@@ -105,7 +105,7 @@ func (e *GCSToMinIOExecutor) Execute(ctx context.Context, m *Migration, config *
 			return fmt.Errorf("failed to create temp file for service account key: %w", err)
 		}
 		tempKeyFile = tmpFile.Name()
-		defer os.Remove(tempKeyFile)
+		defer func() { _ = os.Remove(tempKeyFile) }()
 
 		if err := os.WriteFile(tempKeyFile, []byte(serviceAccountKey), 0600); err != nil {
 			return fmt.Errorf("failed to write service account key: %w", err)
@@ -166,7 +166,7 @@ func (e *GCSToMinIOExecutor) Execute(ctx context.Context, m *Migration, config *
 	if err != nil {
 		return fmt.Errorf("failed to create staging directory: %w", err)
 	}
-	defer os.RemoveAll(stagingDir)
+	defer func() { _ = os.RemoveAll(stagingDir) }()
 
 	localPath := filepath.Join(stagingDir, bucket)
 
@@ -311,7 +311,7 @@ func (e *FilestoreToNFSExecutor) Execute(ctx context.Context, m *Migration, conf
 			return fmt.Errorf("failed to create temp file for service account key: %w", err)
 		}
 		tempKeyFile = tmpFile.Name()
-		defer os.Remove(tempKeyFile)
+		defer func() { _ = os.Remove(tempKeyFile) }()
 
 		if err := os.WriteFile(tempKeyFile, []byte(serviceAccountKey), 0600); err != nil {
 			return fmt.Errorf("failed to write service account key: %w", err)
@@ -682,7 +682,7 @@ func (e *PersistentDiskToLocalExecutor) Execute(ctx context.Context, m *Migratio
 			return fmt.Errorf("failed to create temp file for service account key: %w", err)
 		}
 		tempKeyFile = tmpFile.Name()
-		defer os.Remove(tempKeyFile)
+		defer func() { _ = os.Remove(tempKeyFile) }()
 
 		if err := os.WriteFile(tempKeyFile, []byte(serviceAccountKey), 0600); err != nil {
 			return fmt.Errorf("failed to write service account key: %w", err)

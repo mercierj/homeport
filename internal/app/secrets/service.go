@@ -658,7 +658,7 @@ func (s *Service) cleanupOldVersions(versionsDir string) {
 	// Remove oldest versions
 	toRemove := len(entries) - s.config.MaxVersions
 	for i := 0; i < toRemove; i++ {
-		os.Remove(filepath.Join(versionsDir, entries[i].Name()))
+		_ = os.Remove(filepath.Join(versionsDir, entries[i].Name()))
 	}
 }
 

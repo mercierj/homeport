@@ -348,8 +348,8 @@ func (g *StackGenerator) createRestartPolicy() *RestartPolicy {
 
 // writeService writes a single service to the buffer.
 func (g *StackGenerator) writeService(buf *bytes.Buffer, svc *SwarmService) error {
-	buf.WriteString(fmt.Sprintf("  %s:\n", svc.Name))
-	buf.WriteString(fmt.Sprintf("    image: %s\n", svc.Image))
+	fmt.Fprintf(buf, "  %s:\n", svc.Name)
+	fmt.Fprintf(buf, "    image: %s\n", svc.Image)
 
 	// Deploy configuration (Swarm-specific)
 	g.writeDeployConfig(buf, svc.Deploy)
@@ -361,9 +361,9 @@ func (g *StackGenerator) writeService(buf *bytes.Buffer, svc *SwarmService) erro
 		for _, k := range keys {
 			v := svc.Environment[k]
 			if strings.ContainsAny(v, " \n\t:{}[]!@#$%^&*") {
-				buf.WriteString(fmt.Sprintf("      %s: \"%s\"\n", k, escapeYAML(v)))
+				fmt.Fprintf(buf, "      %s: \"%s\"\n", k, escapeYAML(v))
 			} else {
-				buf.WriteString(fmt.Sprintf("      %s: %s\n", k, v))
+				fmt.Fprintf(buf, "      %s: %s\n", k, v)
 			}
 		}
 	}
@@ -372,7 +372,7 @@ func (g *StackGenerator) writeService(buf *bytes.Buffer, svc *SwarmService) erro
 	if len(svc.Ports) > 0 {
 		buf.WriteString("    ports:\n")
 		for _, port := range svc.Ports {
-			buf.WriteString(fmt.Sprintf("      - \"%s\"\n", port))
+			fmt.Fprintf(buf, "      - \"%s\"\n", port)
 		}
 	}
 
@@ -380,7 +380,7 @@ func (g *StackGenerator) writeService(buf *bytes.Buffer, svc *SwarmService) erro
 	if len(svc.Volumes) > 0 {
 		buf.WriteString("    volumes:\n")
 		for _, vol := range svc.Volumes {
-			buf.WriteString(fmt.Sprintf("      - %s\n", vol))
+			fmt.Fprintf(buf, "      - %s\n", vol)
 		}
 	}
 
@@ -388,7 +388,7 @@ func (g *StackGenerator) writeService(buf *bytes.Buffer, svc *SwarmService) erro
 	if len(svc.Networks) > 0 {
 		buf.WriteString("    networks:\n")
 		for _, net := range svc.Networks {
-			buf.WriteString(fmt.Sprintf("      - %s\n", net))
+			fmt.Fprintf(buf, "      - %s\n", net)
 		}
 	}
 
@@ -396,7 +396,7 @@ func (g *StackGenerator) writeService(buf *bytes.Buffer, svc *SwarmService) erro
 	if len(svc.DependsOn) > 0 {
 		buf.WriteString("    depends_on:\n")
 		for _, dep := range svc.DependsOn {
-			buf.WriteString(fmt.Sprintf("      - %s\n", dep))
+			fmt.Fprintf(buf, "      - %s\n", dep)
 		}
 	}
 
@@ -404,7 +404,7 @@ func (g *StackGenerator) writeService(buf *bytes.Buffer, svc *SwarmService) erro
 	if len(svc.Command) > 0 {
 		buf.WriteString("    command:\n")
 		for _, cmd := range svc.Command {
-			buf.WriteString(fmt.Sprintf("      - %s\n", cmd))
+			fmt.Fprintf(buf, "      - %s\n", cmd)
 		}
 	}
 
@@ -414,20 +414,20 @@ func (g *StackGenerator) writeService(buf *bytes.Buffer, svc *SwarmService) erro
 		if len(svc.HealthCheck.Test) > 0 {
 			buf.WriteString("      test:\n")
 			for _, t := range svc.HealthCheck.Test {
-				buf.WriteString(fmt.Sprintf("        - %s\n", t))
+				fmt.Fprintf(buf, "        - %s\n", t)
 			}
 		}
 		if svc.HealthCheck.Interval != "" {
-			buf.WriteString(fmt.Sprintf("      interval: %s\n", svc.HealthCheck.Interval))
+			fmt.Fprintf(buf, "      interval: %s\n", svc.HealthCheck.Interval)
 		}
 		if svc.HealthCheck.Timeout != "" {
-			buf.WriteString(fmt.Sprintf("      timeout: %s\n", svc.HealthCheck.Timeout))
+			fmt.Fprintf(buf, "      timeout: %s\n", svc.HealthCheck.Timeout)
 		}
 		if svc.HealthCheck.Retries > 0 {
-			buf.WriteString(fmt.Sprintf("      retries: %d\n", svc.HealthCheck.Retries))
+			fmt.Fprintf(buf, "      retries: %d\n", svc.HealthCheck.Retries)
 		}
 		if svc.HealthCheck.StartPeriod != "" {
-			buf.WriteString(fmt.Sprintf("      start_period: %s\n", svc.HealthCheck.StartPeriod))
+			fmt.Fprintf(buf, "      start_period: %s\n", svc.HealthCheck.StartPeriod)
 		}
 	}
 
@@ -437,7 +437,7 @@ func (g *StackGenerator) writeService(buf *bytes.Buffer, svc *SwarmService) erro
 		keys := sortedKeys(svc.Labels)
 		for _, k := range keys {
 			v := svc.Labels[k]
-			buf.WriteString(fmt.Sprintf("      %s: \"%s\"\n", k, escapeYAML(v)))
+			fmt.Fprintf(buf, "      %s: \"%s\"\n", k, escapeYAML(v))
 		}
 	}
 
@@ -448,35 +448,35 @@ func (g *StackGenerator) writeService(buf *bytes.Buffer, svc *SwarmService) erro
 // writeDeployConfig writes the deploy section for a Swarm service.
 func (g *StackGenerator) writeDeployConfig(buf *bytes.Buffer, deploy *DeployConfig) {
 	buf.WriteString("    deploy:\n")
-	buf.WriteString(fmt.Sprintf("      replicas: %d\n", deploy.Replicas))
+	fmt.Fprintf(buf, "      replicas: %d\n", deploy.Replicas)
 
 	// Update config
 	if deploy.UpdateConfig != nil {
 		buf.WriteString("      update_config:\n")
-		buf.WriteString(fmt.Sprintf("        parallelism: %d\n", deploy.UpdateConfig.Parallelism))
+		fmt.Fprintf(buf, "        parallelism: %d\n", deploy.UpdateConfig.Parallelism)
 		if deploy.UpdateConfig.Delay != "" {
-			buf.WriteString(fmt.Sprintf("        delay: %s\n", deploy.UpdateConfig.Delay))
+			fmt.Fprintf(buf, "        delay: %s\n", deploy.UpdateConfig.Delay)
 		}
 		if deploy.UpdateConfig.FailureAction != "" {
-			buf.WriteString(fmt.Sprintf("        failure_action: %s\n", deploy.UpdateConfig.FailureAction))
+			fmt.Fprintf(buf, "        failure_action: %s\n", deploy.UpdateConfig.FailureAction)
 		}
 		if deploy.UpdateConfig.Order != "" {
-			buf.WriteString(fmt.Sprintf("        order: %s\n", deploy.UpdateConfig.Order))
+			fmt.Fprintf(buf, "        order: %s\n", deploy.UpdateConfig.Order)
 		}
 		if deploy.UpdateConfig.Monitor != "" {
-			buf.WriteString(fmt.Sprintf("        monitor: %s\n", deploy.UpdateConfig.Monitor))
+			fmt.Fprintf(buf, "        monitor: %s\n", deploy.UpdateConfig.Monitor)
 		}
 	}
 
 	// Rollback config
 	if deploy.RollbackConfig != nil {
 		buf.WriteString("      rollback_config:\n")
-		buf.WriteString(fmt.Sprintf("        parallelism: %d\n", deploy.RollbackConfig.Parallelism))
+		fmt.Fprintf(buf, "        parallelism: %d\n", deploy.RollbackConfig.Parallelism)
 		if deploy.RollbackConfig.Delay != "" {
-			buf.WriteString(fmt.Sprintf("        delay: %s\n", deploy.RollbackConfig.Delay))
+			fmt.Fprintf(buf, "        delay: %s\n", deploy.RollbackConfig.Delay)
 		}
 		if deploy.RollbackConfig.Order != "" {
-			buf.WriteString(fmt.Sprintf("        order: %s\n", deploy.RollbackConfig.Order))
+			fmt.Fprintf(buf, "        order: %s\n", deploy.RollbackConfig.Order)
 		}
 	}
 
@@ -484,16 +484,16 @@ func (g *StackGenerator) writeDeployConfig(buf *bytes.Buffer, deploy *DeployConf
 	if deploy.RestartPolicy != nil {
 		buf.WriteString("      restart_policy:\n")
 		if deploy.RestartPolicy.Condition != "" {
-			buf.WriteString(fmt.Sprintf("        condition: %s\n", deploy.RestartPolicy.Condition))
+			fmt.Fprintf(buf, "        condition: %s\n", deploy.RestartPolicy.Condition)
 		}
 		if deploy.RestartPolicy.Delay != "" {
-			buf.WriteString(fmt.Sprintf("        delay: %s\n", deploy.RestartPolicy.Delay))
+			fmt.Fprintf(buf, "        delay: %s\n", deploy.RestartPolicy.Delay)
 		}
 		if deploy.RestartPolicy.MaxAttempts > 0 {
-			buf.WriteString(fmt.Sprintf("        max_attempts: %d\n", deploy.RestartPolicy.MaxAttempts))
+			fmt.Fprintf(buf, "        max_attempts: %d\n", deploy.RestartPolicy.MaxAttempts)
 		}
 		if deploy.RestartPolicy.Window != "" {
-			buf.WriteString(fmt.Sprintf("        window: %s\n", deploy.RestartPolicy.Window))
+			fmt.Fprintf(buf, "        window: %s\n", deploy.RestartPolicy.Window)
 		}
 	}
 
@@ -503,13 +503,13 @@ func (g *StackGenerator) writeDeployConfig(buf *bytes.Buffer, deploy *DeployConf
 		if len(deploy.Placement.Constraints) > 0 {
 			buf.WriteString("        constraints:\n")
 			for _, c := range deploy.Placement.Constraints {
-				buf.WriteString(fmt.Sprintf("          - %s\n", c))
+				fmt.Fprintf(buf, "          - %s\n", c)
 			}
 		}
 		if len(deploy.Placement.Preferences) > 0 {
 			buf.WriteString("        preferences:\n")
 			for _, p := range deploy.Placement.Preferences {
-				buf.WriteString(fmt.Sprintf("          - spread: %s\n", p.Spread))
+				fmt.Fprintf(buf, "          - spread: %s\n", p.Spread)
 			}
 		}
 	}
@@ -520,19 +520,19 @@ func (g *StackGenerator) writeDeployConfig(buf *bytes.Buffer, deploy *DeployConf
 		if deploy.Resources.Limits != nil {
 			buf.WriteString("        limits:\n")
 			if deploy.Resources.Limits.CPUs != "" {
-				buf.WriteString(fmt.Sprintf("          cpus: '%s'\n", deploy.Resources.Limits.CPUs))
+				fmt.Fprintf(buf, "          cpus: '%s'\n", deploy.Resources.Limits.CPUs)
 			}
 			if deploy.Resources.Limits.Memory != "" {
-				buf.WriteString(fmt.Sprintf("          memory: %s\n", deploy.Resources.Limits.Memory))
+				fmt.Fprintf(buf, "          memory: %s\n", deploy.Resources.Limits.Memory)
 			}
 		}
 		if deploy.Resources.Reservations != nil {
 			buf.WriteString("        reservations:\n")
 			if deploy.Resources.Reservations.CPUs != "" {
-				buf.WriteString(fmt.Sprintf("          cpus: '%s'\n", deploy.Resources.Reservations.CPUs))
+				fmt.Fprintf(buf, "          cpus: '%s'\n", deploy.Resources.Reservations.CPUs)
 			}
 			if deploy.Resources.Reservations.Memory != "" {
-				buf.WriteString(fmt.Sprintf("          memory: %s\n", deploy.Resources.Reservations.Memory))
+				fmt.Fprintf(buf, "          memory: %s\n", deploy.Resources.Reservations.Memory)
 			}
 		}
 	}
@@ -550,8 +550,8 @@ func (g *StackGenerator) writeNetworks(buf *bytes.Buffer) {
 
 	for _, name := range networkNames {
 		net := g.networks.networks[name]
-		buf.WriteString(fmt.Sprintf("  %s:\n", name))
-		buf.WriteString(fmt.Sprintf("    driver: %s\n", net.Driver))
+		fmt.Fprintf(buf, "  %s:\n", name)
+		fmt.Fprintf(buf, "    driver: %s\n", net.Driver)
 		if net.Attachable {
 			buf.WriteString("    attachable: true\n")
 		}
@@ -565,7 +565,7 @@ func (g *StackGenerator) writeNetworks(buf *bytes.Buffer) {
 		if len(net.Labels) > 0 {
 			buf.WriteString("    labels:\n")
 			for k, v := range net.Labels {
-				buf.WriteString(fmt.Sprintf("      %s: \"%s\"\n", k, v))
+				fmt.Fprintf(buf, "      %s: \"%s\"\n", k, v)
 			}
 		}
 	}
@@ -608,20 +608,20 @@ func (g *StackGenerator) writeVolumes(buf *bytes.Buffer, volumes map[string]*Vol
 
 	for _, name := range volumeNames {
 		vol := volumes[name]
-		buf.WriteString(fmt.Sprintf("  %s:\n", name))
+		fmt.Fprintf(buf, "  %s:\n", name)
 		if vol.Driver != "" {
-			buf.WriteString(fmt.Sprintf("    driver: %s\n", vol.Driver))
+			fmt.Fprintf(buf, "    driver: %s\n", vol.Driver)
 		}
 		if len(vol.DriverOpts) > 0 {
 			buf.WriteString("    driver_opts:\n")
 			for k, v := range vol.DriverOpts {
-				buf.WriteString(fmt.Sprintf("      %s: \"%s\"\n", k, v))
+				fmt.Fprintf(buf, "      %s: \"%s\"\n", k, v)
 			}
 		}
 		if len(vol.Labels) > 0 {
 			buf.WriteString("    labels:\n")
 			for k, v := range vol.Labels {
-				buf.WriteString(fmt.Sprintf("      %s: \"%s\"\n", k, v))
+				fmt.Fprintf(buf, "      %s: \"%s\"\n", k, v)
 			}
 		}
 	}

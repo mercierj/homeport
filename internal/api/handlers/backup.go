@@ -207,7 +207,7 @@ func (h *BackupHandler) HandleDownloadBackup(w http.ResponseWriter, r *http.Requ
 		httputil.InternalError(w, r, err)
 		return
 	}
-	defer file.Close()
+	defer func() { _ = file.Close() }()
 
 	// Get file info
 	info, err := file.Stat()

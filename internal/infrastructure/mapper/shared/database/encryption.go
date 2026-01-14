@@ -368,9 +368,10 @@ func MySQLTLSConfig(opts *DatabaseOptions) []byte {
 
 	// Convert version format for MySQL (TLSv1.2 -> TLSv1.2,TLSv1.3)
 	tlsVersions := minVersion
-	if minVersion == "TLSv1.2" {
+	switch minVersion {
+	case "TLSv1.2":
 		tlsVersions = "TLSv1.2,TLSv1.3"
-	} else if minVersion == "TLSv1.3" {
+	case "TLSv1.3":
 		tlsVersions = "TLSv1.3"
 	}
 

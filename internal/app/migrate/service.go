@@ -155,7 +155,7 @@ func (s *Service) Analyze(ctx context.Context, req AnalyzeRequest) (*AnalyzeResp
 	if err != nil {
 		return nil, fmt.Errorf("failed to create temp dir: %w", err)
 	}
-	defer os.RemoveAll(tmpDir)
+	defer func() { _ = os.RemoveAll(tmpDir) }()
 
 	ext := ".tf"
 	switch req.Type {

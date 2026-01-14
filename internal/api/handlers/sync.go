@@ -315,7 +315,7 @@ func (h *SyncHandler) StreamProgress(w http.ResponseWriter, r *http.Request) {
 			}
 		case <-time.After(30 * time.Second):
 			// Send keepalive
-			fmt.Fprintf(w, ": keepalive\n\n")
+			_, _ = fmt.Fprintf(w, ": keepalive\n\n")
 			flusher.Flush()
 		}
 	}
@@ -323,8 +323,8 @@ func (h *SyncHandler) StreamProgress(w http.ResponseWriter, r *http.Request) {
 
 func sendSSEEvent(w http.ResponseWriter, flusher http.Flusher, eventType string, data interface{}) {
 	jsonData, _ := json.Marshal(data)
-	fmt.Fprintf(w, "event: %s\n", eventType)
-	fmt.Fprintf(w, "data: %s\n\n", jsonData)
+	_, _ = fmt.Fprintf(w, "event: %s\n", eventType)
+	_, _ = fmt.Fprintf(w, "data: %s\n\n", jsonData)
 	flusher.Flush()
 }
 

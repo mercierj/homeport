@@ -130,7 +130,7 @@ func (h *HealthChecker) executeHTTP(ctx context.Context, check *cutover.HealthCh
 	if err != nil {
 		return fmt.Errorf("request failed: %w", err)
 	}
-	defer resp.Body.Close()
+	defer func() { _ = resp.Body.Close() }()
 
 	result.StatusCode = resp.StatusCode
 	result.Details["status_code"] = resp.StatusCode
@@ -183,7 +183,7 @@ func (h *HealthChecker) executeTCP(ctx context.Context, check *cutover.HealthChe
 	if err != nil {
 		return fmt.Errorf("TCP connection failed: %w", err)
 	}
-	defer conn.Close()
+	defer func() { _ = conn.Close() }()
 
 	result.Response = fmt.Sprintf("TCP connection to %s successful", check.Endpoint)
 	result.Details["remote_addr"] = conn.RemoteAddr().String()

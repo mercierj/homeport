@@ -103,7 +103,7 @@ func (e *CloudSQLToPostgresExecutor) Execute(ctx context.Context, m *Migration, 
 	if err != nil {
 		return fmt.Errorf("failed to create staging directory: %w", err)
 	}
-	defer os.RemoveAll(stagingDir)
+	defer func() { _ = os.RemoveAll(stagingDir) }()
 
 	// Setup GCP credentials if provided
 	var envVars []string
@@ -146,7 +146,7 @@ func (e *CloudSQLToPostgresExecutor) Execute(ctx context.Context, m *Migration, 
 	describeCmd.Env = envVars
 	if output, err := describeCmd.CombinedOutput(); err != nil {
 		EmitLog(m, "error", fmt.Sprintf("Failed to describe Cloud SQL instance: %s", string(output)))
-		return fmt.Errorf("Cloud SQL instance not found or inaccessible: %w", err)
+		return fmt.Errorf("cloud SQL instance not found or inaccessible: %w", err)
 	}
 	EmitLog(m, "info", "Cloud SQL instance verified successfully")
 
@@ -392,7 +392,7 @@ func (e *FirestoreToMongoDBExecutor) Execute(ctx context.Context, m *Migration, 
 	if err != nil {
 		return fmt.Errorf("failed to create staging directory: %w", err)
 	}
-	defer os.RemoveAll(stagingDir)
+	defer func() { _ = os.RemoveAll(stagingDir) }()
 
 	// Setup GCP credentials if provided
 	var envVars []string
@@ -645,7 +645,7 @@ func (e *MemorystoreToRedisExecutor) Execute(ctx context.Context, m *Migration, 
 	if err != nil {
 		return fmt.Errorf("failed to create staging directory: %w", err)
 	}
-	defer os.RemoveAll(stagingDir)
+	defer func() { _ = os.RemoveAll(stagingDir) }()
 
 	// Setup GCP credentials if provided
 	var envVars []string
@@ -689,7 +689,7 @@ func (e *MemorystoreToRedisExecutor) Execute(ctx context.Context, m *Migration, 
 	instanceOutput, err := describeCmd.CombinedOutput()
 	if err != nil {
 		EmitLog(m, "error", fmt.Sprintf("Failed to describe Memorystore instance: %s", string(instanceOutput)))
-		return fmt.Errorf("Memorystore instance not found: %w", err)
+		return fmt.Errorf("memorystore instance not found: %w", err)
 	}
 	EmitLog(m, "info", "Memorystore instance verified successfully")
 
@@ -920,7 +920,7 @@ func (e *BigtableToScyllaExecutor) Execute(ctx context.Context, m *Migration, co
 	if err != nil {
 		return fmt.Errorf("failed to create staging directory: %w", err)
 	}
-	defer os.RemoveAll(stagingDir)
+	defer func() { _ = os.RemoveAll(stagingDir) }()
 
 	// Setup GCP credentials if provided
 	var envVars []string
@@ -1196,7 +1196,7 @@ func (e *SpannerToCockroachExecutor) Execute(ctx context.Context, m *Migration, 
 	if err != nil {
 		return fmt.Errorf("failed to create staging directory: %w", err)
 	}
-	defer os.RemoveAll(stagingDir)
+	defer func() { _ = os.RemoveAll(stagingDir) }()
 
 	// Setup GCP credentials if provided
 	var envVars []string

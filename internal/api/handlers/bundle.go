@@ -460,7 +460,7 @@ func (h *BundleHandler) UploadBundle(w http.ResponseWriter, r *http.Request) {
 		respondError(w, r, http.StatusBadRequest, "Bundle file is required")
 		return
 	}
-	defer file.Close()
+	defer func() { _ = file.Close() }()
 
 	// Validate file extension
 	if !strings.HasSuffix(header.Filename, ".hprt") {
@@ -477,7 +477,7 @@ func (h *BundleHandler) UploadBundle(w http.ResponseWriter, r *http.Request) {
 		respondError(w, r, http.StatusInternalServerError, "Failed to save bundle")
 		return
 	}
-	defer dst.Close()
+	defer func() { _ = dst.Close() }()
 
 	written, err := io.Copy(dst, file)
 	if err != nil {
@@ -565,8 +565,8 @@ func (h *BundleHandler) DeleteBundle(w http.ResponseWriter, r *http.Request) {
 	bundleInfo, ok := h.bundles[bundleID]
 	if ok {
 		// Delete files
-		os.Remove(bundleInfo.FilePath)
-		os.RemoveAll(filepath.Join(h.tempDir, bundleID))
+		_ = os.Remove(bundleInfo.FilePath)
+		_ = os.RemoveAll(filepath.Join(h.tempDir, bundleID))
 		delete(h.bundles, bundleID)
 	}
 	h.bundlesMu.Unlock()
@@ -597,7 +597,7 @@ func (h *BundleHandler) DownloadBundle(w http.ResponseWriter, r *http.Request) {
 		respondError(w, r, http.StatusInternalServerError, "Failed to read bundle")
 		return
 	}
-	defer file.Close()
+	defer func() { _ = file.Close() }()
 
 	w.Header().Set("Content-Type", "application/gzip")
 	w.Header().Set("Content-Disposition", fmt.Sprintf("attachment; filename=%s", bundleInfo.Name))
@@ -1042,13 +1042,13 @@ func pullGCPSecret(secretName, projectID, serviceAccountJSON string) (string, er
 		if err != nil {
 			return "", fmt.Errorf("failed to create temp file for service account: %w", err)
 		}
-		defer os.Remove(tmpFile.Name())
+		defer func() { _ = os.Remove(tmpFile.Name()) }()
 
 		if _, err := tmpFile.WriteString(serviceAccountJSON); err != nil {
-			tmpFile.Close()
+			_ = tmpFile.Close()
 			return "", fmt.Errorf("failed to write service account: %w", err)
 		}
-		tmpFile.Close()
+		_ = tmpFile.Close()
 
 		envVars = append(os.Environ(), "GOOGLE_APPLICATION_CREDENTIALS="+tmpFile.Name())
 	} else {
@@ -1139,12 +1139,12 @@ func pullAzureSecret(secretName, subscriptionID, tenantID, clientID, clientSecre
 	output, err := cmd.Output()
 	if err != nil {
 		if ctx.Err() == context.DeadlineExceeded {
-			return "", fmt.Errorf("Azure CLI timed out after 30 seconds")
+			return "", fmt.Errorf("azure CLI timed out after 30 seconds")
 		}
 		if exitErr, ok := err.(*exec.ExitError); ok {
-			return "", fmt.Errorf("Azure CLI error: %s", string(exitErr.Stderr))
+			return "", fmt.Errorf("azure CLI error: %s", string(exitErr.Stderr))
 		}
-		return "", fmt.Errorf("failed to execute Azure CLI: %w", err)
+		return "", fmt.Errorf("failed to execute azure CLI: %w", err)
 	}
 
 	secretValue := strings.TrimSpace(string(output))
@@ -1376,13 +1376,13 @@ func createTarGz(sourceDir, targetPath string) error {
 	if err != nil {
 		return err
 	}
-	defer file.Close()
+	defer func() { _ = file.Close() }()
 
 	gzWriter := gzip.NewWriter(file)
-	defer gzWriter.Close()
+	defer func() { _ = gzWriter.Close() }()
 
 	tarWriter := tar.NewWriter(gzWriter)
-	defer tarWriter.Close()
+	defer func() { _ = tarWriter.Close() }()
 
 	return filepath.Walk(sourceDir, func(path string, info os.FileInfo, err error) error {
 		if err != nil {
@@ -1416,7 +1416,7 @@ func createTarGz(sourceDir, targetPath string) error {
 		if err != nil {
 			return err
 		}
-		defer file.Close()
+		defer func() { _ = file.Close() }()
 
 		_, err = io.Copy(tarWriter, file)
 		return err
@@ -1428,13 +1428,13 @@ func extractTarGz(sourcePath, targetDir string) error {
 	if err != nil {
 		return err
 	}
-	defer file.Close()
+	defer func() { _ = file.Close() }()
 
 	gzReader, err := gzip.NewReader(file)
 	if err != nil {
 		return err
 	}
-	defer gzReader.Close()
+	defer func() { _ = gzReader.Close() }()
 
 	tarReader := tar.NewReader(gzReader)
 
@@ -1463,10 +1463,10 @@ func extractTarGz(sourcePath, targetDir string) error {
 				return err
 			}
 			if _, err := io.Copy(outFile, tarReader); err != nil {
-				outFile.Close()
+				_ = outFile.Close()
 				return err
 			}
-			outFile.Close()
+			_ = outFile.Close()
 		}
 	}
 
@@ -1475,7 +1475,7 @@ func extractTarGz(sourcePath, targetDir string) error {
 
 func sendSSE(w http.ResponseWriter, flusher http.Flusher, eventType string, data interface{}) {
 	jsonData, _ := json.Marshal(data)
-	fmt.Fprintf(w, "event: %s\n", eventType)
-	fmt.Fprintf(w, "data: %s\n\n", jsonData)
+	_, _ = fmt.Fprintf(w, "event: %s\n", eventType)
+	_, _ = fmt.Fprintf(w, "data: %s\n\n", jsonData)
 	flusher.Flush()
 }

@@ -114,7 +114,7 @@ func (p *FileProvider) resolveFromEnvFile(filePath, keyName string) (string, err
 	if err != nil {
 		return "", fmt.Errorf("failed to open env file: %w", err)
 	}
-	defer file.Close()
+	defer func() { _ = file.Close() }()
 
 	env := make(map[string]string)
 	scanner := bufio.NewScanner(file)

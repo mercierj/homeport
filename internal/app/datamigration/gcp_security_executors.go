@@ -110,7 +110,7 @@ func (e *SecretManagerToVaultExecutor) Execute(ctx context.Context, m *Migration
 		if err != nil {
 			return fmt.Errorf("failed to create temp file for service account: %w", err)
 		}
-		defer os.Remove(saFile.Name())
+		defer func() { _ = os.Remove(saFile.Name()) }()
 		if err := os.WriteFile(saFile.Name(), []byte(serviceAccountJSON), 0600); err != nil {
 			return fmt.Errorf("failed to write service account file: %w", err)
 		}
@@ -533,7 +533,7 @@ func (e *IdentityPlatformToKeycloakExecutor) Execute(ctx context.Context, m *Mig
 			return fmt.Errorf("failed to create temp file for service account: %w", err)
 		}
 		saFilePath = saFile.Name()
-		defer os.Remove(saFilePath)
+		defer func() { _ = os.Remove(saFilePath) }()
 		if err := os.WriteFile(saFilePath, []byte(serviceAccountJSON), 0600); err != nil {
 			return fmt.Errorf("failed to write service account file: %w", err)
 		}
@@ -1010,7 +1010,7 @@ func (e *CloudDNSToCoreDNSExecutor) Execute(ctx context.Context, m *Migration, c
 		if err != nil {
 			return fmt.Errorf("failed to create temp file for service account: %w", err)
 		}
-		defer os.Remove(saFile.Name())
+		defer func() { _ = os.Remove(saFile.Name()) }()
 		if err := os.WriteFile(saFile.Name(), []byte(serviceAccountJSON), 0600); err != nil {
 			return fmt.Errorf("failed to write service account file: %w", err)
 		}

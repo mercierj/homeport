@@ -523,7 +523,7 @@ func wizardStep4ExportBundle(state *WizardState) error {
 	if err != nil {
 		return fmt.Errorf("failed to create temp directory: %w", err)
 	}
-	defer os.RemoveAll(tempDir)
+	defer func() { _ = os.RemoveAll(tempDir) }()
 
 	state.OutputDir = tempDir
 

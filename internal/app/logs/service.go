@@ -206,7 +206,7 @@ func (s *Service) GetContainerLogsOld(ctx context.Context, containerName string,
 	if err != nil {
 		return nil, err
 	}
-	defer reader.Close()
+	defer func() { _ = reader.Close() }()
 
 	var logs []LogEntry
 	scanner := bufio.NewScanner(reader)
@@ -274,7 +274,7 @@ func (s *Service) StreamLogs(ctx context.Context, containerName string, callback
 	if err != nil {
 		return err
 	}
-	defer reader.Close()
+	defer func() { _ = reader.Close() }()
 
 	scanner := bufio.NewScanner(reader)
 	for scanner.Scan() {

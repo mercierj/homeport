@@ -36,7 +36,7 @@ func (m *MySQLSync) EstimateSize(ctx context.Context, source *sync.Endpoint) (in
 	if err != nil {
 		return 0, fmt.Errorf("failed to connect to source database: %w", err)
 	}
-	defer db.Close()
+	defer func() { _ = db.Close() }()
 
 	var size sql.NullInt64
 	query := `
@@ -108,7 +108,7 @@ func (m *MySQLSync) Sync(ctx context.Context, source, target *sync.Endpoint, pro
 
 	// Start dump
 	if err := dumpProc.Start(); err != nil {
-		pipeWriter.Close()
+		_ = pipeWriter.Close()
 		_ = restoreProc.Process.Kill()
 		return fmt.Errorf("failed to start mysqldump: %w", err)
 	}
@@ -141,11 +141,11 @@ func (m *MySQLSync) Sync(ctx context.Context, source, target *sync.Endpoint, pro
 
 	// Wait for dump to complete
 	dumpErr := dumpProc.Wait()
-	pipeWriter.Close()
+	_ = pipeWriter.Close()
 
 	// Wait for restore to complete
 	restoreErr := restoreProc.Wait()
-	pipeReader.Close()
+	_ = pipeReader.Close()
 
 	// Signal progress monitoring to stop
 	close(progressDone)
@@ -178,13 +178,13 @@ func (m *MySQLSync) Verify(ctx context.Context, source, target *sync.Endpoint) (
 	if err != nil {
 		return nil, fmt.Errorf("failed to connect to source: %w", err)
 	}
-	defer sourceDB.Close()
+	defer func() { _ = sourceDB.Close() }()
 
 	targetDB, err := m.connect(ctx, target)
 	if err != nil {
 		return nil, fmt.Errorf("failed to connect to target: %w", err)
 	}
-	defer targetDB.Close()
+	defer func() { _ = targetDB.Close() }()
 
 	// Get table list from source
 	tables, err := m.getTables(ctx, sourceDB, source.Database)
@@ -236,7 +236,7 @@ func (m *MySQLSync) connect(ctx context.Context, endpoint *sync.Endpoint) (*sql.
 
 	// Test the connection
 	if err := db.PingContext(ctx); err != nil {
-		db.Close()
+		_ = db.Close()
 		return nil, err
 	}
 
@@ -296,7 +296,7 @@ func (m *MySQLSync) createTargetDatabase(ctx context.Context, target *sync.Endpo
 	if err != nil {
 		return fmt.Errorf("failed to connect to MySQL server: %w", err)
 	}
-	defer db.Close()
+	defer func() { _ = db.Close() }()
 
 	// Create the database if it doesn't exist
 	// Note: database names can't be parameterized in CREATE DATABASE
@@ -377,7 +377,7 @@ func (m *MySQLSync) getTables(ctx context.Context, db *sql.DB, database string) 
 	if err != nil {
 		return nil, err
 	}
-	defer rows.Close()
+	defer func() { _ = rows.Close() }()
 
 	var tables []string
 	for rows.Next() {
@@ -430,7 +430,7 @@ func (m *MySQLTableSync) SyncTables(ctx context.Context, source, target *sync.En
 	}
 
 	tables, err := m.getTables(ctx, sourceDB, source.Database)
-	sourceDB.Close()
+	_ = sourceDB.Close()
 	if err != nil {
 		return err
 	}
@@ -503,16 +503,16 @@ func (m *MySQLTableSync) syncTable(ctx context.Context, source, target *sync.End
 	}
 
 	if err := dumpProc.Start(); err != nil {
-		pipeWriter.Close()
+		_ = pipeWriter.Close()
 		_ = restoreProc.Process.Kill()
 		return fmt.Errorf("failed to start dump: %w", err)
 	}
 
 	dumpWaitErr := dumpProc.Wait()
-	pipeWriter.Close()
+	_ = pipeWriter.Close()
 
 	restoreWaitErr := restoreProc.Wait()
-	pipeReader.Close()
+	_ = pipeReader.Close()
 
 	if dumpWaitErr != nil {
 		return fmt.Errorf("dump failed: %w - %s", dumpWaitErr, dumpErr.String())
@@ -584,7 +584,7 @@ func (m *MySQLReplicationSync) GetBinlogPosition(ctx context.Context, source *sy
 	if err != nil {
 		return "", "", err
 	}
-	defer db.Close()
+	defer func() { _ = db.Close() }()
 
 	var file string
 	var position int64

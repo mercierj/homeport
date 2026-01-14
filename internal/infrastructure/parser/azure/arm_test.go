@@ -60,7 +60,7 @@ func TestARMParser_Parse_ValidTemplate(t *testing.T) {
 	if err != nil {
 		t.Fatalf("failed to create temp dir: %v", err)
 	}
-	defer os.RemoveAll(tmpDir)
+	defer func() { _ = os.RemoveAll(tmpDir) }()
 
 	templateContent := `{
 		"$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
@@ -155,7 +155,7 @@ func TestARMParser_Parse_Directory(t *testing.T) {
 	if err != nil {
 		t.Fatalf("failed to create temp dir: %v", err)
 	}
-	defer os.RemoveAll(tmpDir)
+	defer func() { _ = os.RemoveAll(tmpDir) }()
 
 	template1 := `{
 		"$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",

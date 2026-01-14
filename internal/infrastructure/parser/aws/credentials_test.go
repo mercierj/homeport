@@ -74,41 +74,41 @@ func TestDetectCredentialSource(t *testing.T) {
 	originalRoleARN := os.Getenv("AWS_ROLE_ARN")
 
 	defer func() {
-		os.Setenv("AWS_ACCESS_KEY_ID", originalAccessKey)
-		os.Setenv("AWS_SECRET_ACCESS_KEY", originalSecretKey)
-		os.Setenv("AWS_PROFILE", originalProfile)
-		os.Setenv("AWS_ROLE_ARN", originalRoleARN)
+		_ = os.Setenv("AWS_ACCESS_KEY_ID", originalAccessKey)
+		_ = os.Setenv("AWS_SECRET_ACCESS_KEY", originalSecretKey)
+		_ = os.Setenv("AWS_PROFILE", originalProfile)
+		_ = os.Setenv("AWS_ROLE_ARN", originalRoleARN)
 	}()
 
 	// Test env source
-	os.Setenv("AWS_ACCESS_KEY_ID", "test")
-	os.Setenv("AWS_SECRET_ACCESS_KEY", "test")
-	os.Unsetenv("AWS_PROFILE")
-	os.Unsetenv("AWS_ROLE_ARN")
+	_ = os.Setenv("AWS_ACCESS_KEY_ID", "test")
+	_ = os.Setenv("AWS_SECRET_ACCESS_KEY", "test")
+	_ = os.Unsetenv("AWS_PROFILE")
+	_ = os.Unsetenv("AWS_ROLE_ARN")
 
 	if source := DetectCredentialSource(); source != CredentialSourceEnv {
 		t.Errorf("expected env source, got %s", source)
 	}
 
 	// Test profile source
-	os.Unsetenv("AWS_ACCESS_KEY_ID")
-	os.Unsetenv("AWS_SECRET_ACCESS_KEY")
-	os.Setenv("AWS_PROFILE", "myprofile")
+	_ = os.Unsetenv("AWS_ACCESS_KEY_ID")
+	_ = os.Unsetenv("AWS_SECRET_ACCESS_KEY")
+	_ = os.Setenv("AWS_PROFILE", "myprofile")
 
 	if source := DetectCredentialSource(); source != CredentialSourceProfile {
 		t.Errorf("expected profile source, got %s", source)
 	}
 
 	// Test role source
-	os.Unsetenv("AWS_PROFILE")
-	os.Setenv("AWS_ROLE_ARN", "arn:aws:iam::123456789012:role/MyRole")
+	_ = os.Unsetenv("AWS_PROFILE")
+	_ = os.Setenv("AWS_ROLE_ARN", "arn:aws:iam::123456789012:role/MyRole")
 
 	if source := DetectCredentialSource(); source != CredentialSourceRole {
 		t.Errorf("expected role source, got %s", source)
 	}
 
 	// Test default source
-	os.Unsetenv("AWS_ROLE_ARN")
+	_ = os.Unsetenv("AWS_ROLE_ARN")
 
 	if source := DetectCredentialSource(); source != CredentialSourceDefault {
 		t.Errorf("expected default source, got %s", source)

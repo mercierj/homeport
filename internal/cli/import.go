@@ -438,7 +438,7 @@ func runImportAzure(cmd *cobra.Command, args []string) error {
 	// Get the Azure API parser
 	p, err := parser.DefaultRegistry().GetByFormat(resource.ProviderAzure, parser.FormatAPI)
 	if err != nil {
-		return fmt.Errorf("Azure API parser not available: %w", err)
+		return fmt.Errorf("azure API parser not available: %w", err)
 	}
 
 	if !IsQuiet() {

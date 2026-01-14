@@ -39,7 +39,7 @@ func (r *RedisSync) EstimateSize(ctx context.Context, source *sync.Endpoint) (in
 	if err != nil {
 		return 0, fmt.Errorf("failed to connect to source Redis: %w", err)
 	}
-	defer conn.Close()
+	defer func() { _ = conn.Close() }()
 
 	// Send INFO memory command
 	info, err := r.sendCommand(conn, "INFO", "memory")
@@ -85,7 +85,7 @@ func (r *RedisSync) Sync(ctx context.Context, source, target *sync.Endpoint, pro
 		reporter.Error(fmt.Sprintf("failed to create snapshot: %v", err))
 		return err
 	}
-	defer os.Remove(rdbPath)
+	defer func() { _ = os.Remove(rdbPath) }()
 
 	// Step 3: Get key count for item tracking
 	keyCount, err := r.getKeyCount(ctx, source)
@@ -182,7 +182,7 @@ func (r *RedisSync) connect(ctx context.Context, endpoint *sync.Endpoint) (net.C
 			_, err = r.sendCommand(conn, "AUTH", endpoint.Credentials.Password)
 		}
 		if err != nil {
-			conn.Close()
+			_ = conn.Close()
 			return nil, fmt.Errorf("authentication failed: %w", err)
 		}
 	}
@@ -191,7 +191,7 @@ func (r *RedisSync) connect(ctx context.Context, endpoint *sync.Endpoint) (net.C
 	if endpoint.Database != "" {
 		_, err = r.sendCommand(conn, "SELECT", endpoint.Database)
 		if err != nil {
-			conn.Close()
+			_ = conn.Close()
 			return nil, fmt.Errorf("failed to select database: %w", err)
 		}
 	}
@@ -279,7 +279,7 @@ func (r *RedisSync) createSnapshot(ctx context.Context, source *sync.Endpoint, r
 	if err != nil {
 		return "", err
 	}
-	defer conn.Close()
+	defer func() { _ = conn.Close() }()
 
 	// Get current LASTSAVE timestamp
 	lastSave, err := r.sendCommand(conn, "LASTSAVE")
@@ -311,7 +311,7 @@ func (r *RedisSync) createSnapshot(ctx context.Context, source *sync.Endpoint, r
 			}
 
 			newSave, err := r.sendCommand(newConn, "LASTSAVE")
-			newConn.Close()
+			_ = newConn.Close()
 			if err != nil {
 				return "", err
 			}
@@ -332,7 +332,7 @@ func (r *RedisSync) createSnapshot(ctx context.Context, source *sync.Endpoint, r
 	if err != nil {
 		return "", err
 	}
-	defer configConn.Close()
+	defer func() { _ = configConn.Close() }()
 
 	dir, err := r.sendCommand(configConn, "CONFIG", "GET", "dir")
 	if err != nil {
@@ -380,10 +380,10 @@ func (r *RedisSync) restoreSnapshot(ctx context.Context, target *sync.Endpoint, 
 		_, err = r.sendCommand(conn, "FLUSHALL")
 	}
 	if err != nil {
-		conn.Close()
+		_ = conn.Close()
 		return fmt.Errorf("failed to flush target: %w", err)
 	}
-	conn.Close()
+	_ = conn.Close()
 
 	// Method 2: Use RESTORE command for each key
 	// This is slower but more portable
@@ -417,7 +417,7 @@ func (r *RedisSync) getKeyCount(ctx context.Context, endpoint *sync.Endpoint) (i
 	if err != nil {
 		return 0, err
 	}
-	defer conn.Close()
+	defer func() { _ = conn.Close() }()
 
 	info, err := r.sendCommand(conn, "INFO", "keyspace")
 	if err != nil {
@@ -478,13 +478,13 @@ func (r *RedisSync) sampleVerify(ctx context.Context, source, target *sync.Endpo
 	if err != nil {
 		return nil, err
 	}
-	defer sourceConn.Close()
+	defer func() { _ = sourceConn.Close() }()
 
 	targetConn, err := r.connect(ctx, target)
 	if err != nil {
 		return nil, err
 	}
-	defer targetConn.Close()
+	defer func() { _ = targetConn.Close() }()
 
 	// Get random keys from source
 	var mismatches []string
@@ -552,13 +552,13 @@ func (r *RedisPipelineSync) SyncWithPipeline(ctx context.Context, source, target
 	if err != nil {
 		return err
 	}
-	defer sourceConn.Close()
+	defer func() { _ = sourceConn.Close() }()
 
 	targetConn, err := r.connect(ctx, target)
 	if err != nil {
 		return err
 	}
-	defer targetConn.Close()
+	defer func() { _ = targetConn.Close() }()
 
 	// Flush target
 	_, _ = r.sendCommand(targetConn, "FLUSHDB")
@@ -566,7 +566,7 @@ func (r *RedisPipelineSync) SyncWithPipeline(ctx context.Context, source, target
 	reporter.SetPhase("syncing")
 
 	// Scan keys and transfer
-	var cursor string = "0"
+	var cursor = "0"
 	var processed int64
 
 	for {
@@ -657,7 +657,7 @@ func (r *RedisReplicationSync) SetupReplication(ctx context.Context, source, tar
 	if err != nil {
 		return err
 	}
-	defer conn.Close()
+	defer func() { _ = conn.Close() }()
 
 	// Make target a replica of source
 	port := source.Port
@@ -691,7 +691,7 @@ func (r *RedisReplicationSync) WaitForSync(ctx context.Context, target *sync.End
 		}
 
 		info, err := r.sendCommand(conn, "INFO", "replication")
-		conn.Close()
+		_ = conn.Close()
 		if err != nil {
 			return err
 		}
@@ -720,7 +720,7 @@ func (r *RedisReplicationSync) WaitForSync(ctx context.Context, target *sync.End
 			}
 
 			info, err := r.sendCommand(conn, "INFO", "replication")
-			conn.Close()
+			_ = conn.Close()
 			if err != nil {
 				return err
 			}
@@ -747,7 +747,7 @@ func (r *RedisReplicationSync) PromoteToMaster(ctx context.Context, target *sync
 	if err != nil {
 		return err
 	}
-	defer conn.Close()
+	defer func() { _ = conn.Close() }()
 
 	_, err = r.sendCommand(conn, "REPLICAOF", "NO", "ONE")
 	if err != nil {

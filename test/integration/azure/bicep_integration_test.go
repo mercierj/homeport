@@ -17,7 +17,7 @@ func TestBicepParserIntegration_BasicResource(t *testing.T) {
 	if err != nil {
 		t.Fatalf("failed to create temp dir: %v", err)
 	}
-	defer os.RemoveAll(tmpDir)
+	defer func() { _ = os.RemoveAll(tmpDir) }()
 
 	bicepContent := `param location string = 'eastus'
 param storageAccountName string = 'mystorageacct'
@@ -106,7 +106,7 @@ func TestBicepParserIntegration_MultipleResources(t *testing.T) {
 	if err != nil {
 		t.Fatalf("failed to create temp dir: %v", err)
 	}
-	defer os.RemoveAll(tmpDir)
+	defer func() { _ = os.RemoveAll(tmpDir) }()
 
 	bicepContent := `param location string = 'westus2'
 
@@ -202,7 +202,7 @@ func TestBicepParserIntegration_ResourceDependencies(t *testing.T) {
 	if err != nil {
 		t.Fatalf("failed to create temp dir: %v", err)
 	}
-	defer os.RemoveAll(tmpDir)
+	defer func() { _ = os.RemoveAll(tmpDir) }()
 
 	bicepContent := `param location string = 'eastus'
 
@@ -290,7 +290,7 @@ func TestBicepParserIntegration_DirectoryParsing(t *testing.T) {
 	if err != nil {
 		t.Fatalf("failed to create temp dir: %v", err)
 	}
-	defer os.RemoveAll(tmpDir)
+	defer func() { _ = os.RemoveAll(tmpDir) }()
 
 	// Create multiple Bicep files
 	mainBicep := `resource storageAccount 'Microsoft.Storage/storageAccounts@2021-02-01' = {
@@ -352,7 +352,7 @@ func TestBicepParserIntegration_ParametersAndVariables(t *testing.T) {
 	if err != nil {
 		t.Fatalf("failed to create temp dir: %v", err)
 	}
-	defer os.RemoveAll(tmpDir)
+	defer func() { _ = os.RemoveAll(tmpDir) }()
 
 	bicepContent := `param environment string = 'dev'
 param location string = 'eastus'
@@ -413,7 +413,7 @@ func TestBicepParserIntegration_MessagingResources(t *testing.T) {
 	if err != nil {
 		t.Fatalf("failed to create temp dir: %v", err)
 	}
-	defer os.RemoveAll(tmpDir)
+	defer func() { _ = os.RemoveAll(tmpDir) }()
 
 	bicepContent := `param location string = 'eastus'
 
@@ -518,7 +518,7 @@ func TestBicepParserIntegration_NonBicepFile(t *testing.T) {
 	if err != nil {
 		t.Fatalf("failed to create temp dir: %v", err)
 	}
-	defer os.RemoveAll(tmpDir)
+	defer func() { _ = os.RemoveAll(tmpDir) }()
 
 	// Create a non-Bicep file
 	jsonPath := filepath.Join(tmpDir, "config.json")

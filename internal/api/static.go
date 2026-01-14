@@ -39,7 +39,7 @@ func StaticHandler() (http.Handler, error) {
 			fileServer.ServeHTTP(w, r)
 			return
 		}
-		f.Close()
+		_ = f.Close()
 
 		// File exists - serve it
 		fileServer.ServeHTTP(w, r)

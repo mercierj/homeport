@@ -245,7 +245,7 @@ func (g *Generator) EstimateCost(results []*mapper.MappingResult, config *genera
 	// Get pricing data from the catalog
 	pricing := provider.GetProviderPricing(provider.ProviderHetzner)
 	if pricing == nil {
-		return nil, fmt.Errorf("Hetzner pricing data not available")
+		return nil, fmt.Errorf("hetzner pricing data not available")
 	}
 
 	// Extract resource requirements from mapping results

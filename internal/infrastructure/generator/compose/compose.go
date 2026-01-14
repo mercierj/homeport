@@ -856,19 +856,19 @@ func (g *Generator) generateYAML(compose *ComposeFile, projectName string) (stri
 
 // writeService writes a service definition to the buffer.
 func (g *Generator) writeService(buf *bytes.Buffer, svc *Service) error {
-	buf.WriteString(fmt.Sprintf("  %s:\n", svc.Name))
-	buf.WriteString(fmt.Sprintf("    image: %s\n", svc.Image))
+	fmt.Fprintf(buf, "  %s:\n", svc.Name)
+	fmt.Fprintf(buf, "    image: %s\n", svc.Image)
 
 	if svc.Build != nil {
 		buf.WriteString("    build:\n")
-		buf.WriteString(fmt.Sprintf("      context: %s\n", svc.Build.Context))
+		fmt.Fprintf(buf, "      context: %s\n", svc.Build.Context)
 		if svc.Build.Dockerfile != "" {
-			buf.WriteString(fmt.Sprintf("      dockerfile: %s\n", svc.Build.Dockerfile))
+			fmt.Fprintf(buf, "      dockerfile: %s\n", svc.Build.Dockerfile)
 		}
 	}
 
 	if svc.Restart != "" {
-		buf.WriteString(fmt.Sprintf("    restart: %s\n", svc.Restart))
+		fmt.Fprintf(buf, "    restart: %s\n", svc.Restart)
 	}
 
 	if len(svc.Environment) > 0 {
@@ -884,9 +884,9 @@ func (g *Generator) writeService(buf *bytes.Buffer, svc *Service) error {
 			v := svc.Environment[k]
 			// Handle values with special characters
 			if strings.ContainsAny(v, " \n\t:{}[]!@#$%^&*") {
-				buf.WriteString(fmt.Sprintf("      %s: \"%s\"\n", k, escapeYAML(v)))
+				fmt.Fprintf(buf, "      %s: \"%s\"\n", k, escapeYAML(v))
 			} else {
-				buf.WriteString(fmt.Sprintf("      %s: %s\n", k, v))
+				fmt.Fprintf(buf, "      %s: %s\n", k, v)
 			}
 		}
 	}
@@ -894,35 +894,35 @@ func (g *Generator) writeService(buf *bytes.Buffer, svc *Service) error {
 	if len(svc.Ports) > 0 {
 		buf.WriteString("    ports:\n")
 		for _, port := range svc.Ports {
-			buf.WriteString(fmt.Sprintf("      - \"%s\"\n", port))
+			fmt.Fprintf(buf, "      - \"%s\"\n", port)
 		}
 	}
 
 	if len(svc.Volumes) > 0 {
 		buf.WriteString("    volumes:\n")
 		for _, vol := range svc.Volumes {
-			buf.WriteString(fmt.Sprintf("      - %s\n", vol))
+			fmt.Fprintf(buf, "      - %s\n", vol)
 		}
 	}
 
 	if len(svc.Networks) > 0 {
 		buf.WriteString("    networks:\n")
 		for _, net := range svc.Networks {
-			buf.WriteString(fmt.Sprintf("      - %s\n", net))
+			fmt.Fprintf(buf, "      - %s\n", net)
 		}
 	}
 
 	if len(svc.DependsOn) > 0 {
 		buf.WriteString("    depends_on:\n")
 		for _, dep := range svc.DependsOn {
-			buf.WriteString(fmt.Sprintf("      - %s\n", dep))
+			fmt.Fprintf(buf, "      - %s\n", dep)
 		}
 	}
 
 	if len(svc.Command) > 0 {
 		buf.WriteString("    command:\n")
 		for _, cmd := range svc.Command {
-			buf.WriteString(fmt.Sprintf("      - %s\n", cmd))
+			fmt.Fprintf(buf, "      - %s\n", cmd)
 		}
 	}
 
@@ -931,20 +931,20 @@ func (g *Generator) writeService(buf *bytes.Buffer, svc *Service) error {
 		if len(svc.HealthCheck.Test) > 0 {
 			buf.WriteString("      test:\n")
 			for _, t := range svc.HealthCheck.Test {
-				buf.WriteString(fmt.Sprintf("        - %s\n", t))
+				fmt.Fprintf(buf, "        - %s\n", t)
 			}
 		}
 		if svc.HealthCheck.Interval != "" {
-			buf.WriteString(fmt.Sprintf("      interval: %s\n", svc.HealthCheck.Interval))
+			fmt.Fprintf(buf, "      interval: %s\n", svc.HealthCheck.Interval)
 		}
 		if svc.HealthCheck.Timeout != "" {
-			buf.WriteString(fmt.Sprintf("      timeout: %s\n", svc.HealthCheck.Timeout))
+			fmt.Fprintf(buf, "      timeout: %s\n", svc.HealthCheck.Timeout)
 		}
 		if svc.HealthCheck.Retries > 0 {
-			buf.WriteString(fmt.Sprintf("      retries: %d\n", svc.HealthCheck.Retries))
+			fmt.Fprintf(buf, "      retries: %d\n", svc.HealthCheck.Retries)
 		}
 		if svc.HealthCheck.StartPeriod != "" {
-			buf.WriteString(fmt.Sprintf("      start_period: %s\n", svc.HealthCheck.StartPeriod))
+			fmt.Fprintf(buf, "      start_period: %s\n", svc.HealthCheck.StartPeriod)
 		}
 	}
 
@@ -955,20 +955,20 @@ func (g *Generator) writeService(buf *bytes.Buffer, svc *Service) error {
 		if svc.Deploy.Resources.Limits != nil {
 			buf.WriteString("        limits:\n")
 			if svc.Deploy.Resources.Limits.CPUs != "" {
-				buf.WriteString(fmt.Sprintf("          cpus: '%s'\n", svc.Deploy.Resources.Limits.CPUs))
+				fmt.Fprintf(buf, "          cpus: '%s'\n", svc.Deploy.Resources.Limits.CPUs)
 			}
 			if svc.Deploy.Resources.Limits.Memory != "" {
-				buf.WriteString(fmt.Sprintf("          memory: %s\n", svc.Deploy.Resources.Limits.Memory))
+				fmt.Fprintf(buf, "          memory: %s\n", svc.Deploy.Resources.Limits.Memory)
 			}
 		}
 
 		if svc.Deploy.Resources.Reservations != nil {
 			buf.WriteString("        reservations:\n")
 			if svc.Deploy.Resources.Reservations.CPUs != "" {
-				buf.WriteString(fmt.Sprintf("          cpus: '%s'\n", svc.Deploy.Resources.Reservations.CPUs))
+				fmt.Fprintf(buf, "          cpus: '%s'\n", svc.Deploy.Resources.Reservations.CPUs)
 			}
 			if svc.Deploy.Resources.Reservations.Memory != "" {
-				buf.WriteString(fmt.Sprintf("          memory: %s\n", svc.Deploy.Resources.Reservations.Memory))
+				fmt.Fprintf(buf, "          memory: %s\n", svc.Deploy.Resources.Reservations.Memory)
 			}
 		}
 	}
@@ -984,7 +984,7 @@ func (g *Generator) writeService(buf *bytes.Buffer, svc *Service) error {
 
 		for _, k := range keys {
 			v := svc.Labels[k]
-			buf.WriteString(fmt.Sprintf("      %s: \"%s\"\n", k, escapeYAML(v)))
+			fmt.Fprintf(buf, "      %s: \"%s\"\n", k, escapeYAML(v))
 		}
 	}
 

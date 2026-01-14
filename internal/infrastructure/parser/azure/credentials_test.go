@@ -51,14 +51,14 @@ func TestDetectCredentialSource_ServicePrincipal(t *testing.T) {
 	origClientSecret := os.Getenv("AZURE_CLIENT_SECRET")
 	origTenantID := os.Getenv("AZURE_TENANT_ID")
 	defer func() {
-		os.Setenv("AZURE_CLIENT_ID", origClientID)
-		os.Setenv("AZURE_CLIENT_SECRET", origClientSecret)
-		os.Setenv("AZURE_TENANT_ID", origTenantID)
+		_ = os.Setenv("AZURE_CLIENT_ID", origClientID)
+		_ = os.Setenv("AZURE_CLIENT_SECRET", origClientSecret)
+		_ = os.Setenv("AZURE_TENANT_ID", origTenantID)
 	}()
 
-	os.Setenv("AZURE_CLIENT_ID", "test-client")
-	os.Setenv("AZURE_CLIENT_SECRET", "test-secret")
-	os.Setenv("AZURE_TENANT_ID", "test-tenant")
+	_ = os.Setenv("AZURE_CLIENT_ID", "test-client")
+	_ = os.Setenv("AZURE_CLIENT_SECRET", "test-secret")
+	_ = os.Setenv("AZURE_TENANT_ID", "test-tenant")
 
 	source := DetectCredentialSource()
 	if source != CredentialSourceServicePrincipal {
@@ -72,14 +72,14 @@ func TestDetectCredentialSource_ManagedIdentity(t *testing.T) {
 	origClientSecret := os.Getenv("AZURE_CLIENT_SECRET")
 	origTenantID := os.Getenv("AZURE_TENANT_ID")
 	defer func() {
-		os.Setenv("AZURE_CLIENT_ID", origClientID)
-		os.Setenv("AZURE_CLIENT_SECRET", origClientSecret)
-		os.Setenv("AZURE_TENANT_ID", origTenantID)
+		_ = os.Setenv("AZURE_CLIENT_ID", origClientID)
+		_ = os.Setenv("AZURE_CLIENT_SECRET", origClientSecret)
+		_ = os.Setenv("AZURE_TENANT_ID", origTenantID)
 	}()
 
-	os.Setenv("AZURE_CLIENT_ID", "test-client")
-	os.Unsetenv("AZURE_CLIENT_SECRET")
-	os.Unsetenv("AZURE_TENANT_ID")
+	_ = os.Setenv("AZURE_CLIENT_ID", "test-client")
+	_ = os.Unsetenv("AZURE_CLIENT_SECRET")
+	_ = os.Unsetenv("AZURE_TENANT_ID")
 
 	source := DetectCredentialSource()
 	if source != CredentialSourceManagedIdentity {
@@ -93,14 +93,14 @@ func TestDetectCredentialSource_Default(t *testing.T) {
 	origClientSecret := os.Getenv("AZURE_CLIENT_SECRET")
 	origTenantID := os.Getenv("AZURE_TENANT_ID")
 	defer func() {
-		os.Setenv("AZURE_CLIENT_ID", origClientID)
-		os.Setenv("AZURE_CLIENT_SECRET", origClientSecret)
-		os.Setenv("AZURE_TENANT_ID", origTenantID)
+		_ = os.Setenv("AZURE_CLIENT_ID", origClientID)
+		_ = os.Setenv("AZURE_CLIENT_SECRET", origClientSecret)
+		_ = os.Setenv("AZURE_TENANT_ID", origTenantID)
 	}()
 
-	os.Unsetenv("AZURE_CLIENT_ID")
-	os.Unsetenv("AZURE_CLIENT_SECRET")
-	os.Unsetenv("AZURE_TENANT_ID")
+	_ = os.Unsetenv("AZURE_CLIENT_ID")
+	_ = os.Unsetenv("AZURE_CLIENT_SECRET")
+	_ = os.Unsetenv("AZURE_TENANT_ID")
 
 	source := DetectCredentialSource()
 	// Should be either default or cli depending on Azure CLI config
@@ -160,9 +160,9 @@ func TestGetSubscriptionID_FromConfig(t *testing.T) {
 func TestGetSubscriptionID_FromEnv(t *testing.T) {
 	// Save and restore original value
 	original := os.Getenv("AZURE_SUBSCRIPTION_ID")
-	defer os.Setenv("AZURE_SUBSCRIPTION_ID", original)
+	defer func() { _ = os.Setenv("AZURE_SUBSCRIPTION_ID", original) }()
 
-	os.Setenv("AZURE_SUBSCRIPTION_ID", "env-sub-123")
+	_ = os.Setenv("AZURE_SUBSCRIPTION_ID", "env-sub-123")
 	cfg := NewCredentialConfig()
 	subID, err := cfg.GetSubscriptionID()
 	if err != nil {

@@ -147,7 +147,7 @@ func (h *TerminalHandler) HandleExec(w http.ResponseWriter, r *http.Request) {
 		logger.Error("WebSocket upgrade failed", "error", err)
 		return
 	}
-	defer conn.Close()
+	defer func() { _ = conn.Close() }()
 
 	// Configure WebSocket
 	conn.SetReadLimit(MaxMessageSize)

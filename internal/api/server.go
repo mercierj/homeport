@@ -454,28 +454,28 @@ func (s *Server) Shutdown(ctx context.Context) error {
 
 	// Close handlers
 	if s.dockerHandler != nil {
-		s.dockerHandler.Close()
+		_ = s.dockerHandler.Close()
 	}
 	if s.metricsHandler != nil {
-		s.metricsHandler.Close()
+		_ = s.metricsHandler.Close()
 	}
 	if s.logsHandler != nil {
-		s.logsHandler.Close()
+		_ = s.logsHandler.Close()
 	}
 	if s.dockerService != nil {
-		s.dockerService.Close()
+		_ = s.dockerService.Close()
 	}
 	if s.backupHandler != nil {
-		s.backupHandler.Close()
+		_ = s.backupHandler.Close()
 	}
 	if s.stacksHandler != nil {
-		s.stacksHandler.Close()
+		_ = s.stacksHandler.Close()
 	}
 	if s.terminalHandler != nil {
-		s.terminalHandler.Close()
+		_ = s.terminalHandler.Close()
 	}
 	if s.policyHandler != nil {
-		s.policyHandler.Close()
+		_ = s.policyHandler.Close()
 	}
 
 	if s.httpServer == nil {

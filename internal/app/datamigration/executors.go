@@ -142,7 +142,7 @@ func (e *S3ToMinIOExecutor) Execute(ctx context.Context, m *Migration, config *M
 	if err != nil {
 		return fmt.Errorf("failed to create staging directory: %w", err)
 	}
-	defer os.RemoveAll(stagingDir)
+	defer func() { _ = os.RemoveAll(stagingDir) }()
 
 	localPath := filepath.Join(stagingDir, bucket)
 
@@ -317,7 +317,7 @@ func (e *RDSToPostgresExecutor) Execute(ctx context.Context, m *Migration, confi
 	if err != nil {
 		return fmt.Errorf("failed to create staging directory: %w", err)
 	}
-	defer os.RemoveAll(stagingDir)
+	defer func() { _ = os.RemoveAll(stagingDir) }()
 
 	dumpFile := filepath.Join(stagingDir, "dump.sql")
 
@@ -477,7 +477,7 @@ func (e *DynamoDBToScyllaExecutor) Execute(ctx context.Context, m *Migration, co
 	if err != nil {
 		return fmt.Errorf("failed to create staging directory: %w", err)
 	}
-	defer os.RemoveAll(stagingDir)
+	defer func() { _ = os.RemoveAll(stagingDir) }()
 
 	exportFile := filepath.Join(stagingDir, tableName+".json")
 
@@ -633,7 +633,7 @@ func (e *ElastiCacheToRedisExecutor) Execute(ctx context.Context, m *Migration, 
 	if err != nil {
 		return fmt.Errorf("failed to create staging directory: %w", err)
 	}
-	defer os.RemoveAll(stagingDir)
+	defer func() { _ = os.RemoveAll(stagingDir) }()
 
 	dumpFile := filepath.Join(stagingDir, "dump.rdb")
 

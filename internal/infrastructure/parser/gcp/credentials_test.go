@@ -35,9 +35,9 @@ func TestCredentialConfig_WithCredentialsFile(t *testing.T) {
 func TestDetectCredentialSource_Environment(t *testing.T) {
 	// Save and restore original value
 	original := os.Getenv("GOOGLE_APPLICATION_CREDENTIALS")
-	defer os.Setenv("GOOGLE_APPLICATION_CREDENTIALS", original)
+	defer func() { _ = os.Setenv("GOOGLE_APPLICATION_CREDENTIALS", original) }()
 
-	os.Setenv("GOOGLE_APPLICATION_CREDENTIALS", "/path/to/creds.json")
+	_ = os.Setenv("GOOGLE_APPLICATION_CREDENTIALS", "/path/to/creds.json")
 	source := DetectCredentialSource()
 	if source != CredentialSourceEnvironment {
 		t.Errorf("expected environment source, got %s", source)
@@ -47,9 +47,9 @@ func TestDetectCredentialSource_Environment(t *testing.T) {
 func TestDetectCredentialSource_Default(t *testing.T) {
 	// Save and restore original value
 	original := os.Getenv("GOOGLE_APPLICATION_CREDENTIALS")
-	defer os.Setenv("GOOGLE_APPLICATION_CREDENTIALS", original)
+	defer func() { _ = os.Setenv("GOOGLE_APPLICATION_CREDENTIALS", original) }()
 
-	os.Unsetenv("GOOGLE_APPLICATION_CREDENTIALS")
+	_ = os.Unsetenv("GOOGLE_APPLICATION_CREDENTIALS")
 	source := DetectCredentialSource()
 	// Should be either default or user_account depending on gcloud config
 	if source != CredentialSourceDefault && source != CredentialSourceUserAccount {

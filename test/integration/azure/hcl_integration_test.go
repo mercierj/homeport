@@ -17,7 +17,7 @@ func TestHCLParserIntegration_BasicAzureProvider(t *testing.T) {
 	if err != nil {
 		t.Fatalf("failed to create temp dir: %v", err)
 	}
-	defer os.RemoveAll(tmpDir)
+	defer func() { _ = os.RemoveAll(tmpDir) }()
 
 	hclContent := `provider "azurerm" {
   features {}
@@ -94,7 +94,7 @@ func TestHCLParserIntegration_AzureResourceExtraction(t *testing.T) {
 	if err != nil {
 		t.Fatalf("failed to create temp dir: %v", err)
 	}
-	defer os.RemoveAll(tmpDir)
+	defer func() { _ = os.RemoveAll(tmpDir) }()
 
 	hclContent := `provider "azurerm" {
   features {}
@@ -210,7 +210,7 @@ func TestHCLParserIntegration_StorageResources(t *testing.T) {
 	if err != nil {
 		t.Fatalf("failed to create temp dir: %v", err)
 	}
-	defer os.RemoveAll(tmpDir)
+	defer func() { _ = os.RemoveAll(tmpDir) }()
 
 	hclContent := `resource "azurerm_storage_account" "main" {
   name                     = "mystorageaccount"
@@ -294,7 +294,7 @@ func TestHCLParserIntegration_DatabaseResources(t *testing.T) {
 	if err != nil {
 		t.Fatalf("failed to create temp dir: %v", err)
 	}
-	defer os.RemoveAll(tmpDir)
+	defer func() { _ = os.RemoveAll(tmpDir) }()
 
 	hclContent := `resource "azurerm_mssql_database" "sql" {
   name      = "mysqldb"
@@ -391,7 +391,7 @@ func TestHCLParserIntegration_NetworkingResources(t *testing.T) {
 	if err != nil {
 		t.Fatalf("failed to create temp dir: %v", err)
 	}
-	defer os.RemoveAll(tmpDir)
+	defer func() { _ = os.RemoveAll(tmpDir) }()
 
 	hclContent := `resource "azurerm_virtual_network" "vnet" {
   name                = "myvnet"
@@ -556,7 +556,7 @@ func TestHCLParserIntegration_DirectoryParsing(t *testing.T) {
 	if err != nil {
 		t.Fatalf("failed to create temp dir: %v", err)
 	}
-	defer os.RemoveAll(tmpDir)
+	defer func() { _ = os.RemoveAll(tmpDir) }()
 
 	// Create provider file
 	providerTf := `provider "azurerm" {
@@ -643,7 +643,7 @@ func TestHCLParserIntegration_IgnoresNonAzureResources(t *testing.T) {
 	if err != nil {
 		t.Fatalf("failed to create temp dir: %v", err)
 	}
-	defer os.RemoveAll(tmpDir)
+	defer func() { _ = os.RemoveAll(tmpDir) }()
 
 	hclContent := `provider "azurerm" {
   features {}
@@ -745,7 +745,7 @@ func TestHCLParserIntegration_NonAzureFile(t *testing.T) {
 	if err != nil {
 		t.Fatalf("failed to create temp dir: %v", err)
 	}
-	defer os.RemoveAll(tmpDir)
+	defer func() { _ = os.RemoveAll(tmpDir) }()
 
 	// Create a TF file with only AWS resources
 	awsContent := `provider "aws" {
@@ -783,7 +783,7 @@ func TestHCLParserIntegration_MessagingResources(t *testing.T) {
 	if err != nil {
 		t.Fatalf("failed to create temp dir: %v", err)
 	}
-	defer os.RemoveAll(tmpDir)
+	defer func() { _ = os.RemoveAll(tmpDir) }()
 
 	hclContent := `resource "azurerm_servicebus_namespace" "sb" {
   name                = "myservicebus"

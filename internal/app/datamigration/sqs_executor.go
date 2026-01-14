@@ -302,7 +302,7 @@ func (e *SQSToRabbitMQExecutor) Execute(ctx context.Context, m *Migration, confi
 			EmitLog(m, "warn", fmt.Sprintf("rabbitmqadmin exchange creation: %s", string(output)))
 		}
 	} else {
-		resp.Body.Close()
+		_ = resp.Body.Close()
 		if resp.StatusCode >= 200 && resp.StatusCode < 300 {
 			EmitLog(m, "info", fmt.Sprintf("Created exchange: %s (type: %s)", destExchange, exchangeType))
 		} else if resp.StatusCode == 204 {
@@ -336,7 +336,7 @@ func (e *SQSToRabbitMQExecutor) Execute(ctx context.Context, m *Migration, confi
 		dlqReq.SetBasicAuth(rabbitUser, rabbitPass)
 		dlqReq.Header.Set("Content-Type", "application/json")
 		if dlqResp, err := client.Do(dlqReq); err == nil {
-			dlqResp.Body.Close()
+			_ = dlqResp.Body.Close()
 			EmitLog(m, "info", fmt.Sprintf("Created dead letter queue: %s", dlqName))
 		}
 	}
@@ -367,7 +367,7 @@ func (e *SQSToRabbitMQExecutor) Execute(ctx context.Context, m *Migration, confi
 			EmitLog(m, "warn", fmt.Sprintf("rabbitmqadmin queue creation: %s", string(output)))
 		}
 	} else {
-		resp.Body.Close()
+		_ = resp.Body.Close()
 		if resp.StatusCode >= 200 && resp.StatusCode < 300 {
 			EmitLog(m, "info", fmt.Sprintf("Created queue: %s", destQueue))
 		}
@@ -406,7 +406,7 @@ func (e *SQSToRabbitMQExecutor) Execute(ctx context.Context, m *Migration, confi
 			EmitLog(m, "warn", fmt.Sprintf("rabbitmqadmin binding creation: %s", string(output)))
 		}
 	} else {
-		resp.Body.Close()
+		_ = resp.Body.Close()
 		EmitLog(m, "info", fmt.Sprintf("Created binding: %s -> %s", destExchange, destQueue))
 	}
 
@@ -520,7 +520,7 @@ func (e *SQSToRabbitMQExecutor) Execute(ctx context.Context, m *Migration, confi
 					EmitLog(m, "error", fmt.Sprintf("Failed to publish message %s: %v", msg.MessageId, err))
 					continue
 				}
-				resp.Body.Close()
+				_ = resp.Body.Close()
 
 				if resp.StatusCode >= 200 && resp.StatusCode < 300 {
 					// Delete from SQS after successful publish
@@ -577,7 +577,7 @@ func (e *SQSToRabbitMQExecutor) Execute(ctx context.Context, m *Migration, confi
 		if err != nil {
 			EmitLog(m, "warn", fmt.Sprintf("Failed to verify queue: %v", err))
 		} else {
-			defer resp.Body.Close()
+			defer func() { _ = resp.Body.Close() }()
 			if resp.StatusCode == 200 {
 				var queueInfo struct {
 					Name     string `json:"name"`
@@ -603,7 +603,7 @@ func (e *SQSToRabbitMQExecutor) Execute(ctx context.Context, m *Migration, confi
 		if err != nil {
 			EmitLog(m, "warn", fmt.Sprintf("Failed to verify exchange: %v", err))
 		} else {
-			defer resp.Body.Close()
+			defer func() { _ = resp.Body.Close() }()
 			if resp.StatusCode == 200 {
 				var exchangeInfo struct {
 					Name string `json:"name"`

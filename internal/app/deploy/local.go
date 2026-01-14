@@ -416,8 +416,8 @@ func (l *LocalDeployer) downloadLambdaCode(ctx context.Context, d *Deployment, w
 			continue
 		}
 
-		// Clean up ZIP
-		os.Remove(zipPath)
+		// Clean up ZIP (ignore error - best effort cleanup)
+		_ = os.Remove(zipPath)
 
 		EmitLog(d, "info", fmt.Sprintf("Downloaded Lambda code: %s", funcName))
 	}

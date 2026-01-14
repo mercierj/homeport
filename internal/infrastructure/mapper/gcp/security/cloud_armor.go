@@ -183,9 +183,10 @@ func (m *CloudArmorMapper) generateIPLists(rules interface{}) ipListConfig {
 								if srcIPRanges, ok := configMap["src_ip_ranges"].([]interface{}); ok {
 									for _, ip := range srcIPRanges {
 										if ipStr, ok := ip.(string); ok {
-											if action == "allow" {
+											switch action {
+											case "allow":
 												whitelist.WriteString(fmt.Sprintf("SecRule REMOTE_ADDR \"@ipMatch %s\" \"id:100001,phase:1,pass,nolog,ctl:ruleEngine=Off\"\n", ipStr))
-											} else if action == "deny" || action == "deny(403)" || action == "deny(404)" {
+											case "deny", "deny(403)", "deny(404)":
 												blacklist.WriteString(fmt.Sprintf("SecRule REMOTE_ADDR \"@ipMatch %s\" \"id:100002,phase:1,deny,status:403,msg:'IP blocked by policy'\"\n", ipStr))
 											}
 										}

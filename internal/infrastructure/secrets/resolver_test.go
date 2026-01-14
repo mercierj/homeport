@@ -52,8 +52,8 @@ MULTILINE="line1\nline2"
 
 func TestResolver_ResolveFromEnv(t *testing.T) {
 	// Set up test environment variable
-	os.Setenv("HOMEPORT_SECRET_TEST_VAR", "env_value")
-	defer os.Unsetenv("HOMEPORT_SECRET_TEST_VAR")
+	_ = os.Setenv("HOMEPORT_SECRET_TEST_VAR", "env_value")
+	defer func() { _ = os.Unsetenv("HOMEPORT_SECRET_TEST_VAR") }()
 
 	opts := DefaultResolverOptions()
 	resolver := NewResolver(opts)
@@ -109,11 +109,11 @@ API_KEY=api_secret_value
 
 func TestResolver_ResolveAll(t *testing.T) {
 	// Set up environment
-	os.Setenv("HOMEPORT_SECRET_DB_PASSWORD", "env_db_pass")
-	os.Setenv("HOMEPORT_SECRET_API_KEY", "env_api_key")
+	_ = os.Setenv("HOMEPORT_SECRET_DB_PASSWORD", "env_db_pass")
+	_ = os.Setenv("HOMEPORT_SECRET_API_KEY", "env_api_key")
 	defer func() {
-		os.Unsetenv("HOMEPORT_SECRET_DB_PASSWORD")
-		os.Unsetenv("HOMEPORT_SECRET_API_KEY")
+		_ = os.Unsetenv("HOMEPORT_SECRET_DB_PASSWORD")
+		_ = os.Unsetenv("HOMEPORT_SECRET_API_KEY")
 	}()
 
 	// Create manifest
@@ -148,8 +148,8 @@ func TestResolver_ResolveAll(t *testing.T) {
 
 func TestResolver_CheckResolvability(t *testing.T) {
 	// Set up environment
-	os.Setenv("HOMEPORT_SECRET_AVAILABLE", "value")
-	defer os.Unsetenv("HOMEPORT_SECRET_AVAILABLE")
+	_ = os.Setenv("HOMEPORT_SECRET_AVAILABLE", "value")
+	defer func() { _ = os.Unsetenv("HOMEPORT_SECRET_AVAILABLE") }()
 
 	manifest := secrets.NewSecretsManifest()
 	_ = manifest.AddSecret(secrets.NewSecretReference("AVAILABLE", secrets.SourceEnv).WithKey("AVAILABLE"))

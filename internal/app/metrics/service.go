@@ -211,10 +211,10 @@ func (s *Service) collectContainerMetrics(ctx context.Context) {
 
 		var statsJSON container.StatsResponse
 		if err := json.NewDecoder(stats.Body).Decode(&statsJSON); err != nil {
-			stats.Body.Close()
+			_ = stats.Body.Close()
 			continue
 		}
-		stats.Body.Close()
+		_ = stats.Body.Close()
 
 		metrics := s.parseContainerStats(c.ID, c.Names, &statsJSON)
 		s.storeContainerMetrics(c.ID, metrics)
@@ -493,10 +493,10 @@ func (s *Service) GetContainerMetrics(ctx context.Context, containerID string) (
 
 				var statsJSON container.StatsResponse
 				if err := json.NewDecoder(stats.Body).Decode(&statsJSON); err != nil {
-					stats.Body.Close()
+					_ = stats.Body.Close()
 					return nil, fmt.Errorf("failed to decode stats: %w", err)
 				}
-				stats.Body.Close()
+				_ = stats.Body.Close()
 
 				metrics := s.parseContainerStats(c.ID, c.Names, &statsJSON)
 				return &metrics, nil

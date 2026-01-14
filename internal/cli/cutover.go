@@ -153,11 +153,12 @@ func runCutover(cmd *cobra.Command, args []string) error {
 			}
 		},
 		OnStepComplete: func(step *cutover.CutoverStep) {
-			if step.Status == cutover.CutoverStepStatusCompleted {
+			switch step.Status {
+			case cutover.CutoverStepStatusCompleted:
 				if IsVerbose() {
 					ui.Success(fmt.Sprintf("Completed: %s", step.Description))
 				}
-			} else if step.Status == cutover.CutoverStepStatusFailed {
+			case cutover.CutoverStepStatusFailed:
 				ui.Error(fmt.Sprintf("Failed: %s - %s", step.Description, step.Error))
 			}
 		},
@@ -518,9 +519,10 @@ func displayCutoverResults(result *infraCutover.ExecutionResult) {
 		table := ui.NewTable([]string{"Domain", "Type", "Old Value", "New Value", "Status"})
 		for _, change := range result.Plan.DNSChanges {
 			status := string(change.Status)
-			if change.Status == cutover.DNSChangeStatusApplied {
+			switch change.Status {
+			case cutover.DNSChangeStatusApplied:
 				status = "Applied"
-			} else if change.Status == cutover.DNSChangeStatusRolledBack {
+			case cutover.DNSChangeStatusRolledBack:
 				status = "Rolled Back"
 			}
 			table.AddRow([]string{

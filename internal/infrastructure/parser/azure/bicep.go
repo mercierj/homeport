@@ -296,9 +296,10 @@ func (p *BicepParser) extractResourceProperties(content string, startPos int) ma
 	depth := 1
 	endPos := startPos + bracePos + 1
 	for i := endPos; i < len(content) && depth > 0; i++ {
-		if content[i] == '{' {
+		switch content[i] {
+		case '{':
 			depth++
-		} else if content[i] == '}' {
+		case '}':
 			depth--
 		}
 		endPos = i
@@ -337,9 +338,10 @@ func (p *BicepParser) extractDependencies(content string, startPos int) []string
 	depth := 1
 	endPos := startPos + bracePos + 1
 	for i := endPos; i < len(content) && depth > 0; i++ {
-		if content[i] == '{' {
+		switch content[i] {
+		case '{':
 			depth++
-		} else if content[i] == '}' {
+		case '}':
 			depth--
 		}
 		endPos = i

@@ -38,7 +38,7 @@ func (p *PostgresSync) EstimateSize(ctx context.Context, source *sync.Endpoint) 
 	if err != nil {
 		return 0, fmt.Errorf("failed to connect to source database: %w", err)
 	}
-	defer db.Close()
+	defer func() { _ = db.Close() }()
 
 	var size int64
 	query := "SELECT pg_database_size(current_database())"
@@ -102,7 +102,7 @@ func (p *PostgresSync) Sync(ctx context.Context, source, target *sync.Endpoint, 
 
 	// Start dump
 	if err := dumpProc.Start(); err != nil {
-		pipeWriter.Close()
+		_ = pipeWriter.Close()
 		_ = restoreProc.Process.Kill()
 		return fmt.Errorf("failed to start pg_dump: %w", err)
 	}
@@ -135,11 +135,11 @@ func (p *PostgresSync) Sync(ctx context.Context, source, target *sync.Endpoint, 
 
 	// Wait for dump to complete
 	dumpErr := dumpProc.Wait()
-	pipeWriter.Close()
+	_ = pipeWriter.Close()
 
 	// Wait for restore to complete
 	restoreErr := restoreProc.Wait()
-	pipeReader.Close()
+	_ = pipeReader.Close()
 
 	// Signal progress monitoring to stop
 	close(progressDone)
@@ -172,13 +172,13 @@ func (p *PostgresSync) Verify(ctx context.Context, source, target *sync.Endpoint
 	if err != nil {
 		return nil, fmt.Errorf("failed to connect to source: %w", err)
 	}
-	defer sourceDB.Close()
+	defer func() { _ = sourceDB.Close() }()
 
 	targetDB, err := p.connect(ctx, target)
 	if err != nil {
 		return nil, fmt.Errorf("failed to connect to target: %w", err)
 	}
-	defer targetDB.Close()
+	defer func() { _ = targetDB.Close() }()
 
 	// Get table list from source
 	tables, err := p.getTables(ctx, sourceDB)
@@ -230,7 +230,7 @@ func (p *PostgresSync) connect(ctx context.Context, endpoint *sync.Endpoint) (*s
 
 	// Test the connection
 	if err := db.PingContext(ctx); err != nil {
-		db.Close()
+		_ = db.Close()
 		return nil, err
 	}
 
@@ -254,7 +254,7 @@ func (p *PostgresSync) createTargetDatabase(ctx context.Context, target *sync.En
 	if err != nil {
 		return fmt.Errorf("failed to connect to postgres database: %w", err)
 	}
-	defer db.Close()
+	defer func() { _ = db.Close() }()
 
 	// Check if database exists
 	var exists bool
@@ -356,7 +356,7 @@ func (p *PostgresSync) getTables(ctx context.Context, db *sql.DB) ([]string, err
 	if err != nil {
 		return nil, err
 	}
-	defer rows.Close()
+	defer func() { _ = rows.Close() }()
 
 	var tables []string
 	for rows.Next() {
@@ -454,7 +454,7 @@ func (p *PostgresStreamSync) StreamSync(ctx context.Context, source, target *syn
 	}
 
 	tables, err := p.getTables(ctx, sourceDB)
-	sourceDB.Close()
+	_ = sourceDB.Close()
 	if err != nil {
 		return err
 	}
@@ -510,16 +510,16 @@ func (p *PostgresStreamSync) syncTable(ctx context.Context, source, target *sync
 	}
 
 	if err := copyOut.Start(); err != nil {
-		pipeWriter.Close()
+		_ = pipeWriter.Close()
 		_ = copyIn.Process.Kill()
 		return fmt.Errorf("failed to start COPY OUT: %w", err)
 	}
 
 	outErr := copyOut.Wait()
-	pipeWriter.Close()
+	_ = pipeWriter.Close()
 
 	inErr := copyIn.Wait()
-	pipeReader.Close()
+	_ = pipeReader.Close()
 
 	if outErr != nil {
 		return fmt.Errorf("COPY OUT failed: %w - %s", outErr, copyOutErr.String())

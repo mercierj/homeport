@@ -99,7 +99,7 @@ func (p *CloudflareProvider) ListRecords(ctx context.Context, domain string) ([]
 	if err != nil {
 		return nil, fmt.Errorf("request failed: %w", err)
 	}
-	defer resp.Body.Close()
+	defer func() { _ = resp.Body.Close() }()
 
 	var cfResp cloudflareResponse
 	if err := json.NewDecoder(resp.Body).Decode(&cfResp); err != nil {
@@ -148,7 +148,7 @@ func (p *CloudflareProvider) GetRecord(ctx context.Context, domain, recordID str
 	if err != nil {
 		return nil, fmt.Errorf("request failed: %w", err)
 	}
-	defer resp.Body.Close()
+	defer func() { _ = resp.Body.Close() }()
 
 	var cfResp cloudflareResponse
 	if err := json.NewDecoder(resp.Body).Decode(&cfResp); err != nil {
@@ -209,7 +209,7 @@ func (p *CloudflareProvider) CreateRecord(ctx context.Context, change *cutover.D
 	if err != nil {
 		return fmt.Errorf("request failed: %w", err)
 	}
-	defer resp.Body.Close()
+	defer func() { _ = resp.Body.Close() }()
 
 	var cfResp cloudflareResponse
 	if err := json.NewDecoder(resp.Body).Decode(&cfResp); err != nil {
@@ -287,7 +287,7 @@ func (p *CloudflareProvider) UpdateRecord(ctx context.Context, change *cutover.D
 	if err != nil {
 		return fmt.Errorf("request failed: %w", err)
 	}
-	defer resp.Body.Close()
+	defer func() { _ = resp.Body.Close() }()
 
 	respBody, _ := io.ReadAll(resp.Body)
 
@@ -322,7 +322,7 @@ func (p *CloudflareProvider) DeleteRecord(ctx context.Context, domain, recordID 
 	if err != nil {
 		return fmt.Errorf("request failed: %w", err)
 	}
-	defer resp.Body.Close()
+	defer func() { _ = resp.Body.Close() }()
 
 	var cfResp cloudflareResponse
 	if err := json.NewDecoder(resp.Body).Decode(&cfResp); err != nil {
@@ -351,7 +351,7 @@ func (p *CloudflareProvider) ValidateCredentials(ctx context.Context) error {
 	if err != nil {
 		return fmt.Errorf("request failed: %w", err)
 	}
-	defer resp.Body.Close()
+	defer func() { _ = resp.Body.Close() }()
 
 	var cfResp cloudflareResponse
 	if err := json.NewDecoder(resp.Body).Decode(&cfResp); err != nil {

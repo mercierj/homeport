@@ -53,7 +53,7 @@ Examples:
 		if err != nil {
 			return fmt.Errorf("failed to list stacks: %w", err)
 		}
-		defer resp.Body.Close()
+		defer func() { _ = resp.Body.Close() }()
 
 		if resp.StatusCode != http.StatusOK {
 			return handleAPIError(resp)
@@ -123,7 +123,7 @@ Examples:
 		if err != nil {
 			return fmt.Errorf("failed to get stack status: %w", err)
 		}
-		defer resp.Body.Close()
+		defer func() { _ = resp.Body.Close() }()
 
 		if resp.StatusCode != http.StatusOK {
 			return handleAPIError(resp)
@@ -196,7 +196,7 @@ Examples:
 		if err != nil {
 			return fmt.Errorf("failed to start stack: %w", err)
 		}
-		defer resp.Body.Close()
+		defer func() { _ = resp.Body.Close() }()
 
 		if resp.StatusCode != http.StatusOK {
 			return handleAPIError(resp)
@@ -242,7 +242,7 @@ Examples:
 		if err != nil {
 			return fmt.Errorf("failed to stop stack: %w", err)
 		}
-		defer resp.Body.Close()
+		defer func() { _ = resp.Body.Close() }()
 
 		if resp.StatusCode != http.StatusOK {
 			return handleAPIError(resp)
@@ -288,7 +288,7 @@ Examples:
 		if err != nil {
 			return fmt.Errorf("failed to restart stack: %w", err)
 		}
-		defer resp.Body.Close()
+		defer func() { _ = resp.Body.Close() }()
 
 		if resp.StatusCode != http.StatusOK {
 			return handleAPIError(resp)
