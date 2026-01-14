@@ -12,6 +12,7 @@ Homeport transforms your AWS, GCP, or Azure infrastructure into a self-hosted Do
 
 ## Features
 
+- **Web Dashboard** - Full-featured UI for migration management and infrastructure control
 - **Multi-Cloud Support** - AWS, GCP, and Azure infrastructure migration
 - **70+ Services Mapped** - Comprehensive mapping to self-hosted equivalents
 - **One Command** - Complete Docker Compose stack generation
@@ -19,6 +20,48 @@ Homeport transforms your AWS, GCP, or Azure infrastructure into a self-hosted Do
 - **Migration Scripts** - Automated data transfer (S3, RDS, DynamoDB, etc.)
 - **Monitoring Included** - Prometheus, Grafana, Loki stack ready
 - **Extensible** - Plugin system for custom mappers
+
+## Web Dashboard
+
+Homeport includes a full-featured web dashboard for managing your cloud migration and self-hosted infrastructure.
+
+### Start the Dashboard
+
+```bash
+# Build with web UI included
+make build-with-web
+
+# Start the dashboard
+./bin/homeport serve
+
+# Open http://localhost:8080 in your browser
+```
+
+### Dashboard Features
+
+| Category | Features |
+|----------|----------|
+| **Migration** | 7-step wizard (Analyze → Export → Upload → Secrets → Deploy → Sync → Cutover) |
+| **Stacks** | Docker Compose stack management, container lifecycle control |
+| **Compute** | Container management, serverless functions, web terminal |
+| **Data** | Database admin, S3/MinIO browser, Redis/cache inspection, queue management |
+| **Security** | Identity management, SSL certificates, secrets vault, RBAC policies |
+| **Networking** | DNS zone management, load balancer configuration |
+| **Monitoring** | Real-time metrics, log search, alerting |
+| **Backup** | Scheduled backups, point-in-time recovery |
+
+### Development Mode
+
+For frontend development with hot-reload:
+
+```bash
+# Terminal 1: Start backend API
+make build && ./bin/homeport serve --port 8080
+
+# Terminal 2: Start frontend dev server (with API proxy)
+cd web && npm install && npm run dev
+# Open http://localhost:5173
+```
 
 ## Quick Start
 
@@ -233,6 +276,7 @@ Available Commands:
   analyze     Analyze cloud infrastructure from Terraform
   migrate     Generate self-hosted stack from cloud infrastructure
   validate    Validate generated stack configuration
+  serve       Start the web dashboard and API server
   version     Show version information
   help        Help about any command
 
@@ -243,9 +287,30 @@ Flags:
   -q, --quiet           Suppress non-essential output
 ```
 
+### Serve Command
+
+```bash
+# Start dashboard on default port (8080)
+homeport serve
+
+# Custom host and port
+homeport serve --host 0.0.0.0 --port 3000
+
+# Development mode (disable auth)
+homeport serve --no-auth
+```
+
+| Flag | Description | Default |
+|------|-------------|---------|
+| `--port, -p` | Port to listen on | 8080 |
+| `--host, -H` | Host to bind to | localhost |
+| `--no-auth` | Disable authentication (dev only) | false |
+
 ## Documentation
 
 - [Architecture](docs/architecture.md) - Technical architecture overview
+- [Web Dashboard Guide](docs/web-dashboard.md) - Dashboard features and usage
+- [API Reference](docs/api-reference.md) - REST API documentation
 - [AWS Services](docs/aws-services.md) - AWS service mapping reference
 - [GCP Services](docs/gcp-services.md) - GCP service mapping reference
 - [Azure Services](docs/azure-services.md) - Azure service mapping reference
@@ -266,8 +331,11 @@ Flags:
 # Install dependencies
 make deps
 
-# Build
+# Build CLI only
 make build
+
+# Build with web dashboard (recommended)
+make build-with-web
 
 # Run tests
 make test
@@ -276,12 +344,29 @@ make test
 make build-all
 ```
 
+### Web Development
+
+```bash
+# Install web dependencies
+make web-install
+
+# Build web UI only
+make web-build
+
+# Run web dev server (hot reload)
+make web-dev
+
+# Start full stack (API + Web)
+make serve
+```
+
 ### Project Structure
 
 ```
 homeport/
 ├── cmd/homeport/          # CLI entry point
 ├── internal/
+│   ├── api/                # REST API server & handlers
 │   ├── app/                # Application services
 │   ├── cli/                # CLI commands
 │   ├── domain/             # Core domain models
@@ -291,6 +376,12 @@ homeport/
 │       │   ├── gcp/        # GCP mappers
 │       │   └── azure/      # Azure mappers
 │       └── generator/      # Output generation
+├── web/                    # React frontend (dashboard)
+│   ├── src/
+│   │   ├── pages/          # Dashboard pages
+│   │   ├── components/     # UI components
+│   │   └── lib/            # Utilities & API client
+│   └── package.json
 ├── pkg/                    # Public packages
 ├── templates/              # Go templates
 └── test/                   # Tests and fixtures
@@ -315,8 +406,8 @@ Quick start:
 - [x] Docker Compose generation
 - [x] Migration scripts
 - [x] Monitoring stack
+- [x] Web UI dashboard
 - [ ] Kubernetes output format
-- [ ] Web UI dashboard
 - [ ] Plugin marketplace
 
 ## License
