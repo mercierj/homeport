@@ -1899,7 +1899,6 @@ func (p *APIParser) scanCognito(ctx context.Context, cfg aws.Config, infra *reso
 			// Config
 			res.Config["name"] = poolName
 			res.Config["user_pool_id"] = poolID
-			res.Config["status"] = string(userPool.Status)
 			res.Config["domain"] = aws.ToString(userPool.Domain)
 			res.Config["custom_domain"] = aws.ToString(userPool.CustomDomain)
 			res.Config["estimated_number_of_users"] = userPool.EstimatedNumberOfUsers
