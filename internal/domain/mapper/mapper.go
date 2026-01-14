@@ -5,7 +5,7 @@ package mapper
 import (
 	"context"
 
-	"github.com/agnostech/agnostech/internal/domain/resource"
+	"github.com/homeport/homeport/internal/domain/resource"
 )
 
 // Mapper converts an AWS resource to a self-hosted alternative.

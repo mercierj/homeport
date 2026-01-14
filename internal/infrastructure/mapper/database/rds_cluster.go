@@ -7,8 +7,8 @@ import (
 	"strings"
 	"time"
 
-	"github.com/agnostech/agnostech/internal/domain/mapper"
-	"github.com/agnostech/agnostech/internal/domain/resource"
+	"github.com/homeport/homeport/internal/domain/mapper"
+	"github.com/homeport/homeport/internal/domain/resource"
 )
 
 // RDSClusterMapper converts AWS RDS Aurora clusters to PostgreSQL/MySQL with replication.
@@ -88,10 +88,10 @@ func (m *RDSClusterMapper) createPostgresClusterService(res *resource.AWSResourc
 	}
 	svc.Restart = "unless-stopped"
 	svc.Labels = map[string]string{
-		"cloudexit.source":  "aws_rds_cluster",
-		"cloudexit.engine":  "postgres",
-		"cloudexit.cluster": clusterID,
-		"cloudexit.role":    "primary",
+		"homeport.source":  "aws_rds_cluster",
+		"homeport.engine":  "postgres",
+		"homeport.cluster": clusterID,
+		"homeport.role":    "primary",
 	}
 
 	pgConfig := m.generatePostgresClusterConfig(res)
@@ -164,10 +164,10 @@ func (m *RDSClusterMapper) createMySQLClusterService(res *resource.AWSResource, 
 	}
 	svc.Restart = "unless-stopped"
 	svc.Labels = map[string]string{
-		"cloudexit.source":  "aws_rds_cluster",
-		"cloudexit.engine":  "mysql",
-		"cloudexit.cluster": clusterID,
-		"cloudexit.role":    "primary",
+		"homeport.source":  "aws_rds_cluster",
+		"homeport.engine":  "mysql",
+		"homeport.cluster": clusterID,
+		"homeport.role":    "primary",
 	}
 
 	mysqlConfig := m.generateMySQLClusterConfig(res)
@@ -278,10 +278,10 @@ postgres-replica:
   depends_on:
     - postgres-primary
   networks:
-    - cloudexit
+    - homeport
   labels:
-    cloudexit.role: replica
-    cloudexit.database: %s
+    homeport.role: replica
+    homeport.database: %s
 `, version, dbName)
 }
 
@@ -357,10 +357,10 @@ mysql-replica:
   depends_on:
     - mysql-primary
   networks:
-    - cloudexit
+    - homeport
   labels:
-    cloudexit.role: replica
-    cloudexit.database: %s
+    homeport.role: replica
+    homeport.database: %s
 `, version, dbName)
 }
 

@@ -5,8 +5,8 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/agnostech/agnostech/internal/domain/mapper"
-	"github.com/agnostech/agnostech/internal/domain/resource"
+	"github.com/homeport/homeport/internal/domain/mapper"
+	"github.com/homeport/homeport/internal/domain/resource"
 )
 
 func TestNewIAMMapper(t *testing.T) {
@@ -115,8 +115,8 @@ func TestIAMMapper_Map(t *testing.T) {
 					t.Errorf("Expected Keycloak image, got %s", result.DockerService.Image)
 				}
 				// Check labels
-				if result.DockerService.Labels["agnostech.role"] != "roles/owner" {
-					t.Errorf("Expected role label, got %s", result.DockerService.Labels["agnostech.role"])
+				if result.DockerService.Labels["homeport.role"] != "roles/owner" {
+					t.Errorf("Expected role label, got %s", result.DockerService.Labels["homeport.role"])
 				}
 			},
 		},

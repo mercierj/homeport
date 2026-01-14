@@ -1,4 +1,4 @@
-// Package e2e contains end-to-end tests for the CloudExit migration tool.
+// Package e2e contains end-to-end tests for the Homeport migration tool.
 package e2e
 
 import (
@@ -8,14 +8,14 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/agnostech/agnostech/internal/domain/mapper"
-	"github.com/agnostech/agnostech/internal/domain/parser"
-	"github.com/agnostech/agnostech/internal/domain/resource"
-	"github.com/agnostech/agnostech/internal/infrastructure/generator/compose"
-	_ "github.com/agnostech/agnostech/internal/infrastructure/mapper/azure/compute"
-	_ "github.com/agnostech/agnostech/internal/infrastructure/mapper/azure/database"
-	_ "github.com/agnostech/agnostech/internal/infrastructure/mapper/azure/storage"
-	_ "github.com/agnostech/agnostech/internal/infrastructure/parser/azure"
+	"github.com/homeport/homeport/internal/domain/mapper"
+	"github.com/homeport/homeport/internal/domain/parser"
+	"github.com/homeport/homeport/internal/domain/resource"
+	"github.com/homeport/homeport/internal/infrastructure/generator/compose"
+	_ "github.com/homeport/homeport/internal/infrastructure/mapper/azure/compute"
+	_ "github.com/homeport/homeport/internal/infrastructure/mapper/azure/database"
+	_ "github.com/homeport/homeport/internal/infrastructure/mapper/azure/storage"
+	_ "github.com/homeport/homeport/internal/infrastructure/parser/azure"
 )
 
 // TestAzureMigration_ARMTemplate tests complete Azure to self-hosted migration using ARM templates.

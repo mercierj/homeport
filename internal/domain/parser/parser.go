@@ -5,7 +5,7 @@ import (
 	"context"
 	"errors"
 
-	"github.com/agnostech/agnostech/internal/domain/resource"
+	"github.com/homeport/homeport/internal/domain/resource"
 )
 
 // Parser defines the interface for parsing cloud infrastructure.
@@ -61,6 +61,22 @@ func (f Format) String() string {
 	return string(f)
 }
 
+// ProgressEvent represents a progress update during parsing/discovery.
+type ProgressEvent struct {
+	Step           string // Current step: "init", "regions", "scanning"
+	Message        string // Human-readable message
+	Region         string // Current region being scanned
+	Service        string // Current service being scanned
+	CurrentRegion  int    // Current region index (1-based)
+	TotalRegions   int    // Total number of regions
+	CurrentService int    // Current service index (1-based)
+	TotalServices  int    // Total number of services to scan
+	ResourcesFound int    // Total resources found so far
+}
+
+// ProgressCallback is called during parsing to report progress.
+type ProgressCallback func(event ProgressEvent)
+
 // ParseOptions configures parsing behavior.
 type ParseOptions struct {
 	// IncludeSensitive includes sensitive data (secrets, passwords) in output.
@@ -96,6 +112,9 @@ type ParseOptions struct {
 	// IncludePatterns are glob patterns for paths to include.
 	// Empty means include all.
 	IncludePatterns []string
+
+	// OnProgress is called during parsing to report progress updates.
+	OnProgress ProgressCallback
 }
 
 // NewParseOptions creates parse options with sensible defaults.
@@ -153,6 +172,12 @@ func (o *ParseOptions) WithRegions(regions ...string) *ParseOptions {
 // WithCredentials sets API credentials.
 func (o *ParseOptions) WithCredentials(creds map[string]string) *ParseOptions {
 	o.APICredentials = creds
+	return o
+}
+
+// WithProgressCallback sets a callback for progress updates during parsing.
+func (o *ParseOptions) WithProgressCallback(callback ProgressCallback) *ParseOptions {
+	o.OnProgress = callback
 	return o
 }
 

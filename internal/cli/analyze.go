@@ -7,12 +7,12 @@ import (
 	"os"
 	"path/filepath"
 
-	"github.com/agnostech/agnostech/internal/cli/ui"
-	"github.com/agnostech/agnostech/internal/domain/parser"
-	"github.com/agnostech/agnostech/internal/domain/resource"
-	_ "github.com/agnostech/agnostech/internal/infrastructure/parser/aws"   // Register AWS parsers
-	_ "github.com/agnostech/agnostech/internal/infrastructure/parser/azure" // Register Azure parsers
-	_ "github.com/agnostech/agnostech/internal/infrastructure/parser/gcp"   // Register GCP parsers
+	"github.com/homeport/homeport/internal/cli/ui"
+	"github.com/homeport/homeport/internal/domain/parser"
+	"github.com/homeport/homeport/internal/domain/resource"
+	_ "github.com/homeport/homeport/internal/infrastructure/parser/aws"   // Register AWS parsers
+	_ "github.com/homeport/homeport/internal/infrastructure/parser/azure" // Register Azure parsers
+	_ "github.com/homeport/homeport/internal/infrastructure/parser/gcp"   // Register GCP parsers
 	"github.com/spf13/cobra"
 	"gopkg.in/yaml.v3"
 )
@@ -46,31 +46,31 @@ Supported input sources:
 
 Examples:
   # Auto-detect and analyze Terraform directory
-  cloudexit analyze ./infrastructure
+  homeport analyze ./infrastructure
 
   # Analyze specific Terraform state file
-  cloudexit analyze terraform.tfstate
+  homeport analyze terraform.tfstate
 
   # Analyze CloudFormation templates
-  cloudexit analyze --source cloudformation ./templates
+  homeport analyze --source cloudformation ./templates
 
   # Analyze ARM templates
-  cloudexit analyze --source arm ./arm-templates
+  homeport analyze --source arm ./arm-templates
 
   # Analyze live AWS infrastructure via API
-  cloudexit analyze --source aws-api --profile production --region us-east-1
+  homeport analyze --source aws-api --profile production --region us-east-1
 
   # Analyze live GCP infrastructure via API
-  cloudexit analyze --source gcp-api --project my-project --region us-central1
+  homeport analyze --source gcp-api --project my-project --region us-central1
 
   # Analyze live Azure infrastructure via API
-  cloudexit analyze --source azure-api --region eastus
+  homeport analyze --source azure-api --region eastus
 
   # Analyze multiple regions
-  cloudexit analyze --source aws-api --region us-east-1 --region eu-west-1
+  homeport analyze --source aws-api --region us-east-1 --region eu-west-1
 
   # Analyze with custom output
-  cloudexit analyze ./infrastructure --output analysis.yaml --format yaml`,
+  homeport analyze ./infrastructure --output analysis.yaml --format yaml`,
 	Args: cobra.MaximumNArgs(1),
 	RunE: func(cmd *cobra.Command, args []string) error {
 		var inputPath string
@@ -81,7 +81,7 @@ Examples:
 		}
 
 		if !IsQuiet() {
-			ui.Header("CloudExit - Infrastructure Analysis")
+			ui.Header("Homeport - Infrastructure Analysis")
 			if inputPath != "" {
 				ui.Info(fmt.Sprintf("Analyzing: %s", inputPath))
 			} else {
@@ -160,13 +160,15 @@ type AnalysisResult struct {
 
 // ResourceSummary represents a summary of a single resource
 type ResourceSummary struct {
-	Type         string            `json:"type" yaml:"type"`
-	Name         string            `json:"name" yaml:"name"`
-	ID           string            `json:"id" yaml:"id"`
-	Region       string            `json:"region,omitempty" yaml:"region,omitempty"`
-	Tags         map[string]string `json:"tags,omitempty" yaml:"tags,omitempty"`
-	MigrateAs    string            `json:"migrate_as" yaml:"migrate_as"`
-	Dependencies []string          `json:"dependencies,omitempty" yaml:"dependencies,omitempty"`
+	Type         string                 `json:"type" yaml:"type"`
+	Name         string                 `json:"name" yaml:"name"`
+	ID           string                 `json:"id" yaml:"id"`
+	ARN          string                 `json:"arn,omitempty" yaml:"arn,omitempty"`
+	Region       string                 `json:"region,omitempty" yaml:"region,omitempty"`
+	Config       map[string]interface{} `json:"config,omitempty" yaml:"config,omitempty"`
+	Tags         map[string]string      `json:"tags,omitempty" yaml:"tags,omitempty"`
+	MigrateAs    string                 `json:"migrate_as" yaml:"migrate_as"`
+	Dependencies []string               `json:"dependencies,omitempty" yaml:"dependencies,omitempty"`
 }
 
 // AnalysisStatistics represents statistics about the analysis
@@ -378,7 +380,9 @@ func buildAnalysisResult(infra *resource.Infrastructure, absPath, sourceType str
 			Type:         string(res.Type),
 			Name:         res.Name,
 			ID:           res.ID,
+			ARN:          res.ARN,
 			Region:       res.Region,
+			Config:       res.Config,
 			Tags:         res.Tags,
 			MigrateAs:    getMigrateAs(res.Type),
 			Dependencies: res.Dependencies,

@@ -7,8 +7,8 @@ import (
 	"strings"
 	"time"
 
-	"github.com/agnostech/agnostech/internal/domain/mapper"
-	"github.com/agnostech/agnostech/internal/domain/resource"
+	"github.com/homeport/homeport/internal/domain/mapper"
+	"github.com/homeport/homeport/internal/domain/resource"
 )
 
 // CloudSQLMapper converts GCP CloudSQL instances to PostgreSQL/MySQL containers.
@@ -71,9 +71,9 @@ func (m *CloudSQLMapper) createPostgresService(res *resource.AWSResource, instan
 	}
 	svc.Restart = "unless-stopped"
 	svc.Labels = map[string]string{
-		"cloudexit.source":   "google_sql_database_instance",
-		"cloudexit.engine":   "postgres",
-		"cloudexit.instance": instanceName,
+		"homeport.source":   "google_sql_database_instance",
+		"homeport.engine":   "postgres",
+		"homeport.instance": instanceName,
 	}
 
 	migrationScript := m.generatePostgresMigrationScript(instanceName)
@@ -112,9 +112,9 @@ func (m *CloudSQLMapper) createMySQLService(res *resource.AWSResource, instanceN
 	}
 	svc.Restart = "unless-stopped"
 	svc.Labels = map[string]string{
-		"cloudexit.source":   "google_sql_database_instance",
-		"cloudexit.engine":   "mysql",
-		"cloudexit.instance": instanceName,
+		"homeport.source":   "google_sql_database_instance",
+		"homeport.engine":   "mysql",
+		"homeport.instance": instanceName,
 	}
 
 	migrationScript := m.generateMySQLMigrationScript(instanceName)

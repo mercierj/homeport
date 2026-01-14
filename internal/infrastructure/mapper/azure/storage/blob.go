@@ -6,8 +6,8 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/agnostech/agnostech/internal/domain/mapper"
-	"github.com/agnostech/agnostech/internal/domain/resource"
+	"github.com/homeport/homeport/internal/domain/mapper"
+	"github.com/homeport/homeport/internal/domain/resource"
 )
 
 // BlobMapper converts Azure Blob Storage containers to MinIO.
@@ -51,7 +51,7 @@ func (m *BlobMapper) Map(ctx context.Context, res *resource.AWSResource) (*mappe
 		"./data/minio:/data",
 	}
 	svc.Command = []string{"server", "/data", "--console-address", ":9001"}
-	svc.Networks = []string{"cloudexit"}
+	svc.Networks = []string{"homeport"}
 	svc.Restart = "unless-stopped"
 	svc.HealthCheck = &mapper.HealthCheck{
 		Test:     []string{"CMD", "curl", "-f", "http://localhost:9000/minio/health/live"},
@@ -60,8 +60,8 @@ func (m *BlobMapper) Map(ctx context.Context, res *resource.AWSResource) (*mappe
 		Retries:  3,
 	}
 	svc.Labels = map[string]string{
-		"cloudexit.source":    "azurerm_storage_container",
-		"cloudexit.container": containerName,
+		"homeport.source":    "azurerm_storage_container",
+		"homeport.container": containerName,
 		"traefik.enable":      "true",
 		"traefik.http.routers.minio.rule":                      "Host(`minio.localhost`)",
 		"traefik.http.services.minio.loadbalancer.server.port": "9001",

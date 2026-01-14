@@ -7,8 +7,8 @@ import (
 	"fmt"
 	"strings"
 
-	"github.com/agnostech/agnostech/internal/domain/mapper"
-	"github.com/agnostech/agnostech/internal/domain/resource"
+	"github.com/homeport/homeport/internal/domain/mapper"
+	"github.com/homeport/homeport/internal/domain/resource"
 )
 
 // EC2Mapper converts AWS EC2 instances to Docker containers.
@@ -52,9 +52,9 @@ func (m *EC2Mapper) Map(ctx context.Context, res *resource.AWSResource) (*mapper
 	}
 	result.DockerService.Restart = "unless-stopped"
 	result.DockerService.Labels = map[string]string{
-		"cloudexit.source":        "aws_instance",
-		"cloudexit.instance_name": instanceName,
-		"cloudexit.instance_type": instanceType,
+		"homeport.source":        "aws_instance",
+		"homeport.instance_name": instanceName,
+		"homeport.instance_type": instanceType,
 	}
 
 	// Map instance type to resources

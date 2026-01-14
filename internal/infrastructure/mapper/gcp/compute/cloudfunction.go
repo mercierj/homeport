@@ -7,8 +7,8 @@ import (
 	"strings"
 	"time"
 
-	"github.com/agnostech/agnostech/internal/domain/mapper"
-	"github.com/agnostech/agnostech/internal/domain/resource"
+	"github.com/homeport/homeport/internal/domain/mapper"
+	"github.com/homeport/homeport/internal/domain/resource"
 )
 
 // CloudFunctionMapper converts GCP Cloud Functions to Docker/OpenFaaS.
@@ -64,7 +64,7 @@ func (m *CloudFunctionMapper) Map(ctx context.Context, res *resource.AWSResource
 	}
 
 	svc.Ports = []string{"8080:8080"}
-	svc.Networks = []string{"cloudexit"}
+	svc.Networks = []string{"homeport"}
 	svc.Restart = "unless-stopped"
 
 	// Resource limits
@@ -79,9 +79,9 @@ func (m *CloudFunctionMapper) Map(ctx context.Context, res *resource.AWSResource
 
 	// Labels
 	svc.Labels = map[string]string{
-		"cloudexit.source":        "google_cloudfunctions_function",
-		"cloudexit.function_name": functionName,
-		"cloudexit.runtime":       runtime,
+		"homeport.source":        "google_cloudfunctions_function",
+		"homeport.function_name": functionName,
+		"homeport.runtime":       runtime,
 		"traefik.enable":          "true",
 		"traefik.http.routers." + m.sanitizeName(functionName) + ".rule": fmt.Sprintf("Host(`%s.localhost`)", m.sanitizeName(functionName)),
 	}

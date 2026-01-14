@@ -6,8 +6,8 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/agnostech/agnostech/internal/domain/mapper"
-	"github.com/agnostech/agnostech/internal/domain/resource"
+	"github.com/homeport/homeport/internal/domain/mapper"
+	"github.com/homeport/homeport/internal/domain/resource"
 )
 
 // MemorystoreMapper converts GCP Memorystore to Redis containers.
@@ -62,9 +62,9 @@ func (m *MemorystoreMapper) Map(ctx context.Context, res *resource.AWSResource) 
 	}
 	svc.Restart = "unless-stopped"
 	svc.Labels = map[string]string{
-		"cloudexit.source":   "google_redis_instance",
-		"cloudexit.engine":   "redis",
-		"cloudexit.instance": instanceName,
+		"homeport.source":   "google_redis_instance",
+		"homeport.engine":   "redis",
+		"homeport.instance": instanceName,
 	}
 
 	redisConfig := m.generateRedisConfig(memorySizeGB, tier)

@@ -7,8 +7,8 @@ import (
 	"strings"
 	"time"
 
-	"github.com/agnostech/agnostech/internal/domain/mapper"
-	"github.com/agnostech/agnostech/internal/domain/resource"
+	"github.com/homeport/homeport/internal/domain/mapper"
+	"github.com/homeport/homeport/internal/domain/resource"
 )
 
 // CloudRunMapper converts GCP Cloud Run services to Docker containers.
@@ -54,14 +54,14 @@ func (m *CloudRunMapper) Map(ctx context.Context, res *resource.AWSResource) (*m
 
 	// Configure for Traefik
 	svc.Labels = map[string]string{
-		"cloudexit.source":       "google_cloud_run_service",
-		"cloudexit.service_name": serviceName,
+		"homeport.source":       "google_cloud_run_service",
+		"homeport.service_name": serviceName,
 		"traefik.enable":         "true",
 		"traefik.http.routers." + m.sanitizeName(serviceName) + ".rule": fmt.Sprintf("Host(`%s.localhost`)", m.sanitizeName(serviceName)),
 		"traefik.http.services." + m.sanitizeName(serviceName) + ".loadbalancer.server.port": fmt.Sprintf("%d", containerPort),
 	}
 
-	svc.Networks = []string{"cloudexit"}
+	svc.Networks = []string{"homeport"}
 	svc.Restart = "unless-stopped"
 
 	// Health check

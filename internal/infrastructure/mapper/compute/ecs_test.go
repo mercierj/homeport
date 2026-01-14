@@ -4,8 +4,8 @@ import (
 	"context"
 	"testing"
 
-	"github.com/agnostech/agnostech/internal/domain/mapper"
-	"github.com/agnostech/agnostech/internal/domain/resource"
+	"github.com/homeport/homeport/internal/domain/mapper"
+	"github.com/homeport/homeport/internal/domain/resource"
 )
 
 func TestNewECSMapper(t *testing.T) {
@@ -128,11 +128,11 @@ func TestECSMapper_Map(t *testing.T) {
 				if result.DockerService.Labels == nil {
 					t.Error("DockerService.Labels is nil")
 				}
-				if result.DockerService.Labels["cloudexit.source"] != "aws_ecs_service" {
-					t.Errorf("Label cloudexit.source = %v, want aws_ecs_service", result.DockerService.Labels["cloudexit.source"])
+				if result.DockerService.Labels["homeport.source"] != "aws_ecs_service" {
+					t.Errorf("Label homeport.source = %v, want aws_ecs_service", result.DockerService.Labels["homeport.source"])
 				}
-				if result.DockerService.Labels["cloudexit.service_name"] != "my-service" {
-					t.Errorf("Label cloudexit.service_name = %v, want my-service", result.DockerService.Labels["cloudexit.service_name"])
+				if result.DockerService.Labels["homeport.service_name"] != "my-service" {
+					t.Errorf("Label homeport.service_name = %v, want my-service", result.DockerService.Labels["homeport.service_name"])
 				}
 				// Check Deploy config
 				if result.DockerService.Deploy == nil {
@@ -485,8 +485,8 @@ func TestECSMapper_Map(t *testing.T) {
 				if result == nil {
 					t.Fatal("Map() returned nil result")
 				}
-				if result.DockerService.Labels["cloudexit.service_name"] != "fallback-service-name" {
-					t.Errorf("Label cloudexit.service_name = %v, want fallback-service-name", result.DockerService.Labels["cloudexit.service_name"])
+				if result.DockerService.Labels["homeport.service_name"] != "fallback-service-name" {
+					t.Errorf("Label homeport.service_name = %v, want fallback-service-name", result.DockerService.Labels["homeport.service_name"])
 				}
 			},
 		},
@@ -685,8 +685,8 @@ func TestECSTaskDefMapper_Map(t *testing.T) {
 				if result.DockerService.Image != "nginx:1.21" {
 					t.Errorf("DockerService.Image = %v, want nginx:1.21", result.DockerService.Image)
 				}
-				if result.DockerService.Labels["cloudexit.source"] != "aws_ecs_task_definition" {
-					t.Errorf("Label cloudexit.source = %v, want aws_ecs_task_definition", result.DockerService.Labels["cloudexit.source"])
+				if result.DockerService.Labels["homeport.source"] != "aws_ecs_task_definition" {
+					t.Errorf("Label homeport.source = %v, want aws_ecs_task_definition", result.DockerService.Labels["homeport.source"])
 				}
 			},
 		},

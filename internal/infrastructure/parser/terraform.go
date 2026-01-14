@@ -1,5 +1,5 @@
 // Package parser provides functionality for parsing Terraform state files and HCL configurations
-// to build Infrastructure models for the CloudExit project.
+// to build Infrastructure models for the Homeport project.
 package parser
 
 import (
@@ -7,7 +7,7 @@ import (
 	"os"
 	"path/filepath"
 
-	"github.com/agnostech/agnostech/internal/domain/resource"
+	"github.com/homeport/homeport/internal/domain/resource"
 )
 
 // ParseState parses a Terraform state file and returns an Infrastructure model

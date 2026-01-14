@@ -10,6 +10,7 @@ export interface Resource {
   region?: string;
   dependencies: string[];
   tags?: Record<string, string>;
+  config?: Record<string, unknown>;
 }
 
 export interface AnalyzeResponse {
@@ -23,6 +24,23 @@ export interface GenerateOptions {
   include_migration: boolean;
   include_monitoring: boolean;
   domain: string;
+  consolidate: boolean;
+}
+
+// Stack consolidation preview types
+export interface ConsolidationPreview {
+  stacks: StackPreview[];
+  source_count: number;
+  service_count: number;
+  reduction_ratio: number;
+}
+
+export interface StackPreview {
+  type: string;
+  display_name: string;
+  resource_count: number;
+  service_count: number;
+  resources: string[];
 }
 
 export interface GenerateResponse {
@@ -60,6 +78,89 @@ export async function discoverInfrastructure(request: DiscoverRequest): Promise<
     method: 'POST',
     body: JSON.stringify(request),
   });
+}
+
+// Progress event from streaming discover
+export interface DiscoverProgressEvent {
+  type: 'progress' | 'error' | 'complete';
+  step: string;
+  message: string;
+  region?: string;
+  service?: string;
+  current_region: number;
+  total_regions: number;
+  current_service: number;
+  total_services: number;
+  resources_found: number;
+}
+
+// Streaming discover with progress updates
+export async function discoverInfrastructureWithProgress(
+  request: DiscoverRequest,
+  onProgress: (event: DiscoverProgressEvent) => void
+): Promise<AnalyzeResponse> {
+  const response = await fetch(`${API_BASE}/migrate/discover/stream`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(request),
+  });
+
+  if (!response.ok) {
+    throw new Error('Discovery failed');
+  }
+
+  const reader = response.body?.getReader();
+  if (!reader) {
+    throw new Error('Streaming not supported');
+  }
+
+  const decoder = new TextDecoder();
+  let buffer = '';
+  let result: AnalyzeResponse | null = null;
+
+  while (true) {
+    const { done, value } = await reader.read();
+    if (done) break;
+
+    buffer += decoder.decode(value, { stream: true });
+
+    // Parse SSE events
+    const lines = buffer.split('\n');
+    buffer = lines.pop() || ''; // Keep incomplete line in buffer
+
+    let eventType = '';
+    for (const line of lines) {
+      if (line.startsWith('event:')) {
+        eventType = line.slice(6).trim();
+      } else if (line.startsWith('data:')) {
+        const data = line.slice(5).trim();
+        if (!data) continue;
+
+        try {
+          const parsed = JSON.parse(data);
+          if (eventType === 'progress') {
+            onProgress(parsed as DiscoverProgressEvent);
+          } else if (eventType === 'error') {
+            throw new Error(parsed.message || 'Discovery failed');
+          } else if (eventType === 'complete') {
+            result = parsed as AnalyzeResponse;
+          }
+        } catch (e) {
+          if (e instanceof SyntaxError) {
+            console.warn('Failed to parse SSE data:', data);
+          } else {
+            throw e;
+          }
+        }
+      }
+    }
+  }
+
+  if (!result) {
+    throw new Error('No result received from discovery');
+  }
+
+  return result;
 }
 
 export async function generateStack(
@@ -136,4 +237,30 @@ export async function deleteDiscovery(id: string): Promise<void> {
   await fetchAPI<void>(`/migrate/discoveries/${id}`, {
     method: 'DELETE',
   });
+}
+
+// Terraform export types
+export interface ExportTerraformConfig {
+  provider: 'hetzner' | 'scaleway' | 'ovh';
+  project_name: string;
+  domain: string;
+  region: string;
+}
+
+// Export Terraform configuration as a ZIP file
+export async function exportTerraform(
+  resources: Resource[],
+  config: ExportTerraformConfig
+): Promise<Blob> {
+  const response = await fetch(`${API_BASE}/migrate/export/${config.provider}`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ resources, config }),
+  });
+
+  if (!response.ok) {
+    throw new Error('Export failed');
+  }
+
+  return response.blob();
 }

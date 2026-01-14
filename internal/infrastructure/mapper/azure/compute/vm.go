@@ -7,8 +7,8 @@ import (
 	"strings"
 	"time"
 
-	"github.com/agnostech/agnostech/internal/domain/mapper"
-	"github.com/agnostech/agnostech/internal/domain/resource"
+	"github.com/homeport/homeport/internal/domain/mapper"
+	"github.com/homeport/homeport/internal/domain/resource"
 )
 
 // VMMapper converts Azure Virtual Machines to Docker containers.
@@ -63,16 +63,16 @@ func (m *VMMapper) Map(ctx context.Context, res *resource.AWSResource) (*mapper.
 		result.AddManualStep("Review custom data script and incorporate into Dockerfile")
 	}
 
-	svc.Networks = []string{"cloudexit"}
+	svc.Networks = []string{"homeport"}
 	svc.Restart = "unless-stopped"
 	svc.Labels = map[string]string{
-		"cloudexit.source":  "azurerm_linux_virtual_machine",
-		"cloudexit.vm_name": vmName,
-		"cloudexit.vm_size": vmSize,
+		"homeport.source":  "azurerm_linux_virtual_machine",
+		"homeport.vm_name": vmName,
+		"homeport.vm_size": vmSize,
 	}
 
 	if isWindows {
-		svc.Labels["cloudexit.source"] = "azurerm_windows_virtual_machine"
+		svc.Labels["homeport.source"] = "azurerm_windows_virtual_machine"
 		result.AddWarning("Windows VM detected. Docker may require Windows containers or WSL2.")
 	}
 

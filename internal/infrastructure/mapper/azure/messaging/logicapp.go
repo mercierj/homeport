@@ -7,8 +7,8 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/agnostech/agnostech/internal/domain/mapper"
-	"github.com/agnostech/agnostech/internal/domain/resource"
+	"github.com/homeport/homeport/internal/domain/mapper"
+	"github.com/homeport/homeport/internal/domain/resource"
 )
 
 // LogicAppMapper converts Azure Logic Apps to n8n workflows.
@@ -54,10 +54,10 @@ func (m *LogicAppMapper) Map(ctx context.Context, res *resource.AWSResource) (*m
 		"./data/n8n:/home/node/.n8n",
 		"./config/n8n/workflows:/workflows",
 	}
-	svc.Networks = []string{"cloudexit"}
+	svc.Networks = []string{"homeport"}
 	svc.Labels = map[string]string{
-		"cloudexit.source":                                       "azurerm_logic_app_workflow",
-		"cloudexit.workflow_name":                                workflowName,
+		"homeport.source":                                       "azurerm_logic_app_workflow",
+		"homeport.workflow_name":                                workflowName,
 		"traefik.enable":                                         "true",
 		"traefik.http.routers.n8n.rule":                          "Host(`n8n.localhost`)",
 		"traefik.http.services.n8n.loadbalancer.server.port":     "5678",

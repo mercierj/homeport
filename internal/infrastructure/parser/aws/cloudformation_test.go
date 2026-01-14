@@ -6,8 +6,8 @@ import (
 	"path/filepath"
 	"testing"
 
-	"github.com/agnostech/agnostech/internal/domain/parser"
-	"github.com/agnostech/agnostech/internal/domain/resource"
+	"github.com/homeport/homeport/internal/domain/parser"
+	"github.com/homeport/homeport/internal/domain/resource"
 )
 
 func TestCloudFormationParser_Provider(t *testing.T) {

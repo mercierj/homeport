@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"os"
 
-	"github.com/agnostech/agnostech/internal/cli/ui"
+	"github.com/homeport/homeport/internal/cli/ui"
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
 )
@@ -17,12 +17,12 @@ var (
 
 // rootCmd represents the base command when called without any subcommands
 var rootCmd = &cobra.Command{
-	Use:   "cloudexit",
-	Short: "Migrate AWS infrastructure to self-hosted Docker stack",
-	Long: `CloudExit is a CLI tool that helps you migrate from AWS infrastructure
+	Use:   "homeport",
+	Short: "Migrate cloud infrastructure to self-hosted Docker stack",
+	Long: `Homeport is a CLI tool that helps you migrate from cloud infrastructure
 to a self-hosted Docker-based stack.
 
-It analyzes your AWS infrastructure from Terraform state files or configurations,
+It analyzes your cloud infrastructure from Terraform state files or configurations,
 and generates a complete self-hosted stack with Docker Compose, Traefik,
 and all necessary configurations.`,
 	PersistentPreRun: func(cmd *cobra.Command, args []string) {
@@ -47,7 +47,7 @@ func init() {
 	})
 
 	// Global flags
-	rootCmd.PersistentFlags().StringVar(&cfgFile, "config", "", "config file (default is $HOME/.cloudexit.yaml)")
+	rootCmd.PersistentFlags().StringVar(&cfgFile, "config", "", "config file (default is $HOME/.homeport.yaml)")
 	rootCmd.PersistentFlags().BoolVarP(&verbose, "verbose", "v", false, "verbose output")
 	rootCmd.PersistentFlags().BoolVarP(&quiet, "quiet", "q", false, "quiet output (errors only)")
 
@@ -68,11 +68,11 @@ func initConfig() error {
 			return err
 		}
 
-		// Search config in home directory with name ".cloudexit" (without extension).
+		// Search config in home directory with name ".homeport" (without extension).
 		viper.AddConfigPath(home)
 		viper.AddConfigPath(".")
 		viper.SetConfigType("yaml")
-		viper.SetConfigName(".cloudexit")
+		viper.SetConfigName(".homeport")
 	}
 
 	viper.AutomaticEnv() // read in environment variables that match

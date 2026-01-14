@@ -6,8 +6,8 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/agnostech/agnostech/internal/domain/mapper"
-	"github.com/agnostech/agnostech/internal/domain/resource"
+	"github.com/homeport/homeport/internal/domain/mapper"
+	"github.com/homeport/homeport/internal/domain/resource"
 )
 
 // KinesisMapper converts AWS Kinesis streams to Redpanda.
@@ -65,11 +65,11 @@ func (m *KinesisMapper) Map(ctx context.Context, res *resource.AWSResource) (*ma
 	svc.Volumes = []string{
 		"./data/redpanda:/var/lib/redpanda/data",
 	}
-	svc.Networks = []string{"cloudexit"}
+	svc.Networks = []string{"homeport"}
 	svc.Labels = map[string]string{
-		"cloudexit.source":                                           "aws_kinesis_stream",
-		"cloudexit.stream_name":                                      streamName,
-		"cloudexit.shard_count":                                      fmt.Sprintf("%d", shardCount),
+		"homeport.source":                                           "aws_kinesis_stream",
+		"homeport.stream_name":                                      streamName,
+		"homeport.shard_count":                                      fmt.Sprintf("%d", shardCount),
 		"traefik.enable":                                             "true",
 		"traefik.http.routers.redpanda.rule":                         "Host(`redpanda.localhost`)",
 		"traefik.http.services.redpanda.loadbalancer.server.port":    "8082",

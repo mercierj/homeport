@@ -7,14 +7,14 @@ import (
 	"strings"
 	"testing"
 
-	domainmapper "github.com/agnostech/agnostech/internal/domain/mapper"
-	"github.com/agnostech/agnostech/internal/domain/parser"
-	"github.com/agnostech/agnostech/internal/domain/resource"
-	"github.com/agnostech/agnostech/internal/infrastructure/mapper"
-	"github.com/agnostech/agnostech/internal/infrastructure/mapper/compute"
-	"github.com/agnostech/agnostech/internal/infrastructure/mapper/database"
-	"github.com/agnostech/agnostech/internal/infrastructure/mapper/storage"
-	awsparser "github.com/agnostech/agnostech/internal/infrastructure/parser/aws"
+	domainmapper "github.com/homeport/homeport/internal/domain/mapper"
+	"github.com/homeport/homeport/internal/domain/parser"
+	"github.com/homeport/homeport/internal/domain/resource"
+	"github.com/homeport/homeport/internal/infrastructure/mapper"
+	"github.com/homeport/homeport/internal/infrastructure/mapper/compute"
+	"github.com/homeport/homeport/internal/infrastructure/mapper/database"
+	"github.com/homeport/homeport/internal/infrastructure/mapper/storage"
+	awsparser "github.com/homeport/homeport/internal/infrastructure/parser/aws"
 )
 
 // TestMapperIntegration_ParserToMapper tests the complete workflow from parsing to mapping.

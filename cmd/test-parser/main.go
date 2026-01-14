@@ -6,7 +6,7 @@ import (
 	"os"
 	"path/filepath"
 
-	"github.com/agnostech/agnostech/internal/infrastructure/parser"
+	"github.com/homeport/homeport/internal/infrastructure/parser"
 )
 
 func main() {
@@ -19,7 +19,7 @@ func main() {
 	// Path to test fixture
 	fixturePath := filepath.Join(cwd, "test", "fixtures", "simple-webapp")
 
-	fmt.Println("CloudExit Terraform Parser Test")
+	fmt.Println("Homeport Terraform Parser Test")
 	fmt.Println("================================")
 	fmt.Println()
 

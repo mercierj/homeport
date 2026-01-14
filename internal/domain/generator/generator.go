@@ -9,8 +9,9 @@ import (
 	"sync"
 	"time"
 
-	"github.com/agnostech/agnostech/internal/domain/mapper"
-	"github.com/agnostech/agnostech/internal/domain/target"
+	"github.com/homeport/homeport/internal/domain/mapper"
+	"github.com/homeport/homeport/internal/domain/stack"
+	"github.com/homeport/homeport/internal/domain/target"
 )
 
 // Generator defines the interface for generating output artifacts from mapping results.
@@ -170,7 +171,7 @@ func NewOptions() *Options {
 	return &Options{
 		Format:          FormatDockerCompose,
 		IncludeComments: true,
-		NetworkName:     "cloudexit",
+		NetworkName:     "homeport",
 		Extra:           make(map[string]interface{}),
 	}
 }
@@ -258,6 +259,22 @@ type TargetGenerator interface {
 	EstimateCost(results []*mapper.MappingResult, config *TargetConfig) (*CostEstimate, error)
 }
 
+// StackGenerator extends TargetGenerator with the ability to generate from consolidated stacks.
+// This interface allows generators to take pre-consolidated stack definitions and produce
+// deployment artifacts, enabling a more efficient and organized generation process.
+type StackGenerator interface {
+	TargetGenerator
+
+	// GenerateFromStacks produces output artifacts from consolidated stacks.
+	// This method takes the output from the consolidator and generates
+	// deployment configurations (docker-compose.yml, Helm charts, etc.)
+	// that combine all services from all stacks into a unified deployment.
+	GenerateFromStacks(ctx context.Context, stacks *stack.ConsolidatedResult, config *TargetConfig) (*TargetOutput, error)
+
+	// ValidateStacks checks if the consolidated stacks can be processed by this generator.
+	ValidateStacks(stacks *stack.ConsolidatedResult, config *TargetConfig) error
+}
+
 // TargetConfig holds configuration for target-specific generation.
 type TargetConfig struct {
 	// Platform is the target deployment platform
@@ -302,7 +319,7 @@ func NewTargetConfig(platform target.Platform) *TargetConfig {
 	return &TargetConfig{
 		Platform:          platform,
 		HALevel:           target.HALevelNone,
-		ProjectName:       "cloudexit",
+		ProjectName:       "homeport",
 		SSLEnabled:        true,
 		IncludeMonitoring: true,
 		IncludeBackups:    true,
@@ -655,3 +672,49 @@ func GetGenerator(platform target.Platform) (TargetGenerator, error) {
 func Generate(ctx context.Context, platform target.Platform, results []*mapper.MappingResult, config *TargetConfig) (*TargetOutput, error) {
 	return defaultRegistry.Generate(ctx, platform, results, config)
 }
+
+// GetStackGenerator returns a StackGenerator for the specified platform.
+// Returns an error if the generator doesn't implement StackGenerator.
+func (r *Registry) GetStackGenerator(platform target.Platform) (StackGenerator, error) {
+	r.mu.RLock()
+	defer r.mu.RUnlock()
+
+	gen, ok := r.generators[platform]
+	if !ok {
+		return nil, ErrNoGeneratorFound
+	}
+
+	stackGen, ok := gen.(StackGenerator)
+	if !ok {
+		return nil, ErrNotStackGenerator
+	}
+
+	return stackGen, nil
+}
+
+// GenerateFromStacks uses the appropriate StackGenerator to produce output from consolidated stacks.
+func (r *Registry) GenerateFromStacks(ctx context.Context, platform target.Platform, stacks *stack.ConsolidatedResult, config *TargetConfig) (*TargetOutput, error) {
+	gen, err := r.GetStackGenerator(platform)
+	if err != nil {
+		return nil, err
+	}
+
+	if err := gen.ValidateStacks(stacks, config); err != nil {
+		return nil, err
+	}
+
+	return gen.GenerateFromStacks(ctx, stacks, config)
+}
+
+// GetStackGenerator returns a StackGenerator from the default registry.
+func GetStackGenerator(platform target.Platform) (StackGenerator, error) {
+	return defaultRegistry.GetStackGenerator(platform)
+}
+
+// GenerateFromStacks uses the default registry to generate output from consolidated stacks.
+func GenerateFromStacks(ctx context.Context, platform target.Platform, stacks *stack.ConsolidatedResult, config *TargetConfig) (*TargetOutput, error) {
+	return defaultRegistry.GenerateFromStacks(ctx, platform, stacks, config)
+}
+
+// ErrNotStackGenerator is returned when the generator doesn't support stack generation.
+var ErrNotStackGenerator = errors.New("generator does not support stack-based generation")

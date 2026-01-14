@@ -6,8 +6,8 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/agnostech/agnostech/internal/domain/mapper"
-	"github.com/agnostech/agnostech/internal/domain/resource"
+	"github.com/homeport/homeport/internal/domain/mapper"
+	"github.com/homeport/homeport/internal/domain/resource"
 )
 
 // SpannerMapper converts GCP Spanner to CockroachDB containers.
@@ -54,9 +54,9 @@ func (m *SpannerMapper) Map(ctx context.Context, res *resource.AWSResource) (*ma
 	}
 	svc.Restart = "unless-stopped"
 	svc.Labels = map[string]string{
-		"cloudexit.source":   "google_spanner_instance",
-		"cloudexit.engine":   "cockroachdb",
-		"cloudexit.instance": instanceName,
+		"homeport.source":   "google_spanner_instance",
+		"homeport.engine":   "cockroachdb",
+		"homeport.instance": instanceName,
 	}
 
 	schemaScript := m.generateSchemaConversionScript()

@@ -6,8 +6,8 @@ import (
 	"path/filepath"
 	"strings"
 
-	"github.com/agnostech/agnostech/internal/domain/parser"
-	"github.com/agnostech/agnostech/internal/domain/resource"
+	"github.com/homeport/homeport/internal/domain/parser"
+	"github.com/homeport/homeport/internal/domain/resource"
 )
 
 // TerraformGCPParser wraps the existing Terraform parser for GCP resources.

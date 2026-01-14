@@ -7,8 +7,8 @@ import (
 	"strings"
 	"time"
 
-	"github.com/agnostech/agnostech/internal/domain/mapper"
-	"github.com/agnostech/agnostech/internal/domain/resource"
+	"github.com/homeport/homeport/internal/domain/mapper"
+	"github.com/homeport/homeport/internal/domain/resource"
 )
 
 // CDNMapper converts Azure CDN to Varnish or nginx.
@@ -56,11 +56,11 @@ func (m *CDNMapper) Map(ctx context.Context, res *resource.AWSResource) (*mapper
 		"./config/varnish:/etc/varnish:ro",
 	}
 
-	svc.Networks = []string{"cloudexit"}
+	svc.Networks = []string{"homeport"}
 	svc.Restart = "unless-stopped"
 	svc.Labels = map[string]string{
-		"cloudexit.source":   "azurerm_cdn_profile",
-		"cloudexit.cdn_name": cdnName,
+		"homeport.source":   "azurerm_cdn_profile",
+		"homeport.cdn_name": cdnName,
 	}
 
 	// Health check for Varnish

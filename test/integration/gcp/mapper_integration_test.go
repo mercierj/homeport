@@ -4,12 +4,12 @@ import (
 	"context"
 	"testing"
 
-	"github.com/agnostech/agnostech/internal/domain/mapper"
-	"github.com/agnostech/agnostech/internal/domain/resource"
-	"github.com/agnostech/agnostech/internal/infrastructure/mapper/gcp/compute"
-	"github.com/agnostech/agnostech/internal/infrastructure/mapper/gcp/database"
-	"github.com/agnostech/agnostech/internal/infrastructure/mapper/gcp/messaging"
-	"github.com/agnostech/agnostech/internal/infrastructure/mapper/gcp/storage"
+	"github.com/homeport/homeport/internal/domain/mapper"
+	"github.com/homeport/homeport/internal/domain/resource"
+	"github.com/homeport/homeport/internal/infrastructure/mapper/gcp/compute"
+	"github.com/homeport/homeport/internal/infrastructure/mapper/gcp/database"
+	"github.com/homeport/homeport/internal/infrastructure/mapper/gcp/messaging"
+	"github.com/homeport/homeport/internal/infrastructure/mapper/gcp/storage"
 )
 
 // TestGCSToMinIO_BasicMapping tests GCS bucket to MinIO mapping.
@@ -60,8 +60,8 @@ func TestGCSToMinIO_BasicMapping(t *testing.T) {
 	}
 
 	// Check labels
-	if svc.Labels["cloudexit.source"] != "google_storage_bucket" {
-		t.Errorf("Expected cloudexit.source label, got %s", svc.Labels["cloudexit.source"])
+	if svc.Labels["homeport.source"] != "google_storage_bucket" {
+		t.Errorf("Expected homeport.source label, got %s", svc.Labels["homeport.source"])
 	}
 
 	t.Logf("GCS bucket mapped to MinIO service: %s", svc.Image)
@@ -177,8 +177,8 @@ func TestGCEToDocker_BasicMapping(t *testing.T) {
 	}
 
 	// Check labels
-	if svc.Labels["cloudexit.source"] != "google_compute_instance" {
-		t.Errorf("Expected cloudexit.source label")
+	if svc.Labels["homeport.source"] != "google_compute_instance" {
+		t.Errorf("Expected homeport.source label")
 	}
 
 	// Check resource limits are set for machine type
@@ -350,8 +350,8 @@ func TestCloudSQLToPostgres_BasicMapping(t *testing.T) {
 	}
 
 	// Check labels
-	if svc.Labels["cloudexit.engine"] != "postgres" {
-		t.Errorf("Expected engine label 'postgres', got %s", svc.Labels["cloudexit.engine"])
+	if svc.Labels["homeport.engine"] != "postgres" {
+		t.Errorf("Expected engine label 'postgres', got %s", svc.Labels["homeport.engine"])
 	}
 
 	t.Logf("CloudSQL PostgreSQL mapped to: %s", svc.Image)
@@ -401,8 +401,8 @@ func TestCloudSQLToMySQL_BasicMapping(t *testing.T) {
 	}
 
 	// Check labels
-	if svc.Labels["cloudexit.engine"] != "mysql" {
-		t.Errorf("Expected engine label 'mysql', got %s", svc.Labels["cloudexit.engine"])
+	if svc.Labels["homeport.engine"] != "mysql" {
+		t.Errorf("Expected engine label 'mysql', got %s", svc.Labels["homeport.engine"])
 	}
 
 	t.Logf("CloudSQL MySQL mapped to: %s", svc.Image)
@@ -509,10 +509,10 @@ func TestPubSubToRabbitMQ_BasicMapping(t *testing.T) {
 	}
 
 	// Check labels
-	if svc.Labels["cloudexit.source"] != "google_pubsub_topic" {
-		t.Errorf("Expected cloudexit.source label")
+	if svc.Labels["homeport.source"] != "google_pubsub_topic" {
+		t.Errorf("Expected homeport.source label")
 	}
-	if svc.Labels["cloudexit.topic_name"] != "events-topic" {
+	if svc.Labels["homeport.topic_name"] != "events-topic" {
 		t.Errorf("Expected topic name in labels")
 	}
 
@@ -748,17 +748,17 @@ func TestMapperNetworkConfiguration(t *testing.T) {
 		t.Error("Expected networks to be configured")
 	}
 
-	// Should have cloudexit network
-	hasCloudExitNetwork := false
+	// Should have homeport network
+	hasHomeportNetwork := false
 	for _, network := range svc.Networks {
-		if network == "cloudexit" {
-			hasCloudExitNetwork = true
+		if network == "homeport" {
+			hasHomeportNetwork = true
 			break
 		}
 	}
 
-	if !hasCloudExitNetwork {
-		t.Error("Expected 'cloudexit' network to be configured")
+	if !hasHomeportNetwork {
+		t.Error("Expected 'homeport' network to be configured")
 	}
 }
 

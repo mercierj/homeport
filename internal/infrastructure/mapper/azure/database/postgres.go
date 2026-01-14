@@ -6,8 +6,8 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/agnostech/agnostech/internal/domain/mapper"
-	"github.com/agnostech/agnostech/internal/domain/resource"
+	"github.com/homeport/homeport/internal/domain/mapper"
+	"github.com/homeport/homeport/internal/domain/resource"
 )
 
 // PostgresMapper converts Azure Database for PostgreSQL to PostgreSQL containers.
@@ -58,9 +58,9 @@ func (m *PostgresMapper) Map(ctx context.Context, res *resource.AWSResource) (*m
 	}
 	svc.Restart = "unless-stopped"
 	svc.Labels = map[string]string{
-		"cloudexit.source": "azurerm_postgresql_flexible_server",
-		"cloudexit.engine": "postgres",
-		"cloudexit.server": serverName,
+		"homeport.source": "azurerm_postgresql_flexible_server",
+		"homeport.engine": "postgres",
+		"homeport.server": serverName,
 	}
 
 	migrationScript := m.generateMigrationScript(serverName)

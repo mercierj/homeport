@@ -3,11 +3,13 @@ package networking
 
 import (
 	"context"
+	"encoding/json"
 	"fmt"
 	"strings"
 
-	"github.com/agnostech/agnostech/internal/domain/mapper"
-	"github.com/agnostech/agnostech/internal/domain/resource"
+	"github.com/homeport/homeport/internal/domain/mapper"
+	"github.com/homeport/homeport/internal/domain/policy"
+	"github.com/homeport/homeport/internal/domain/resource"
 )
 
 // VPCMapper converts AWS VPC to Docker networks.
@@ -49,10 +51,10 @@ func (m *VPCMapper) Map(ctx context.Context, res *resource.AWSResource) (*mapper
 	svc.Command = []string{"sh", "-c", "echo 'VPC placeholder - networks defined in docker-compose.yml' && sleep infinity"}
 	svc.Networks = []string{m.sanitizeName(vpcName)}
 	svc.Labels = map[string]string{
-		"cloudexit.source":     "aws_vpc",
-		"cloudexit.vpc_id":     vpcID,
-		"cloudexit.vpc_name":   vpcName,
-		"cloudexit.cidr_block": cidrBlock,
+		"homeport.source":     "aws_vpc",
+		"homeport.vpc_id":     vpcID,
+		"homeport.vpc_name":   vpcName,
+		"homeport.cidr_block": cidrBlock,
 	}
 	svc.Restart = "no"
 
@@ -185,9 +187,9 @@ networks:
       com.docker.network.bridge.enable_icc: "true"
       com.docker.network.driver.mtu: "1500"
     labels:
-      cloudexit.source: "aws_vpc"
-      cloudexit.vpc_name: "%s"
-      cloudexit.cidr_block: "%s"
+      homeport.source: "aws_vpc"
+      homeport.vpc_name: "%s"
+      homeport.cidr_block: "%s"
 
 # Additional isolated network for private subnets
   %s-private:
@@ -197,8 +199,8 @@ networks:
       config:
         - subnet: 172.19.0.0/16
     labels:
-      cloudexit.source: "aws_vpc_private"
-      cloudexit.vpc_name: "%s"
+      homeport.source: "aws_vpc_private"
+      homeport.vpc_name: "%s"
 `
 
 	return fmt.Sprintf(config, networkName, cidrBlock, networkName, vpcName, cidrBlock, networkName, vpcName)
@@ -609,4 +611,281 @@ func (m *VPCMapper) hasFlowLogs(res *resource.AWSResource) bool {
 		return true
 	}
 	return false
+}
+
+// ExtractPolicies extracts security group and network ACL rules as network policies.
+func (m *VPCMapper) ExtractPolicies(ctx context.Context, res *resource.AWSResource) ([]*policy.Policy, error) {
+	var policies []*policy.Policy
+
+	vpcName := res.Name
+	if vpcName == "" {
+		vpcName = res.ID
+	}
+
+	// Extract security group rules
+	if sg := res.Config["security_group"]; sg != nil {
+		sgPolicies := m.extractSecurityGroupPolicies(res, vpcName, sg)
+		policies = append(policies, sgPolicies...)
+	}
+
+	// Extract network ACL rules
+	if acl := res.Config["network_acl"]; acl != nil {
+		aclPolicies := m.extractNetworkACLPolicies(res, vpcName, acl)
+		policies = append(policies, aclPolicies...)
+	}
+
+	return policies, nil
+}
+
+// extractSecurityGroupPolicies extracts security group rules.
+func (m *VPCMapper) extractSecurityGroupPolicies(res *resource.AWSResource, vpcName string, sg interface{}) []*policy.Policy {
+	var policies []*policy.Policy
+
+	sgList := m.toSlice(sg)
+	for i, sgItem := range sgList {
+		sgMap, ok := sgItem.(map[string]interface{})
+		if !ok {
+			continue
+		}
+
+		sgName := fmt.Sprintf("security-group-%d", i)
+		if name, ok := sgMap["name"].(string); ok {
+			sgName = name
+		}
+		if name, ok := sgMap["group_name"].(string); ok {
+			sgName = name
+		}
+
+		sgJSON, _ := json.Marshal(sgMap)
+		p := policy.NewPolicy(
+			fmt.Sprintf("%s-sg-%d", res.ID, i),
+			fmt.Sprintf("%s Security Group: %s", vpcName, sgName),
+			policy.PolicyTypeNetwork,
+			policy.ProviderAWS,
+		)
+		p.ResourceID = res.ID
+		p.ResourceType = "aws_security_group"
+		p.ResourceName = sgName
+		p.OriginalDocument = sgJSON
+		p.OriginalFormat = "json"
+		p.NormalizedPolicy = m.normalizeSecurityGroup(sgMap)
+
+		// Check for overly permissive rules
+		if m.hasOpenIngressRule(sgMap) {
+			p.AddWarning("Security group allows ingress from 0.0.0.0/0")
+		}
+
+		policies = append(policies, p)
+	}
+
+	return policies
+}
+
+// extractNetworkACLPolicies extracts network ACL rules.
+func (m *VPCMapper) extractNetworkACLPolicies(res *resource.AWSResource, vpcName string, acl interface{}) []*policy.Policy {
+	var policies []*policy.Policy
+
+	aclList := m.toSlice(acl)
+	for i, aclItem := range aclList {
+		aclMap, ok := aclItem.(map[string]interface{})
+		if !ok {
+			continue
+		}
+
+		aclName := fmt.Sprintf("network-acl-%d", i)
+		if name, ok := aclMap["name"].(string); ok {
+			aclName = name
+		}
+
+		aclJSON, _ := json.Marshal(aclMap)
+		p := policy.NewPolicy(
+			fmt.Sprintf("%s-acl-%d", res.ID, i),
+			fmt.Sprintf("%s Network ACL: %s", vpcName, aclName),
+			policy.PolicyTypeNetwork,
+			policy.ProviderAWS,
+		)
+		p.ResourceID = res.ID
+		p.ResourceType = "aws_network_acl"
+		p.ResourceName = aclName
+		p.OriginalDocument = aclJSON
+		p.OriginalFormat = "json"
+		p.NormalizedPolicy = m.normalizeNetworkACL(aclMap)
+
+		policies = append(policies, p)
+	}
+
+	return policies
+}
+
+// normalizeSecurityGroup converts security group rules to normalized network rules.
+func (m *VPCMapper) normalizeSecurityGroup(sg map[string]interface{}) *policy.NormalizedPolicy {
+	normalized := &policy.NormalizedPolicy{
+		NetworkRules: make([]policy.NetworkRule, 0),
+	}
+
+	// Parse ingress rules
+	if ingress := sg["ingress"]; ingress != nil {
+		rules := m.parseSecurityGroupRules(ingress, "ingress")
+		normalized.NetworkRules = append(normalized.NetworkRules, rules...)
+	}
+
+	// Parse egress rules
+	if egress := sg["egress"]; egress != nil {
+		rules := m.parseSecurityGroupRules(egress, "egress")
+		normalized.NetworkRules = append(normalized.NetworkRules, rules...)
+	}
+
+	return normalized
+}
+
+// parseSecurityGroupRules parses security group rule blocks.
+func (m *VPCMapper) parseSecurityGroupRules(rules interface{}, direction string) []policy.NetworkRule {
+	var networkRules []policy.NetworkRule
+
+	ruleList := m.toSlice(rules)
+	for _, r := range ruleList {
+		ruleMap, ok := r.(map[string]interface{})
+		if !ok {
+			continue
+		}
+
+		rule := policy.NetworkRule{
+			Direction:   direction,
+			Protocol:    m.getString(ruleMap, "protocol"),
+			FromPort:    m.getInt(ruleMap, "from_port"),
+			ToPort:      m.getInt(ruleMap, "to_port"),
+			Description: m.getString(ruleMap, "description"),
+		}
+
+		// Parse CIDR blocks
+		if cidrBlocks := ruleMap["cidr_blocks"]; cidrBlocks != nil {
+			rule.CIDRBlocks = m.toStringSlice(cidrBlocks)
+		}
+		if ipv6CIDRBlocks := ruleMap["ipv6_cidr_blocks"]; ipv6CIDRBlocks != nil {
+			rule.CIDRBlocks = append(rule.CIDRBlocks, m.toStringSlice(ipv6CIDRBlocks)...)
+		}
+
+		// Parse security group references
+		if sgRefs := ruleMap["security_groups"]; sgRefs != nil {
+			rule.SecurityGroups = m.toStringSlice(sgRefs)
+		}
+
+		networkRules = append(networkRules, rule)
+	}
+
+	return networkRules
+}
+
+// normalizeNetworkACL converts network ACL rules to normalized format.
+func (m *VPCMapper) normalizeNetworkACL(acl map[string]interface{}) *policy.NormalizedPolicy {
+	normalized := &policy.NormalizedPolicy{
+		NetworkRules: make([]policy.NetworkRule, 0),
+	}
+
+	// Parse ingress rules
+	if ingress := acl["ingress"]; ingress != nil {
+		rules := m.parseNetworkACLRules(ingress, "ingress")
+		normalized.NetworkRules = append(normalized.NetworkRules, rules...)
+	}
+
+	// Parse egress rules
+	if egress := acl["egress"]; egress != nil {
+		rules := m.parseNetworkACLRules(egress, "egress")
+		normalized.NetworkRules = append(normalized.NetworkRules, rules...)
+	}
+
+	return normalized
+}
+
+// parseNetworkACLRules parses network ACL rule blocks.
+func (m *VPCMapper) parseNetworkACLRules(rules interface{}, direction string) []policy.NetworkRule {
+	var networkRules []policy.NetworkRule
+
+	ruleList := m.toSlice(rules)
+	for _, r := range ruleList {
+		ruleMap, ok := r.(map[string]interface{})
+		if !ok {
+			continue
+		}
+
+		rule := policy.NetworkRule{
+			Direction: direction,
+			Protocol:  m.getString(ruleMap, "protocol"),
+			FromPort:  m.getInt(ruleMap, "from_port"),
+			ToPort:    m.getInt(ruleMap, "to_port"),
+			Priority:  m.getInt(ruleMap, "rule_no"),
+			Action:    m.getString(ruleMap, "action"),
+		}
+
+		// Parse CIDR block
+		if cidr := m.getString(ruleMap, "cidr_block"); cidr != "" {
+			rule.CIDRBlocks = []string{cidr}
+		}
+		if ipv6CIDR := m.getString(ruleMap, "ipv6_cidr_block"); ipv6CIDR != "" {
+			rule.CIDRBlocks = append(rule.CIDRBlocks, ipv6CIDR)
+		}
+
+		networkRules = append(networkRules, rule)
+	}
+
+	return networkRules
+}
+
+// hasOpenIngressRule checks if security group has 0.0.0.0/0 ingress.
+func (m *VPCMapper) hasOpenIngressRule(sg map[string]interface{}) bool {
+	if ingress := sg["ingress"]; ingress != nil {
+		for _, r := range m.toSlice(ingress) {
+			if ruleMap, ok := r.(map[string]interface{}); ok {
+				if cidrBlocks := ruleMap["cidr_blocks"]; cidrBlocks != nil {
+					for _, cidr := range m.toStringSlice(cidrBlocks) {
+						if cidr == "0.0.0.0/0" {
+							return true
+						}
+					}
+				}
+			}
+		}
+	}
+	return false
+}
+
+// toSlice converts interface to slice.
+func (m *VPCMapper) toSlice(v interface{}) []interface{} {
+	if v == nil {
+		return nil
+	}
+	if slice, ok := v.([]interface{}); ok {
+		return slice
+	}
+	return []interface{}{v}
+}
+
+// toStringSlice converts interface to string slice.
+func (m *VPCMapper) toStringSlice(v interface{}) []string {
+	var result []string
+	for _, item := range m.toSlice(v) {
+		if s, ok := item.(string); ok {
+			result = append(result, s)
+		}
+	}
+	return result
+}
+
+// getString safely gets string from map.
+func (m *VPCMapper) getString(data map[string]interface{}, key string) string {
+	if v, ok := data[key].(string); ok {
+		return v
+	}
+	return ""
+}
+
+// getInt safely gets int from map.
+func (m *VPCMapper) getInt(data map[string]interface{}, key string) int {
+	if v, ok := data[key].(float64); ok {
+		return int(v)
+	}
+	if v, ok := data[key].(int); ok {
+		return v
+	}
+	return 0
 }

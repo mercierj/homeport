@@ -6,8 +6,8 @@ import (
 	"fmt"
 	"strings"
 
-	"github.com/agnostech/agnostech/internal/domain/mapper"
-	"github.com/agnostech/agnostech/internal/domain/resource"
+	"github.com/homeport/homeport/internal/domain/mapper"
+	"github.com/homeport/homeport/internal/domain/resource"
 )
 
 // PersistentDiskMapper converts GCP Persistent Disks to Docker volumes.
@@ -63,10 +63,10 @@ func (m *PersistentDiskMapper) Map(ctx context.Context, res *resource.AWSResourc
 		fmt.Sprintf("%s:/data", volumeName),
 	}
 	svc.Labels = map[string]string{
-		"cloudexit.source":    "google_compute_disk",
-		"cloudexit.disk_name": diskName,
-		"cloudexit.disk_type": diskType,
-		"cloudexit.disk_size": fmt.Sprintf("%dGB", diskSize),
+		"homeport.source":    "google_compute_disk",
+		"homeport.disk_name": diskName,
+		"homeport.disk_type": diskType,
+		"homeport.disk_size": fmt.Sprintf("%dGB", diskSize),
 	}
 	svc.Restart = "unless-stopped"
 

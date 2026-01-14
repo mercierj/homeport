@@ -5,11 +5,11 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/agnostech/agnostech/internal/domain/mapper"
-	"github.com/agnostech/agnostech/internal/infrastructure/generator/compose"
-	"github.com/agnostech/agnostech/internal/infrastructure/generator/docs"
-	"github.com/agnostech/agnostech/internal/infrastructure/generator/scripts"
-	"github.com/agnostech/agnostech/internal/infrastructure/generator/traefik"
+	"github.com/homeport/homeport/internal/domain/mapper"
+	"github.com/homeport/homeport/internal/infrastructure/generator/compose"
+	"github.com/homeport/homeport/internal/infrastructure/generator/docs"
+	"github.com/homeport/homeport/internal/infrastructure/generator/scripts"
+	"github.com/homeport/homeport/internal/infrastructure/generator/traefik"
 )
 
 // Example demonstrates how to use the generators.
@@ -83,7 +83,7 @@ func Example() error {
 	// Generate Docker Compose
 	fmt.Println("Generating Docker Compose configuration...")
 	composeGen := compose.NewGenerator("myproject")
-	composeOutput, err := composeGen.Generate(results)
+	composeOutput, err := composeGen.GenerateLegacy(results)
 	if err != nil {
 		return fmt.Errorf("failed to generate compose: %w", err)
 	}

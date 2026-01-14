@@ -7,8 +7,8 @@ import (
 	"strings"
 	"time"
 
-	"github.com/agnostech/agnostech/internal/domain/mapper"
-	"github.com/agnostech/agnostech/internal/domain/resource"
+	"github.com/homeport/homeport/internal/domain/mapper"
+	"github.com/homeport/homeport/internal/domain/resource"
 )
 
 // DNSMapper converts Azure DNS to CoreDNS or PowerDNS.
@@ -54,11 +54,11 @@ func (m *DNSMapper) Map(ctx context.Context, res *resource.AWSResource) (*mapper
 		"./config/coredns:/etc/coredns:ro",
 	}
 
-	svc.Networks = []string{"cloudexit"}
+	svc.Networks = []string{"homeport"}
 	svc.Restart = "unless-stopped"
 	svc.Labels = map[string]string{
-		"cloudexit.source":    "azurerm_dns_zone",
-		"cloudexit.zone_name": zoneName,
+		"homeport.source":    "azurerm_dns_zone",
+		"homeport.zone_name": zoneName,
 	}
 
 	// Health check for CoreDNS

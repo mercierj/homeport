@@ -7,8 +7,8 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/agnostech/agnostech/internal/domain/mapper"
-	"github.com/agnostech/agnostech/internal/domain/resource"
+	"github.com/homeport/homeport/internal/domain/mapper"
+	"github.com/homeport/homeport/internal/domain/resource"
 )
 
 // EventBridgeMapper converts AWS EventBridge rules to n8n.
@@ -54,10 +54,10 @@ func (m *EventBridgeMapper) Map(ctx context.Context, res *resource.AWSResource) 
 		"./data/n8n:/home/node/.n8n",
 		"./config/n8n/workflows:/workflows",
 	}
-	svc.Networks = []string{"cloudexit"}
+	svc.Networks = []string{"homeport"}
 	svc.Labels = map[string]string{
-		"cloudexit.source":                                       "aws_cloudwatch_event_rule",
-		"cloudexit.rule_name":                                    ruleName,
+		"homeport.source":                                       "aws_cloudwatch_event_rule",
+		"homeport.rule_name":                                    ruleName,
 		"traefik.enable":                                         "true",
 		"traefik.http.routers.n8n.rule":                          "Host(`n8n.localhost`)",
 		"traefik.http.services.n8n.loadbalancer.server.port":     "5678",

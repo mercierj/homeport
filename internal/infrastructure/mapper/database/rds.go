@@ -7,8 +7,8 @@ import (
 	"strings"
 	"time"
 
-	"github.com/agnostech/agnostech/internal/domain/mapper"
-	"github.com/agnostech/agnostech/internal/domain/resource"
+	"github.com/homeport/homeport/internal/domain/mapper"
+	"github.com/homeport/homeport/internal/domain/resource"
 )
 
 // RDSMapper converts AWS RDS instances to PostgreSQL/MySQL containers.
@@ -85,9 +85,9 @@ func (m *RDSMapper) createPostgresService(res *resource.AWSResource, dbName, ins
 	}
 	svc.Restart = "unless-stopped"
 	svc.Labels = map[string]string{
-		"cloudexit.source":   "aws_db_instance",
-		"cloudexit.engine":   "postgres",
-		"cloudexit.database": dbName,
+		"homeport.source":   "aws_db_instance",
+		"homeport.engine":   "postgres",
+		"homeport.database": dbName,
 	}
 
 	// Note: Resources field has been removed from the new API
@@ -178,9 +178,9 @@ func (m *RDSMapper) createMySQLService(res *resource.AWSResource, dbName, engine
 	}
 	svc.Restart = "unless-stopped"
 	svc.Labels = map[string]string{
-		"cloudexit.source":   "aws_db_instance",
-		"cloudexit.engine":   engine,
-		"cloudexit.database": dbName,
+		"homeport.source":   "aws_db_instance",
+		"homeport.engine":   engine,
+		"homeport.database": dbName,
 	}
 
 	// Add MySQL configuration file
@@ -248,10 +248,10 @@ postgres-backup:
   depends_on:
     - postgres
   networks:
-    - cloudexit
+    - homeport
   labels:
-    cloudexit.service: backup
-    cloudexit.database: %s
+    homeport.service: backup
+    homeport.database: %s
 `, dbName, retentionDays, dbName)
 
 	result.AddConfig("config/postgres/backup-service.yml", []byte(backupServiceConfig))

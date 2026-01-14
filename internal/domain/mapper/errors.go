@@ -3,7 +3,7 @@ package mapper
 import (
 	"fmt"
 
-	"github.com/agnostech/agnostech/internal/domain/resource"
+	"github.com/homeport/homeport/internal/domain/resource"
 )
 
 // Domain errors for the mapper package.

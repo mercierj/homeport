@@ -5,8 +5,8 @@ import (
 	"context"
 	"fmt"
 
-	"github.com/agnostech/agnostech/internal/domain/mapper"
-	"github.com/agnostech/agnostech/internal/domain/resource"
+	"github.com/homeport/homeport/internal/domain/mapper"
+	"github.com/homeport/homeport/internal/domain/resource"
 )
 
 // EBSMapper converts AWS EBS volumes to Docker volumes.
@@ -57,11 +57,11 @@ func (m *EBSMapper) Map(ctx context.Context, res *resource.AWSResource) (*mapper
 		fmt.Sprintf("%s:/data", volumeName),
 	}
 	svc.Labels = map[string]string{
-		"cloudexit.source":           "aws_ebs_volume",
-		"cloudexit.volume":           volumeName,
-		"cloudexit.volume.size":      fmt.Sprintf("%dGB", size),
-		"cloudexit.volume.type":      volumeType,
-		"cloudexit.type":             "volume-helper",
+		"homeport.source":           "aws_ebs_volume",
+		"homeport.volume":           volumeName,
+		"homeport.volume.size":      fmt.Sprintf("%dGB", size),
+		"homeport.volume.type":      volumeType,
+		"homeport.type":             "volume-helper",
 	}
 
 	// Add volume definition to result
@@ -72,9 +72,9 @@ func (m *EBSMapper) Map(ctx context.Context, res *resource.AWSResource) (*mapper
 
 	// Add size constraint as a label (Docker doesn't directly limit volume size)
 	volumeConfig["labels"] = map[string]string{
-		"cloudexit.size":              fmt.Sprintf("%d", size),
-		"cloudexit.type":              volumeType,
-		"cloudexit.availability_zone": availabilityZone,
+		"homeport.size":              fmt.Sprintf("%d", size),
+		"homeport.type":              volumeType,
+		"homeport.availability_zone": availabilityZone,
 	}
 
 	result.AddConfig(fmt.Sprintf("volumes/%s.json", volumeName), []byte(m.generateVolumeConfigJSON(volumeConfig)))

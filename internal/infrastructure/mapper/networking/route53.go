@@ -7,8 +7,8 @@ import (
 	"strings"
 	"time"
 
-	"github.com/agnostech/agnostech/internal/domain/mapper"
-	"github.com/agnostech/agnostech/internal/domain/resource"
+	"github.com/homeport/homeport/internal/domain/mapper"
+	"github.com/homeport/homeport/internal/domain/resource"
 )
 
 // Route53Mapper converts AWS Route53 zones to CoreDNS or PowerDNS.
@@ -51,10 +51,10 @@ func (m *Route53Mapper) Map(ctx context.Context, res *resource.AWSResource) (*ma
 	svc.Command = []string{
 		"-conf", "/etc/coredns/Corefile",
 	}
-	svc.Networks = []string{"cloudexit"}
+	svc.Networks = []string{"homeport"}
 	svc.Labels = map[string]string{
-		"cloudexit.source":    "aws_route53",
-		"cloudexit.zone_name": zoneNameStr,
+		"homeport.source":    "aws_route53",
+		"homeport.zone_name": zoneNameStr,
 	}
 	svc.Restart = "unless-stopped"
 

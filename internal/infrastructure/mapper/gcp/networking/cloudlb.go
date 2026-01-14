@@ -7,8 +7,8 @@ import (
 	"strings"
 	"time"
 
-	"github.com/agnostech/agnostech/internal/domain/mapper"
-	"github.com/agnostech/agnostech/internal/domain/resource"
+	"github.com/homeport/homeport/internal/domain/mapper"
+	"github.com/homeport/homeport/internal/domain/resource"
 )
 
 // CloudLBMapper converts GCP Cloud Load Balancer (Backend Service) to Traefik or HAProxy.
@@ -58,8 +58,8 @@ func (m *CloudLBMapper) Map(ctx context.Context, res *resource.AWSResource) (*ma
 
 	// Configure Traefik with labels
 	svc.Labels = map[string]string{
-		"cloudexit.source":       "google_compute_backend_service",
-		"cloudexit.service_name": serviceName,
+		"homeport.source":       "google_compute_backend_service",
+		"homeport.service_name": serviceName,
 		"traefik.enable":         "true",
 		"traefik.http.routers.dashboard.rule":         "Host(`traefik.localhost`)",
 		"traefik.http.routers.dashboard.service":      "api@internal",
@@ -67,7 +67,7 @@ func (m *CloudLBMapper) Map(ctx context.Context, res *resource.AWSResource) (*ma
 		"traefik.http.services." + m.sanitizeName(serviceName) + ".loadbalancer.sticky": fmt.Sprintf("%t", sessionAffinity),
 	}
 
-	svc.Networks = []string{"cloudexit"}
+	svc.Networks = []string{"homeport"}
 	svc.Restart = "unless-stopped"
 
 	// Generate Traefik configuration

@@ -7,8 +7,8 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/agnostech/agnostech/internal/domain/mapper"
-	"github.com/agnostech/agnostech/internal/domain/resource"
+	"github.com/homeport/homeport/internal/domain/mapper"
+	"github.com/homeport/homeport/internal/domain/resource"
 )
 
 // SNSMapper converts AWS SNS topics to NATS.
@@ -39,7 +39,7 @@ func (m *SNSMapper) Map(ctx context.Context, res *resource.AWSResource) (*mapper
 
 	svc.Image = "nats:2.10-alpine"
 	svc.Environment = map[string]string{
-		"NATS_CLUSTER_NAME": "cloudexit-cluster",
+		"NATS_CLUSTER_NAME": "homeport-cluster",
 	}
 	svc.Ports = []string{
 		"4222:4222", // Client connections
@@ -51,10 +51,10 @@ func (m *SNSMapper) Map(ctx context.Context, res *resource.AWSResource) (*mapper
 		"./config/nats/nats.conf:/etc/nats/nats.conf",
 	}
 	svc.Command = []string{"-c", "/etc/nats/nats.conf"}
-	svc.Networks = []string{"cloudexit"}
+	svc.Networks = []string{"homeport"}
 	svc.Labels = map[string]string{
-		"cloudexit.source":                                        "aws_sns_topic",
-		"cloudexit.topic_name":                                    topicName,
+		"homeport.source":                                        "aws_sns_topic",
+		"homeport.topic_name":                                    topicName,
 		"traefik.enable":                                          "true",
 		"traefik.http.routers.nats.rule":                          "Host(`nats.localhost`)",
 		"traefik.http.services.nats.loadbalancer.server.port":     "8222",
@@ -103,7 +103,7 @@ func (m *SNSMapper) generateNATSConfig(topicName string) string {
 	return fmt.Sprintf(`# NATS Server Configuration
 # Generated from SNS topic: %s
 
-server_name: cloudexit-nats
+server_name: homeport-nats
 port: 4222
 http_port: 8222
 
@@ -131,7 +131,7 @@ store_dir: "/data"
 # }
 
 cluster {
-  name: cloudexit-cluster
+  name: homeport-cluster
   port: 6222
 }
 `, topicName)

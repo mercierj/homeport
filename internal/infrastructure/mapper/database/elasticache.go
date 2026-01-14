@@ -7,8 +7,8 @@ import (
 	"strings"
 	"time"
 
-	"github.com/agnostech/agnostech/internal/domain/mapper"
-	"github.com/agnostech/agnostech/internal/domain/resource"
+	"github.com/homeport/homeport/internal/domain/mapper"
+	"github.com/homeport/homeport/internal/domain/resource"
 )
 
 // ElastiCacheMapper converts AWS ElastiCache clusters to Redis or Memcached.
@@ -91,9 +91,9 @@ func (m *ElastiCacheMapper) createRedisService(res *resource.AWSResource, cluste
 	}
 	svc.Restart = "unless-stopped"
 	svc.Labels = map[string]string{
-		"cloudexit.source":  "aws_elasticache_cluster",
-		"cloudexit.engine":  "redis",
-		"cloudexit.cluster": clusterID,
+		"homeport.source":  "aws_elasticache_cluster",
+		"homeport.engine":  "redis",
+		"homeport.cluster": clusterID,
 	}
 
 	// Handle persistence settings
@@ -200,9 +200,9 @@ func (m *ElastiCacheMapper) createMemcachedService(res *resource.AWSResource, cl
 	}
 	svc.Restart = "unless-stopped"
 	svc.Labels = map[string]string{
-		"cloudexit.source":  "aws_elasticache_cluster",
-		"cloudexit.engine":  "memcached",
-		"cloudexit.cluster": clusterID,
+		"homeport.source":  "aws_elasticache_cluster",
+		"homeport.engine":  "memcached",
+		"homeport.cluster": clusterID,
 	}
 
 	result.AddWarning("Memcached is stateless and does not persist data. Ensure your application handles cache warming appropriately.")
@@ -301,7 +301,7 @@ services:
     volumes:
       - ./data/redis-node-%d:/data
     networks:
-      - cloudexit
+      - homeport
 `, i, port, port, port, i)
 	}
 

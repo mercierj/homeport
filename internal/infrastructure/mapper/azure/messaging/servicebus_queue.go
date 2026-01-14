@@ -7,8 +7,8 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/agnostech/agnostech/internal/domain/mapper"
-	"github.com/agnostech/agnostech/internal/domain/resource"
+	"github.com/homeport/homeport/internal/domain/mapper"
+	"github.com/homeport/homeport/internal/domain/resource"
 )
 
 // ServiceBusQueueMapper converts Azure Service Bus queues to RabbitMQ queues.
@@ -51,10 +51,10 @@ func (m *ServiceBusQueueMapper) Map(ctx context.Context, res *resource.AWSResour
 		"./config/rabbitmq/definitions.json:/etc/rabbitmq/definitions.json",
 		"./config/rabbitmq/rabbitmq.conf:/etc/rabbitmq/rabbitmq.conf",
 	}
-	svc.Networks = []string{"cloudexit"}
+	svc.Networks = []string{"homeport"}
 	svc.Labels = map[string]string{
-		"cloudexit.source":                                           "azurerm_servicebus_queue",
-		"cloudexit.queue_name":                                       queueName,
+		"homeport.source":                                           "azurerm_servicebus_queue",
+		"homeport.queue_name":                                       queueName,
 		"traefik.enable":                                             "true",
 		"traefik.http.routers.rabbitmq.rule":                         "Host(`rabbitmq.localhost`)",
 		"traefik.http.services.rabbitmq.loadbalancer.server.port":    "15672",

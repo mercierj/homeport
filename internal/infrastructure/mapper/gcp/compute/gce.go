@@ -7,8 +7,8 @@ import (
 	"strings"
 	"time"
 
-	"github.com/agnostech/agnostech/internal/domain/mapper"
-	"github.com/agnostech/agnostech/internal/domain/resource"
+	"github.com/homeport/homeport/internal/domain/mapper"
+	"github.com/homeport/homeport/internal/domain/resource"
 )
 
 // GCEMapper converts GCP Compute Engine instances to Docker containers.
@@ -54,7 +54,7 @@ func (m *GCEMapper) Map(ctx context.Context, res *resource.AWSResource) (*mapper
 	}
 
 	// Configure networking
-	svc.Networks = []string{"cloudexit"}
+	svc.Networks = []string{"homeport"}
 
 	// Handle network tags (security groups equivalent)
 	if tags := res.Config["tags"]; tags != nil {
@@ -76,9 +76,9 @@ func (m *GCEMapper) Map(ctx context.Context, res *resource.AWSResource) (*mapper
 	}
 
 	svc.Restart = "unless-stopped"
-	svc.Labels["cloudexit.source"] = "google_compute_instance"
-	svc.Labels["cloudexit.instance_name"] = instanceName
-	svc.Labels["cloudexit.machine_type"] = machineType
+	svc.Labels["homeport.source"] = "google_compute_instance"
+	svc.Labels["homeport.instance_name"] = instanceName
+	svc.Labels["homeport.machine_type"] = machineType
 
 	// Health check
 	svc.HealthCheck = &mapper.HealthCheck{

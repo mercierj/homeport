@@ -6,8 +6,8 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/agnostech/agnostech/internal/domain/mapper"
-	"github.com/agnostech/agnostech/internal/domain/resource"
+	"github.com/homeport/homeport/internal/domain/mapper"
+	"github.com/homeport/homeport/internal/domain/resource"
 )
 
 // MySQLMapper converts Azure Database for MySQL to MySQL containers.
@@ -58,9 +58,9 @@ func (m *MySQLMapper) Map(ctx context.Context, res *resource.AWSResource) (*mapp
 	}
 	svc.Restart = "unless-stopped"
 	svc.Labels = map[string]string{
-		"cloudexit.source": "azurerm_mysql_flexible_server",
-		"cloudexit.engine": "mysql",
-		"cloudexit.server": serverName,
+		"homeport.source": "azurerm_mysql_flexible_server",
+		"homeport.engine": "mysql",
+		"homeport.server": serverName,
 	}
 
 	migrationScript := m.generateMigrationScript(serverName)

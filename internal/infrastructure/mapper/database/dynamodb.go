@@ -7,8 +7,8 @@ import (
 	"strings"
 	"time"
 
-	"github.com/agnostech/agnostech/internal/domain/mapper"
-	"github.com/agnostech/agnostech/internal/domain/resource"
+	"github.com/homeport/homeport/internal/domain/mapper"
+	"github.com/homeport/homeport/internal/domain/resource"
 )
 
 // DynamoDBMapper converts AWS DynamoDB tables to ScyllaDB containers.
@@ -59,9 +59,9 @@ func (m *DynamoDBMapper) Map(ctx context.Context, res *resource.AWSResource) (*m
 	}
 	svc.Restart = "unless-stopped"
 	svc.Labels = map[string]string{
-		"cloudexit.source": "aws_dynamodb_table",
-		"cloudexit.table":  tableName,
-		"cloudexit.engine": "scylla",
+		"homeport.source": "aws_dynamodb_table",
+		"homeport.table":  tableName,
+		"homeport.engine": "scylla",
 	}
 
 	scyllaConfig := m.generateScyllaDBConfig()
@@ -94,7 +94,7 @@ func (m *DynamoDBMapper) Map(ctx context.Context, res *resource.AWSResource) (*m
 
 func (m *DynamoDBMapper) generateScyllaDBConfig() string {
 	return `# ScyllaDB Configuration with Alternator (DynamoDB-compatible API)
-cluster_name: 'cloudexit_cluster'
+cluster_name: 'homeport_cluster'
 listen_address: 0.0.0.0
 rpc_address: 0.0.0.0
 broadcast_rpc_address: 0.0.0.0
@@ -121,13 +121,13 @@ func (m *DynamoDBMapper) generateTableCreationScript(res *resource.AWSResource, 
 	script := fmt.Sprintf(`-- ScyllaDB CQL Script for table: %s
 -- Use this if you prefer CQL over Alternator API
 
-CREATE KEYSPACE IF NOT EXISTS cloudexit
+CREATE KEYSPACE IF NOT EXISTS homeport
 WITH REPLICATION = {
     'class': 'SimpleStrategy',
     'replication_factor': 1
 };
 
-USE cloudexit;
+USE homeport;
 
 CREATE TABLE IF NOT EXISTS %s (
     %s text`, tableName, tableName, hashKey)

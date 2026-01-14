@@ -6,8 +6,8 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/agnostech/agnostech/internal/domain/mapper"
-	"github.com/agnostech/agnostech/internal/domain/resource"
+	"github.com/homeport/homeport/internal/domain/mapper"
+	"github.com/homeport/homeport/internal/domain/resource"
 )
 
 // CloudTasksMapper converts GCP Cloud Tasks queues to Celery + Redis.
@@ -45,10 +45,10 @@ func (m *CloudTasksMapper) Map(ctx context.Context, res *resource.AWSResource) (
 	}
 	svc.Ports = []string{"6379:6379"}
 	svc.Volumes = []string{"./data/redis:/data"}
-	svc.Networks = []string{"cloudexit"}
+	svc.Networks = []string{"homeport"}
 	svc.Labels = map[string]string{
-		"cloudexit.source":     "google_cloud_tasks_queue",
-		"cloudexit.queue_name": queueName,
+		"homeport.source":     "google_cloud_tasks_queue",
+		"homeport.queue_name": queueName,
 	}
 	svc.HealthCheck = &mapper.HealthCheck{
 		Test:     []string{"CMD", "redis-cli", "ping"},
@@ -210,7 +210,7 @@ services:
     depends_on:
       - redis
     networks:
-      - cloudexit
+      - homeport
     volumes:
       - ./config/celery:/app/config/celery
       - ./app:/app
@@ -219,8 +219,8 @@ services:
       - CELERY_RESULT_BACKEND=redis://redis:6379/0
     restart: unless-stopped
     labels:
-      cloudexit.source: google_cloud_tasks_queue
-      cloudexit.queue: %s
+      homeport.source: google_cloud_tasks_queue
+      homeport.queue: %s
 
   flower:
     build:
@@ -232,7 +232,7 @@ services:
       - redis
       - celery-worker
     networks:
-      - cloudexit
+      - homeport
     ports:
       - "5555:5555"
     environment:
@@ -240,7 +240,7 @@ services:
       - CELERY_RESULT_BACKEND=redis://redis:6379/0
     restart: unless-stopped
     labels:
-      cloudexit.service: flower
+      homeport.service: flower
       traefik.enable: "true"
       traefik.http.routers.flower.rule: Host(` + "`flower.localhost`" + `)
       traefik.http.services.flower.loadbalancer.server.port: "5555"

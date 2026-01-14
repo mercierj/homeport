@@ -6,8 +6,8 @@ import (
 	"fmt"
 	"strings"
 
-	"github.com/agnostech/agnostech/internal/domain/mapper"
-	"github.com/agnostech/agnostech/internal/domain/resource"
+	"github.com/homeport/homeport/internal/domain/mapper"
+	"github.com/homeport/homeport/internal/domain/resource"
 )
 
 // SecretsManagerMapper converts AWS Secrets Manager to HashiCorp Vault.
@@ -49,10 +49,10 @@ func (m *SecretsManagerMapper) Map(ctx context.Context, res *resource.AWSResourc
 		"./data/vault:/vault/data",
 		"./config/vault:/vault/config",
 	}
-	svc.Networks = []string{"cloudexit"}
+	svc.Networks = []string{"homeport"}
 	svc.Labels = map[string]string{
-		"cloudexit.source":      "aws_secretsmanager_secret",
-		"cloudexit.secret_name": secretName,
+		"homeport.source":      "aws_secretsmanager_secret",
+		"homeport.secret_name": secretName,
 		"traefik.enable":        "false",
 	}
 	svc.Restart = "unless-stopped"

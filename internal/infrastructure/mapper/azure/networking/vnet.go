@@ -3,11 +3,13 @@ package networking
 
 import (
 	"context"
+	"encoding/json"
 	"fmt"
 	"strings"
 
-	"github.com/agnostech/agnostech/internal/domain/mapper"
-	"github.com/agnostech/agnostech/internal/domain/resource"
+	"github.com/homeport/homeport/internal/domain/mapper"
+	"github.com/homeport/homeport/internal/domain/policy"
+	"github.com/homeport/homeport/internal/domain/resource"
 )
 
 // VNetMapper converts Azure Virtual Network to Docker networks.
@@ -46,9 +48,9 @@ func (m *VNetMapper) Map(ctx context.Context, res *resource.AWSResource) (*mappe
 	svc.Networks = []string{m.sanitizeName(vnetName)}
 	svc.Restart = "unless-stopped"
 	svc.Labels = map[string]string{
-		"cloudexit.source":    "azurerm_virtual_network",
-		"cloudexit.vnet_name": vnetName,
-		"cloudexit.type":      "network-placeholder",
+		"homeport.source":    "azurerm_virtual_network",
+		"homeport.vnet_name": vnetName,
+		"homeport.type":      "network-placeholder",
 	}
 
 	// Get address space
@@ -208,8 +210,8 @@ func (m *VNetMapper) generateComposeNetworks(vnetName string, addressSpaces []st
 				}
 
 				sb.WriteString("    labels:\n")
-				sb.WriteString(fmt.Sprintf("      cloudexit.vnet: %s\n", vnetName))
-				sb.WriteString(fmt.Sprintf("      cloudexit.subnet: %s\n", name))
+				sb.WriteString(fmt.Sprintf("      homeport.vnet: %s\n", vnetName))
+				sb.WriteString(fmt.Sprintf("      homeport.subnet: %s\n", name))
 				sb.WriteString("\n")
 			}
 		}
@@ -221,7 +223,7 @@ func (m *VNetMapper) generateComposeNetworks(vnetName string, addressSpaces []st
 		sb.WriteString("      config:\n")
 		sb.WriteString(fmt.Sprintf("        - subnet: %s\n", addressSpaces[0]))
 		sb.WriteString("    labels:\n")
-		sb.WriteString(fmt.Sprintf("      cloudexit.vnet: %s\n", vnetName))
+		sb.WriteString(fmt.Sprintf("      homeport.vnet: %s\n", vnetName))
 		sb.WriteString("\n")
 	}
 
@@ -259,8 +261,8 @@ func (m *VNetMapper) generateSetupScript(vnetName string, addressSpaces []string
 					sb.WriteString(fmt.Sprintf("    --subnet=%s \\\n", addressPrefix))
 				}
 
-				sb.WriteString(fmt.Sprintf("    --label cloudexit.vnet=%s \\\n", vnetName))
-				sb.WriteString(fmt.Sprintf("    --label cloudexit.subnet=%s \\\n", name))
+				sb.WriteString(fmt.Sprintf("    --label homeport.vnet=%s \\\n", vnetName))
+				sb.WriteString(fmt.Sprintf("    --label homeport.subnet=%s \\\n", name))
 				sb.WriteString(fmt.Sprintf("    %s\n", networkName))
 				sb.WriteString(fmt.Sprintf("  echo 'Created network: %s'\n", networkName))
 				sb.WriteString("else\n")
@@ -275,7 +277,7 @@ func (m *VNetMapper) generateSetupScript(vnetName string, addressSpaces []string
 		sb.WriteString(fmt.Sprintf("  docker network create \\\n"))
 		sb.WriteString("    --driver=bridge \\\n")
 		sb.WriteString(fmt.Sprintf("    --subnet=%s \\\n", addressSpaces[0]))
-		sb.WriteString(fmt.Sprintf("    --label cloudexit.vnet=%s \\\n", vnetName))
+		sb.WriteString(fmt.Sprintf("    --label homeport.vnet=%s \\\n", vnetName))
 		sb.WriteString(fmt.Sprintf("    %s\n", networkName))
 		sb.WriteString(fmt.Sprintf("  echo 'Created network: %s'\n", networkName))
 		sb.WriteString("else\n")
@@ -286,7 +288,7 @@ func (m *VNetMapper) generateSetupScript(vnetName string, addressSpaces []string
 	sb.WriteString("echo ''\n")
 	sb.WriteString("echo 'Docker networks created successfully!'\n")
 	sb.WriteString("echo 'List networks:'\n")
-	sb.WriteString("docker network ls --filter label=cloudexit.vnet\n")
+	sb.WriteString("docker network ls --filter label=homeport.vnet\n")
 
 	return sb.String()
 }
@@ -353,4 +355,70 @@ func (m *VNetMapper) sanitizeName(name string) string {
 		validName = "vnet"
 	}
 	return validName
+}
+
+// ExtractPolicies extracts NSG rules and security configurations.
+func (m *VNetMapper) ExtractPolicies(ctx context.Context, res *resource.AWSResource) ([]*policy.Policy, error) {
+	var policies []*policy.Policy
+
+	vnetName := res.GetConfigString("name")
+	if vnetName == "" {
+		vnetName = res.Name
+	}
+
+	// Extract subnet NSG associations
+	if subnets := res.Config["subnet"]; subnets != nil {
+		if subnetSlice, ok := subnets.([]interface{}); ok {
+			for i, subnet := range subnetSlice {
+				if subnetMap, ok := subnet.(map[string]interface{}); ok {
+					if nsgID := subnetMap["security_group"]; nsgID != nil {
+						nsgJSON, _ := json.Marshal(map[string]interface{}{
+							"subnet_name":       subnetMap["name"],
+							"security_group_id": nsgID,
+						})
+
+						subnetName := fmt.Sprintf("subnet-%d", i)
+						if name, ok := subnetMap["name"].(string); ok {
+							subnetName = name
+						}
+
+						p := policy.NewPolicy(
+							fmt.Sprintf("%s-nsg-%d", res.ID, i),
+							fmt.Sprintf("%s/%s NSG Association", vnetName, subnetName),
+							policy.PolicyTypeNetwork,
+							policy.ProviderAzure,
+						)
+						p.ResourceID = res.ID
+						p.ResourceType = "azurerm_subnet_network_security_group_association"
+						p.ResourceName = subnetName
+						p.OriginalDocument = nsgJSON
+						p.OriginalFormat = "json"
+
+						policies = append(policies, p)
+					}
+				}
+			}
+		}
+	}
+
+	// Extract DDos protection settings
+	if ddosProtection := res.Config["ddos_protection_plan"]; ddosProtection != nil {
+		ddosJSON, _ := json.Marshal(ddosProtection)
+		p := policy.NewPolicy(
+			res.ID+"-ddos",
+			vnetName+" DDoS Protection",
+			policy.PolicyTypeNetwork,
+			policy.ProviderAzure,
+		)
+		p.ResourceID = res.ID
+		p.ResourceType = "azurerm_virtual_network"
+		p.ResourceName = vnetName
+		p.OriginalDocument = ddosJSON
+		p.OriginalFormat = "json"
+		p.AddWarning("DDoS protection requires equivalent configuration in self-hosted environment")
+
+		policies = append(policies, p)
+	}
+
+	return policies, nil
 }

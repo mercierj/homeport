@@ -7,8 +7,8 @@ import (
 	"strings"
 	"time"
 
-	"github.com/agnostech/agnostech/internal/domain/mapper"
-	"github.com/agnostech/agnostech/internal/domain/resource"
+	"github.com/homeport/homeport/internal/domain/mapper"
+	"github.com/homeport/homeport/internal/domain/resource"
 )
 
 // FilestoreMapper converts GCP Filestore instances to NFS server containers.
@@ -78,13 +78,13 @@ func (m *FilestoreMapper) Map(ctx context.Context, res *resource.AWSResource) (*
 		fmt.Sprintf("./data/nfs/%s:/data", fileShareName),
 	}
 	svc.Labels = map[string]string{
-		"cloudexit.source":         "google_filestore_instance",
-		"cloudexit.instance_name":  instanceName,
-		"cloudexit.tier":           tier,
-		"cloudexit.fileshare_name": fileShareName,
-		"cloudexit.capacity_gb":    fmt.Sprintf("%d", capacityGB),
+		"homeport.source":         "google_filestore_instance",
+		"homeport.instance_name":  instanceName,
+		"homeport.tier":           tier,
+		"homeport.fileshare_name": fileShareName,
+		"homeport.capacity_gb":    fmt.Sprintf("%d", capacityGB),
 	}
-	svc.Networks = []string{"cloudexit"}
+	svc.Networks = []string{"homeport"}
 	svc.Restart = "unless-stopped"
 
 	// Apply resource limits based on tier
@@ -287,7 +287,7 @@ services:
       # Mount NFS share using Docker volume
       - nfs-data:/usr/share/nginx/html
     networks:
-      - cloudexit
+      - homeport
 
 # Define NFS volume
 volumes:
@@ -299,7 +299,7 @@ volumes:
       device: ":/data"
 
 networks:
-  cloudexit:
+  homeport:
     external: true
 
 # Usage Notes:

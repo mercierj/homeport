@@ -3,11 +3,13 @@ package security
 
 import (
 	"context"
+	"encoding/json"
 	"fmt"
 	"strings"
 
-	"github.com/agnostech/agnostech/internal/domain/mapper"
-	"github.com/agnostech/agnostech/internal/domain/resource"
+	"github.com/homeport/homeport/internal/domain/mapper"
+	"github.com/homeport/homeport/internal/domain/policy"
+	"github.com/homeport/homeport/internal/domain/resource"
 )
 
 // KeyVaultMapper converts Azure Key Vault to HashiCorp Vault.
@@ -51,11 +53,11 @@ func (m *KeyVaultMapper) Map(ctx context.Context, res *resource.AWSResource) (*m
 		"./data/vault:/vault/data",
 		"./config/vault:/vault/config",
 	}
-	svc.Networks = []string{"cloudexit"}
+	svc.Networks = []string{"homeport"}
 	svc.Labels = map[string]string{
-		"cloudexit.source":         "azurerm_key_vault",
-		"cloudexit.vault_name":     vaultName,
-		"cloudexit.resource_group": resourceGroup,
+		"homeport.source":         "azurerm_key_vault",
+		"homeport.vault_name":     vaultName,
+		"homeport.resource_group": resourceGroup,
 		"traefik.enable":           "false",
 	}
 	svc.Restart = "unless-stopped"
@@ -172,4 +174,220 @@ echo ""
 echo "Migration complete!"
 echo "Note: Keys and certificates require manual export and import"
 `, vaultName, resourceGroup, vaultPath)
+}
+
+// ExtractPolicies extracts access policies from the Key Vault.
+func (m *KeyVaultMapper) ExtractPolicies(ctx context.Context, res *resource.AWSResource) ([]*policy.Policy, error) {
+	var policies []*policy.Policy
+
+	vaultName := res.GetConfigString("name")
+	if vaultName == "" {
+		vaultName = res.Name
+	}
+
+	// Extract access policies
+	if accessPolicies := res.Config["access_policy"]; accessPolicies != nil {
+		policyList := m.toSlice(accessPolicies)
+		for i, ap := range policyList {
+			if apMap, ok := ap.(map[string]interface{}); ok {
+				apJSON, _ := json.Marshal(apMap)
+
+				objectID := ""
+				if oid, ok := apMap["object_id"].(string); ok {
+					objectID = oid
+				}
+
+				p := policy.NewPolicy(
+					fmt.Sprintf("%s-access-policy-%d", res.ID, i),
+					fmt.Sprintf("%s Access Policy for %s", vaultName, objectID),
+					policy.PolicyTypeIAM,
+					policy.ProviderAzure,
+				)
+				p.ResourceID = res.ID
+				p.ResourceType = "azurerm_key_vault_access_policy"
+				p.ResourceName = vaultName
+				p.OriginalDocument = apJSON
+				p.OriginalFormat = "json"
+				p.NormalizedPolicy = m.normalizeAccessPolicy(apMap)
+
+				// Check for sensitive permissions
+				if m.hasSecretPermissions(apMap, "get", "list", "set", "delete") {
+					p.AddWarning("Full secret permissions granted")
+				}
+				if m.hasKeyPermissions(apMap, "decrypt", "sign", "unwrapKey") {
+					p.AddWarning("Cryptographic key permissions granted")
+				}
+
+				policies = append(policies, p)
+			}
+		}
+	}
+
+	// Extract network ACLs
+	if networkAcls := res.Config["network_acls"]; networkAcls != nil {
+		aclJSON, _ := json.Marshal(networkAcls)
+		p := policy.NewPolicy(
+			res.ID+"-network-acls",
+			vaultName+" Network ACLs",
+			policy.PolicyTypeNetwork,
+			policy.ProviderAzure,
+		)
+		p.ResourceID = res.ID
+		p.ResourceType = "azurerm_key_vault"
+		p.ResourceName = vaultName
+		p.OriginalDocument = aclJSON
+		p.OriginalFormat = "json"
+		p.NormalizedPolicy = m.normalizeNetworkACLs(networkAcls)
+
+		policies = append(policies, p)
+	}
+
+	return policies, nil
+}
+
+// normalizeAccessPolicy converts Azure access policy to normalized format.
+func (m *KeyVaultMapper) normalizeAccessPolicy(ap map[string]interface{}) *policy.NormalizedPolicy {
+	normalized := &policy.NormalizedPolicy{
+		Statements: make([]policy.Statement, 0),
+	}
+
+	objectID := ""
+	if oid, ok := ap["object_id"].(string); ok {
+		objectID = oid
+	}
+
+	var actions []string
+
+	// Extract key permissions
+	if keyPerms := ap["key_permissions"]; keyPerms != nil {
+		for _, perm := range m.toStringSlice(keyPerms) {
+			actions = append(actions, "key:"+perm)
+		}
+	}
+
+	// Extract secret permissions
+	if secretPerms := ap["secret_permissions"]; secretPerms != nil {
+		for _, perm := range m.toStringSlice(secretPerms) {
+			actions = append(actions, "secret:"+perm)
+		}
+	}
+
+	// Extract certificate permissions
+	if certPerms := ap["certificate_permissions"]; certPerms != nil {
+		for _, perm := range m.toStringSlice(certPerms) {
+			actions = append(actions, "certificate:"+perm)
+		}
+	}
+
+	if len(actions) > 0 {
+		stmt := policy.Statement{
+			Effect: policy.EffectAllow,
+			Principals: []policy.Principal{
+				{Type: "AzureAD", ID: objectID},
+			},
+			Actions:   actions,
+			Resources: []string{"*"},
+		}
+		normalized.Statements = append(normalized.Statements, stmt)
+	}
+
+	return normalized
+}
+
+// normalizeNetworkACLs converts Azure network ACLs to normalized format.
+func (m *KeyVaultMapper) normalizeNetworkACLs(acls interface{}) *policy.NormalizedPolicy {
+	normalized := &policy.NormalizedPolicy{
+		NetworkRules: make([]policy.NetworkRule, 0),
+	}
+
+	if aclMap, ok := acls.(map[string]interface{}); ok {
+		defaultAction := "Deny"
+		if da, ok := aclMap["default_action"].(string); ok {
+			defaultAction = da
+		}
+
+		// IP rules
+		if ipRules := aclMap["ip_rules"]; ipRules != nil {
+			for _, ip := range m.toStringSlice(ipRules) {
+				rule := policy.NetworkRule{
+					Direction:  "ingress",
+					Protocol:   "tcp",
+					FromPort:   443,
+					ToPort:     443,
+					CIDRBlocks: []string{ip},
+					Action:     "allow",
+				}
+				normalized.NetworkRules = append(normalized.NetworkRules, rule)
+			}
+		}
+
+		// Default deny rule
+		if defaultAction == "Deny" {
+			rule := policy.NetworkRule{
+				Direction:   "ingress",
+				Protocol:    "-1",
+				CIDRBlocks:  []string{"0.0.0.0/0"},
+				Action:      "deny",
+				Description: "Default deny rule",
+				Priority:    1000,
+			}
+			normalized.NetworkRules = append(normalized.NetworkRules, rule)
+		}
+	}
+
+	return normalized
+}
+
+// hasSecretPermissions checks if the access policy has specified secret permissions.
+func (m *KeyVaultMapper) hasSecretPermissions(ap map[string]interface{}, perms ...string) bool {
+	if secretPerms := ap["secret_permissions"]; secretPerms != nil {
+		permSet := make(map[string]bool)
+		for _, p := range m.toStringSlice(secretPerms) {
+			permSet[strings.ToLower(p)] = true
+		}
+		for _, perm := range perms {
+			if permSet[strings.ToLower(perm)] {
+				return true
+			}
+		}
+	}
+	return false
+}
+
+// hasKeyPermissions checks if the access policy has specified key permissions.
+func (m *KeyVaultMapper) hasKeyPermissions(ap map[string]interface{}, perms ...string) bool {
+	if keyPerms := ap["key_permissions"]; keyPerms != nil {
+		permSet := make(map[string]bool)
+		for _, p := range m.toStringSlice(keyPerms) {
+			permSet[strings.ToLower(p)] = true
+		}
+		for _, perm := range perms {
+			if permSet[strings.ToLower(perm)] {
+				return true
+			}
+		}
+	}
+	return false
+}
+
+// toSlice converts interface to slice.
+func (m *KeyVaultMapper) toSlice(v interface{}) []interface{} {
+	if v == nil {
+		return nil
+	}
+	if slice, ok := v.([]interface{}); ok {
+		return slice
+	}
+	return []interface{}{v}
+}
+
+// toStringSlice converts interface to string slice.
+func (m *KeyVaultMapper) toStringSlice(v interface{}) []string {
+	var result []string
+	for _, item := range m.toSlice(v) {
+		if s, ok := item.(string); ok {
+			result = append(result, s)
+		}
+	}
+	return result
 }

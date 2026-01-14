@@ -7,8 +7,8 @@ import (
 	"strings"
 	"time"
 
-	"github.com/agnostech/agnostech/internal/domain/mapper"
-	"github.com/agnostech/agnostech/internal/domain/resource"
+	"github.com/homeport/homeport/internal/domain/mapper"
+	"github.com/homeport/homeport/internal/domain/resource"
 )
 
 // FunctionMapper converts Azure Functions to Docker/OpenFaaS.
@@ -64,13 +64,13 @@ func (m *FunctionMapper) Map(ctx context.Context, res *resource.AWSResource) (*m
 	}
 
 	svc.Ports = []string{"80:80"}
-	svc.Networks = []string{"cloudexit"}
+	svc.Networks = []string{"homeport"}
 	svc.Restart = "unless-stopped"
 
 	svc.Labels = map[string]string{
-		"cloudexit.source":        "azurerm_function_app",
-		"cloudexit.function_name": functionName,
-		"cloudexit.runtime":       runtime,
+		"homeport.source":        "azurerm_function_app",
+		"homeport.function_name": functionName,
+		"homeport.runtime":       runtime,
 		"traefik.enable":          "true",
 		"traefik.http.routers." + m.sanitizeName(functionName) + ".rule": fmt.Sprintf("Host(`%s.localhost`)", m.sanitizeName(functionName)),
 	}

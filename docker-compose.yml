@@ -1,0 +1,197 @@
+# =============================================================================
+# AgnosTech Local Development Docker Compose
+# =============================================================================
+# Usage:
+#   Development:  docker compose up -d
+#   Production:   docker compose --profile production up -d
+#   Full stack:   docker compose --profile production --profile monitoring up -d
+#
+# Profiles:
+#   - (default): Backend API server only
+#   - production: Includes frontend build and Traefik reverse proxy
+#   - monitoring: Includes Prometheus and Grafana
+# =============================================================================
+
+services:
+  # ===========================================================================
+  # Backend API Server
+  # ===========================================================================
+  api:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: homeport-api
+    command: ["serve", "--host", "0.0.0.0", "--port", "8080"]
+    ports:
+      - "${AGNOSTECH_PORT:-8080}:8080"
+    environment:
+      - ADMIN_PASSWORD=${ADMIN_PASSWORD:-changeme123}
+      - AGNOSTECH_VERBOSE=${AGNOSTECH_VERBOSE:-false}
+      - AGNOSTECH_TLS_ENABLED=${AGNOSTECH_TLS_ENABLED:-false}
+      - AGNOSTECH_TLS_CERT=${AGNOSTECH_TLS_CERT:-}
+      - AGNOSTECH_TLS_KEY=${AGNOSTECH_TLS_KEY:-}
+    volumes:
+      # Persist authentication data
+      - homeport-data:/home/homeport/.homeport
+      # Mount workspace for file operations
+      - ./workspace:/workspace
+      # Optional: Mount AWS credentials for API scanning
+      - ${HOME}/.aws:/home/homeport/.aws:ro
+    healthcheck:
+      test: ["CMD", "wget", "-q", "--spider", "http://localhost:8080/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 10s
+    restart: unless-stopped
+    networks:
+      - homeport
+
+  # ===========================================================================
+  # Frontend Development Server
+  # ===========================================================================
+  frontend-dev:
+    image: node:20-alpine
+    container_name: homeport-frontend-dev
+    working_dir: /app
+    command: sh -c "npm install && npm run dev -- --host 0.0.0.0"
+    ports:
+      - "${FRONTEND_PORT:-5173}:5173"
+    environment:
+      - VITE_API_URL=http://localhost:${AGNOSTECH_PORT:-8080}
+    volumes:
+      - ./web:/app
+      - frontend-node-modules:/app/node_modules
+    depends_on:
+      - api
+    profiles:
+      - dev
+    networks:
+      - homeport
+
+  # ===========================================================================
+  # Production Frontend (Nginx)
+  # ===========================================================================
+  frontend:
+    image: nginx:alpine
+    container_name: homeport-frontend
+    volumes:
+      - ./web/dist:/usr/share/nginx/html:ro
+      - ./docker/nginx.conf:/etc/nginx/conf.d/default.conf:ro
+    depends_on:
+      - api
+    profiles:
+      - production
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.frontend.rule=Host(`${AGNOSTECH_DOMAIN:-localhost}`)"
+      - "traefik.http.routers.frontend.entrypoints=websecure"
+      - "traefik.http.routers.frontend.tls.certresolver=letsencrypt"
+      - "traefik.http.services.frontend.loadbalancer.server.port=80"
+    networks:
+      - homeport
+
+  # ===========================================================================
+  # Traefik Reverse Proxy (Production)
+  # ===========================================================================
+  traefik:
+    image: traefik:v2.10
+    container_name: homeport-traefik
+    command:
+      - "--api.dashboard=true"
+      - "--providers.docker=true"
+      - "--providers.docker.exposedbydefault=false"
+      - "--entrypoints.web.address=:80"
+      - "--entrypoints.websecure.address=:443"
+      - "--entrypoints.web.http.redirections.entrypoint.to=websecure"
+      - "--entrypoints.web.http.redirections.entrypoint.scheme=https"
+      - "--certificatesresolvers.letsencrypt.acme.tlschallenge=true"
+      - "--certificatesresolvers.letsencrypt.acme.email=${AGNOSTECH_TLS_EMAIL:-admin@example.com}"
+      - "--certificatesresolvers.letsencrypt.acme.storage=/letsencrypt/acme.json"
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock:ro
+      - traefik-certs:/letsencrypt
+    profiles:
+      - production
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.traefik.rule=Host(`traefik.${AGNOSTECH_DOMAIN:-localhost}`)"
+      - "traefik.http.routers.traefik.service=api@internal"
+      - "traefik.http.routers.traefik.entrypoints=websecure"
+      - "traefik.http.routers.traefik.tls.certresolver=letsencrypt"
+    networks:
+      - homeport
+
+  # ===========================================================================
+  # Prometheus (Monitoring)
+  # ===========================================================================
+  prometheus:
+    image: prom/prometheus:v2.47.0
+    container_name: homeport-prometheus
+    command:
+      - "--config.file=/etc/prometheus/prometheus.yml"
+      - "--storage.tsdb.path=/prometheus"
+      - "--web.enable-lifecycle"
+    volumes:
+      - ./docker/prometheus.yml:/etc/prometheus/prometheus.yml:ro
+      - prometheus-data:/prometheus
+    profiles:
+      - monitoring
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.prometheus.rule=Host(`prometheus.${AGNOSTECH_DOMAIN:-localhost}`)"
+      - "traefik.http.routers.prometheus.entrypoints=websecure"
+      - "traefik.http.routers.prometheus.tls.certresolver=letsencrypt"
+      - "traefik.http.services.prometheus.loadbalancer.server.port=9090"
+    networks:
+      - homeport
+
+  # ===========================================================================
+  # Grafana (Monitoring)
+  # ===========================================================================
+  grafana:
+    image: grafana/grafana:10.1.0
+    container_name: homeport-grafana
+    environment:
+      - GF_SECURITY_ADMIN_USER=admin
+      - GF_SECURITY_ADMIN_PASSWORD=${GRAFANA_ADMIN_PASSWORD:-admin}
+      - GF_USERS_ALLOW_SIGN_UP=false
+    volumes:
+      - grafana-data:/var/lib/grafana
+      - ./docker/grafana/provisioning:/etc/grafana/provisioning:ro
+    profiles:
+      - monitoring
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.grafana.rule=Host(`grafana.${AGNOSTECH_DOMAIN:-localhost}`)"
+      - "traefik.http.routers.grafana.entrypoints=websecure"
+      - "traefik.http.routers.grafana.tls.certresolver=letsencrypt"
+      - "traefik.http.services.grafana.loadbalancer.server.port=3000"
+    networks:
+      - homeport
+
+# =============================================================================
+# Volumes
+# =============================================================================
+volumes:
+  homeport-data:
+    name: homeport-data
+  frontend-node-modules:
+    name: homeport-frontend-node-modules
+  traefik-certs:
+    name: homeport-traefik-certs
+  prometheus-data:
+    name: homeport-prometheus-data
+  grafana-data:
+    name: homeport-grafana-data
+
+# =============================================================================
+# Networks
+# =============================================================================
+networks:
+  homeport:
+    name: homeport
+    driver: bridge

@@ -7,8 +7,8 @@ import (
 	"strings"
 	"time"
 
-	"github.com/agnostech/agnostech/internal/domain/mapper"
-	"github.com/agnostech/agnostech/internal/domain/resource"
+	"github.com/homeport/homeport/internal/domain/mapper"
+	"github.com/homeport/homeport/internal/domain/resource"
 )
 
 // ALBMapper converts AWS Application Load Balancers to Traefik.
@@ -61,11 +61,11 @@ func (m *ALBMapper) Map(ctx context.Context, res *resource.AWSResource) (*mapper
 		"--log.level=INFO",
 		"--accesslog=true",
 	}
-	svc.Networks = []string{"cloudexit"}
+	svc.Networks = []string{"homeport"}
 	svc.Labels = map[string]string{
-		"cloudexit.source":  "aws_lb",
-		"cloudexit.lb_name": lbNameStr,
-		"cloudexit.lb_type": "application",
+		"homeport.source":  "aws_lb",
+		"homeport.lb_name": lbNameStr,
+		"homeport.lb_type": "application",
 		// Traefik dashboard
 		"traefik.enable":                            "true",
 		"traefik.http.routers.dashboard.rule":       "Host(`traefik.localhost`)",
@@ -141,7 +141,7 @@ providers:
   docker:
     endpoint: "unix:///var/run/docker.sock"
     exposedByDefault: false
-    network: cloudexit
+    network: homeport
   file:
     directory: "/etc/traefik/dynamic"
     watch: true

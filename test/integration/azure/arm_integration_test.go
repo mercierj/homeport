@@ -6,9 +6,9 @@ import (
 	"path/filepath"
 	"testing"
 
-	"github.com/agnostech/agnostech/internal/domain/parser"
-	"github.com/agnostech/agnostech/internal/domain/resource"
-	azureparser "github.com/agnostech/agnostech/internal/infrastructure/parser/azure"
+	"github.com/homeport/homeport/internal/domain/parser"
+	"github.com/homeport/homeport/internal/domain/resource"
+	azureparser "github.com/homeport/homeport/internal/infrastructure/parser/azure"
 )
 
 // TestARMParserIntegration_BasicTemplate tests parsing a basic ARM template with storage account.
@@ -44,7 +44,7 @@ func TestARMParserIntegration_BasicTemplate(t *testing.T) {
 				},
 				"tags": {
 					"environment": "test",
-					"project": "cloudexit"
+					"project": "homeport"
 				}
 			}
 		]

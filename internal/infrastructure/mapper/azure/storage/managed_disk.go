@@ -6,8 +6,8 @@ import (
 	"fmt"
 	"strings"
 
-	"github.com/agnostech/agnostech/internal/domain/mapper"
-	"github.com/agnostech/agnostech/internal/domain/resource"
+	"github.com/homeport/homeport/internal/domain/mapper"
+	"github.com/homeport/homeport/internal/domain/resource"
 )
 
 // ManagedDiskMapper converts Azure Managed Disks to Docker volumes.
@@ -43,9 +43,9 @@ func (m *ManagedDiskMapper) Map(ctx context.Context, res *resource.AWSResource) 
 	svc.Image = "busybox:latest"
 	svc.Command = []string{"true"} // No-op command
 	svc.Labels = map[string]string{
-		"cloudexit.source":    "azurerm_managed_disk",
-		"cloudexit.disk_name": diskName,
-		"cloudexit.note":      "This is a volume placeholder - attach to your VM services",
+		"homeport.source":    "azurerm_managed_disk",
+		"homeport.disk_name": diskName,
+		"homeport.note":      "This is a volume placeholder - attach to your VM services",
 	}
 
 	// Get disk configuration
@@ -70,25 +70,25 @@ func (m *ManagedDiskMapper) Map(ctx context.Context, res *resource.AWSResource) 
 		Name:   volumeName,
 		Driver: "local",
 		Labels: map[string]string{
-			"cloudexit.source":              "azurerm_managed_disk",
-			"cloudexit.disk_name":           diskName,
-			"cloudexit.disk_size_gb":        fmt.Sprintf("%d", diskSizeGB),
-			"cloudexit.storage_account_type": storageAccountType,
-			"cloudexit.create_option":       createOption,
+			"homeport.source":              "azurerm_managed_disk",
+			"homeport.disk_name":           diskName,
+			"homeport.disk_size_gb":        fmt.Sprintf("%d", diskSizeGB),
+			"homeport.storage_account_type": storageAccountType,
+			"homeport.create_option":       createOption,
 		},
 	}
 
 	// Map storage account type to performance characteristics
 	switch storageAccountType {
 	case "Premium_LRS", "Premium_ZRS":
-		volume.Labels["cloudexit.performance"] = "premium-ssd"
+		volume.Labels["homeport.performance"] = "premium-ssd"
 		result.AddWarning(fmt.Sprintf("Premium SSD disk (%s). Docker volumes don't enforce performance tiers - performance depends on host storage.", storageAccountType))
 	case "StandardSSD_LRS", "StandardSSD_ZRS":
-		volume.Labels["cloudexit.performance"] = "standard-ssd"
+		volume.Labels["homeport.performance"] = "standard-ssd"
 	case "Standard_LRS":
-		volume.Labels["cloudexit.performance"] = "standard-hdd"
+		volume.Labels["homeport.performance"] = "standard-hdd"
 	case "UltraSSD_LRS":
-		volume.Labels["cloudexit.performance"] = "ultra-ssd"
+		volume.Labels["homeport.performance"] = "ultra-ssd"
 		result.AddWarning("Ultra SSD disk detected. Docker volumes don't enforce Ultra SSD performance - ensure host has appropriate storage.")
 	}
 

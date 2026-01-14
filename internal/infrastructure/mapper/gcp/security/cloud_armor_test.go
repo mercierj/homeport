@@ -5,8 +5,8 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/agnostech/agnostech/internal/domain/mapper"
-	"github.com/agnostech/agnostech/internal/domain/resource"
+	"github.com/homeport/homeport/internal/domain/mapper"
+	"github.com/homeport/homeport/internal/domain/resource"
 )
 
 func TestNewCloudArmorMapper(t *testing.T) {
@@ -114,8 +114,8 @@ func TestCloudArmorMapper_Map(t *testing.T) {
 					t.Errorf("Expected ModSecurity image, got %s", result.DockerService.Image)
 				}
 				// Check labels
-				if result.DockerService.Labels["agnostech.policy_name"] != "my-policy" {
-					t.Errorf("Expected policy_name label, got %s", result.DockerService.Labels["agnostech.policy_name"])
+				if result.DockerService.Labels["homeport.policy_name"] != "my-policy" {
+					t.Errorf("Expected policy_name label, got %s", result.DockerService.Labels["homeport.policy_name"])
 				}
 			},
 		},

@@ -7,8 +7,8 @@ import (
 	"strings"
 	"time"
 
-	"github.com/agnostech/agnostech/internal/domain/mapper"
-	"github.com/agnostech/agnostech/internal/domain/resource"
+	"github.com/homeport/homeport/internal/domain/mapper"
+	"github.com/homeport/homeport/internal/domain/resource"
 )
 
 // AppGatewayMapper converts Azure Application Gateway to Traefik.
@@ -63,11 +63,11 @@ func (m *AppGatewayMapper) Map(ctx context.Context, res *resource.AWSResource) (
 		"./certs:/certs:ro",
 	}
 
-	svc.Networks = []string{"cloudexit"}
+	svc.Networks = []string{"homeport"}
 	svc.Restart = "unless-stopped"
 	svc.Labels = map[string]string{
-		"cloudexit.source":      "azurerm_application_gateway",
-		"cloudexit.gateway_name": gwName,
+		"homeport.source":      "azurerm_application_gateway",
+		"homeport.gateway_name": gwName,
 	}
 
 	// Health check for Traefik

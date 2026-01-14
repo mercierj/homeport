@@ -4,8 +4,8 @@ import (
 	"context"
 	"testing"
 
-	"github.com/agnostech/agnostech/internal/domain/mapper"
-	"github.com/agnostech/agnostech/internal/domain/resource"
+	"github.com/homeport/homeport/internal/domain/mapper"
+	"github.com/homeport/homeport/internal/domain/resource"
 )
 
 func TestNewRoute53Mapper(t *testing.T) {
@@ -134,8 +134,8 @@ func TestRoute53Mapper_Map(t *testing.T) {
 				if result.DockerService.Labels == nil {
 					t.Error("Expected labels to be configured")
 				}
-				if result.DockerService.Labels["cloudexit.source"] != "aws_route53" {
-					t.Errorf("Expected source label to be aws_route53, got %s", result.DockerService.Labels["cloudexit.source"])
+				if result.DockerService.Labels["homeport.source"] != "aws_route53" {
+					t.Errorf("Expected source label to be aws_route53, got %s", result.DockerService.Labels["homeport.source"])
 				}
 			},
 		},
@@ -429,8 +429,8 @@ func TestRoute53Mapper_Map(t *testing.T) {
 					t.Fatal("Map() returned nil result")
 				}
 				// Should use resource Name as zone name
-				if result.DockerService.Labels["cloudexit.zone_name"] != "fallback.example.com" {
-					t.Errorf("Expected zone_name label to be fallback.example.com, got %s", result.DockerService.Labels["cloudexit.zone_name"])
+				if result.DockerService.Labels["homeport.zone_name"] != "fallback.example.com" {
+					t.Errorf("Expected zone_name label to be fallback.example.com, got %s", result.DockerService.Labels["homeport.zone_name"])
 				}
 			},
 		},

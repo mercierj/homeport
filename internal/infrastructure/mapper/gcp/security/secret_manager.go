@@ -6,8 +6,8 @@ import (
 	"fmt"
 	"strings"
 
-	"github.com/agnostech/agnostech/internal/domain/mapper"
-	"github.com/agnostech/agnostech/internal/domain/resource"
+	"github.com/homeport/homeport/internal/domain/mapper"
+	"github.com/homeport/homeport/internal/domain/resource"
 )
 
 // SecretManagerMapper converts GCP Secret Manager to HashiCorp Vault.
@@ -51,11 +51,11 @@ func (m *SecretManagerMapper) Map(ctx context.Context, res *resource.AWSResource
 		"./data/vault:/vault/data",
 		"./config/vault:/vault/config",
 	}
-	svc.Networks = []string{"cloudexit"}
+	svc.Networks = []string{"homeport"}
 	svc.Labels = map[string]string{
-		"cloudexit.source":     "google_secret_manager_secret",
-		"cloudexit.secret_id":  secretID,
-		"cloudexit.project_id": projectID,
+		"homeport.source":     "google_secret_manager_secret",
+		"homeport.secret_id":  secretID,
+		"homeport.project_id": projectID,
 		"traefik.enable":       "false",
 	}
 	svc.Restart = "unless-stopped"

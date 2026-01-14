@@ -7,8 +7,8 @@ import (
 	"strings"
 	"time"
 
-	"github.com/agnostech/agnostech/internal/domain/mapper"
-	"github.com/agnostech/agnostech/internal/domain/resource"
+	"github.com/homeport/homeport/internal/domain/mapper"
+	"github.com/homeport/homeport/internal/domain/resource"
 )
 
 // StorageAccountMapper converts Azure Storage Accounts to Azurite.
@@ -58,7 +58,7 @@ func (m *StorageAccountMapper) Map(ctx context.Context, res *resource.AWSResourc
 	svc.Volumes = []string{
 		fmt.Sprintf("./data/azurite/%s:/data", accountName),
 	}
-	svc.Networks = []string{"cloudexit"}
+	svc.Networks = []string{"homeport"}
 	svc.Restart = "unless-stopped"
 	svc.HealthCheck = &mapper.HealthCheck{
 		Test:     []string{"CMD", "nc", "-z", "localhost", "10000"},
@@ -67,9 +67,9 @@ func (m *StorageAccountMapper) Map(ctx context.Context, res *resource.AWSResourc
 		Retries:  3,
 	}
 	svc.Labels = map[string]string{
-		"cloudexit.source":         "azurerm_storage_account",
-		"cloudexit.account_name":   accountName,
-		"cloudexit.service_type":   "azurite",
+		"homeport.source":         "azurerm_storage_account",
+		"homeport.account_name":   accountName,
+		"homeport.service_type":   "azurite",
 		"traefik.enable":           "false",
 	}
 
@@ -78,14 +78,14 @@ func (m *StorageAccountMapper) Map(ctx context.Context, res *resource.AWSResourc
 	if accountTier == "" {
 		accountTier = "Standard"
 	}
-	svc.Labels["cloudexit.account_tier"] = accountTier
+	svc.Labels["homeport.account_tier"] = accountTier
 
 	// Handle replication type
 	replicationType := res.GetConfigString("account_replication_type")
 	if replicationType == "" {
 		replicationType = "LRS"
 	}
-	svc.Labels["cloudexit.replication_type"] = replicationType
+	svc.Labels["homeport.replication_type"] = replicationType
 
 	if replicationType != "LRS" {
 		result.AddWarning(fmt.Sprintf("Replication type '%s' is configured. Azurite is single-instance only (LRS equivalent).", replicationType))
@@ -94,7 +94,7 @@ func (m *StorageAccountMapper) Map(ctx context.Context, res *resource.AWSResourc
 	// Handle access tier
 	accessTier := res.GetConfigString("access_tier")
 	if accessTier != "" {
-		svc.Labels["cloudexit.access_tier"] = accessTier
+		svc.Labels["homeport.access_tier"] = accessTier
 		result.AddWarning(fmt.Sprintf("Access tier '%s' is configured. Azurite doesn't differentiate between Hot/Cool/Archive tiers.", accessTier))
 	}
 
@@ -103,7 +103,7 @@ func (m *StorageAccountMapper) Map(ctx context.Context, res *resource.AWSResourc
 	if accountKind == "" {
 		accountKind = "StorageV2"
 	}
-	svc.Labels["cloudexit.account_kind"] = accountKind
+	svc.Labels["homeport.account_kind"] = accountKind
 
 	if accountKind == "BlobStorage" {
 		result.AddWarning("BlobStorage account kind detected. Azurite supports all storage types (blob, queue, table).")

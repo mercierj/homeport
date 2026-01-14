@@ -4,18 +4,12 @@ import { listContainers, restartContainer, stopContainer, startContainer } from 
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
 import { RefreshCw, Square, Play, RotateCcw, Terminal } from 'lucide-react';
+import { statusBadgeClasses } from '@/lib/diagram-types';
 
 interface ContainerListProps {
   stackId?: string;
   onViewLogs?: (container: Container) => void;
 }
-
-const stateColors: Record<string, string> = {
-  running: 'bg-green-100 text-green-800',
-  exited: 'bg-red-100 text-red-800',
-  paused: 'bg-yellow-100 text-yellow-800',
-  restarting: 'bg-blue-100 text-blue-800',
-};
 
 export function ContainerList({ stackId = 'default', onViewLogs }: ContainerListProps) {
   const queryClient = useQueryClient();
@@ -47,7 +41,7 @@ export function ContainerList({ stackId = 'default', onViewLogs }: ContainerList
 
   if (error) {
     return (
-      <div className="text-red-500">
+      <div className="text-error">
         Error loading containers. Is Docker running?
       </div>
     );
@@ -66,20 +60,19 @@ export function ContainerList({ stackId = 'default', onViewLogs }: ContainerList
       </div>
 
       {containers.length === 0 ? (
-        <div className="text-center py-8 text-muted-foreground border rounded-lg">
-          No containers found
+        <div className="empty-state">
+          <p className="empty-state-description">No containers found</p>
         </div>
       ) : (
         <div className="space-y-2">
           {containers.map((container) => (
             <div
               key={container.id}
-              className="flex items-center justify-between p-4 rounded-lg border"
+              className="card-resource"
             >
               <div className="flex items-center gap-4">
                 <span className={cn(
-                  "px-2 py-1 rounded text-xs font-medium",
-                  stateColors[container.state] || 'bg-gray-100'
+                  statusBadgeClasses[container.state] || 'badge-secondary'
                 )}>
                   {container.state}
                 </span>

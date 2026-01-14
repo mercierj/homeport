@@ -4,8 +4,8 @@ import (
 	"context"
 	"testing"
 
-	"github.com/agnostech/agnostech/internal/domain/mapper"
-	"github.com/agnostech/agnostech/internal/domain/resource"
+	"github.com/homeport/homeport/internal/domain/mapper"
+	"github.com/homeport/homeport/internal/domain/resource"
 )
 
 func TestNewEKSMapper(t *testing.T) {
@@ -137,11 +137,11 @@ func TestEKSMapper_Map(t *testing.T) {
 				if result.DockerService.Labels == nil {
 					t.Error("DockerService.Labels is nil")
 				}
-				if result.DockerService.Labels["cloudexit.source"] != "aws_eks_cluster" {
-					t.Errorf("Label cloudexit.source = %v, want aws_eks_cluster", result.DockerService.Labels["cloudexit.source"])
+				if result.DockerService.Labels["homeport.source"] != "aws_eks_cluster" {
+					t.Errorf("Label homeport.source = %v, want aws_eks_cluster", result.DockerService.Labels["homeport.source"])
 				}
-				if result.DockerService.Labels["cloudexit.cluster_name"] != "my-cluster" {
-					t.Errorf("Label cloudexit.cluster_name = %v, want my-cluster", result.DockerService.Labels["cloudexit.cluster_name"])
+				if result.DockerService.Labels["homeport.cluster_name"] != "my-cluster" {
+					t.Errorf("Label homeport.cluster_name = %v, want my-cluster", result.DockerService.Labels["homeport.cluster_name"])
 				}
 			},
 		},
@@ -452,8 +452,8 @@ func TestEKSMapper_Map(t *testing.T) {
 					t.Error("Expected at least 1 volume mount")
 				}
 				// Check networks
-				if len(result.DockerService.Networks) < 1 || result.DockerService.Networks[0] != "cloudexit" {
-					t.Error("Expected network 'cloudexit'")
+				if len(result.DockerService.Networks) < 1 || result.DockerService.Networks[0] != "homeport" {
+					t.Error("Expected network 'homeport'")
 				}
 			},
 		},

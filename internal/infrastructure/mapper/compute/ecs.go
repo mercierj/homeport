@@ -7,8 +7,8 @@ import (
 	"strings"
 	"time"
 
-	"github.com/agnostech/agnostech/internal/domain/mapper"
-	"github.com/agnostech/agnostech/internal/domain/resource"
+	"github.com/homeport/homeport/internal/domain/mapper"
+	"github.com/homeport/homeport/internal/domain/resource"
 )
 
 // ECSMapper converts AWS ECS services and task definitions to Docker Compose.
@@ -55,12 +55,12 @@ func (m *ECSMapper) Map(ctx context.Context, res *resource.AWSResource) (*mapper
 	svc.Environment = m.extractEnvironmentVariables(res)
 	svc.Ports = m.extractPortMappings(res)
 	svc.Volumes = m.extractVolumeMounts(res)
-	svc.Networks = []string{"cloudexit"}
+	svc.Networks = []string{"homeport"}
 	svc.Restart = "unless-stopped"
 	svc.Labels = map[string]string{
-		"cloudexit.source":       "aws_ecs_service",
-		"cloudexit.service_name": serviceName,
-		"cloudexit.task_def":     taskDef,
+		"homeport.source":       "aws_ecs_service",
+		"homeport.service_name": serviceName,
+		"homeport.task_def":     taskDef,
 	}
 
 	// Add health check if defined
@@ -416,11 +416,11 @@ func (m *ECSTaskDefMapper) Map(ctx context.Context, res *resource.AWSResource) (
 		}
 	}
 
-	svc.Networks = []string{"cloudexit"}
+	svc.Networks = []string{"homeport"}
 	svc.Restart = "unless-stopped"
 	svc.Labels = map[string]string{
-		"cloudexit.source":      "aws_ecs_task_definition",
-		"cloudexit.task_family": taskFamily,
+		"homeport.source":      "aws_ecs_task_definition",
+		"homeport.task_family": taskFamily,
 	}
 
 	// Handle multiple containers

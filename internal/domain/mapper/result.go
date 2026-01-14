@@ -1,12 +1,20 @@
 package mapper
 
-import "time"
+import (
+	"time"
+
+	"github.com/homeport/homeport/internal/domain/policy"
+	"github.com/homeport/homeport/internal/domain/resource"
+)
 
 // MappingResult represents the outcome of mapping a cloud resource to self-hosted equivalents.
 // It contains everything needed to deploy and run the mapped service.
 type MappingResult struct {
 	// DockerService defines the main Docker service configuration
 	DockerService *DockerService
+
+	// AdditionalServices contains additional Docker services needed (sidecars, databases, etc.)
+	AdditionalServices []*DockerService
 
 	// Configs contains configuration files needed by the service (filename -> content)
 	Configs map[string][]byte
@@ -25,6 +33,15 @@ type MappingResult struct {
 
 	// ManualSteps contains steps that require manual intervention
 	ManualSteps []string
+
+	// Policies contains IAM and resource policies extracted from the source
+	Policies []*policy.Policy
+
+	// Source resource information
+	SourceResource     *resource.AWSResource
+	SourceResourceType string
+	SourceResourceName string
+	SourceCategory     resource.Category
 }
 
 // DockerService represents a Docker Compose service definition.
@@ -34,6 +51,9 @@ type DockerService struct {
 
 	// Image is the Docker image to use
 	Image string
+
+	// Build is the build context for the service (optional)
+	Build *DockerBuild
 
 	// Ports are the port mappings (host:container)
 	Ports []string
@@ -85,6 +105,21 @@ type DockerService struct {
 
 	// Ulimits sets resource limits
 	Ulimits map[string]Ulimit
+}
+
+// DockerBuild defines Docker build configuration.
+type DockerBuild struct {
+	// Context is the build context path
+	Context string
+
+	// Dockerfile is the path to the Dockerfile
+	Dockerfile string
+
+	// Args are build arguments
+	Args map[string]string
+
+	// Target is the build target stage
+	Target string
 }
 
 // HealthCheck defines a Docker health check configuration.
@@ -215,12 +250,26 @@ func NewMappingResult(serviceName string) *MappingResult {
 			Ulimits:     make(map[string]Ulimit),
 			Restart:     "unless-stopped",
 		},
-		Configs:     make(map[string][]byte),
-		Scripts:     make(map[string][]byte),
-		Volumes:     make([]Volume, 0),
-		Networks:    make([]string, 0),
-		Warnings:    make([]string, 0),
-		ManualSteps: make([]string, 0),
+		AdditionalServices: make([]*DockerService, 0),
+		Configs:            make(map[string][]byte),
+		Scripts:            make(map[string][]byte),
+		Volumes:            make([]Volume, 0),
+		Networks:           make([]string, 0),
+		Warnings:           make([]string, 0),
+		ManualSteps:        make([]string, 0),
+		Policies:           make([]*policy.Policy, 0),
+	}
+}
+
+// NewDockerService creates a new Docker service with initialized maps.
+func NewDockerService(name string) *DockerService {
+	return &DockerService{
+		Name:        name,
+		Environment: make(map[string]string),
+		Labels:      make(map[string]string),
+		Sysctls:     make(map[string]string),
+		Ulimits:     make(map[string]Ulimit),
+		Restart:     "unless-stopped",
 	}
 }
 
@@ -254,6 +303,11 @@ func (r *MappingResult) AddNetwork(network string) {
 	r.Networks = append(r.Networks, network)
 }
 
+// AddService adds an additional Docker service to the result.
+func (r *MappingResult) AddService(service *DockerService) {
+	r.AdditionalServices = append(r.AdditionalServices, service)
+}
+
 // HasWarnings returns true if there are any warnings.
 func (r *MappingResult) HasWarnings() bool {
 	return len(r.Warnings) > 0
@@ -262,4 +316,14 @@ func (r *MappingResult) HasWarnings() bool {
 // HasManualSteps returns true if there are any manual steps.
 func (r *MappingResult) HasManualSteps() bool {
 	return len(r.ManualSteps) > 0
+}
+
+// AddPolicy adds a policy to the result.
+func (r *MappingResult) AddPolicy(p *policy.Policy) {
+	r.Policies = append(r.Policies, p)
+}
+
+// HasPolicies returns true if there are any policies.
+func (r *MappingResult) HasPolicies() bool {
+	return len(r.Policies) > 0
 }

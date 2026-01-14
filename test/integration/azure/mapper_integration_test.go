@@ -6,16 +6,16 @@ import (
 	"path/filepath"
 	"testing"
 
-	"github.com/agnostech/agnostech/internal/domain/mapper"
-	"github.com/agnostech/agnostech/internal/domain/parser"
-	"github.com/agnostech/agnostech/internal/domain/resource"
-	azuremapper "github.com/agnostech/agnostech/internal/infrastructure/mapper/azure"
-	"github.com/agnostech/agnostech/internal/infrastructure/mapper/azure/compute"
-	"github.com/agnostech/agnostech/internal/infrastructure/mapper/azure/database"
-	"github.com/agnostech/agnostech/internal/infrastructure/mapper/azure/messaging"
-	"github.com/agnostech/agnostech/internal/infrastructure/mapper/azure/security"
-	"github.com/agnostech/agnostech/internal/infrastructure/mapper/azure/storage"
-	azureparser "github.com/agnostech/agnostech/internal/infrastructure/parser/azure"
+	"github.com/homeport/homeport/internal/domain/mapper"
+	"github.com/homeport/homeport/internal/domain/parser"
+	"github.com/homeport/homeport/internal/domain/resource"
+	azuremapper "github.com/homeport/homeport/internal/infrastructure/mapper/azure"
+	"github.com/homeport/homeport/internal/infrastructure/mapper/azure/compute"
+	"github.com/homeport/homeport/internal/infrastructure/mapper/azure/database"
+	"github.com/homeport/homeport/internal/infrastructure/mapper/azure/messaging"
+	"github.com/homeport/homeport/internal/infrastructure/mapper/azure/security"
+	"github.com/homeport/homeport/internal/infrastructure/mapper/azure/storage"
+	azureparser "github.com/homeport/homeport/internal/infrastructure/parser/azure"
 )
 
 // TestMapperIntegration_StorageToAzurite tests Azure Storage Account to Azurite mapping.
@@ -58,8 +58,8 @@ func TestMapperIntegration_StorageToAzurite(t *testing.T) {
 	}
 
 	// Verify labels
-	if svc.Labels["cloudexit.source"] != "azurerm_storage_account" {
-		t.Errorf("expected cloudexit.source label, got %s", svc.Labels["cloudexit.source"])
+	if svc.Labels["homeport.source"] != "azurerm_storage_account" {
+		t.Errorf("expected homeport.source label, got %s", svc.Labels["homeport.source"])
 	}
 
 	// Verify health check is configured
@@ -114,8 +114,8 @@ func TestMapperIntegration_VMToDocker(t *testing.T) {
 	}
 
 	// Verify labels
-	if svc.Labels["cloudexit.vm_name"] != "mylinuxvm" {
-		t.Errorf("expected vm_name label, got %s", svc.Labels["cloudexit.vm_name"])
+	if svc.Labels["homeport.vm_name"] != "mylinuxvm" {
+		t.Errorf("expected vm_name label, got %s", svc.Labels["homeport.vm_name"])
 	}
 
 	// Verify Dockerfile is generated
@@ -218,8 +218,8 @@ func TestMapperIntegration_ServiceBusToRabbitMQ(t *testing.T) {
 	}
 
 	// Verify labels
-	if svc.Labels["cloudexit.source"] != "azurerm_servicebus_namespace" {
-		t.Errorf("expected cloudexit.source label, got %s", svc.Labels["cloudexit.source"])
+	if svc.Labels["homeport.source"] != "azurerm_servicebus_namespace" {
+		t.Errorf("expected homeport.source label, got %s", svc.Labels["homeport.source"])
 	}
 
 	// Verify configs are generated (definitions.json, rabbitmq.conf)
@@ -277,8 +277,8 @@ func TestMapperIntegration_KeyVaultToVault(t *testing.T) {
 	}
 
 	// Verify labels
-	if svc.Labels["cloudexit.vault_name"] != "mykeyvault" {
-		t.Errorf("expected vault_name label, got %s", svc.Labels["cloudexit.vault_name"])
+	if svc.Labels["homeport.vault_name"] != "mykeyvault" {
+		t.Errorf("expected vault_name label, got %s", svc.Labels["homeport.vault_name"])
 	}
 
 	// Verify configs and scripts are generated
@@ -502,8 +502,8 @@ func TestMapperIntegration_WindowsVMToDocker(t *testing.T) {
 	}
 
 	// Verify labels indicate Windows
-	if svc.Labels["cloudexit.source"] != "azurerm_windows_virtual_machine" {
-		t.Errorf("expected windows source label, got %s", svc.Labels["cloudexit.source"])
+	if svc.Labels["homeport.source"] != "azurerm_windows_virtual_machine" {
+		t.Errorf("expected windows source label, got %s", svc.Labels["homeport.source"])
 	}
 
 	// Verify warnings about Windows containers

@@ -4,8 +4,8 @@ import (
 	"context"
 	"testing"
 
-	"github.com/agnostech/agnostech/internal/domain/mapper"
-	"github.com/agnostech/agnostech/internal/domain/resource"
+	"github.com/homeport/homeport/internal/domain/mapper"
+	"github.com/homeport/homeport/internal/domain/resource"
 )
 
 func TestNewPersistentDiskMapper(t *testing.T) {
@@ -112,8 +112,8 @@ func TestPersistentDiskMapper_Map(t *testing.T) {
 					t.Fatal("DockerService is nil")
 				}
 				// Check labels
-				if result.DockerService.Labels["cloudexit.source"] != "google_compute_disk" {
-					t.Error("Expected cloudexit.source label")
+				if result.DockerService.Labels["homeport.source"] != "google_compute_disk" {
+					t.Error("Expected homeport.source label")
 				}
 			},
 		},
@@ -134,7 +134,7 @@ func TestPersistentDiskMapper_Map(t *testing.T) {
 				if result == nil {
 					t.Fatal("Map() returned nil result")
 				}
-				if result.DockerService.Labels["cloudexit.disk_type"] != "pd-ssd" {
+				if result.DockerService.Labels["homeport.disk_type"] != "pd-ssd" {
 					t.Error("Expected disk type label to be pd-ssd")
 				}
 			},

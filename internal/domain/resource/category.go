@@ -46,6 +46,12 @@ const (
 	CategoryLogging    Category = "logging"    // CloudWatch Logs, Cloud Logging, Log Analytics
 	CategoryTracing    Category = "tracing"    // X-Ray, Cloud Trace, Application Insights
 
+	// Aggregate categories (for grouping related sub-categories)
+	CategoryMessaging  Category = "messaging"  // Aggregate for Queue, PubSub, Stream
+	CategoryNetworking Category = "networking" // Aggregate for LoadBalancer, CDN, DNS, APIGateway, VPC
+	CategorySecurity   Category = "security"   // Aggregate for Auth, Secrets, IAM, Firewall, Certificate
+	CategoryIdentity   Category = "identity"   // Identity/Auth related
+
 	// Other
 	CategoryUnknown Category = "unknown"
 )
@@ -64,7 +70,8 @@ func (c Category) IsValid() bool {
 		CategoryQueue, CategoryPubSub, CategoryStream,
 		CategoryLoadBalancer, CategoryCDN, CategoryDNS, CategoryAPIGateway, CategoryVPC,
 		CategoryAuth, CategorySecrets, CategoryIAM, CategoryFirewall, CategoryCertificate,
-		CategoryMonitoring, CategoryLogging, CategoryTracing:
+		CategoryMonitoring, CategoryLogging, CategoryTracing,
+		CategoryMessaging, CategoryNetworking, CategorySecurity, CategoryIdentity:
 		return true
 	default:
 		return false
@@ -114,6 +121,15 @@ var CategoryMapping = map[Type]Category{
 	TypeSNSTopic:    CategoryPubSub,
 	TypeEventBridge: CategoryPubSub,
 	TypeKinesis:     CategoryStream,
+	TypeSESIdentity: CategoryPubSub, // Email service (SES)
+
+	// AWS Security (additional)
+	TypeKMSKey: CategorySecrets, // Key Management Service
+
+	// AWS Monitoring
+	TypeCloudWatchMetricAlarm: CategoryMonitoring,
+	TypeCloudWatchLogGroup:    CategoryLogging,
+	TypeCloudWatchDashboard:   CategoryMonitoring,
 
 	// ─────────────────────────────────────────────────────
 	// GCP Resource Mappings (Complete)

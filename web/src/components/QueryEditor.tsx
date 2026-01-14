@@ -53,7 +53,7 @@ export function QueryEditor({ stackId = 'default' }: Props) {
       </div>
 
       {mutation.isError && (
-        <div className="p-4 bg-red-50 border border-red-200 rounded-md text-red-700 text-sm">
+        <div className="alert-error">
           {mutation.error.message}
         </div>
       )}

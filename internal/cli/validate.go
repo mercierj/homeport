@@ -6,7 +6,7 @@ import (
 	"path/filepath"
 	"strings"
 
-	"github.com/agnostech/agnostech/internal/cli/ui"
+	"github.com/homeport/homeport/internal/cli/ui"
 	"github.com/spf13/cobra"
 )
 
@@ -28,16 +28,16 @@ This helps ensure the generated stack is ready for deployment.
 
 Examples:
   # Validate generated stack
-  cloudexit validate ./output
+  homeport validate ./output
 
   # Validate with verbose output
-  cloudexit validate ./output --verbose`,
+  homeport validate ./output --verbose`,
 	Args: cobra.ExactArgs(1),
 	RunE: func(cmd *cobra.Command, args []string) error {
 		stackPath := args[0]
 
 		if !IsQuiet() {
-			ui.Header("CloudExit - Stack Validation")
+			ui.Header("Homeport - Stack Validation")
 			ui.Info(fmt.Sprintf("Validating: %s", stackPath))
 			ui.Divider()
 		}

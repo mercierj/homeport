@@ -8,8 +8,8 @@ import (
 	"strings"
 	"time"
 
-	"github.com/agnostech/agnostech/internal/domain/mapper"
-	"github.com/agnostech/agnostech/internal/domain/resource"
+	"github.com/homeport/homeport/internal/domain/mapper"
+	"github.com/homeport/homeport/internal/domain/resource"
 )
 
 // CognitoMapper converts AWS Cognito User Pools to Keycloak.
@@ -62,10 +62,10 @@ func (m *CognitoMapper) Map(ctx context.Context, res *resource.AWSResource) (*ma
 	keycloakSvc.Volumes = []string{
 		"./config/keycloak:/opt/keycloak/data/import",
 	}
-	keycloakSvc.Networks = []string{"cloudexit"}
+	keycloakSvc.Networks = []string{"homeport"}
 	keycloakSvc.Labels = map[string]string{
-		"cloudexit.source":    "aws_cognito_user_pool",
-		"cloudexit.pool_name": poolName,
+		"homeport.source":    "aws_cognito_user_pool",
+		"homeport.pool_name": poolName,
 		"traefik.enable":      "true",
 		"traefik.http.routers.keycloak.rule":                      "Host(`keycloak.localhost`)",
 		"traefik.http.services.keycloak.loadbalancer.server.port": "8080",
@@ -157,7 +157,7 @@ postgres-keycloak:
   volumes:
     - ./data/postgres-keycloak:/var/lib/postgresql/data
   networks:
-    - cloudexit
+    - homeport
   healthcheck:
     test: ["CMD-SHELL", "pg_isready -U keycloak"]
     interval: 10s
@@ -165,7 +165,7 @@ postgres-keycloak:
     retries: 5
   restart: unless-stopped
   labels:
-    cloudexit.service: keycloak-database
+    homeport.service: keycloak-database
 `
 }
 

@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"log"
 
-	"github.com/agnostech/agnostech/internal/infrastructure/parser"
+	"github.com/homeport/homeport/internal/infrastructure/parser"
 )
 
 // ExampleParseState demonstrates how to parse a Terraform state file

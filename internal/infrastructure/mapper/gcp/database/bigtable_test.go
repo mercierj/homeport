@@ -4,8 +4,8 @@ import (
 	"context"
 	"testing"
 
-	"github.com/agnostech/agnostech/internal/domain/mapper"
-	"github.com/agnostech/agnostech/internal/domain/resource"
+	"github.com/homeport/homeport/internal/domain/mapper"
+	"github.com/homeport/homeport/internal/domain/resource"
 )
 
 func TestNewBigtableMapper(t *testing.T) {
@@ -130,7 +130,7 @@ func TestBigtableMapper_Map(t *testing.T) {
 					t.Fatal("Map() returned nil result")
 				}
 				// Check environment variables are set
-				if result.DockerService.Environment["CASSANDRA_CLUSTER_NAME"] != "cloudexit_cluster" {
+				if result.DockerService.Environment["CASSANDRA_CLUSTER_NAME"] != "homeport_cluster" {
 					t.Error("Expected CASSANDRA_CLUSTER_NAME to be set")
 				}
 			},

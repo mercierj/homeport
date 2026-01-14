@@ -1,7 +1,7 @@
 # yaml-language-server: $schema=https://goreleaser.com/static/schema.json
 version: 2
 
-project_name: agnostech
+project_name: homeport
 
 before:
   hooks:
@@ -10,8 +10,8 @@ before:
 
 builds:
   - id: agnostech
-    main: ./cmd/agnostech
-    binary: agnostech
+    main: ./cmd/homeport
+    binary: homeport
     env:
       - CGO_ENABLED=0
     goos:
@@ -23,9 +23,9 @@ builds:
       - arm64
     ldflags:
       - -s -w
-      - -X github.com/agnostech/agnostech/pkg/version.Version={{.Version}}
-      - -X github.com/agnostech/agnostech/pkg/version.Commit={{.Commit}}
-      - -X github.com/agnostech/agnostech/pkg/version.Date={{.Date}}
+      - -X github.com/mercierj/homeport/pkg/version.Version={{.Version}}
+      - -X github.com/mercierj/homeport/pkg/version.Commit={{.Commit}}
+      - -X github.com/mercierj/homeport/pkg/version.Date={{.Date}}
 
 archives:
   - id: default
@@ -53,11 +53,11 @@ signs:
       - "${artifact}"
 
 brews:
-  - name: agnostech
+  - name: homeport
     repository:
       owner: agnostech
       name: homebrew-tap
-    homepage: https://agnostech.dev
+    homepage: https://homeport.dev
     description: "Migrate AWS infrastructure to self-hosted Docker stack"
     license: "AGPL-3.0"
     install: |
@@ -69,16 +69,16 @@ scoops:
   - repository:
       owner: agnostech
       name: scoop-bucket
-    homepage: https://agnostech.dev
+    homepage: https://homeport.dev
     description: "Migrate AWS infrastructure to self-hosted Docker stack"
     license: AGPL-3.0
 
 nfpms:
   - id: packages
-    package_name: agnostech
-    vendor: AgnosTech
-    homepage: https://agnostech.dev
-    maintainer: AgnosTech <maintainers@agnostech.dev>
+    package_name: homeport
+    vendor: Homeport
+    homepage: https://homeport.dev
+    maintainer: Homeport <maintainers@homeport.dev>
     description: "Migrate AWS infrastructure to self-hosted Docker stack"
     license: AGPL-3.0
     formats:
@@ -88,21 +88,21 @@ nfpms:
     bindir: /usr/bin
 
 aurs:
-  - name: agnostech-bin
-    homepage: https://agnostech.dev
+  - name: homeport-bin
+    homepage: https://homeport.dev
     description: "Migrate AWS infrastructure to self-hosted Docker stack"
     maintainers:
-      - "AgnosTech <maintainers@agnostech.dev>"
+      - "Homeport <maintainers@homeport.dev>"
     license: AGPL-3.0
     private_key: "{{ .Env.AUR_SSH_KEY }}"
-    git_url: "ssh://aur@aur.archlinux.org/agnostech-bin.git"
+    git_url: "ssh://aur@aur.archlinux.org/homeport-bin.git"
 
 dockers:
   - image_templates:
-      - "agnostech/agnostech:{{ .Tag }}"
-      - "agnostech/agnostech:latest"
-      - "ghcr.io/agnostech/agnostech:{{ .Tag }}"
-      - "ghcr.io/agnostech/agnostech:latest"
+      - "mercierj/homeport:{{ .Tag }}"
+      - "mercierj/homeport:latest"
+      - "ghcr.io/mercierj/homeport:{{ .Tag }}"
+      - "ghcr.io/mercierj/homeport:latest"
     dockerfile: Dockerfile
     build_flag_templates:
       - "--pull"
@@ -129,19 +129,19 @@ changelog:
 release:
   github:
     owner: agnostech
-    name: agnostech
+    name: homeport
   prerelease: auto
   footer: |
     ## Installation
 
     **Homebrew (macOS/Linux):**
     ```bash
-    brew install agnostech/tap/agnostech
+    brew install mercierj/tap/homeport
     ```
 
     **Docker:**
     ```bash
-    docker pull agnostech/agnostech:{{ .Tag }}
+    docker pull mercierj/homeport:{{ .Tag }}
     ```
 
     **Binary:**

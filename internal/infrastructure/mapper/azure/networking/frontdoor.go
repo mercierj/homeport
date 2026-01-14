@@ -7,8 +7,8 @@ import (
 	"strings"
 	"time"
 
-	"github.com/agnostech/agnostech/internal/domain/mapper"
-	"github.com/agnostech/agnostech/internal/domain/resource"
+	"github.com/homeport/homeport/internal/domain/mapper"
+	"github.com/homeport/homeport/internal/domain/resource"
 )
 
 // FrontDoorMapper converts Azure Front Door to Traefik with caching.
@@ -63,11 +63,11 @@ func (m *FrontDoorMapper) Map(ctx context.Context, res *resource.AWSResource) (*
 		"./certs:/certs:ro",
 	}
 
-	svc.Networks = []string{"cloudexit"}
+	svc.Networks = []string{"homeport"}
 	svc.Restart = "unless-stopped"
 	svc.Labels = map[string]string{
-		"cloudexit.source":         "azurerm_frontdoor",
-		"cloudexit.frontdoor_name": fdName,
+		"homeport.source":         "azurerm_frontdoor",
+		"homeport.frontdoor_name": fdName,
 	}
 
 	// Health check for Traefik
@@ -196,11 +196,11 @@ varnish:
   volumes:
     - ./config/varnish:/etc/varnish:ro
   networks:
-    - cloudexit
+    - homeport
   restart: unless-stopped
   labels:
-    cloudexit.source: azurerm_frontdoor
-    cloudexit.component: cache
+    homeport.source: azurerm_frontdoor
+    homeport.component: cache
   healthcheck:
     test: ["CMD-SHELL", "varnishadm ping || exit 1"]
     interval: 30s

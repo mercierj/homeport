@@ -1,0 +1,1514 @@
+openapi: 3.0.3
+info:
+  title: AgnosTech API
+  description: |
+    API for AgnosTech - a tool to migrate cloud infrastructure to self-hosted Docker Compose stacks.
+
+    ## Authentication
+    Most endpoints require authentication via session cookie or Bearer token.
+    Use the `/api/v1/auth/login` endpoint to obtain a session token.
+
+    ## Error Responses
+    All endpoints may return standard error responses:
+    - `400 Bad Request` - Invalid request parameters
+    - `401 Unauthorized` - Missing or invalid authentication
+    - `404 Not Found` - Resource not found
+    - `500 Internal Server Error` - Server error
+    - `502 Bad Gateway` - External service connection failed
+  version: 1.0.0
+  contact:
+    name: AgnosTech Support
+  license:
+    name: MIT
+
+servers:
+  - url: http://localhost:8080
+    description: Local development server
+  - url: https://api.homeport.local
+    description: Local production server
+
+tags:
+  - name: Health
+    description: Health check and system status endpoints
+  - name: Authentication
+    description: User authentication and session management
+  - name: Migration
+    description: Infrastructure analysis and Docker Compose generation
+  - name: Credentials
+    description: Secure credential storage for external services
+  - name: Containers
+    description: Docker container management
+  - name: Storage
+    description: S3-compatible object storage (MinIO)
+  - name: Database
+    description: PostgreSQL database operations
+
+paths:
+  # Health Endpoints
+  /health:
+    get:
+      tags: [Health]
+      summary: Basic health check
+      description: Returns a simple health status. Use this for basic availability checks.
+      operationId: getHealth
+      responses:
+        '200':
+          description: Service is healthy
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HealthResponse'
+              example:
+                status: healthy
+
+  /health/detailed:
+    get:
+      tags: [Health]
+      summary: Detailed health check
+      description: Returns detailed health status including dependencies, version, and system info.
+      operationId: getHealthDetailed
+      responses:
+        '200':
+          description: Service health details
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/DetailedHealthResponse'
+              example:
+                status: healthy
+                version: "1.0.0"
+                uptime: "2h30m15s"
+                dependencies:
+                  docker:
+                    status: healthy
+                    latency: "5ms"
+                system:
+                  go_version: "go1.21.0"
+                  num_goroutine: 12
+                  num_cpu: 8
+        '503':
+          description: Service is unhealthy
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/DetailedHealthResponse'
+
+  /health/ready:
+    get:
+      tags: [Health]
+      summary: Readiness probe
+      description: Kubernetes readiness probe endpoint.
+      operationId: getHealthReady
+      responses:
+        '200':
+          description: Service is ready
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status:
+                    type: string
+                    example: ready
+
+  /health/live:
+    get:
+      tags: [Health]
+      summary: Liveness probe
+      description: Kubernetes liveness probe endpoint.
+      operationId: getHealthLive
+      responses:
+        '200':
+          description: Service is alive
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status:
+                    type: string
+                    example: alive
+
+  # Authentication Endpoints
+  /api/v1/auth/login:
+    post:
+      tags: [Authentication]
+      summary: User login
+      description: Authenticate with username and password to obtain a session token.
+      operationId: login
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/LoginRequest'
+            example:
+              username: admin
+              password: "secret123"
+      responses:
+        '200':
+          description: Login successful
+          headers:
+            Set-Cookie:
+              description: Session cookie
+              schema:
+                type: string
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/LoginResponse'
+              example:
+                token: "abc123..."
+                username: admin
+                expires_at: "2024-01-15T12:00:00Z"
+        '401':
+          description: Invalid credentials
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /api/v1/auth/logout:
+    post:
+      tags: [Authentication]
+      summary: User logout
+      description: Invalidate the current session and clear cookies.
+      operationId: logout
+      security:
+        - sessionCookie: []
+        - bearerAuth: []
+      responses:
+        '200':
+          description: Logout successful
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status:
+                    type: string
+                    example: logged out
+
+  /api/v1/auth/me:
+    get:
+      tags: [Authentication]
+      summary: Get current user
+      description: Get information about the currently authenticated user.
+      operationId: getCurrentUser
+      security:
+        - sessionCookie: []
+        - bearerAuth: []
+      responses:
+        '200':
+          description: Current user information
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UserInfo'
+              example:
+                username: admin
+                expires_at: "2024-01-15T12:00:00Z"
+        '401':
+          description: Not authenticated
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /api/v1/auth/change-password:
+    post:
+      tags: [Authentication]
+      summary: Change password
+      description: Change the password for the currently authenticated user.
+      operationId: changePassword
+      security:
+        - sessionCookie: []
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ChangePasswordRequest'
+      responses:
+        '200':
+          description: Password changed successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status:
+                    type: string
+                    example: password changed
+        '400':
+          description: Invalid password
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '401':
+          description: Not authenticated
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  # Migration Endpoints
+  /api/v1/migrate/analyze:
+    post:
+      tags: [Migration]
+      summary: Analyze infrastructure
+      description: |
+        Parse infrastructure-as-code files and return discovered resources.
+        Supports Terraform, CloudFormation, and ARM templates.
+      operationId: analyzeInfrastructure
+      security:
+        - sessionCookie: []
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/AnalyzeRequest'
+            example:
+              type: terraform
+              content: |
+                resource "aws_s3_bucket" "example" {
+                  bucket = "my-bucket"
+                }
+      responses:
+        '200':
+          description: Analysis results
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AnalyzeResponse'
+        '400':
+          description: Invalid request
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '500':
+          description: Parse error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /api/v1/migrate/generate:
+    post:
+      tags: [Migration]
+      summary: Generate Docker Compose stack
+      description: Generate a Docker Compose stack from analyzed resources.
+      operationId: generateStack
+      security:
+        - sessionCookie: []
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/GenerateRequest'
+      responses:
+        '200':
+          description: Generated stack
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/GenerateResponse'
+        '400':
+          description: Invalid request
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /api/v1/migrate/download:
+    post:
+      tags: [Migration]
+      summary: Download stack as ZIP
+      description: Generate and download a complete stack as a ZIP file.
+      operationId: downloadStack
+      security:
+        - sessionCookie: []
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/GenerateRequest'
+      responses:
+        '200':
+          description: ZIP file containing stack
+          content:
+            application/zip:
+              schema:
+                type: string
+                format: binary
+          headers:
+            Content-Disposition:
+              description: Suggested filename
+              schema:
+                type: string
+                example: 'attachment; filename=homeport-stack.zip'
+        '400':
+          description: Invalid request
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  # Credentials Endpoints
+  /api/v1/credentials/storage:
+    post:
+      tags: [Credentials]
+      summary: Set storage credentials
+      description: Store S3/MinIO credentials for the current session.
+      operationId: setStorageCredentials
+      security:
+        - sessionCookie: []
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/StorageCredentials'
+      responses:
+        '200':
+          description: Credentials stored
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status:
+                    type: string
+                    example: credentials stored
+        '400':
+          description: Invalid credentials
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+    delete:
+      tags: [Credentials]
+      summary: Delete storage credentials
+      description: Remove stored storage credentials for the current session.
+      operationId: deleteStorageCredentials
+      security:
+        - sessionCookie: []
+        - bearerAuth: []
+      responses:
+        '200':
+          description: Credentials deleted
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status:
+                    type: string
+                    example: credentials deleted
+
+  /api/v1/credentials/database:
+    post:
+      tags: [Credentials]
+      summary: Set database credentials
+      description: Store PostgreSQL credentials for the current session.
+      operationId: setDatabaseCredentials
+      security:
+        - sessionCookie: []
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/DatabaseCredentials'
+      responses:
+        '200':
+          description: Credentials stored
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status:
+                    type: string
+                    example: credentials stored
+        '400':
+          description: Invalid credentials
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+    delete:
+      tags: [Credentials]
+      summary: Delete database credentials
+      description: Remove stored database credentials for the current session.
+      operationId: deleteDatabaseCredentials
+      security:
+        - sessionCookie: []
+        - bearerAuth: []
+      responses:
+        '200':
+          description: Credentials deleted
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status:
+                    type: string
+                    example: credentials deleted
+
+  # Container Endpoints
+  /api/v1/stacks/{stackId}/containers:
+    get:
+      tags: [Containers]
+      summary: List containers
+      description: List all Docker containers in a stack.
+      operationId: listContainers
+      security:
+        - sessionCookie: []
+        - bearerAuth: []
+      parameters:
+        - $ref: '#/components/parameters/stackId'
+      responses:
+        '200':
+          description: List of containers
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ContainerListResponse'
+        '400':
+          description: Invalid stack ID
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /api/v1/stacks/{stackId}/containers/{name}/logs:
+    get:
+      tags: [Containers]
+      summary: Get container logs
+      description: Retrieve logs from a Docker container.
+      operationId: getContainerLogs
+      security:
+        - sessionCookie: []
+        - bearerAuth: []
+      parameters:
+        - $ref: '#/components/parameters/stackId'
+        - $ref: '#/components/parameters/containerName'
+        - name: tail
+          in: query
+          description: Number of log lines to retrieve (1-10000, default 100)
+          schema:
+            type: integer
+            minimum: 1
+            maximum: 10000
+            default: 100
+      responses:
+        '200':
+          description: Container logs
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  logs:
+                    type: string
+                    description: Log content
+        '400':
+          description: Invalid parameters
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /api/v1/stacks/{stackId}/containers/{name}/restart:
+    post:
+      tags: [Containers]
+      summary: Restart container
+      description: Restart a Docker container.
+      operationId: restartContainer
+      security:
+        - sessionCookie: []
+        - bearerAuth: []
+      parameters:
+        - $ref: '#/components/parameters/stackId'
+        - $ref: '#/components/parameters/containerName'
+      responses:
+        '200':
+          description: Container restarted
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/StatusResponse'
+              example:
+                status: restarted
+        '400':
+          description: Invalid container name
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /api/v1/stacks/{stackId}/containers/{name}/stop:
+    post:
+      tags: [Containers]
+      summary: Stop container
+      description: Stop a running Docker container.
+      operationId: stopContainer
+      security:
+        - sessionCookie: []
+        - bearerAuth: []
+      parameters:
+        - $ref: '#/components/parameters/stackId'
+        - $ref: '#/components/parameters/containerName'
+      responses:
+        '200':
+          description: Container stopped
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/StatusResponse'
+              example:
+                status: stopped
+
+  /api/v1/stacks/{stackId}/containers/{name}/start:
+    post:
+      tags: [Containers]
+      summary: Start container
+      description: Start a stopped Docker container.
+      operationId: startContainer
+      security:
+        - sessionCookie: []
+        - bearerAuth: []
+      parameters:
+        - $ref: '#/components/parameters/stackId'
+        - $ref: '#/components/parameters/containerName'
+      responses:
+        '200':
+          description: Container started
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/StatusResponse'
+              example:
+                status: started
+
+  # Storage Endpoints
+  /api/v1/stacks/{stackId}/storage/buckets:
+    get:
+      tags: [Storage]
+      summary: List buckets
+      description: List all S3-compatible storage buckets.
+      operationId: listBuckets
+      security:
+        - sessionCookie: []
+        - bearerAuth: []
+      parameters:
+        - $ref: '#/components/parameters/stackId'
+      responses:
+        '200':
+          description: List of buckets
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/BucketListResponse'
+        '502':
+          description: Storage connection failed
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+    post:
+      tags: [Storage]
+      summary: Create bucket
+      description: Create a new S3-compatible storage bucket.
+      operationId: createBucket
+      security:
+        - sessionCookie: []
+        - bearerAuth: []
+      parameters:
+        - $ref: '#/components/parameters/stackId'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [name]
+              properties:
+                name:
+                  type: string
+                  description: Bucket name (3-63 chars, lowercase)
+                  pattern: '^[a-z0-9][a-z0-9.\-]{1,61}[a-z0-9]$'
+                  example: my-bucket
+      responses:
+        '200':
+          description: Bucket created
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status:
+                    type: string
+                    example: created
+                  name:
+                    type: string
+                    example: my-bucket
+        '400':
+          description: Invalid bucket name
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /api/v1/stacks/{stackId}/storage/buckets/{bucket}:
+    delete:
+      tags: [Storage]
+      summary: Delete bucket
+      description: Delete an empty S3-compatible storage bucket.
+      operationId: deleteBucket
+      security:
+        - sessionCookie: []
+        - bearerAuth: []
+      parameters:
+        - $ref: '#/components/parameters/stackId'
+        - $ref: '#/components/parameters/bucketName'
+      responses:
+        '200':
+          description: Bucket deleted
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status:
+                    type: string
+                    example: deleted
+                  name:
+                    type: string
+
+  /api/v1/stacks/{stackId}/storage/buckets/{bucket}/objects:
+    get:
+      tags: [Storage]
+      summary: List objects
+      description: List objects in a bucket with optional prefix filter.
+      operationId: listObjects
+      security:
+        - sessionCookie: []
+        - bearerAuth: []
+      parameters:
+        - $ref: '#/components/parameters/stackId'
+        - $ref: '#/components/parameters/bucketName'
+        - name: prefix
+          in: query
+          description: Filter objects by prefix
+          schema:
+            type: string
+            maxLength: 1024
+      responses:
+        '200':
+          description: List of objects
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ObjectListResponse'
+
+  /api/v1/stacks/{stackId}/storage/buckets/{bucket}/upload:
+    post:
+      tags: [Storage]
+      summary: Upload file
+      description: Upload a file to a bucket.
+      operationId: uploadObject
+      security:
+        - sessionCookie: []
+        - bearerAuth: []
+      parameters:
+        - $ref: '#/components/parameters/stackId'
+        - $ref: '#/components/parameters/bucketName'
+      requestBody:
+        required: true
+        content:
+          multipart/form-data:
+            schema:
+              type: object
+              required: [file]
+              properties:
+                file:
+                  type: string
+                  format: binary
+                  description: File to upload
+                key:
+                  type: string
+                  description: Object key (defaults to filename)
+      responses:
+        '200':
+          description: File uploaded
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status:
+                    type: string
+                    example: uploaded
+                  bucket:
+                    type: string
+                  key:
+                    type: string
+        '400':
+          description: Invalid request
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /api/v1/stacks/{stackId}/storage/buckets/{bucket}/download/{key}:
+    get:
+      tags: [Storage]
+      summary: Download file
+      description: Download a file from a bucket.
+      operationId: downloadObject
+      security:
+        - sessionCookie: []
+        - bearerAuth: []
+      parameters:
+        - $ref: '#/components/parameters/stackId'
+        - $ref: '#/components/parameters/bucketName'
+        - name: key
+          in: path
+          required: true
+          description: Object key (path to file)
+          schema:
+            type: string
+      responses:
+        '200':
+          description: File content
+          content:
+            application/octet-stream:
+              schema:
+                type: string
+                format: binary
+          headers:
+            Content-Disposition:
+              description: Suggested filename
+              schema:
+                type: string
+        '404':
+          description: Object not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /api/v1/stacks/{stackId}/storage/buckets/{bucket}/objects/{key}:
+    delete:
+      tags: [Storage]
+      summary: Delete object
+      description: Delete an object from a bucket.
+      operationId: deleteObject
+      security:
+        - sessionCookie: []
+        - bearerAuth: []
+      parameters:
+        - $ref: '#/components/parameters/stackId'
+        - $ref: '#/components/parameters/bucketName'
+        - name: key
+          in: path
+          required: true
+          description: Object key
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Object deleted
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/StatusResponse'
+              example:
+                status: deleted
+
+  /api/v1/stacks/{stackId}/storage/buckets/{bucket}/presign/{key}:
+    get:
+      tags: [Storage]
+      summary: Get presigned URL
+      description: Generate a presigned URL for direct object access (valid for 15 minutes).
+      operationId: getPresignedUrl
+      security:
+        - sessionCookie: []
+        - bearerAuth: []
+      parameters:
+        - $ref: '#/components/parameters/stackId'
+        - $ref: '#/components/parameters/bucketName'
+        - name: key
+          in: path
+          required: true
+          description: Object key
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Presigned URL
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  url:
+                    type: string
+                    format: uri
+                    description: Presigned URL valid for 15 minutes
+
+  # Database Endpoints
+  /api/v1/stacks/{stackId}/database/databases:
+    get:
+      tags: [Database]
+      summary: List databases
+      description: List all PostgreSQL databases.
+      operationId: listDatabases
+      security:
+        - sessionCookie: []
+        - bearerAuth: []
+      parameters:
+        - $ref: '#/components/parameters/stackId'
+      responses:
+        '200':
+          description: List of databases
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  databases:
+                    type: array
+                    items:
+                      type: string
+                  count:
+                    type: integer
+        '502':
+          description: Database connection failed
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /api/v1/stacks/{stackId}/database/tables:
+    get:
+      tags: [Database]
+      summary: List tables
+      description: List all tables in a schema.
+      operationId: listTables
+      security:
+        - sessionCookie: []
+        - bearerAuth: []
+      parameters:
+        - $ref: '#/components/parameters/stackId'
+        - name: schema
+          in: query
+          description: Schema name (default "public")
+          schema:
+            type: string
+            default: public
+            pattern: '^[a-zA-Z_][a-zA-Z0-9_]*$'
+      responses:
+        '200':
+          description: List of tables
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TableListResponse'
+
+  /api/v1/stacks/{stackId}/database/tables/{table}/schema:
+    get:
+      tags: [Database]
+      summary: Get table schema
+      description: Get column definitions for a table.
+      operationId: getTableSchema
+      security:
+        - sessionCookie: []
+        - bearerAuth: []
+      parameters:
+        - $ref: '#/components/parameters/stackId'
+        - $ref: '#/components/parameters/tableName'
+        - name: schema
+          in: query
+          description: Schema name (default "public")
+          schema:
+            type: string
+            default: public
+      responses:
+        '200':
+          description: Table schema
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TableSchemaResponse'
+
+  /api/v1/stacks/{stackId}/database/tables/{table}/data:
+    get:
+      tags: [Database]
+      summary: Get table data
+      description: Retrieve data from a table.
+      operationId: getTableData
+      security:
+        - sessionCookie: []
+        - bearerAuth: []
+      parameters:
+        - $ref: '#/components/parameters/stackId'
+        - $ref: '#/components/parameters/tableName'
+        - name: schema
+          in: query
+          description: Schema name (default "public")
+          schema:
+            type: string
+            default: public
+        - name: limit
+          in: query
+          description: Maximum rows to return (1-1000, default 100)
+          schema:
+            type: integer
+            minimum: 1
+            maximum: 1000
+            default: 100
+      responses:
+        '200':
+          description: Table data
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/QueryResult'
+
+  /api/v1/stacks/{stackId}/database/query:
+    post:
+      tags: [Database]
+      summary: Execute SQL query
+      description: |
+        Execute a SQL query against the database.
+        By default, queries are executed in read-only mode.
+      operationId: executeQuery
+      security:
+        - sessionCookie: []
+        - bearerAuth: []
+      parameters:
+        - $ref: '#/components/parameters/stackId'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/QueryRequest'
+            example:
+              query: SELECT * FROM users LIMIT 10
+              read_only: true
+      responses:
+        '200':
+          description: Query results
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/QueryResult'
+        '400':
+          description: Invalid query
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+components:
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      description: JWT Bearer token from login
+    sessionCookie:
+      type: apiKey
+      in: cookie
+      name: session
+      description: Session cookie from login
+
+  parameters:
+    stackId:
+      name: stackId
+      in: path
+      required: true
+      description: Stack identifier (use "default" for the default stack)
+      schema:
+        type: string
+        pattern: '^[a-zA-Z0-9][a-zA-Z0-9_.\-]*$'
+        example: default
+
+    containerName:
+      name: name
+      in: path
+      required: true
+      description: Container name
+      schema:
+        type: string
+        maxLength: 256
+        pattern: '^[a-zA-Z0-9][a-zA-Z0-9_.\-]*$'
+
+    bucketName:
+      name: bucket
+      in: path
+      required: true
+      description: Bucket name
+      schema:
+        type: string
+        minLength: 3
+        maxLength: 63
+        pattern: '^[a-z0-9][a-z0-9.\-]{1,61}[a-z0-9]$'
+
+    tableName:
+      name: table
+      in: path
+      required: true
+      description: Table name
+      schema:
+        type: string
+        maxLength: 128
+        pattern: '^[a-zA-Z_][a-zA-Z0-9_]*$'
+
+  schemas:
+    ErrorResponse:
+      type: object
+      properties:
+        error:
+          type: string
+          description: Error message
+        code:
+          type: string
+          description: Error code
+      required: [error]
+
+    StatusResponse:
+      type: object
+      properties:
+        status:
+          type: string
+      required: [status]
+
+    HealthResponse:
+      type: object
+      properties:
+        status:
+          type: string
+          enum: [healthy, degraded, unhealthy]
+      required: [status]
+
+    DetailedHealthResponse:
+      type: object
+      properties:
+        status:
+          type: string
+          enum: [healthy, degraded, unhealthy]
+        version:
+          type: string
+        uptime:
+          type: string
+        dependencies:
+          type: object
+          additionalProperties:
+            $ref: '#/components/schemas/DependencyStatus'
+        system:
+          $ref: '#/components/schemas/SystemInfo'
+      required: [status]
+
+    DependencyStatus:
+      type: object
+      properties:
+        status:
+          type: string
+          enum: [healthy, degraded, unhealthy]
+        latency:
+          type: string
+        error:
+          type: string
+
+    SystemInfo:
+      type: object
+      properties:
+        go_version:
+          type: string
+        num_goroutine:
+          type: integer
+        num_cpu:
+          type: integer
+
+    LoginRequest:
+      type: object
+      required: [username, password]
+      properties:
+        username:
+          type: string
+          minLength: 1
+        password:
+          type: string
+          format: password
+          minLength: 1
+
+    LoginResponse:
+      type: object
+      properties:
+        token:
+          type: string
+          description: Session token
+        username:
+          type: string
+        expires_at:
+          type: string
+          format: date-time
+
+    UserInfo:
+      type: object
+      properties:
+        username:
+          type: string
+        expires_at:
+          type: string
+          format: date-time
+
+    ChangePasswordRequest:
+      type: object
+      required: [old_password, new_password]
+      properties:
+        old_password:
+          type: string
+          format: password
+        new_password:
+          type: string
+          format: password
+          minLength: 8
+
+    AnalyzeRequest:
+      type: object
+      required: [type, content]
+      properties:
+        type:
+          type: string
+          enum: [terraform, cloudformation, arm]
+          description: Infrastructure-as-code format
+        content:
+          type: string
+          description: File content to analyze
+
+    AnalyzeResponse:
+      type: object
+      properties:
+        resources:
+          type: array
+          items:
+            $ref: '#/components/schemas/ResourceInfo'
+        warnings:
+          type: array
+          items:
+            type: string
+        provider:
+          type: string
+          description: Detected cloud provider
+
+    ResourceInfo:
+      type: object
+      properties:
+        id:
+          type: string
+        name:
+          type: string
+        type:
+          type: string
+        category:
+          type: string
+        dependencies:
+          type: array
+          items:
+            type: string
+        tags:
+          type: object
+          additionalProperties:
+            type: string
+
+    GenerateRequest:
+      type: object
+      required: [resources]
+      properties:
+        resources:
+          type: array
+          items:
+            $ref: '#/components/schemas/ResourceInfo'
+        options:
+          $ref: '#/components/schemas/GenerateOptions'
+
+    GenerateOptions:
+      type: object
+      properties:
+        ha:
+          type: boolean
+          description: Enable high availability configuration
+          default: false
+        include_migration:
+          type: boolean
+          description: Include data migration scripts
+          default: false
+        include_monitoring:
+          type: boolean
+          description: Include monitoring configuration
+          default: false
+        domain:
+          type: string
+          description: Domain name for services
+
+    GenerateResponse:
+      type: object
+      properties:
+        compose:
+          type: string
+          description: Docker Compose YAML content
+        scripts:
+          type: object
+          additionalProperties:
+            type: string
+          description: Generated shell scripts
+        docs:
+          type: string
+          description: Generated documentation (README)
+        zip_base64:
+          type: string
+          description: Base64-encoded ZIP file (optional)
+
+    StorageCredentials:
+      type: object
+      required: [access_key, secret_key]
+      properties:
+        endpoint:
+          type: string
+          description: S3/MinIO endpoint (default localhost:9000)
+        access_key:
+          type: string
+        secret_key:
+          type: string
+          format: password
+
+    DatabaseCredentials:
+      type: object
+      required: [user, password]
+      properties:
+        host:
+          type: string
+          description: Database host (default localhost)
+        port:
+          type: integer
+          minimum: 1
+          maximum: 65535
+          description: Database port (default 5432)
+        database:
+          type: string
+          description: Database name (default postgres)
+        user:
+          type: string
+        password:
+          type: string
+          format: password
+        ssl_mode:
+          type: string
+          enum: [disable, require, verify-ca, verify-full]
+          default: disable
+
+    ContainerListResponse:
+      type: object
+      properties:
+        containers:
+          type: array
+          items:
+            $ref: '#/components/schemas/ContainerInfo'
+        count:
+          type: integer
+
+    ContainerInfo:
+      type: object
+      properties:
+        id:
+          type: string
+        name:
+          type: string
+        image:
+          type: string
+        status:
+          type: string
+        state:
+          type: string
+          enum: [running, exited, paused, created, restarting, removing, dead]
+        ports:
+          type: array
+          items:
+            $ref: '#/components/schemas/PortBinding'
+        created:
+          type: string
+          format: date-time
+        labels:
+          type: object
+          additionalProperties:
+            type: string
+
+    PortBinding:
+      type: object
+      properties:
+        host_port:
+          type: string
+        container_port:
+          type: string
+        protocol:
+          type: string
+          enum: [tcp, udp]
+
+    BucketListResponse:
+      type: object
+      properties:
+        buckets:
+          type: array
+          items:
+            $ref: '#/components/schemas/BucketInfo'
+        count:
+          type: integer
+
+    BucketInfo:
+      type: object
+      properties:
+        name:
+          type: string
+        created:
+          type: string
+          format: date-time
+        region:
+          type: string
+
+    ObjectListResponse:
+      type: object
+      properties:
+        objects:
+          type: array
+          items:
+            $ref: '#/components/schemas/ObjectInfo'
+        count:
+          type: integer
+        bucket:
+          type: string
+        prefix:
+          type: string
+
+    ObjectInfo:
+      type: object
+      properties:
+        key:
+          type: string
+        size:
+          type: integer
+          format: int64
+        last_modified:
+          type: string
+          format: date-time
+        content_type:
+          type: string
+        is_dir:
+          type: boolean
+
+    TableListResponse:
+      type: object
+      properties:
+        tables:
+          type: array
+          items:
+            $ref: '#/components/schemas/TableInfo'
+        count:
+          type: integer
+        schema:
+          type: string
+
+    TableInfo:
+      type: object
+      properties:
+        schema:
+          type: string
+        name:
+          type: string
+        type:
+          type: string
+        owner:
+          type: string
+        row_count:
+          type: integer
+          format: int64
+        size:
+          type: string
+
+    TableSchemaResponse:
+      type: object
+      properties:
+        columns:
+          type: array
+          items:
+            $ref: '#/components/schemas/ColumnInfo'
+        table:
+          type: string
+        schema:
+          type: string
+
+    ColumnInfo:
+      type: object
+      properties:
+        name:
+          type: string
+        type:
+          type: string
+        nullable:
+          type: boolean
+        default:
+          type: string
+          nullable: true
+        primary_key:
+          type: boolean
+
+    QueryRequest:
+      type: object
+      required: [query]
+      properties:
+        query:
+          type: string
+          maxLength: 10000
+          description: SQL query to execute
+        read_only:
+          type: boolean
+          default: true
+          description: Execute in read-only mode (default true)
+
+    QueryResult:
+      type: object
+      properties:
+        columns:
+          type: array
+          items:
+            type: string
+        rows:
+          type: array
+          items:
+            type: array
+            items: {}
+        row_count:
+          type: integer
+        duration:
+          type: string
+          description: Query execution time
+
+security:
+  - sessionCookie: []
+  - bearerAuth: []

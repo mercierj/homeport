@@ -1,14 +1,14 @@
 .PHONY: help build install clean test run deps version
 
 # Build variables
-BINARY_NAME=agnostech
+BINARY_NAME=homeport
 VERSION?=dev
 COMMIT?=$(shell git rev-parse --short HEAD 2>/dev/null || echo "none")
 BUILD_DATE?=$(shell date -u '+%Y-%m-%d_%H:%M:%S')
-LDFLAGS=-ldflags "-X github.com/agnostech/agnostech/pkg/version.Version=$(VERSION) -X github.com/agnostech/agnostech/pkg/version.Commit=$(COMMIT) -X github.com/agnostech/agnostech/pkg/version.Date=$(BUILD_DATE)"
+LDFLAGS=-ldflags "-X github.com/homeport/homeport/pkg/version.Version=$(VERSION) -X github.com/homeport/homeport/pkg/version.Commit=$(COMMIT) -X github.com/homeport/homeport/pkg/version.Date=$(BUILD_DATE)"
 
 help: ## Display this help message
-	@echo "AgnosTech CLI - Available Commands:"
+	@echo "Homeport CLI - Available Commands:"
 	@echo ""
 	@grep -E '^[a-zA-Z_-]+:.*?## .*$$' $(MAKEFILE_LIST) | sort | awk 'BEGIN {FS = ":.*?## "}; {printf "  \033[36m%-15s\033[0m %s\n", $$1, $$2}'
 	@echo ""
@@ -22,12 +22,12 @@ deps: ## Download dependencies
 build: deps ## Build the CLI binary
 	@echo "Building $(BINARY_NAME)..."
 	@mkdir -p bin
-	@go build $(LDFLAGS) -o bin/$(BINARY_NAME) ./cmd/agnostech
+	@go build $(LDFLAGS) -o bin/$(BINARY_NAME) ./cmd/homeport
 	@echo "Build complete: bin/$(BINARY_NAME)"
 
 install: build ## Install the CLI to GOPATH/bin
 	@echo "Installing $(BINARY_NAME)..."
-	@go install $(LDFLAGS) ./cmd/agnostech
+	@go install $(LDFLAGS) ./cmd/homeport
 	@echo "Installed to $(shell go env GOPATH)/bin/$(BINARY_NAME)"
 
 clean: ## Clean build artifacts
@@ -61,16 +61,16 @@ example-validate: build ## Run example validate command
 	@./bin/$(BINARY_NAME) validate ./example-output
 
 dev: ## Run in development mode with verbose output
-	@go run ./cmd/agnostech --verbose --help
+	@go run ./cmd/homeport --verbose --help
 
 # Build for multiple platforms
 build-all: ## Build for all platforms
 	@echo "Building for all platforms..."
 	@mkdir -p bin
-	@GOOS=linux GOARCH=amd64 go build $(LDFLAGS) -o bin/$(BINARY_NAME)-linux-amd64 ./cmd/agnostech
-	@GOOS=darwin GOARCH=amd64 go build $(LDFLAGS) -o bin/$(BINARY_NAME)-darwin-amd64 ./cmd/agnostech
-	@GOOS=darwin GOARCH=arm64 go build $(LDFLAGS) -o bin/$(BINARY_NAME)-darwin-arm64 ./cmd/agnostech
-	@GOOS=windows GOARCH=amd64 go build $(LDFLAGS) -o bin/$(BINARY_NAME)-windows-amd64.exe ./cmd/agnostech
+	@GOOS=linux GOARCH=amd64 go build $(LDFLAGS) -o bin/$(BINARY_NAME)-linux-amd64 ./cmd/homeport
+	@GOOS=darwin GOARCH=amd64 go build $(LDFLAGS) -o bin/$(BINARY_NAME)-darwin-amd64 ./cmd/homeport
+	@GOOS=darwin GOARCH=arm64 go build $(LDFLAGS) -o bin/$(BINARY_NAME)-darwin-arm64 ./cmd/homeport
+	@GOOS=windows GOARCH=amd64 go build $(LDFLAGS) -o bin/$(BINARY_NAME)-windows-amd64.exe ./cmd/homeport
 	@echo "Build complete for all platforms"
 
 # Web dashboard targets

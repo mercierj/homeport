@@ -7,8 +7,8 @@ import (
 	"strings"
 	"time"
 
-	"github.com/agnostech/agnostech/internal/domain/mapper"
-	"github.com/agnostech/agnostech/internal/domain/resource"
+	"github.com/homeport/homeport/internal/domain/mapper"
+	"github.com/homeport/homeport/internal/domain/resource"
 )
 
 // CosmosDBMapper converts Azure Cosmos DB to MongoDB or Cassandra containers.
@@ -100,9 +100,9 @@ func (m *CosmosDBMapper) createMongoDBService(res *resource.AWSResource, account
 	}
 	svc.Restart = "unless-stopped"
 	svc.Labels = map[string]string{
-		"cloudexit.source":  "azurerm_cosmosdb_account",
-		"cloudexit.engine":  "mongodb",
-		"cloudexit.account": accountName,
+		"homeport.source":  "azurerm_cosmosdb_account",
+		"homeport.engine":  "mongodb",
+		"homeport.account": accountName,
 	}
 
 	migrationScript := m.generateMongoMigrationScript(accountName)
@@ -124,7 +124,7 @@ func (m *CosmosDBMapper) createCassandraService(res *resource.AWSResource, accou
 
 	svc.Image = "cassandra:4.1"
 	svc.Environment = map[string]string{
-		"CASSANDRA_CLUSTER_NAME": "cloudexit_cluster",
+		"CASSANDRA_CLUSTER_NAME": "homeport_cluster",
 		"MAX_HEAP_SIZE":          "2G",
 		"HEAP_NEWSIZE":           "512M",
 	}
@@ -138,9 +138,9 @@ func (m *CosmosDBMapper) createCassandraService(res *resource.AWSResource, accou
 	}
 	svc.Restart = "unless-stopped"
 	svc.Labels = map[string]string{
-		"cloudexit.source":  "azurerm_cosmosdb_account",
-		"cloudexit.engine":  "cassandra",
-		"cloudexit.account": accountName,
+		"homeport.source":  "azurerm_cosmosdb_account",
+		"homeport.engine":  "cassandra",
+		"homeport.account": accountName,
 	}
 
 	result.AddWarning("Cosmos DB Cassandra API mapped to Apache Cassandra.")
@@ -166,9 +166,9 @@ func (m *CosmosDBMapper) createGremlinService(res *resource.AWSResource, account
 	}
 	svc.Restart = "unless-stopped"
 	svc.Labels = map[string]string{
-		"cloudexit.source":  "azurerm_cosmosdb_account",
-		"cloudexit.engine":  "janusgraph",
-		"cloudexit.account": accountName,
+		"homeport.source":  "azurerm_cosmosdb_account",
+		"homeport.engine":  "janusgraph",
+		"homeport.account": accountName,
 	}
 
 	result.AddWarning("Cosmos DB Gremlin API mapped to JanusGraph. Gremlin queries should be compatible.")
@@ -195,9 +195,9 @@ func (m *CosmosDBMapper) createTableService(res *resource.AWSResource, accountNa
 	}
 	svc.Restart = "unless-stopped"
 	svc.Labels = map[string]string{
-		"cloudexit.source":  "azurerm_cosmosdb_account",
-		"cloudexit.engine":  "azurite",
-		"cloudexit.account": accountName,
+		"homeport.source":  "azurerm_cosmosdb_account",
+		"homeport.engine":  "azurite",
+		"homeport.account": accountName,
 	}
 
 	result.AddWarning("Cosmos DB Table API mapped to Azurite (Azure Storage Emulator).")

@@ -8,8 +8,8 @@ import (
 	"strings"
 	"time"
 
-	"github.com/agnostech/agnostech/internal/domain/mapper"
-	"github.com/agnostech/agnostech/internal/domain/resource"
+	"github.com/homeport/homeport/internal/domain/mapper"
+	"github.com/homeport/homeport/internal/domain/resource"
 )
 
 // IdentityPlatformMapper converts GCP Identity Platform to Keycloak.
@@ -53,10 +53,10 @@ func (m *IdentityPlatformMapper) Map(ctx context.Context, res *resource.AWSResou
 	svc.Ports = []string{"8080:8080"}
 	svc.DependsOn = []string{"postgres-keycloak"}
 	svc.Volumes = []string{"./config/keycloak:/opt/keycloak/data/import"}
-	svc.Networks = []string{"cloudexit"}
+	svc.Networks = []string{"homeport"}
 	svc.Labels = map[string]string{
-		"cloudexit.source":     "google_identity_platform_config",
-		"cloudexit.project_id": projectID,
+		"homeport.source":     "google_identity_platform_config",
+		"homeport.project_id": projectID,
 		"traefik.enable":       "true",
 	}
 	svc.Restart = "unless-stopped"
@@ -129,7 +129,7 @@ func (m *IdentityPlatformMapper) generatePostgresConfig() string {
   volumes:
     - ./data/postgres-keycloak:/var/lib/postgresql/data
   networks:
-    - cloudexit
+    - homeport
   healthcheck:
     test: ["CMD-SHELL", "pg_isready -U keycloak"]
     interval: 10s

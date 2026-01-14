@@ -7,8 +7,8 @@ import (
 	"strings"
 	"time"
 
-	"github.com/agnostech/agnostech/internal/domain/mapper"
-	"github.com/agnostech/agnostech/internal/domain/resource"
+	"github.com/homeport/homeport/internal/domain/mapper"
+	"github.com/homeport/homeport/internal/domain/resource"
 )
 
 // CacheMapper converts Azure Cache for Redis to Redis containers.
@@ -64,9 +64,9 @@ func (m *CacheMapper) Map(ctx context.Context, res *resource.AWSResource) (*mapp
 	}
 	svc.Restart = "unless-stopped"
 	svc.Labels = map[string]string{
-		"cloudexit.source": "azurerm_redis_cache",
-		"cloudexit.engine": "redis",
-		"cloudexit.cache":  cacheName,
+		"homeport.source": "azurerm_redis_cache",
+		"homeport.engine": "redis",
+		"homeport.cache":  cacheName,
 	}
 
 	redisConfig := m.generateRedisConfig(skuName, family, capacity)

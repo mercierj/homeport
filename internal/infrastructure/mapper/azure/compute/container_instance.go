@@ -6,8 +6,8 @@ import (
 	"fmt"
 	"strings"
 
-	"github.com/agnostech/agnostech/internal/domain/mapper"
-	"github.com/agnostech/agnostech/internal/domain/resource"
+	"github.com/homeport/homeport/internal/domain/mapper"
+	"github.com/homeport/homeport/internal/domain/resource"
 )
 
 // ContainerInstanceMapper converts Azure Container Instance (Container Group) to Docker Compose.
@@ -106,18 +106,18 @@ func (m *ContainerInstanceMapper) Map(ctx context.Context, res *resource.AWSReso
 	}
 
 	// Set network
-	svc.Networks = []string{"cloudexit"}
+	svc.Networks = []string{"homeport"}
 
 	// Set labels
 	svc.Labels = map[string]string{
-		"cloudexit.source":     "azurerm_container_group",
-		"cloudexit.group_name": groupName,
+		"homeport.source":     "azurerm_container_group",
+		"homeport.group_name": groupName,
 	}
 
 	// Handle OS type
 	osType := res.GetConfigString("os_type")
 	if osType != "" {
-		svc.Labels["cloudexit.os_type"] = osType
+		svc.Labels["homeport.os_type"] = osType
 	}
 	if osType == "Windows" {
 		result.AddWarning("Windows containers may require Windows Docker host.")
@@ -126,7 +126,7 @@ func (m *ContainerInstanceMapper) Map(ctx context.Context, res *resource.AWSReso
 	// Handle DNS name label
 	dnsNameLabel := res.GetConfigString("dns_name_label")
 	if dnsNameLabel != "" {
-		svc.Labels["cloudexit.dns_label"] = dnsNameLabel
+		svc.Labels["homeport.dns_label"] = dnsNameLabel
 		result.AddWarning(fmt.Sprintf("Azure DNS label '%s' was configured. Configure DNS or /etc/hosts manually.", dnsNameLabel))
 	}
 
@@ -359,7 +359,7 @@ func (m *ContainerInstanceMapper) generateSidecarConfig(name string, container c
 	}
 
 	sb.WriteString("  networks:\n")
-	sb.WriteString("    - cloudexit\n")
+	sb.WriteString("    - homeport\n")
 	sb.WriteString("  restart: unless-stopped\n")
 
 	return sb.String()

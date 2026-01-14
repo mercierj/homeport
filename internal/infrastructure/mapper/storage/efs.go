@@ -6,8 +6,8 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/agnostech/agnostech/internal/domain/mapper"
-	"github.com/agnostech/agnostech/internal/domain/resource"
+	"github.com/homeport/homeport/internal/domain/mapper"
+	"github.com/homeport/homeport/internal/domain/resource"
 )
 
 // EFSMapper converts AWS EFS file systems to NFS servers.
@@ -50,9 +50,9 @@ func (m *EFSMapper) Map(ctx context.Context, res *resource.AWSResource) (*mapper
 	}
 	svc.CapAdd = []string{"SYS_ADMIN"} // NFS server requires privileged capabilities
 	svc.Labels = map[string]string{
-		"cloudexit.source":      "aws_efs_file_system",
-		"cloudexit.filesystem":  fileSystemName,
-		"cloudexit.type":        "nfs-server",
+		"homeport.source":      "aws_efs_file_system",
+		"homeport.filesystem":  fileSystemName,
+		"homeport.type":        "nfs-server",
 	}
 
 	// Add health check

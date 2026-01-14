@@ -6,8 +6,8 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/agnostech/agnostech/internal/domain/mapper"
-	"github.com/agnostech/agnostech/internal/domain/resource"
+	"github.com/homeport/homeport/internal/domain/mapper"
+	"github.com/homeport/homeport/internal/domain/resource"
 )
 
 // BigtableMapper converts GCP Bigtable to Apache Cassandra containers.
@@ -38,7 +38,7 @@ func (m *BigtableMapper) Map(ctx context.Context, res *resource.AWSResource) (*m
 
 	svc.Image = "cassandra:4.1"
 	svc.Environment = map[string]string{
-		"CASSANDRA_CLUSTER_NAME":  "cloudexit_cluster",
+		"CASSANDRA_CLUSTER_NAME":  "homeport_cluster",
 		"CASSANDRA_DC":            "dc1",
 		"CASSANDRA_RACK":          "rack1",
 		"CASSANDRA_ENDPOINT_SNITCH": "GossipingPropertyFileSnitch",
@@ -55,9 +55,9 @@ func (m *BigtableMapper) Map(ctx context.Context, res *resource.AWSResource) (*m
 	}
 	svc.Restart = "unless-stopped"
 	svc.Labels = map[string]string{
-		"cloudexit.source":   "google_bigtable_instance",
-		"cloudexit.engine":   "cassandra",
-		"cloudexit.instance": instanceName,
+		"homeport.source":   "google_bigtable_instance",
+		"homeport.engine":   "cassandra",
+		"homeport.instance": instanceName,
 	}
 
 	cassandraConfig := m.generateCassandraConfig()
@@ -79,7 +79,7 @@ func (m *BigtableMapper) Map(ctx context.Context, res *resource.AWSResource) (*m
 
 func (m *BigtableMapper) generateCassandraConfig() string {
 	return `# Cassandra Configuration
-cluster_name: 'cloudexit_cluster'
+cluster_name: 'homeport_cluster'
 num_tokens: 256
 seed_provider:
   - class_name: org.apache.cassandra.locator.SimpleSeedProvider
@@ -118,7 +118,7 @@ echo "  cbt -project=PROJECT -instance=INSTANCE read TABLE > bigtable_data.txt"
 
 echo "Step 2: Create Cassandra schema"
 echo "  # Example schema creation"
-echo "  cqlsh -e \"CREATE KEYSPACE IF NOT EXISTS cloudexit WITH REPLICATION = {'class': 'SimpleStrategy', 'replication_factor': 1};\""
+echo "  cqlsh -e \"CREATE KEYSPACE IF NOT EXISTS homeport WITH REPLICATION = {'class': 'SimpleStrategy', 'replication_factor': 1};\""
 
 echo "Step 3: Transform and import data"
 echo "  # Write a custom script to transform Bigtable data to CQL INSERT statements"

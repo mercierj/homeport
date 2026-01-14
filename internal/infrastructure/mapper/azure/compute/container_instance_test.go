@@ -4,8 +4,8 @@ import (
 	"context"
 	"testing"
 
-	"github.com/agnostech/agnostech/internal/domain/mapper"
-	"github.com/agnostech/agnostech/internal/domain/resource"
+	"github.com/homeport/homeport/internal/domain/mapper"
+	"github.com/homeport/homeport/internal/domain/resource"
 )
 
 func TestNewContainerInstanceMapper(t *testing.T) {
@@ -210,8 +210,8 @@ func TestContainerInstanceMapper_Map(t *testing.T) {
 				if !result.HasWarnings() {
 					t.Error("Expected warnings for DNS label configuration")
 				}
-				if result.DockerService.Labels["cloudexit.dns_label"] != "myapp-dns" {
-					t.Errorf("Label cloudexit.dns_label = %v, want myapp-dns", result.DockerService.Labels["cloudexit.dns_label"])
+				if result.DockerService.Labels["homeport.dns_label"] != "myapp-dns" {
+					t.Errorf("Label homeport.dns_label = %v, want myapp-dns", result.DockerService.Labels["homeport.dns_label"])
 				}
 			},
 		},

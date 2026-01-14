@@ -6,8 +6,8 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/agnostech/agnostech/internal/domain/mapper"
-	"github.com/agnostech/agnostech/internal/domain/resource"
+	"github.com/homeport/homeport/internal/domain/mapper"
+	"github.com/homeport/homeport/internal/domain/resource"
 )
 
 // AzureSQLMapper converts Azure SQL Database to SQL Server containers.
@@ -58,9 +58,9 @@ func (m *AzureSQLMapper) Map(ctx context.Context, res *resource.AWSResource) (*m
 	}
 	svc.Restart = "unless-stopped"
 	svc.Labels = map[string]string{
-		"cloudexit.source":   "azurerm_mssql_database",
-		"cloudexit.engine":   "mssql",
-		"cloudexit.database": dbName,
+		"homeport.source":   "azurerm_mssql_database",
+		"homeport.engine":   "mssql",
+		"homeport.database": dbName,
 	}
 
 	initScript := m.generateInitScript(dbName)

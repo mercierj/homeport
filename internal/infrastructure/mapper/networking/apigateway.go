@@ -6,8 +6,8 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/agnostech/agnostech/internal/domain/mapper"
-	"github.com/agnostech/agnostech/internal/domain/resource"
+	"github.com/homeport/homeport/internal/domain/mapper"
+	"github.com/homeport/homeport/internal/domain/resource"
 )
 
 // APIGatewayMapper converts AWS API Gateway to Kong or Traefik.
@@ -61,10 +61,10 @@ func (m *APIGatewayMapper) Map(ctx context.Context, res *resource.AWSResource) (
 		"./config/kong:/etc/kong",
 	}
 	svc.DependsOn = []string{"kong-db"}
-	svc.Networks = []string{"cloudexit"}
+	svc.Networks = []string{"homeport"}
 	svc.Labels = map[string]string{
-		"cloudexit.source":   "aws_api_gateway",
-		"cloudexit.api_name": apiNameStr,
+		"homeport.source":   "aws_api_gateway",
+		"homeport.api_name": apiNameStr,
 		// Traefik integration for routing
 		"traefik.enable":                                "true",
 		"traefik.http.routers.kong-api.rule":            "Host(`api.localhost`)",
@@ -157,7 +157,7 @@ services:
     volumes:
       - kong-db-data:/var/lib/postgresql/data
     networks:
-      - cloudexit
+      - homeport
     restart: unless-stopped
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -U kong"]

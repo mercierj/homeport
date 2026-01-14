@@ -1,6 +1,6 @@
-# Contributing to AgnosTech
+# Contributing to Homeport
 
-Thank you for your interest in contributing to AgnosTech! This document provides guidelines and information for contributors.
+Thank you for your interest in contributing to Homeport! This document provides guidelines and information for contributors.
 
 ## Table of Contents
 
@@ -31,8 +31,8 @@ We are committed to providing a welcoming and inclusive experience for everyone.
 
 1. **Fork and clone the repository:**
    ```bash
-   git clone https://github.com/YOUR_USERNAME/agnostech.git
-   cd agnostech
+   git clone https://github.com/YOUR_USERNAME/homeport.git
+   cd homeport
    ```
 
 2. **Install dependencies:**
@@ -52,21 +52,21 @@ We are committed to providing a welcoming and inclusive experience for everyone.
 
 5. **Verify the build:**
    ```bash
-   ./bin/agnostech --version
+   ./bin/homeport --version
    ```
 
 ## How to Contribute
 
 ### Report Bugs
 
-- Use the [bug report template](https://github.com/agnostech/agnostech/issues/new?template=bug_report.md)
+- Use the [bug report template](https://github.com/mercierj/homeport/issues/new?template=bug_report.md)
 - Include your Go version and OS
 - Provide a minimal reproduction case
 - Include relevant Terraform/state file snippets (sanitized)
 
 ### Suggest Features
 
-- Use the [feature request template](https://github.com/agnostech/agnostech/issues/new?template=feature_request.md)
+- Use the [feature request template](https://github.com/mercierj/homeport/issues/new?template=feature_request.md)
 - Explain the use case and expected behavior
 - Consider if it fits the project scope
 
@@ -92,8 +92,8 @@ package storage
 
 import (
     "context"
-    "github.com/agnostech/agnostech/internal/domain/mapper"
-    "github.com/agnostech/agnostech/internal/domain/resource"
+    "github.com/mercierj/homeport/internal/domain/mapper"
+    "github.com/mercierj/homeport/internal/domain/resource"
 )
 
 // EFSMapper maps AWS EFS to NFS Docker container
@@ -179,7 +179,7 @@ package storage
 import (
     "context"
     "testing"
-    "github.com/agnostech/agnostech/internal/domain/resource"
+    "github.com/mercierj/homeport/internal/domain/resource"
 )
 
 func TestEFSMapper_Map(t *testing.T) {
@@ -388,10 +388,10 @@ package mapper
 
 ## Questions?
 
-- Open a [Discussion](https://github.com/agnostech/agnostech/discussions)
-- Join our [Discord](https://discord.gg/agnostech)
-- Email: maintainers@agnostech.dev
+- Open a [Discussion](https://github.com/mercierj/homeport/discussions)
+- Join our [Discord](https://discord.gg/homeport)
+- Email: maintainers@homeport.dev
 
 ---
 
-Thank you for contributing to AgnosTech!
+Thank you for contributing to Homeport!

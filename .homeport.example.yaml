@@ -1,0 +1,387 @@
+# =============================================================================
+# Homeport Configuration Example
+# =============================================================================
+# Copy this file to one of the following locations:
+#   - ~/.homeport.yaml (user config, recommended)
+#   - ~/.homeport.yaml (legacy name)
+#   - .homeport.yaml (project config)
+#   - .homeport.yaml (legacy name)
+#
+# Or specify a custom path with: homeport --config /path/to/config.yaml
+# =============================================================================
+
+# =============================================================================
+# GENERAL SETTINGS
+# =============================================================================
+
+# Default output directory for generated stacks
+output: ./output
+
+# Default domain name for services
+domain: example.com
+
+# Output format for analysis (json, yaml, table)
+format: json
+
+# Include migration tools and scripts in generated output
+include-migration: false
+
+# Include monitoring stack (Prometheus, Grafana) in generated output
+include-monitoring: false
+
+# Verbose output (debug level logging)
+verbose: false
+
+# Quiet mode (errors only)
+quiet: false
+
+# =============================================================================
+# SERVER CONFIGURATION
+# =============================================================================
+
+server:
+  # Host to bind the API server to
+  # Use "0.0.0.0" to allow external connections
+  host: localhost
+
+  # Port for the API server
+  port: 8080
+
+  # Disable authentication (development mode only!)
+  # WARNING: Never enable this in production
+  no_auth: false
+
+  # Request timeout in seconds
+  request_timeout: 60
+
+  # Maximum request body size in bytes (default: 1MB)
+  max_body_size: 1048576
+
+  # CORS allowed origins (for production, specify your frontend domain)
+  cors_origins:
+    - "http://localhost:5173"
+    - "http://localhost:5174"
+    - "http://localhost:3000"
+
+# =============================================================================
+# TLS/HTTPS CONFIGURATION
+# =============================================================================
+
+tls:
+  # Enable TLS for the API server
+  enabled: false
+
+  # TLS certificate file (PEM format)
+  cert: ""
+
+  # TLS private key file (PEM format)
+  key: ""
+
+  # Minimum TLS version (1.2 or 1.3)
+  min_version: "1.2"
+
+  # Auto-TLS configuration with Let's Encrypt
+  auto:
+    # Enable automatic certificate management
+    enabled: false
+
+    # Domain for the certificate (required if auto.enabled is true)
+    domain: ""
+
+    # Email for Let's Encrypt notifications
+    email: "admin@example.com"
+
+    # Use staging server for testing (avoids rate limits)
+    staging: false
+
+    # Directory to store certificates
+    cache_dir: "~/.homeport/certs"
+
+# =============================================================================
+# AUTHENTICATION
+# =============================================================================
+
+auth:
+  # Path to store user credentials (JSON file)
+  data_file: "~/.homeport/users.json"
+
+  # Session token expiry duration
+  token_expiry: "24h"
+
+  # Minimum password length
+  min_password_length: 8
+
+  # Enable rate limiting for auth endpoints
+  rate_limit:
+    enabled: true
+    max_attempts: 5
+    window: "15m"
+
+# =============================================================================
+# LOGGING CONFIGURATION
+# =============================================================================
+
+logging:
+  # Log level: debug, info, warn, error
+  level: info
+
+  # Output format: text, json
+  format: text
+
+  # Include source file and line in log output
+  include_source: false
+
+  # Log file path (empty = stdout only)
+  file: ""
+
+  # Log rotation settings (only applies if file is set)
+  rotation:
+    max_size: "100MB"
+    max_age: "7d"
+    max_backups: 3
+
+# =============================================================================
+# CUSTOM CONFIGURATION OPTIONS
+# =============================================================================
+
+config:
+  # Traefik version for generated stacks
+  traefik_version: "v2.10"
+
+  # Docker Compose version
+  compose_version: "3.8"
+
+  # Default timezone for containers
+  timezone: "UTC"
+
+  # Enable SSL by default in generated stacks
+  ssl_enabled: true
+
+  # SSL provider (letsencrypt, custom)
+  ssl_provider: "letsencrypt"
+
+  # ACME email for Let's Encrypt
+  acme_email: "admin@example.com"
+
+# =============================================================================
+# RESOURCE MAPPINGS
+# =============================================================================
+# Customize how cloud resources are migrated to self-hosted alternatives
+
+mappings:
+  # ---------------------------------------------------------------------------
+  # AWS EC2 to Docker Container
+  # ---------------------------------------------------------------------------
+  ec2:
+    image_prefix: "app"
+    restart_policy: "unless-stopped"
+    resource_limits:
+      memory: "512m"
+      cpus: "0.5"
+
+  # ---------------------------------------------------------------------------
+  # AWS RDS to Docker Database
+  # ---------------------------------------------------------------------------
+  rds:
+    postgres:
+      image: "postgres:16-alpine"
+      volume_path: "/var/lib/postgresql/data"
+    mysql:
+      image: "mysql:8.0"
+      volume_path: "/var/lib/mysql"
+    mariadb:
+      image: "mariadb:11"
+      volume_path: "/var/lib/mysql"
+
+  # ---------------------------------------------------------------------------
+  # AWS S3 to MinIO
+  # ---------------------------------------------------------------------------
+  s3:
+    image: "minio/minio:latest"
+    enable_console: true
+    console_port: 9001
+    api_port: 9000
+
+  # ---------------------------------------------------------------------------
+  # AWS ElastiCache to Redis/Memcached
+  # ---------------------------------------------------------------------------
+  elasticache:
+    redis:
+      image: "redis:7-alpine"
+      volume_path: "/data"
+    memcached:
+      image: "memcached:1.6-alpine"
+
+  # ---------------------------------------------------------------------------
+  # AWS Lambda to OpenFaaS/Functions
+  # ---------------------------------------------------------------------------
+  lambda:
+    runtime: "openfaas"
+    image_prefix: "functions"
+
+  # ---------------------------------------------------------------------------
+  # AWS SQS to RabbitMQ
+  # ---------------------------------------------------------------------------
+  sqs:
+    image: "rabbitmq:3-management-alpine"
+    management_port: 15672
+
+  # ---------------------------------------------------------------------------
+  # AWS SNS to NATS
+  # ---------------------------------------------------------------------------
+  sns:
+    image: "nats:2-alpine"
+    cluster_port: 6222
+
+  # ---------------------------------------------------------------------------
+  # Azure Cosmos DB to MongoDB
+  # ---------------------------------------------------------------------------
+  cosmosdb:
+    image: "mongo:7"
+    volume_path: "/data/db"
+
+  # ---------------------------------------------------------------------------
+  # Azure Blob Storage to MinIO
+  # ---------------------------------------------------------------------------
+  azure_blob:
+    image: "minio/minio:latest"
+    enable_console: true
+
+  # ---------------------------------------------------------------------------
+  # GCP Cloud SQL to Docker Database
+  # ---------------------------------------------------------------------------
+  cloud_sql:
+    postgres:
+      image: "postgres:16-alpine"
+    mysql:
+      image: "mysql:8.0"
+
+  # ---------------------------------------------------------------------------
+  # GCP Cloud Storage to MinIO
+  # ---------------------------------------------------------------------------
+  gcs:
+    image: "minio/minio:latest"
+    enable_console: true
+
+  # ---------------------------------------------------------------------------
+  # GCP Pub/Sub to NATS
+  # ---------------------------------------------------------------------------
+  pubsub:
+    image: "nats:2-alpine"
+
+# =============================================================================
+# NETWORK CONFIGURATION
+# =============================================================================
+
+network:
+  # Docker network name
+  name: "web"
+
+  # Network driver (bridge, overlay, host, none)
+  driver: "bridge"
+
+  # Enable IPv6
+  ipv6: false
+
+  # IP Address Management
+  ipam:
+    driver: "default"
+    subnet: "172.20.0.0/16"
+    gateway: "172.20.0.1"
+
+  # Internal network (no external connectivity)
+  internal: false
+
+# =============================================================================
+# VOLUME CONFIGURATION
+# =============================================================================
+
+volumes:
+  # Default volume driver
+  driver: "local"
+
+  # Backup configuration
+  backup:
+    enabled: false
+    schedule: "0 2 * * *"  # Daily at 2 AM
+    retention: 7           # Keep 7 days of backups
+    destination: "/backups"
+
+# =============================================================================
+# LOGGING CONFIGURATION (for generated containers)
+# =============================================================================
+
+container_logging:
+  driver: "json-file"
+  options:
+    max-size: "10m"
+    max-file: "3"
+
+# =============================================================================
+# HEALTH CHECK CONFIGURATION
+# =============================================================================
+
+healthcheck:
+  # Default health check interval
+  interval: "30s"
+
+  # Health check timeout
+  timeout: "10s"
+
+  # Number of retries before unhealthy
+  retries: 3
+
+  # Start period before health checks begin
+  start_period: "10s"
+
+# =============================================================================
+# MONITORING CONFIGURATION
+# =============================================================================
+
+monitoring:
+  # Prometheus configuration
+  prometheus:
+    image: "prom/prometheus:v2.47.0"
+    retention: "15d"
+    scrape_interval: "15s"
+
+  # Grafana configuration
+  grafana:
+    image: "grafana/grafana:10.1.0"
+    admin_user: "admin"
+    # Note: Set admin password via GRAFANA_ADMIN_PASSWORD env var
+
+  # Loki for log aggregation
+  loki:
+    enabled: false
+    image: "grafana/loki:2.9.0"
+    retention: "168h"  # 7 days
+
+# =============================================================================
+# CLOUD PROVIDER DEFAULTS
+# =============================================================================
+
+providers:
+  # AWS configuration
+  aws:
+    default_region: "us-east-1"
+    profile: "default"
+
+  # Azure configuration
+  azure:
+    default_location: "eastus"
+
+  # GCP configuration
+  gcp:
+    default_region: "us-central1"
+
+# =============================================================================
+# PLUGIN CONFIGURATION
+# =============================================================================
+
+plugins:
+  # Directory for custom plugins
+  directory: "~/.homeport/plugins"
+
+  # Enable plugin auto-discovery
+  auto_discover: true

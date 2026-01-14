@@ -7,33 +7,33 @@ import "time"
 // to a self-hosted equivalent.
 type AWSResource struct {
 	// ID is the unique identifier of the resource (e.g., instance ID, bucket name)
-	ID string
+	ID string `json:"id"`
 
 	// Name is the human-readable name of the resource
-	Name string
+	Name string `json:"name"`
 
 	// Type is the AWS resource type (e.g., aws_instance, aws_s3_bucket)
-	Type Type
+	Type Type `json:"type"`
 
 	// ARN is the Amazon Resource Name
-	ARN string
+	ARN string `json:"arn,omitempty"`
 
 	// Region is the AWS region where the resource is located
-	Region string
+	Region string `json:"region,omitempty"`
 
 	// Config contains the full configuration of the resource as key-value pairs.
 	// This includes all attributes needed for mapping to Docker equivalents.
-	Config map[string]interface{}
+	Config map[string]interface{} `json:"config,omitempty"`
 
 	// Tags are the AWS tags associated with the resource
-	Tags map[string]string
+	Tags map[string]string `json:"tags,omitempty"`
 
 	// Dependencies lists the IDs of other resources this resource depends on.
 	// Used for determining deployment order in the dependency graph.
-	Dependencies []string
+	Dependencies []string `json:"dependencies,omitempty"`
 
 	// CreatedAt is when this resource was created in AWS
-	CreatedAt time.Time
+	CreatedAt time.Time `json:"created_at,omitempty"`
 }
 
 // NewAWSResource creates a new AWS resource with the given ID, name, and type.

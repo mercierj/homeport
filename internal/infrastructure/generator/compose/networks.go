@@ -16,8 +16,8 @@ func NewNetworkConfig() *NetworkConfig {
 		Driver:   "bridge",
 		Internal: false,
 		Labels: map[string]string{
-			"com.cloudexit.network": "public",
-			"com.cloudexit.type":    "web",
+			"com.homeport.network": "public",
+			"com.homeport.type":    "web",
 		},
 	}
 
@@ -26,8 +26,8 @@ func NewNetworkConfig() *NetworkConfig {
 		Driver:   "bridge",
 		Internal: true,
 		Labels: map[string]string{
-			"com.cloudexit.network": "private",
-			"com.cloudexit.type":    "internal",
+			"com.homeport.network": "private",
+			"com.homeport.type":    "internal",
 		},
 	}
 

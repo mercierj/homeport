@@ -6,9 +6,9 @@ import (
 	"path/filepath"
 	"testing"
 
-	"github.com/agnostech/agnostech/internal/domain/parser"
-	"github.com/agnostech/agnostech/internal/domain/resource"
-	awsparser "github.com/agnostech/agnostech/internal/infrastructure/parser/aws"
+	"github.com/homeport/homeport/internal/domain/parser"
+	"github.com/homeport/homeport/internal/domain/resource"
+	awsparser "github.com/homeport/homeport/internal/infrastructure/parser/aws"
 )
 
 // TestHCLParser_Integration tests the Terraform HCL parser with real .tf files.

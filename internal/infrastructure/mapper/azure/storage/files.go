@@ -7,8 +7,8 @@ import (
 	"strings"
 	"time"
 
-	"github.com/agnostech/agnostech/internal/domain/mapper"
-	"github.com/agnostech/agnostech/internal/domain/resource"
+	"github.com/homeport/homeport/internal/domain/mapper"
+	"github.com/homeport/homeport/internal/domain/resource"
 )
 
 // FilesMapper converts Azure Files shares to Samba/CIFS file shares.
@@ -52,7 +52,7 @@ func (m *FilesMapper) Map(ctx context.Context, res *resource.AWSResource) (*mapp
 	svc.Volumes = []string{
 		fmt.Sprintf("./data/shares/%s:/share/%s", shareName, shareName),
 	}
-	svc.Networks = []string{"cloudexit"}
+	svc.Networks = []string{"homeport"}
 	svc.Restart = "unless-stopped"
 	svc.HealthCheck = &mapper.HealthCheck{
 		Test:     []string{"CMD", "smbclient", "-L", "localhost", "-U", "%"},
@@ -61,9 +61,9 @@ func (m *FilesMapper) Map(ctx context.Context, res *resource.AWSResource) (*mapp
 		Retries:  3,
 	}
 	svc.Labels = map[string]string{
-		"cloudexit.source":     "azurerm_storage_share",
-		"cloudexit.share_name": shareName,
-		"cloudexit.protocol":   "SMB/CIFS",
+		"homeport.source":     "azurerm_storage_share",
+		"homeport.share_name": shareName,
+		"homeport.protocol":   "SMB/CIFS",
 	}
 
 	// Handle quota
@@ -71,13 +71,13 @@ func (m *FilesMapper) Map(ctx context.Context, res *resource.AWSResource) (*mapp
 	if quotaGB == 0 {
 		quotaGB = 5120 // Default 5TB max for Azure Files
 	}
-	svc.Labels["cloudexit.quota_gb"] = fmt.Sprintf("%d", quotaGB)
+	svc.Labels["homeport.quota_gb"] = fmt.Sprintf("%d", quotaGB)
 	result.AddWarning(fmt.Sprintf("Share quota is %d GB. Samba doesn't enforce quotas by default - consider using filesystem quotas if needed.", quotaGB))
 
 	// Handle access tier
 	accessTier := res.GetConfigString("access_tier")
 	if accessTier != "" {
-		svc.Labels["cloudexit.access_tier"] = accessTier
+		svc.Labels["homeport.access_tier"] = accessTier
 		result.AddWarning(fmt.Sprintf("Access tier '%s' is configured. Samba doesn't differentiate between Hot/Cool/Transaction Optimized tiers.", accessTier))
 	}
 
@@ -86,7 +86,7 @@ func (m *FilesMapper) Map(ctx context.Context, res *resource.AWSResource) (*mapp
 	if enabledProtocol == "" {
 		enabledProtocol = "SMB"
 	}
-	svc.Labels["cloudexit.protocol_version"] = enabledProtocol
+	svc.Labels["homeport.protocol_version"] = enabledProtocol
 
 	if enabledProtocol == "NFS" {
 		result.AddWarning("NFS protocol is enabled. Consider using an NFS server image instead of Samba.")
@@ -111,7 +111,7 @@ func (m *FilesMapper) Map(ctx context.Context, res *resource.AWSResource) (*mapp
 
 	// Handle storage account name (parent resource)
 	if storageAccountName := res.GetConfigString("storage_account_name"); storageAccountName != "" {
-		svc.Labels["cloudexit.storage_account"] = storageAccountName
+		svc.Labels["homeport.storage_account"] = storageAccountName
 		result.AddWarning(fmt.Sprintf("Share belongs to storage account '%s'. Samba shares are independent.", storageAccountName))
 	}
 
@@ -264,7 +264,7 @@ services:
     ports:
       - "2049:2049"
     networks:
-      - cloudexit
+      - homeport
     restart: unless-stopped
 
 Mount on Linux:

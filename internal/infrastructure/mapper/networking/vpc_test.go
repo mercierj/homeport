@@ -4,8 +4,8 @@ import (
 	"context"
 	"testing"
 
-	"github.com/agnostech/agnostech/internal/domain/mapper"
-	"github.com/agnostech/agnostech/internal/domain/resource"
+	"github.com/homeport/homeport/internal/domain/mapper"
+	"github.com/homeport/homeport/internal/domain/resource"
 )
 
 func TestNewVPCMapper(t *testing.T) {
@@ -119,8 +119,8 @@ func TestVPCMapper_Map(t *testing.T) {
 				if result.DockerService.Labels == nil {
 					t.Error("Expected labels to be configured")
 				}
-				if result.DockerService.Labels["cloudexit.source"] != "aws_vpc" {
-					t.Errorf("Expected source label to be aws_vpc, got %s", result.DockerService.Labels["cloudexit.source"])
+				if result.DockerService.Labels["homeport.source"] != "aws_vpc" {
+					t.Errorf("Expected source label to be aws_vpc, got %s", result.DockerService.Labels["homeport.source"])
 				}
 			},
 		},
@@ -138,8 +138,8 @@ func TestVPCMapper_Map(t *testing.T) {
 					t.Fatal("Map() returned nil result")
 				}
 				// Should use default CIDR block when not specified
-				if result.DockerService.Labels["cloudexit.cidr_block"] != "172.18.0.0/16" {
-					t.Errorf("Expected default CIDR block 172.18.0.0/16, got %s", result.DockerService.Labels["cloudexit.cidr_block"])
+				if result.DockerService.Labels["homeport.cidr_block"] != "172.18.0.0/16" {
+					t.Errorf("Expected default CIDR block 172.18.0.0/16, got %s", result.DockerService.Labels["homeport.cidr_block"])
 				}
 			},
 		},

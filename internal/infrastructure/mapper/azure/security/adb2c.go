@@ -8,8 +8,8 @@ import (
 	"strings"
 	"time"
 
-	"github.com/agnostech/agnostech/internal/domain/mapper"
-	"github.com/agnostech/agnostech/internal/domain/resource"
+	"github.com/homeport/homeport/internal/domain/mapper"
+	"github.com/homeport/homeport/internal/domain/resource"
 )
 
 // ADB2CMapper converts Azure AD B2C to Keycloak.
@@ -53,10 +53,10 @@ func (m *ADB2CMapper) Map(ctx context.Context, res *resource.AWSResource) (*mapp
 	svc.Ports = []string{"8080:8080"}
 	svc.DependsOn = []string{"postgres-keycloak"}
 	svc.Volumes = []string{"./data/keycloak:/opt/keycloak/data"}
-	svc.Networks = []string{"cloudexit"}
+	svc.Networks = []string{"homeport"}
 	svc.Labels = map[string]string{
-		"cloudexit.source":    "azurerm_aadb2c_directory",
-		"cloudexit.directory": directoryName,
+		"homeport.source":    "azurerm_aadb2c_directory",
+		"homeport.directory": directoryName,
 		"traefik.enable":      "true",
 	}
 	svc.Restart = "unless-stopped"
@@ -135,7 +135,7 @@ func (m *ADB2CMapper) generatePostgresConfig() string {
   volumes:
     - ./data/postgres-keycloak:/var/lib/postgresql/data
   networks:
-    - cloudexit
+    - homeport
   healthcheck:
     test: ["CMD-SHELL", "pg_isready -U keycloak"]
     interval: 10s

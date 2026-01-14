@@ -53,3 +53,27 @@ internal/api/static/
 # Temporary files
 *.tmp
 *.log
+
+# Binaries
+homeport
+cloudexit
+agnostech
+
+# Internal documentation (not for public release)
+FILES_CREATED.txt
+CLI_IMPLEMENTATION_SUMMARY.md
+CLI_README.md
+CLI_STRUCTURE.md
+cloudexit-plan-v2-multicloud.md
+IMPLEMENTATION_PLAN_v2_ADAPTED.md
+IMPLEMENTATION_PLAN_COMPLETE.md
+DEVELOPMENT_PLAN.md
+
+# Design docs (internal reference)
+COLOR_PALETTE.md
+DESIGN_CHEATSHEET.md
+DESIGN_INDEX.md
+DESIGN_SYSTEM_README.md
+DESIGN_SYSTEM.md
+DESIGN_TOKENS.md
+IMPLEMENTATION_GUIDE.md

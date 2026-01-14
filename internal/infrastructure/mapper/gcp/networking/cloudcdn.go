@@ -7,8 +7,8 @@ import (
 	"strings"
 	"time"
 
-	"github.com/agnostech/agnostech/internal/domain/mapper"
-	"github.com/agnostech/agnostech/internal/domain/resource"
+	"github.com/homeport/homeport/internal/domain/mapper"
+	"github.com/homeport/homeport/internal/domain/resource"
 )
 
 // CloudCDNMapper converts GCP Cloud CDN (Backend Bucket) to Varnish or nginx.
@@ -58,12 +58,12 @@ func (m *CloudCDNMapper) Map(ctx context.Context, res *resource.AWSResource) (*m
 
 	// Labels
 	svc.Labels = map[string]string{
-		"cloudexit.source":       "google_compute_backend_bucket",
-		"cloudexit.service_name": bucketName,
-		"cloudexit.origin":       originURL,
+		"homeport.source":       "google_compute_backend_bucket",
+		"homeport.service_name": bucketName,
+		"homeport.origin":       originURL,
 	}
 
-	svc.Networks = []string{"cloudexit"}
+	svc.Networks = []string{"homeport"}
 	svc.Restart = "unless-stopped"
 
 	// Volume for Varnish configuration
@@ -77,7 +77,7 @@ func (m *CloudCDNMapper) Map(ctx context.Context, res *resource.AWSResource) (*m
 		Name:   "varnish-cache",
 		Driver: "local",
 		Labels: map[string]string{
-			"cloudexit.service": bucketName,
+			"homeport.service": bucketName,
 		},
 	})
 

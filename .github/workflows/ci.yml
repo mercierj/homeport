@@ -120,11 +120,11 @@ jobs:
 
       - name: Build binaries
         run: |
-          GOOS=linux GOARCH=amd64 go build -o dist/agnostech-linux-amd64 ./cmd/agnostech
-          GOOS=linux GOARCH=arm64 go build -o dist/agnostech-linux-arm64 ./cmd/agnostech
-          GOOS=darwin GOARCH=amd64 go build -o dist/agnostech-darwin-amd64 ./cmd/agnostech
-          GOOS=darwin GOARCH=arm64 go build -o dist/agnostech-darwin-arm64 ./cmd/agnostech
-          GOOS=windows GOARCH=amd64 go build -o dist/agnostech-windows-amd64.exe ./cmd/agnostech
+          GOOS=linux GOARCH=amd64 go build -o dist/homeport-linux-amd64 ./cmd/homeport
+          GOOS=linux GOARCH=arm64 go build -o dist/homeport-linux-arm64 ./cmd/homeport
+          GOOS=darwin GOARCH=amd64 go build -o dist/homeport-darwin-amd64 ./cmd/homeport
+          GOOS=darwin GOARCH=arm64 go build -o dist/homeport-darwin-arm64 ./cmd/homeport
+          GOOS=windows GOARCH=amd64 go build -o dist/homeport-windows-amd64.exe ./cmd/homeport
 
       - name: Upload artifacts
         uses: actions/upload-artifact@v4

@@ -4,9 +4,9 @@ import (
 	"context"
 	"testing"
 
-	"github.com/agnostech/agnostech/internal/domain/parser"
-	"github.com/agnostech/agnostech/internal/domain/resource"
-	gcpparser "github.com/agnostech/agnostech/internal/infrastructure/parser/gcp"
+	"github.com/homeport/homeport/internal/domain/parser"
+	"github.com/homeport/homeport/internal/domain/resource"
+	gcpparser "github.com/homeport/homeport/internal/infrastructure/parser/gcp"
 )
 
 // TestAPIParser_Integration tests the GCP API parser integration.

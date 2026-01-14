@@ -6,8 +6,8 @@ import (
 	"fmt"
 	"strings"
 
-	"github.com/agnostech/agnostech/internal/domain/mapper"
-	"github.com/agnostech/agnostech/internal/domain/resource"
+	"github.com/homeport/homeport/internal/domain/mapper"
+	"github.com/homeport/homeport/internal/domain/resource"
 )
 
 // AKSMapper converts Azure Kubernetes Service to K3s.
@@ -48,7 +48,7 @@ func (m *AKSMapper) Map(ctx context.Context, res *resource.AWSResource) (*mapper
 		"--tls-san=k3s-server",
 	}
 	svc.Environment = map[string]string{
-		"K3S_TOKEN":               "cloudexit-aks-token",
+		"K3S_TOKEN":               "homeport-aks-token",
 		"K3S_KUBECONFIG_OUTPUT":   "/output/kubeconfig.yaml",
 		"K3S_KUBECONFIG_MODE":     "666",
 		"KUBERNETES_CLUSTER_NAME": clusterName,
@@ -62,12 +62,12 @@ func (m *AKSMapper) Map(ctx context.Context, res *resource.AWSResource) (*mapper
 		"k3s-server:/var/lib/rancher/k3s",
 		"./kubeconfig:/output",
 	}
-	svc.Networks = []string{"cloudexit"}
+	svc.Networks = []string{"homeport"}
 	svc.Restart = "unless-stopped"
 	svc.Labels = map[string]string{
-		"cloudexit.source":       "azurerm_kubernetes_cluster",
-		"cloudexit.cluster_name": clusterName,
-		"cloudexit.k8s_version":  k8sVersion,
+		"homeport.source":       "azurerm_kubernetes_cluster",
+		"homeport.cluster_name": clusterName,
+		"homeport.k8s_version":  k8sVersion,
 	}
 	svc.CapAdd = []string{"NET_ADMIN", "SYS_ADMIN"}
 
@@ -165,11 +165,11 @@ k3s-agent:
     - agent
   environment:
     K3S_URL: https://k3s-server:6443
-    K3S_TOKEN: cloudexit-aks-token
+    K3S_TOKEN: homeport-aks-token
   volumes:
     - k3s-agent:/var/lib/rancher/k3s
   networks:
-    - cloudexit
+    - homeport
   depends_on:
     - k3s-server
   restart: unless-stopped

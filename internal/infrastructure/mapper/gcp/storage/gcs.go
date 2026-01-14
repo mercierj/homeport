@@ -3,11 +3,13 @@ package storage
 
 import (
 	"context"
+	"encoding/json"
 	"fmt"
 	"time"
 
-	"github.com/agnostech/agnostech/internal/domain/mapper"
-	"github.com/agnostech/agnostech/internal/domain/resource"
+	"github.com/homeport/homeport/internal/domain/mapper"
+	"github.com/homeport/homeport/internal/domain/policy"
+	"github.com/homeport/homeport/internal/domain/resource"
 )
 
 // GCSMapper converts GCP Cloud Storage buckets to MinIO.
@@ -58,13 +60,13 @@ func (m *GCSMapper) Map(ctx context.Context, res *resource.AWSResource) (*mapper
 		Retries:  3,
 	}
 	svc.Labels = map[string]string{
-		"cloudexit.source": "google_storage_bucket",
-		"cloudexit.bucket": bucketName,
+		"homeport.source": "google_storage_bucket",
+		"homeport.bucket": bucketName,
 		"traefik.enable":   "true",
 		"traefik.http.routers.minio.rule":                      "Host(`minio.localhost`)",
 		"traefik.http.services.minio.loadbalancer.server.port": "9001",
 	}
-	svc.Networks = []string{"cloudexit"}
+	svc.Networks = []string{"homeport"}
 	svc.Restart = "unless-stopped"
 
 	// Generate MinIO client (mc) setup script
@@ -324,4 +326,81 @@ func (m *GCSMapper) isPublicBucket(res *resource.AWSResource) bool {
 	}
 
 	return false
+}
+
+// ExtractPolicies extracts bucket IAM policies from the GCS bucket.
+func (m *GCSMapper) ExtractPolicies(ctx context.Context, res *resource.AWSResource) ([]*policy.Policy, error) {
+	var policies []*policy.Policy
+
+	bucketName := res.GetConfigString("name")
+	if bucketName == "" {
+		bucketName = res.Name
+	}
+
+	// Extract uniform bucket-level access settings
+	if uniformAccess := res.Config["uniform_bucket_level_access"]; uniformAccess != nil {
+		accessJSON, _ := json.Marshal(uniformAccess)
+		p := policy.NewPolicy(
+			res.ID+"-uniform-access",
+			bucketName+" Uniform Bucket Access",
+			policy.PolicyTypeResource,
+			policy.ProviderGCP,
+		)
+		p.ResourceID = res.ID
+		p.ResourceType = "google_storage_bucket"
+		p.ResourceName = bucketName
+		p.OriginalDocument = accessJSON
+		p.OriginalFormat = "json"
+
+		if enabled, ok := uniformAccess.(map[string]interface{})["enabled"].(bool); ok && enabled {
+			p.AddWarning("Uniform bucket-level access is enabled - ACLs are disabled")
+		}
+
+		policies = append(policies, p)
+	}
+
+	// Extract public access prevention settings
+	publicAccessPrevention := res.GetConfigString("public_access_prevention")
+	if publicAccessPrevention != "" {
+		accessJSON, _ := json.Marshal(map[string]string{
+			"public_access_prevention": publicAccessPrevention,
+		})
+		p := policy.NewPolicy(
+			res.ID+"-public-access",
+			bucketName+" Public Access Prevention",
+			policy.PolicyTypeResource,
+			policy.ProviderGCP,
+		)
+		p.ResourceID = res.ID
+		p.ResourceType = "google_storage_bucket"
+		p.ResourceName = bucketName
+		p.OriginalDocument = accessJSON
+		p.OriginalFormat = "json"
+
+		if publicAccessPrevention == "enforced" {
+			p.AddWarning("Public access prevention is enforced")
+		}
+
+		policies = append(policies, p)
+	}
+
+	// Extract IAM configuration if present
+	if iamConfig := res.Config["iam_configuration"]; iamConfig != nil {
+		iamJSON, _ := json.Marshal(iamConfig)
+		p := policy.NewPolicy(
+			res.ID+"-iam-config",
+			bucketName+" IAM Configuration",
+			policy.PolicyTypeResource,
+			policy.ProviderGCP,
+		)
+		p.ResourceID = res.ID
+		p.ResourceType = "google_storage_bucket"
+		p.ResourceName = bucketName
+		p.OriginalDocument = iamJSON
+		p.OriginalFormat = "json"
+
+		policies = append(policies, p)
+	}
+
+	return policies, nil
 }

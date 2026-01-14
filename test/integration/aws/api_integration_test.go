@@ -4,9 +4,9 @@ import (
 	"context"
 	"testing"
 
-	"github.com/agnostech/agnostech/internal/domain/parser"
-	"github.com/agnostech/agnostech/internal/domain/resource"
-	awsparser "github.com/agnostech/agnostech/internal/infrastructure/parser/aws"
+	"github.com/homeport/homeport/internal/domain/parser"
+	"github.com/homeport/homeport/internal/domain/resource"
+	awsparser "github.com/homeport/homeport/internal/infrastructure/parser/aws"
 )
 
 // TestAPIParser_Integration tests the AWS API parser integration.

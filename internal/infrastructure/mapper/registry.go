@@ -6,16 +6,17 @@ import (
 	"fmt"
 	"sync"
 
-	"github.com/agnostech/agnostech/internal/domain/mapper"
-	"github.com/agnostech/agnostech/internal/domain/resource"
-	"github.com/agnostech/agnostech/internal/infrastructure/mapper/azure"
-	"github.com/agnostech/agnostech/internal/infrastructure/mapper/compute"
-	"github.com/agnostech/agnostech/internal/infrastructure/mapper/database"
-	"github.com/agnostech/agnostech/internal/infrastructure/mapper/gcp"
-	"github.com/agnostech/agnostech/internal/infrastructure/mapper/messaging"
-	"github.com/agnostech/agnostech/internal/infrastructure/mapper/networking"
-	"github.com/agnostech/agnostech/internal/infrastructure/mapper/security"
-	"github.com/agnostech/agnostech/internal/infrastructure/mapper/storage"
+	"github.com/homeport/homeport/internal/domain/mapper"
+	"github.com/homeport/homeport/internal/domain/resource"
+	"github.com/homeport/homeport/internal/infrastructure/mapper/azure"
+	"github.com/homeport/homeport/internal/infrastructure/mapper/compute"
+	"github.com/homeport/homeport/internal/infrastructure/mapper/database"
+	"github.com/homeport/homeport/internal/infrastructure/mapper/gcp"
+	"github.com/homeport/homeport/internal/infrastructure/mapper/messaging"
+	"github.com/homeport/homeport/internal/infrastructure/mapper/monitoring"
+	"github.com/homeport/homeport/internal/infrastructure/mapper/networking"
+	"github.com/homeport/homeport/internal/infrastructure/mapper/security"
+	"github.com/homeport/homeport/internal/infrastructure/mapper/storage"
 )
 
 // Registry manages all available resource mappers.
@@ -78,6 +79,15 @@ func (r *Registry) RegisterDefaults() {
 	r.Register(messaging.NewSNSMapper())
 	r.Register(messaging.NewEventBridgeMapper())
 	r.Register(messaging.NewKinesisMapper())
+	r.Register(messaging.NewSESMapper())
+
+	// AWS Security mappers (additional)
+	r.Register(security.NewKMSMapper())
+
+	// AWS Monitoring mappers
+	r.Register(monitoring.NewCloudWatchLogsMapper())
+	r.Register(monitoring.NewCloudWatchMetricAlarmMapper())
+	r.Register(monitoring.NewCloudWatchDashboardMapper())
 
 	// ─────────────────────────────────────────────────────
 	// GCP Mappers

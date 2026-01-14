@@ -2,13 +2,13 @@
 package azure
 
 import (
-	"github.com/agnostech/agnostech/internal/domain/mapper"
-	"github.com/agnostech/agnostech/internal/infrastructure/mapper/azure/compute"
-	"github.com/agnostech/agnostech/internal/infrastructure/mapper/azure/database"
-	"github.com/agnostech/agnostech/internal/infrastructure/mapper/azure/messaging"
-	"github.com/agnostech/agnostech/internal/infrastructure/mapper/azure/networking"
-	"github.com/agnostech/agnostech/internal/infrastructure/mapper/azure/security"
-	"github.com/agnostech/agnostech/internal/infrastructure/mapper/azure/storage"
+	"github.com/homeport/homeport/internal/domain/mapper"
+	"github.com/homeport/homeport/internal/infrastructure/mapper/azure/compute"
+	"github.com/homeport/homeport/internal/infrastructure/mapper/azure/database"
+	"github.com/homeport/homeport/internal/infrastructure/mapper/azure/messaging"
+	"github.com/homeport/homeport/internal/infrastructure/mapper/azure/networking"
+	"github.com/homeport/homeport/internal/infrastructure/mapper/azure/security"
+	"github.com/homeport/homeport/internal/infrastructure/mapper/azure/storage"
 )
 
 // MapperRegistrar is an interface for registering mappers.

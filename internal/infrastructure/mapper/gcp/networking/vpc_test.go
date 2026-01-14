@@ -4,8 +4,8 @@ import (
 	"context"
 	"testing"
 
-	"github.com/agnostech/agnostech/internal/domain/mapper"
-	"github.com/agnostech/agnostech/internal/domain/resource"
+	"github.com/homeport/homeport/internal/domain/mapper"
+	"github.com/homeport/homeport/internal/domain/resource"
 )
 
 func TestNewVPCMapper(t *testing.T) {
@@ -162,8 +162,8 @@ func TestVPCMapper_Map(t *testing.T) {
 					t.Error("Labels should not be nil")
 					return
 				}
-				if result.DockerService.Labels["cloudexit.routing_mode"] != "GLOBAL" {
-					t.Errorf("Expected routing mode GLOBAL, got %s", result.DockerService.Labels["cloudexit.routing_mode"])
+				if result.DockerService.Labels["homeport.routing_mode"] != "GLOBAL" {
+					t.Errorf("Expected routing mode GLOBAL, got %s", result.DockerService.Labels["homeport.routing_mode"])
 				}
 			},
 		},
@@ -318,8 +318,8 @@ func TestVPCMapper_Map(t *testing.T) {
 					t.Error("Labels should not be nil")
 					return
 				}
-				if result.DockerService.Labels["cloudexit.mtu"] != "1500" {
-					t.Errorf("Expected MTU label 1500, got %s", result.DockerService.Labels["cloudexit.mtu"])
+				if result.DockerService.Labels["homeport.mtu"] != "1500" {
+					t.Errorf("Expected MTU label 1500, got %s", result.DockerService.Labels["homeport.mtu"])
 				}
 			},
 		},

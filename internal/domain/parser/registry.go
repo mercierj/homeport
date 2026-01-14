@@ -7,7 +7,7 @@ import (
 	"sort"
 	"sync"
 
-	"github.com/agnostech/agnostech/internal/domain/resource"
+	"github.com/homeport/homeport/internal/domain/resource"
 )
 
 // Registry manages parser implementations.

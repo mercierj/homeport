@@ -1,0 +1,719 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* ============================================
+   HOMEPORT DESIGN SYSTEM
+   Digital Sovereignty & Self-Hosted Freedom
+   ============================================ */
+
+@layer base {
+  :root {
+    /* === BRAND COLORS === */
+    /* Primary: Deep Navy Blue - Enterprise Trust, Security, Stability */
+    --primary: 222 47% 20%;
+    --primary-hover: 222 47% 15%;
+    --primary-foreground: 210 40% 98%;
+
+    /* Secondary: Warm Slate - Professional, Approachable */
+    --secondary: 215 20% 45%;
+    --secondary-hover: 215 20% 38%;
+    --secondary-foreground: 0 0% 100%;
+
+    /* Accent: Teal - Modern, Trustworthy, Tech-Forward */
+    --accent: 173 58% 39%;
+    --accent-hover: 173 58% 32%;
+    --accent-foreground: 0 0% 100%;
+
+    /* === SEMANTIC COLORS === */
+    /* Success: Confident Green */
+    --success: 158 64% 40%;
+    --success-foreground: 0 0% 100%;
+
+    /* Warning: Warm Amber */
+    --warning: 38 92% 45%;
+    --warning-foreground: 38 92% 15%;
+
+    /* Error: Calm Red - Not alarming, but clear */
+    --error: 0 65% 51%;
+    --error-foreground: 0 0% 100%;
+
+    /* Info: Professional Blue */
+    --info: 210 92% 45%;
+    --info-foreground: 0 0% 100%;
+
+    /* === CLOUD PROVIDER COLORS (Migration "From" States) === */
+    /* AWS Orange */
+    --cloud-aws: 30 100% 50%;
+    --cloud-aws-light: 30 100% 97%;
+    --cloud-aws-foreground: 30 100% 15%;
+
+    /* GCP - Multi-color represented by blue */
+    --cloud-gcp: 217 89% 55%;
+    --cloud-gcp-light: 217 89% 97%;
+    --cloud-gcp-foreground: 0 0% 100%;
+
+    /* Azure Blue */
+    --cloud-azure: 206 100% 45%;
+    --cloud-azure-light: 206 100% 97%;
+    --cloud-azure-foreground: 0 0% 100%;
+
+    /* === SELF-HOSTED COLORS (Migration "To" States) === */
+    /* Freedom: Deep Teal - Sovereignty, Independence */
+    --freedom: 173 58% 39%;
+    --freedom-light: 173 58% 96%;
+    --freedom-foreground: 0 0% 100%;
+
+    /* === NEUTRAL COLORS === */
+    --background: 210 20% 99%;
+    --foreground: 222 47% 11%;
+
+    --muted: 210 20% 96%;
+    --muted-foreground: 215 16% 47%;
+
+    --border: 214 20% 90%;
+    --input: 214 20% 90%;
+    --ring: 173 58% 39%;
+
+    --card: 0 0% 100%;
+    --card-foreground: 222 47% 11%;
+
+    --popover: 0 0% 100%;
+    --popover-foreground: 222 47% 11%;
+
+    /* === SIDEBAR === */
+    --sidebar: 222 47% 14%;
+    --sidebar-foreground: 210 20% 80%;
+    --sidebar-muted: 222 30% 22%;
+    --sidebar-active: 173 58% 39%;
+
+    /* === CHARTS & DATA VIZ === */
+    --chart-1: 173 58% 39%; /* Teal */
+    --chart-2: 222 47% 35%; /* Navy */
+    --chart-3: 38 92% 50%; /* Amber */
+    --chart-4: 280 60% 50%; /* Purple */
+    --chart-5: 158 64% 40%; /* Green */
+
+    /* === TYPOGRAPHY === */
+    --radius: 0.375rem;
+  }
+
+  .dark {
+    /* === BRAND COLORS (Dark Mode) === */
+    --primary: 210 40% 98%;
+    --primary-hover: 210 40% 90%;
+    --primary-foreground: 222 47% 11%;
+
+    --secondary: 215 20% 65%;
+    --secondary-hover: 215 20% 75%;
+    --secondary-foreground: 222 47% 11%;
+
+    --accent: 173 58% 50%;
+    --accent-hover: 173 58% 60%;
+    --accent-foreground: 222 47% 11%;
+
+    /* === SEMANTIC COLORS (Dark Mode) === */
+    --success: 158 64% 52%;
+    --success-foreground: 222 47% 11%;
+
+    --warning: 38 92% 55%;
+    --warning-foreground: 222 47% 11%;
+
+    --error: 0 65% 60%;
+    --error-foreground: 222 47% 11%;
+
+    --info: 210 92% 56%;
+    --info-foreground: 222 47% 11%;
+
+    /* === CLOUD PROVIDER COLORS (Dark Mode) === */
+    --cloud-aws: 30 100% 55%;
+    --cloud-aws-light: 30 100% 15%;
+    --cloud-aws-foreground: 0 0% 100%;
+
+    --cloud-gcp: 217 89% 65%;
+    --cloud-gcp-light: 217 89% 15%;
+    --cloud-gcp-foreground: 0 0% 100%;
+
+    --cloud-azure: 206 100% 55%;
+    --cloud-azure-light: 206 100% 15%;
+    --cloud-azure-foreground: 0 0% 100%;
+
+    --freedom: 173 58% 50%;
+    --freedom-light: 173 58% 15%;
+    --freedom-foreground: 0 0% 100%;
+
+    /* === NEUTRAL COLORS (Dark Mode) === */
+    --background: 222 47% 8%;
+    --foreground: 210 40% 98%;
+
+    --muted: 222 30% 14%;
+    --muted-foreground: 215 20% 65%;
+
+    --border: 222 30% 18%;
+    --input: 222 30% 18%;
+    --ring: 173 58% 50%;
+
+    --card: 222 47% 11%;
+    --card-foreground: 210 40% 98%;
+
+    --popover: 222 30% 12%;
+    --popover-foreground: 210 40% 98%;
+
+    /* === SIDEBAR (Dark Mode) === */
+    --sidebar: 222 47% 8%;
+    --sidebar-foreground: 210 20% 70%;
+    --sidebar-muted: 222 30% 14%;
+    --sidebar-active: 173 58% 50%;
+
+    /* === CHARTS & DATA VIZ (Dark Mode) === */
+    --chart-1: 173 58% 50%;
+    --chart-2: 210 40% 60%;
+    --chart-3: 38 92% 55%;
+    --chart-4: 280 60% 60%;
+    --chart-5: 158 64% 52%;
+  }
+}
+
+@layer base {
+  * {
+    @apply border-border;
+  }
+
+  html {
+    @apply antialiased;
+  }
+
+  body {
+    @apply bg-background text-foreground;
+    font-feature-settings: "rlig" 1, "calt" 1;
+  }
+
+  /* Typography */
+  h1, h2, h3, h4, h5, h6 {
+    @apply font-semibold tracking-tight;
+  }
+
+  h1 {
+    @apply text-3xl md:text-4xl;
+  }
+
+  h2 {
+    @apply text-2xl md:text-3xl;
+  }
+
+  h3 {
+    @apply text-xl md:text-2xl;
+  }
+
+  h4 {
+    @apply text-lg md:text-xl;
+  }
+
+  h5 {
+    @apply text-base md:text-lg;
+  }
+
+  h6 {
+    @apply text-sm md:text-base;
+  }
+
+  code {
+    @apply font-mono text-sm;
+  }
+
+  /* Scrollbar styling */
+  ::-webkit-scrollbar {
+    @apply w-2 h-2;
+  }
+
+  ::-webkit-scrollbar-track {
+    @apply bg-muted;
+  }
+
+  ::-webkit-scrollbar-thumb {
+    @apply bg-border rounded-full hover:bg-muted-foreground/50;
+  }
+}
+
+/* ============================================
+   COMPONENT CLASSES
+   ============================================ */
+
+@layer components {
+  /* === CARDS === */
+
+  /* Base card */
+  .card {
+    @apply rounded-lg border bg-card text-card-foreground shadow-sm;
+  }
+
+  /* Stat card - for metrics/dashboard stats */
+  .card-stat {
+    @apply card p-6 space-y-2;
+  }
+
+  .card-stat-label {
+    @apply text-sm font-medium text-muted-foreground uppercase tracking-wide;
+  }
+
+  .card-stat-value {
+    @apply text-3xl font-bold;
+  }
+
+  .card-stat-change {
+    @apply text-xs font-medium;
+  }
+
+  .card-stat-change-positive {
+    @apply card-stat-change text-success;
+  }
+
+  .card-stat-change-negative {
+    @apply card-stat-change text-error;
+  }
+
+  /* Resource card - for cloud resources */
+  .card-resource {
+    @apply card p-4 hover:shadow-md transition-shadow cursor-pointer;
+  }
+
+  .card-resource-selected {
+    @apply card-resource ring-2 ring-accent border-accent;
+  }
+
+  /* Action card - for clickable action cards */
+  .card-action {
+    @apply card p-6 hover:border-accent hover:shadow-lg transition-all cursor-pointer;
+  }
+
+  .card-action-active {
+    @apply card-action border-accent bg-accent/5;
+  }
+
+  /* === BADGES === */
+
+  .badge {
+    @apply inline-flex items-center rounded-md px-2.5 py-0.5 text-xs font-semibold transition-colors;
+  }
+
+  .badge-default {
+    @apply badge bg-primary text-primary-foreground;
+  }
+
+  .badge-secondary {
+    @apply badge bg-secondary text-secondary-foreground;
+  }
+
+  .badge-success {
+    @apply badge bg-success text-success-foreground;
+  }
+
+  .badge-warning {
+    @apply badge bg-warning text-warning-foreground;
+  }
+
+  .badge-error {
+    @apply badge bg-error text-error-foreground;
+  }
+
+  .badge-info {
+    @apply badge bg-info text-info-foreground;
+  }
+
+  .badge-outline {
+    @apply badge border border-border bg-transparent;
+  }
+
+  /* Cloud provider badges */
+  .badge-aws {
+    @apply badge bg-[hsl(var(--cloud-aws))] text-[hsl(var(--cloud-aws-foreground))];
+  }
+
+  .badge-gcp {
+    @apply badge bg-[hsl(var(--cloud-gcp))] text-[hsl(var(--cloud-gcp-foreground))];
+  }
+
+  .badge-azure {
+    @apply badge bg-[hsl(var(--cloud-azure))] text-[hsl(var(--cloud-azure-foreground))];
+  }
+
+  .badge-freedom {
+    @apply badge bg-[hsl(var(--freedom))] text-[hsl(var(--freedom-foreground))];
+  }
+
+  /* === STATUS INDICATORS === */
+
+  .status-dot {
+    @apply inline-block w-2 h-2 rounded-full;
+  }
+
+  .status-dot-success {
+    @apply status-dot bg-success;
+  }
+
+  .status-dot-warning {
+    @apply status-dot bg-warning;
+  }
+
+  .status-dot-error {
+    @apply status-dot bg-error;
+  }
+
+  .status-dot-info {
+    @apply status-dot bg-info;
+  }
+
+  .status-dot-muted {
+    @apply status-dot bg-muted-foreground;
+  }
+
+  /* === FORM ELEMENTS === */
+
+  .input {
+    @apply flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50;
+  }
+
+  .input-error {
+    @apply input border-error focus-visible:ring-error;
+  }
+
+  .textarea {
+    @apply flex min-h-[80px] w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50;
+  }
+
+  .select {
+    @apply flex h-10 w-full items-center justify-between rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50;
+  }
+
+  .label {
+    @apply text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70;
+  }
+
+  .label-required::after {
+    @apply text-error;
+    content: " *";
+  }
+
+  /* === TABLES === */
+
+  .table-wrapper {
+    @apply relative w-full overflow-auto;
+  }
+
+  .table {
+    @apply w-full caption-bottom text-sm;
+  }
+
+  .table-header {
+    @apply border-b bg-muted/50;
+  }
+
+  .table-header-row {
+    @apply border-b transition-colors hover:bg-muted/50;
+  }
+
+  .table-header-cell {
+    @apply h-12 px-4 text-left align-middle font-medium text-muted-foreground;
+  }
+
+  .table-body {
+    @apply [&_tr:last-child]:border-0;
+  }
+
+  .table-row {
+    @apply border-b transition-colors hover:bg-muted/50 data-[state=selected]:bg-muted;
+  }
+
+  .table-cell {
+    @apply p-4 align-middle;
+  }
+
+  /* === CODE BLOCKS === */
+
+  .code-block {
+    @apply relative rounded-lg border bg-muted/50 p-4 font-mono text-sm;
+  }
+
+  .code-inline {
+    @apply relative rounded bg-muted px-[0.3rem] py-[0.2rem] font-mono text-sm;
+  }
+
+  /* Terminal output */
+  .terminal {
+    @apply rounded-lg border bg-[#1e1e1e] text-[#d4d4d4] font-mono text-sm;
+  }
+
+  .terminal-header {
+    @apply flex items-center gap-2 px-4 py-2 border-b border-gray-800;
+  }
+
+  .terminal-body {
+    @apply p-4 overflow-auto;
+  }
+
+  /* === NAVIGATION === */
+
+  .nav-link {
+    @apply flex items-center gap-2 rounded-md px-3 py-2 text-sm font-medium transition-colors hover:bg-accent hover:text-accent-foreground;
+  }
+
+  .nav-link-active {
+    @apply nav-link bg-accent text-accent-foreground;
+  }
+
+  /* === ALERTS === */
+
+  .alert {
+    @apply relative w-full rounded-lg border p-4;
+  }
+
+  .alert-success {
+    @apply alert border-success/50 bg-success/10 text-success;
+  }
+
+  .alert-warning {
+    @apply alert border-warning/50 bg-warning/10 text-warning;
+  }
+
+  .alert-error {
+    @apply alert border-error/50 bg-error/10 text-error;
+  }
+
+  .alert-info {
+    @apply alert border-info/50 bg-info/10 text-info;
+  }
+
+  /* === PROGRESS INDICATORS === */
+
+  .progress {
+    @apply relative h-2 w-full overflow-hidden rounded-full bg-muted;
+  }
+
+  .progress-indicator {
+    @apply h-full w-full flex-1 bg-primary transition-all;
+  }
+
+  .progress-success {
+    @apply bg-success;
+  }
+
+  .progress-error {
+    @apply bg-error;
+  }
+
+  /* === TOGGLE SWITCH === */
+
+  .toggle {
+    @apply relative inline-flex h-6 w-11 items-center rounded-full transition-colors;
+  }
+
+  .toggle-enabled {
+    @apply bg-success;
+  }
+
+  .toggle-disabled {
+    @apply bg-muted;
+  }
+
+  .toggle-thumb {
+    @apply inline-block h-4 w-4 transform rounded-full bg-white transition shadow-sm;
+  }
+
+  /* === TABS === */
+
+  .tab {
+    @apply px-4 py-2 text-sm font-medium transition-colors;
+  }
+
+  .tab-active {
+    @apply bg-primary/10 border-l-4 border-primary text-primary;
+  }
+
+  .tab-inactive {
+    @apply border-l-4 border-transparent hover:bg-muted text-muted-foreground;
+  }
+
+  /* === LOG LEVELS === */
+
+  .log-level-error {
+    @apply bg-error/10 text-error;
+  }
+
+  .log-level-warn {
+    @apply bg-warning/10 text-warning;
+  }
+
+  .log-level-info {
+    @apply bg-info/10 text-info;
+  }
+
+  .log-level-debug {
+    @apply bg-muted text-muted-foreground;
+  }
+
+  /* === CHIPS/PILLS === */
+
+  .chip {
+    @apply px-2 py-0.5 rounded text-xs font-medium bg-muted text-muted-foreground;
+  }
+
+  .chip-selected {
+    @apply bg-primary/10 text-primary border border-primary;
+  }
+
+  /* === SKELETON LOADERS === */
+
+  .skeleton {
+    @apply animate-pulse rounded-md bg-muted;
+  }
+
+  /* === EMPTY STATES === */
+
+  .empty-state {
+    @apply flex flex-col items-center justify-center p-12 text-center;
+  }
+
+  .empty-state-icon {
+    @apply h-16 w-16 text-muted-foreground mb-4;
+  }
+
+  .empty-state-title {
+    @apply text-lg font-semibold mb-2;
+  }
+
+  .empty-state-description {
+    @apply text-sm text-muted-foreground max-w-sm;
+  }
+
+  /* === MIGRATION SPECIFIC === */
+
+  /* Migration flow visualization */
+  .migration-flow {
+    @apply flex items-center gap-4;
+  }
+
+  .migration-source {
+    @apply flex items-center gap-2 px-4 py-2 rounded-lg border-2 border-[hsl(var(--cloud-aws))] bg-[hsl(var(--cloud-aws-light))];
+  }
+
+  .migration-arrow {
+    @apply text-muted-foreground;
+  }
+
+  .migration-target {
+    @apply flex items-center gap-2 px-4 py-2 rounded-lg border-2 border-[hsl(var(--freedom))] bg-[hsl(var(--freedom-light))];
+  }
+
+  /* Resource type icons background */
+  .resource-icon {
+    @apply w-10 h-10 rounded-lg flex items-center justify-center text-white;
+  }
+
+  .resource-icon-compute {
+    @apply resource-icon bg-blue-500;
+  }
+
+  .resource-icon-database {
+    @apply resource-icon bg-purple-500;
+  }
+
+  .resource-icon-storage {
+    @apply resource-icon bg-green-500;
+  }
+
+  .resource-icon-network {
+    @apply resource-icon bg-orange-500;
+  }
+
+  .resource-icon-security {
+    @apply resource-icon bg-red-500;
+  }
+
+  .resource-icon-messaging {
+    @apply resource-icon bg-pink-500;
+  }
+}
+
+/* ============================================
+   UTILITY CLASSES
+   ============================================ */
+
+@layer utilities {
+  /* === ANIMATIONS === */
+
+  .animate-in {
+    animation: animateIn 0.2s ease-out;
+  }
+
+  .animate-out {
+    animation: animateOut 0.2s ease-in;
+  }
+
+  @keyframes animateIn {
+    from {
+      opacity: 0;
+      transform: translateY(4px);
+    }
+    to {
+      opacity: 1;
+      transform: translateY(0);
+    }
+  }
+
+  @keyframes animateOut {
+    from {
+      opacity: 1;
+      transform: translateY(0);
+    }
+    to {
+      opacity: 0;
+      transform: translateY(4px);
+    }
+  }
+
+  /* === GLASSMORPHISM === */
+
+  .glass {
+    @apply backdrop-blur-md bg-background/80;
+  }
+
+  .glass-card {
+    @apply card backdrop-blur-md bg-card/80;
+  }
+
+  /* === GRADIENTS === */
+
+  .gradient-primary {
+    background: linear-gradient(135deg, hsl(var(--primary)) 0%, hsl(var(--accent)) 100%);
+  }
+
+  .gradient-freedom {
+    background: linear-gradient(135deg, hsl(var(--freedom)) 0%, hsl(var(--success)) 100%);
+  }
+
+  /* === SHADOWS === */
+
+  .shadow-glow-primary {
+    box-shadow: 0 0 20px hsl(var(--primary) / 0.3);
+  }
+
+  .shadow-glow-success {
+    box-shadow: 0 0 20px hsl(var(--success) / 0.3);
+  }
+
+  /* === FOCUS STATES === */
+
+  .focus-ring {
+    @apply focus:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2;
+  }
+
+  /* === TEXT UTILITIES === */
+
+  .text-gradient {
+    @apply bg-clip-text text-transparent;
+  }
+
+  .text-balance {
+    text-wrap: balance;
+  }
+}

@@ -7,8 +7,8 @@ import (
 	"strings"
 	"time"
 
-	"github.com/agnostech/agnostech/internal/domain/mapper"
-	"github.com/agnostech/agnostech/internal/domain/resource"
+	"github.com/homeport/homeport/internal/domain/mapper"
+	"github.com/homeport/homeport/internal/domain/resource"
 )
 
 // LambdaMapper converts AWS Lambda functions to OpenFaaS or Docker containers.
@@ -94,8 +94,9 @@ func (m *LambdaMapper) Map(ctx context.Context, res *resource.AWSResource) (*map
 	}
 
 	// Generate deployment script
-	deployScriptName := fmt.Sprintf("deploy_%s.sh", functionName)
-	deployScriptContent := m.generateDeploymentScriptContent(functionName, runtime)
+	sanitizedName := m.sanitizeFunctionName(functionName)
+	deployScriptName := fmt.Sprintf("deploy_%s.sh", sanitizedName)
+	deployScriptContent := m.generateDeploymentScriptContent(sanitizedName, runtime)
 	result.AddScript(deployScriptName, []byte(deployScriptContent))
 
 	return result, nil
@@ -122,16 +123,21 @@ func (m *LambdaMapper) configureOpenFaaSService(service *mapper.DockerService, r
 		cpus = "2.0"
 	}
 
-	service.Image = fmt.Sprintf("%s:latest", functionName)
+	sanitizedName := m.sanitizeFunctionName(functionName)
+	service.Image = fmt.Sprintf("%s:latest", sanitizedName)
+	service.Build = &mapper.DockerBuild{
+		Context:    fmt.Sprintf("./functions/%s", functionName),
+		Dockerfile: "Dockerfile",
+	}
 	service.Environment = map[string]string{
 		"FUNCTION_NAME": functionName,
 		"HANDLER":       handler,
 		"TIMEOUT":       fmt.Sprintf("%d", timeout),
 	}
 	service.Labels = map[string]string{
-		"cloudexit.source":        "aws_lambda_function",
-		"cloudexit.function_name": functionName,
-		"cloudexit.runtime":       runtime,
+		"homeport.source":        "aws_lambda_function",
+		"homeport.function_name": functionName,
+		"homeport.runtime":       runtime,
 		"openfaas.scale.min":      "1",
 		"openfaas.scale.max":      "5",
 	}
@@ -647,7 +653,7 @@ func (m *LambdaMapper) handleVPCConfig(vpcConfig map[string]interface{}, service
 	}
 
 	// Add function to custom network
-	service.Networks = []string{"cloudexit"}
+	service.Networks = []string{"homeport"}
 }
 
 // generateDeploymentScriptContent creates deployment script content.

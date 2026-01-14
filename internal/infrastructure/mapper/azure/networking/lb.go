@@ -7,8 +7,8 @@ import (
 	"strings"
 	"time"
 
-	"github.com/agnostech/agnostech/internal/domain/mapper"
-	"github.com/agnostech/agnostech/internal/domain/resource"
+	"github.com/homeport/homeport/internal/domain/mapper"
+	"github.com/homeport/homeport/internal/domain/resource"
 )
 
 // LBMapper converts Azure Load Balancer to Traefik or HAProxy.
@@ -60,11 +60,11 @@ func (m *LBMapper) Map(ctx context.Context, res *resource.AWSResource) (*mapper.
 		"./config/traefik:/etc/traefik/dynamic:ro",
 	}
 
-	svc.Networks = []string{"cloudexit"}
+	svc.Networks = []string{"homeport"}
 	svc.Restart = "unless-stopped"
 	svc.Labels = map[string]string{
-		"cloudexit.source":  "azurerm_lb",
-		"cloudexit.lb_name": lbName,
+		"homeport.source":  "azurerm_lb",
+		"homeport.lb_name": lbName,
 	}
 
 	// Health check for Traefik

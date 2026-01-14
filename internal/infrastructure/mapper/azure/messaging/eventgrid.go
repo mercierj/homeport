@@ -7,8 +7,8 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/agnostech/agnostech/internal/domain/mapper"
-	"github.com/agnostech/agnostech/internal/domain/resource"
+	"github.com/homeport/homeport/internal/domain/mapper"
+	"github.com/homeport/homeport/internal/domain/resource"
 )
 
 // EventGridMapper converts Azure Event Grid topics to n8n.
@@ -54,10 +54,10 @@ func (m *EventGridMapper) Map(ctx context.Context, res *resource.AWSResource) (*
 		"./data/n8n:/home/node/.n8n",
 		"./config/n8n/workflows:/workflows",
 	}
-	svc.Networks = []string{"cloudexit"}
+	svc.Networks = []string{"homeport"}
 	svc.Labels = map[string]string{
-		"cloudexit.source":                                       "azurerm_eventgrid_topic",
-		"cloudexit.topic_name":                                   topicName,
+		"homeport.source":                                       "azurerm_eventgrid_topic",
+		"homeport.topic_name":                                   topicName,
 		"traefik.enable":                                         "true",
 		"traefik.http.routers.n8n.rule":                          "Host(`n8n.localhost`)",
 		"traefik.http.services.n8n.loadbalancer.server.port":     "5678",

@@ -5,10 +5,12 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"strings"
 	"time"
 
-	"github.com/agnostech/agnostech/internal/domain/mapper"
-	"github.com/agnostech/agnostech/internal/domain/resource"
+	"github.com/homeport/homeport/internal/domain/mapper"
+	"github.com/homeport/homeport/internal/domain/policy"
+	"github.com/homeport/homeport/internal/domain/resource"
 )
 
 // SQSMapper converts AWS SQS queues to RabbitMQ.
@@ -53,10 +55,10 @@ func (m *SQSMapper) Map(ctx context.Context, res *resource.AWSResource) (*mapper
 		"./config/rabbitmq/definitions.json:/etc/rabbitmq/definitions.json",
 		"./config/rabbitmq/rabbitmq.conf:/etc/rabbitmq/rabbitmq.conf",
 	}
-	svc.Networks = []string{"cloudexit"}
+	svc.Networks = []string{"homeport"}
 	svc.Labels = map[string]string{
-		"cloudexit.source":     "aws_sqs_queue",
-		"cloudexit.queue_name": queueName,
+		"homeport.source":     "aws_sqs_queue",
+		"homeport.queue_name": queueName,
 		"traefik.enable":       "true",
 		"traefik.http.routers.rabbitmq.rule":                      "Host(`rabbitmq.localhost`)",
 		"traefik.http.services.rabbitmq.loadbalancer.server.port": "15672",
@@ -284,4 +286,168 @@ echo "Connection string: amqp://$RABBITMQ_USER:$RABBITMQ_PASS@$RABBITMQ_HOST:567
 // isFIFOQueue checks if the queue is a FIFO queue based on naming convention.
 func (m *SQSMapper) isFIFOQueue(queueName string) bool {
 	return len(queueName) > 5 && queueName[len(queueName)-5:] == ".fifo"
+}
+
+// ExtractPolicies extracts queue policies from the SQS queue.
+func (m *SQSMapper) ExtractPolicies(ctx context.Context, res *resource.AWSResource) ([]*policy.Policy, error) {
+	var policies []*policy.Policy
+
+	queueName := res.GetConfigString("name")
+	if queueName == "" {
+		queueName = res.Name
+	}
+
+	// Extract queue policy
+	if policyDoc := res.GetConfigString("policy"); policyDoc != "" {
+		p := policy.NewPolicy(
+			res.ID+"-queue-policy",
+			queueName+" Queue Policy",
+			policy.PolicyTypeResource,
+			policy.ProviderAWS,
+		)
+		p.ResourceID = res.ID
+		p.ResourceType = "aws_sqs_queue"
+		p.ResourceName = queueName
+		p.OriginalDocument = json.RawMessage(policyDoc)
+		p.OriginalFormat = "json"
+		p.NormalizedPolicy = m.normalizeQueuePolicy(policyDoc)
+
+		// Check for public access
+		if strings.Contains(policyDoc, "\"*\"") {
+			p.AddWarning("Queue policy may allow public access")
+		}
+
+		policies = append(policies, p)
+	}
+
+	return policies, nil
+}
+
+// normalizeQueuePolicy converts an SQS queue policy to normalized format.
+func (m *SQSMapper) normalizeQueuePolicy(policyDoc string) *policy.NormalizedPolicy {
+	normalized := &policy.NormalizedPolicy{
+		Statements: make([]policy.Statement, 0),
+	}
+
+	var awsPolicy struct {
+		Version   string `json:"Version"`
+		Statement []struct {
+			Sid       string      `json:"Sid"`
+			Effect    string      `json:"Effect"`
+			Principal interface{} `json:"Principal"`
+			Action    interface{} `json:"Action"`
+			Resource  interface{} `json:"Resource"`
+			Condition interface{} `json:"Condition"`
+		} `json:"Statement"`
+	}
+
+	if err := json.Unmarshal([]byte(policyDoc), &awsPolicy); err != nil {
+		return normalized
+	}
+
+	normalized.Version = awsPolicy.Version
+
+	for _, stmt := range awsPolicy.Statement {
+		normalizedStmt := policy.Statement{
+			SID:    stmt.Sid,
+			Effect: policy.Effect(stmt.Effect),
+		}
+
+		// Parse principals
+		normalizedStmt.Principals = m.parsePrincipals(stmt.Principal)
+
+		// Parse actions
+		normalizedStmt.Actions = m.parseStringOrSlice(stmt.Action)
+
+		// Parse resources
+		normalizedStmt.Resources = m.parseStringOrSlice(stmt.Resource)
+
+		// Parse conditions
+		normalizedStmt.Conditions = m.parseConditions(stmt.Condition)
+
+		normalized.Statements = append(normalized.Statements, normalizedStmt)
+	}
+
+	return normalized
+}
+
+// parsePrincipals converts AWS principal format to normalized principals.
+func (m *SQSMapper) parsePrincipals(principal interface{}) []policy.Principal {
+	var principals []policy.Principal
+
+	if principal == nil {
+		return principals
+	}
+
+	switch p := principal.(type) {
+	case string:
+		if p == "*" {
+			principals = append(principals, policy.Principal{Type: "*", ID: "*"})
+		} else {
+			principals = append(principals, policy.Principal{Type: "AWS", ID: p})
+		}
+	case map[string]interface{}:
+		for pType, pValue := range p {
+			ids := m.parseStringOrSlice(pValue)
+			for _, id := range ids {
+				principals = append(principals, policy.Principal{Type: pType, ID: id})
+			}
+		}
+	}
+
+	return principals
+}
+
+// parseStringOrSlice handles AWS policy fields that can be string or array.
+func (m *SQSMapper) parseStringOrSlice(value interface{}) []string {
+	if value == nil {
+		return nil
+	}
+
+	switch v := value.(type) {
+	case string:
+		return []string{v}
+	case []interface{}:
+		result := make([]string, 0, len(v))
+		for _, item := range v {
+			if s, ok := item.(string); ok {
+				result = append(result, s)
+			}
+		}
+		return result
+	}
+
+	return nil
+}
+
+// parseConditions converts AWS conditions to normalized format.
+func (m *SQSMapper) parseConditions(condition interface{}) []policy.Condition {
+	var conditions []policy.Condition
+
+	if condition == nil {
+		return conditions
+	}
+
+	condMap, ok := condition.(map[string]interface{})
+	if !ok {
+		return conditions
+	}
+
+	for operator, keys := range condMap {
+		keyMap, ok := keys.(map[string]interface{})
+		if !ok {
+			continue
+		}
+
+		for key, values := range keyMap {
+			cond := policy.Condition{
+				Operator: operator,
+				Key:      key,
+				Values:   m.parseStringOrSlice(values),
+			}
+			conditions = append(conditions, cond)
+		}
+	}
+
+	return conditions
 }

@@ -7,8 +7,8 @@ import (
 	"strings"
 	"time"
 
-	"github.com/agnostech/agnostech/internal/domain/mapper"
-	"github.com/agnostech/agnostech/internal/domain/resource"
+	"github.com/homeport/homeport/internal/domain/mapper"
+	"github.com/homeport/homeport/internal/domain/resource"
 )
 
 // CloudDNSMapper converts GCP Cloud DNS to CoreDNS or PowerDNS.
@@ -58,12 +58,12 @@ func (m *CloudDNSMapper) Map(ctx context.Context, res *resource.AWSResource) (*m
 
 	// Labels
 	svc.Labels = map[string]string{
-		"cloudexit.source":       "google_dns_managed_zone",
-		"cloudexit.service_name": zoneName,
-		"cloudexit.dns_name":     dnsName,
+		"homeport.source":       "google_dns_managed_zone",
+		"homeport.service_name": zoneName,
+		"homeport.dns_name":     dnsName,
 	}
 
-	svc.Networks = []string{"cloudexit"}
+	svc.Networks = []string{"homeport"}
 	svc.Restart = "unless-stopped"
 
 	// Volume for CoreDNS configuration

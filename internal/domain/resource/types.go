@@ -46,6 +46,15 @@ const (
 	TypeSNSTopic    Type = "aws_sns_topic"
 	TypeEventBridge Type = "aws_cloudwatch_event_rule"
 	TypeKinesis     Type = "aws_kinesis_stream"
+	TypeSESIdentity Type = "aws_ses_domain_identity"
+
+	// AWS Security (additional)
+	TypeKMSKey Type = "aws_kms_key"
+
+	// AWS Monitoring
+	TypeCloudWatchMetricAlarm Type = "aws_cloudwatch_metric_alarm"
+	TypeCloudWatchLogGroup    Type = "aws_cloudwatch_log_group"
+	TypeCloudWatchDashboard   Type = "aws_cloudwatch_dashboard"
 
 	// ─────────────────────────────────────────────────────
 	// GCP Resource Types

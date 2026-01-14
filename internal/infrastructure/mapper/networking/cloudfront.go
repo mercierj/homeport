@@ -7,8 +7,8 @@ import (
 	"strings"
 	"time"
 
-	"github.com/agnostech/agnostech/internal/domain/mapper"
-	"github.com/agnostech/agnostech/internal/domain/resource"
+	"github.com/homeport/homeport/internal/domain/mapper"
+	"github.com/homeport/homeport/internal/domain/resource"
 )
 
 // CloudFrontMapper converts AWS CloudFront distributions to Caddy or nginx as CDN.
@@ -51,10 +51,10 @@ func (m *CloudFrontMapper) Map(ctx context.Context, res *resource.AWSResource) (
 		"caddy-data:/data",
 		"caddy-config:/config",
 	}
-	svc.Networks = []string{"cloudexit"}
+	svc.Networks = []string{"homeport"}
 	svc.Labels = map[string]string{
-		"cloudexit.source":          "aws_cloudfront",
-		"cloudexit.distribution_id": distributionID,
+		"homeport.source":          "aws_cloudfront",
+		"homeport.distribution_id": distributionID,
 		// Traefik integration if used alongside
 		"traefik.enable": "false", // Caddy handles its own routing
 	}

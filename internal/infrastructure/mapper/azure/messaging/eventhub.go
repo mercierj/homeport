@@ -6,8 +6,8 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/agnostech/agnostech/internal/domain/mapper"
-	"github.com/agnostech/agnostech/internal/domain/resource"
+	"github.com/homeport/homeport/internal/domain/mapper"
+	"github.com/homeport/homeport/internal/domain/resource"
 )
 
 // EventHubMapper converts Azure Event Hubs to Kafka/Redpanda.
@@ -65,11 +65,11 @@ func (m *EventHubMapper) Map(ctx context.Context, res *resource.AWSResource) (*m
 	svc.Volumes = []string{
 		"./data/redpanda:/var/lib/redpanda/data",
 	}
-	svc.Networks = []string{"cloudexit"}
+	svc.Networks = []string{"homeport"}
 	svc.Labels = map[string]string{
-		"cloudexit.source":                                           "azurerm_eventhub",
-		"cloudexit.hub_name":                                         hubName,
-		"cloudexit.partition_count":                                  fmt.Sprintf("%d", partitionCount),
+		"homeport.source":                                           "azurerm_eventhub",
+		"homeport.hub_name":                                         hubName,
+		"homeport.partition_count":                                  fmt.Sprintf("%d", partitionCount),
 		"traefik.enable":                                             "true",
 		"traefik.http.routers.redpanda.rule":                         "Host(`redpanda.localhost`)",
 		"traefik.http.services.redpanda.loadbalancer.server.port":    "8082",

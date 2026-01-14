@@ -7,8 +7,8 @@ import (
 	"strings"
 	"time"
 
-	"github.com/agnostech/agnostech/internal/domain/mapper"
-	"github.com/agnostech/agnostech/internal/domain/resource"
+	"github.com/homeport/homeport/internal/domain/mapper"
+	"github.com/homeport/homeport/internal/domain/resource"
 )
 
 // ACMMapper converts AWS ACM certificates to Traefik with Let's Encrypt.
@@ -54,10 +54,10 @@ func (m *ACMMapper) Map(ctx context.Context, res *resource.AWSResource) (*mapper
 		"./data/letsencrypt:/letsencrypt",
 		"./config/traefik:/etc/traefik",
 	}
-	svc.Networks = []string{"cloudexit"}
+	svc.Networks = []string{"homeport"}
 	svc.Labels = map[string]string{
-		"cloudexit.source": "aws_acm_certificate",
-		"cloudexit.domain": domainName,
+		"homeport.source": "aws_acm_certificate",
+		"homeport.domain": domainName,
 		"traefik.enable":   "true",
 		"traefik.http.routers.dashboard.rule":                      "Host(`traefik.localhost`)",
 		"traefik.http.routers.dashboard.service":                   "api@internal",

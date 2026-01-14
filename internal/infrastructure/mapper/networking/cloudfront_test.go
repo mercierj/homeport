@@ -4,8 +4,8 @@ import (
 	"context"
 	"testing"
 
-	"github.com/agnostech/agnostech/internal/domain/mapper"
-	"github.com/agnostech/agnostech/internal/domain/resource"
+	"github.com/homeport/homeport/internal/domain/mapper"
+	"github.com/homeport/homeport/internal/domain/resource"
 )
 
 func TestNewCloudFrontMapper(t *testing.T) {
@@ -121,8 +121,8 @@ func TestCloudFrontMapper_Map(t *testing.T) {
 				if result.DockerService.Labels == nil {
 					t.Error("Expected labels to be configured")
 				}
-				if result.DockerService.Labels["cloudexit.source"] != "aws_cloudfront" {
-					t.Errorf("Expected source label to be aws_cloudfront, got %s", result.DockerService.Labels["cloudexit.source"])
+				if result.DockerService.Labels["homeport.source"] != "aws_cloudfront" {
+					t.Errorf("Expected source label to be aws_cloudfront, got %s", result.DockerService.Labels["homeport.source"])
 				}
 			},
 		},

@@ -90,10 +90,10 @@ export function SelectionSummary({ resources, selected, onSelectAll, onSelectNon
       {/* Header with count */}
       <div className="flex items-center justify-between">
         <div>
-          <div className="text-lg font-semibold text-gray-900">
+          <div className="text-lg font-semibold text-foreground">
             {selectedCount} of {totalCount} resources
           </div>
-          <div className="text-sm text-gray-500">selected for migration</div>
+          <div className="text-sm text-muted-foreground">selected for migration</div>
         </div>
 
         {/* Quick actions */}
@@ -101,7 +101,7 @@ export function SelectionSummary({ resources, selected, onSelectAll, onSelectNon
           <button
             onClick={onSelectAll}
             disabled={allSelected}
-            className="px-3 py-1.5 text-sm font-medium rounded-md bg-emerald-50 text-emerald-700 hover:bg-emerald-100 disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-1"
+            className="px-3 py-1.5 text-sm font-medium rounded-md bg-accent/10 text-accent hover:bg-accent/20 disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-1"
           >
             <CheckCircle2 className="w-4 h-4" />
             All
@@ -109,7 +109,7 @@ export function SelectionSummary({ resources, selected, onSelectAll, onSelectNon
           <button
             onClick={onSelectNone}
             disabled={noneSelected}
-            className="px-3 py-1.5 text-sm font-medium rounded-md bg-gray-100 text-gray-700 hover:bg-gray-200 disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-1"
+            className="px-3 py-1.5 text-sm font-medium rounded-md bg-muted text-muted-foreground hover:bg-muted/80 disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-1"
           >
             <XCircle className="w-4 h-4" />
             None
@@ -119,21 +119,21 @@ export function SelectionSummary({ resources, selected, onSelectAll, onSelectNon
 
       {/* Category breakdown */}
       <div className="space-y-2">
-        <div className="text-sm font-medium text-gray-700">By Category</div>
+        <div className="text-sm font-medium text-foreground">By Category</div>
         <div className="grid grid-cols-2 gap-2">
           {Array.from(categoryStats.entries()).map(([category, stats]) => (
             <div
               key={category}
-              className="flex items-center justify-between px-3 py-2 bg-gray-50 rounded-md"
+              className="flex items-center justify-between px-3 py-2 bg-muted rounded-md"
             >
               <div className="flex items-center gap-2">
                 <div
                   className="w-3 h-3 rounded-full"
                   style={{ backgroundColor: categoryColors[category] || '#6b7280' }}
                 />
-                <span className="text-sm text-gray-700 capitalize">{category}</span>
+                <span className="text-sm text-muted-foreground capitalize">{category}</span>
               </div>
-              <span className="text-sm font-medium text-gray-900">
+              <span className="text-sm font-medium text-foreground">
                 {stats.selected}/{stats.total}
               </span>
             </div>
@@ -144,17 +144,17 @@ export function SelectionSummary({ resources, selected, onSelectAll, onSelectNon
       {/* Region breakdown */}
       {regionStats.size > 0 && !regionStats.has('unknown') && (
         <div className="space-y-2">
-          <div className="text-sm font-medium text-gray-700">By Region</div>
+          <div className="text-sm font-medium text-foreground">By Region</div>
           <div className="max-h-40 overflow-y-auto space-y-1.5">
             {Array.from(regionStats.entries())
               .sort(([a], [b]) => a.localeCompare(b))
               .map(([region, stats]) => (
               <div
                 key={region}
-                className="flex items-center justify-between px-3 py-1.5 bg-blue-50 rounded-md"
+                className="flex items-center justify-between px-3 py-1.5 bg-info/10 rounded-md"
               >
-                <span className="text-sm text-blue-800 font-mono">{region}</span>
-                <span className="text-sm font-medium text-blue-900">
+                <span className="text-sm text-info font-mono">{region}</span>
+                <span className="text-sm font-medium text-info">
                   {stats.selected}/{stats.total}
                 </span>
               </div>
@@ -174,11 +174,11 @@ export function SelectionSummary({ resources, selected, onSelectAll, onSelectNon
             {warnings.map((w, i) => (
               <div
                 key={i}
-                className="text-xs text-gray-600 bg-amber-50 px-3 py-2 rounded"
+                className="text-xs text-muted-foreground bg-warning/10 px-3 py-2 rounded"
               >
                 <span className="font-medium">{w.resourceName}</span>
                 {' depends on '}
-                <span className="font-medium text-amber-700">{w.missingDependencyName}</span>
+                <span className="font-medium text-warning">{w.missingDependencyName}</span>
                 {' (not selected)'}
               </div>
             ))}
@@ -188,7 +188,7 @@ export function SelectionSummary({ resources, selected, onSelectAll, onSelectNon
 
       {/* All good indicator */}
       {warnings.length === 0 && selectedCount > 0 && (
-        <div className="flex items-center gap-2 text-sm text-emerald-700 bg-emerald-50 px-3 py-2 rounded">
+        <div className="flex items-center gap-2 text-sm text-accent bg-accent/10 px-3 py-2 rounded">
           <Check className="w-4 h-4" />
           All dependencies satisfied
         </div>

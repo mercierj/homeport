@@ -3,7 +3,7 @@ package cli
 import (
 	"fmt"
 
-	"github.com/agnostech/agnostech/pkg/version"
+	"github.com/homeport/homeport/pkg/version"
 	"github.com/spf13/cobra"
 )
 
@@ -11,9 +11,9 @@ import (
 var versionCmd = &cobra.Command{
 	Use:   "version",
 	Short: "Print the version information",
-	Long:  `Print the version, commit hash, and build date of the cloudexit CLI.`,
+	Long:  `Print the version, commit hash, and build date of the homeport CLI.`,
 	Run: func(cmd *cobra.Command, args []string) {
-		fmt.Printf("CloudExit CLI\n")
+		fmt.Printf("Homeport CLI\n")
 		fmt.Printf("Version:    %s\n", version.Version)
 		fmt.Printf("Commit:     %s\n", version.Commit)
 		fmt.Printf("Build Date: %s\n", version.Date)

@@ -154,9 +154,9 @@ export function ResourceDetailPanel({ resource, onClose }: ResourceDetailPanelPr
                 </span>
               </div>
               <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                <span className="px-1.5 py-0.5 bg-gray-100 rounded text-xs font-medium">{provider}</span>
+                <span className="px-1.5 py-0.5 bg-muted rounded text-xs font-medium">{provider}</span>
                 {resource.region && (
-                  <span className="px-1.5 py-0.5 bg-blue-50 text-blue-700 rounded text-xs font-medium">
+                  <span className="px-1.5 py-0.5 bg-info/10 text-info rounded text-xs font-medium">
                     {resource.region}
                   </span>
                 )}
@@ -168,7 +168,7 @@ export function ResourceDetailPanel({ resource, onClose }: ResourceDetailPanelPr
           {/* Close button */}
           <button
             onClick={onClose}
-            className="p-1.5 hover:bg-gray-100 rounded-lg transition-colors flex-shrink-0"
+            className="p-1.5 hover:bg-muted rounded-lg transition-colors flex-shrink-0"
           >
             <X className="w-5 h-5 text-gray-500" />
           </button>
@@ -178,7 +178,7 @@ export function ResourceDetailPanel({ resource, onClose }: ResourceDetailPanelPr
         {fields.length > 0 && (
           <div className="mt-4 grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-3">
             {fields.map((field, i) => (
-              <div key={i} className="p-2.5 bg-gray-50 rounded-lg">
+              <div key={i} className="p-2.5 bg-muted rounded-lg">
                 <div className="flex items-center gap-1.5 text-xs text-muted-foreground mb-1">
                   <field.icon className="w-3.5 h-3.5" />
                   {field.label}
@@ -197,7 +197,7 @@ export function ResourceDetailPanel({ resource, onClose }: ResourceDetailPanelPr
             <span className="text-muted-foreground">Depends on:</span>
             <div className="flex flex-wrap gap-1.5">
               {resource.dependencies.map((dep, i) => (
-                <span key={i} className="px-2 py-0.5 bg-gray-100 rounded text-xs font-medium">
+                <span key={i} className="px-2 py-0.5 bg-muted rounded text-xs font-medium">
                   {dep}
                 </span>
               ))}

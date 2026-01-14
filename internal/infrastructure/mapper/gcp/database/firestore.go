@@ -6,8 +6,8 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/agnostech/agnostech/internal/domain/mapper"
-	"github.com/agnostech/agnostech/internal/domain/resource"
+	"github.com/homeport/homeport/internal/domain/mapper"
+	"github.com/homeport/homeport/internal/domain/resource"
 )
 
 // FirestoreMapper converts GCP Firestore to MongoDB containers.
@@ -52,9 +52,9 @@ func (m *FirestoreMapper) Map(ctx context.Context, res *resource.AWSResource) (*
 	}
 	svc.Restart = "unless-stopped"
 	svc.Labels = map[string]string{
-		"cloudexit.source":   "google_firestore_database",
-		"cloudexit.engine":   "mongodb",
-		"cloudexit.database": dbName,
+		"homeport.source":   "google_firestore_database",
+		"homeport.engine":   "mongodb",
+		"homeport.database": dbName,
 	}
 
 	migrationScript := m.generateMigrationScript(dbName)

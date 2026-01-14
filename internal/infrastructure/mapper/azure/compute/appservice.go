@@ -7,8 +7,8 @@ import (
 	"strings"
 	"time"
 
-	"github.com/agnostech/agnostech/internal/domain/mapper"
-	"github.com/agnostech/agnostech/internal/domain/resource"
+	"github.com/homeport/homeport/internal/domain/mapper"
+	"github.com/homeport/homeport/internal/domain/resource"
 )
 
 // AppServiceMapper converts Azure App Service to Docker containers.
@@ -74,13 +74,13 @@ func (m *AppServiceMapper) Map(ctx context.Context, res *resource.AWSResource) (
 		svc.Ports = append(svc.Ports, "443:443")
 	}
 
-	svc.Networks = []string{"cloudexit"}
+	svc.Networks = []string{"homeport"}
 	svc.Restart = "unless-stopped"
 
 	svc.Labels = map[string]string{
-		"cloudexit.source":   "azurerm_app_service",
-		"cloudexit.app_name": appName,
-		"cloudexit.runtime":  runtime,
+		"homeport.source":   "azurerm_app_service",
+		"homeport.app_name": appName,
+		"homeport.runtime":  runtime,
 		"traefik.enable":     "true",
 		"traefik.http.routers." + m.sanitizeName(appName) + ".rule": fmt.Sprintf("Host(`%s.localhost`)", m.sanitizeName(appName)),
 	}
@@ -290,7 +290,7 @@ func (m *AppServiceMapper) applySiteConfig(siteConfig interface{}, svc *mapper.D
 
 		// Handle websockets
 		if websockets, ok := configMap["websockets_enabled"].(bool); ok && websockets {
-			svc.Labels["cloudexit.websockets"] = "true"
+			svc.Labels["homeport.websockets"] = "true"
 		}
 
 		// Handle remote debugging

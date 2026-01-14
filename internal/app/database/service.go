@@ -5,8 +5,8 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/agnostech/agnostech/internal/app/database/security"
-	"github.com/agnostech/agnostech/internal/pkg/logger"
+	"github.com/homeport/homeport/internal/app/database/security"
+	"github.com/homeport/homeport/internal/pkg/logger"
 	"github.com/jackc/pgx/v5"
 	"github.com/jackc/pgx/v5/pgxpool"
 )

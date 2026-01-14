@@ -6,8 +6,8 @@ import (
 	"fmt"
 	"strings"
 
-	"github.com/agnostech/agnostech/internal/domain/mapper"
-	"github.com/agnostech/agnostech/internal/domain/resource"
+	"github.com/homeport/homeport/internal/domain/mapper"
+	"github.com/homeport/homeport/internal/domain/resource"
 )
 
 // FirewallMapper converts Azure Firewall to iptables or OPNsense.
@@ -52,11 +52,11 @@ func (m *FirewallMapper) Map(ctx context.Context, res *resource.AWSResource) (*m
 		"./data/opnsense/config:/conf",
 		"./data/opnsense/log:/var/log",
 	}
-	svc.Networks = []string{"cloudexit"}
+	svc.Networks = []string{"homeport"}
 	svc.Labels = map[string]string{
-		"cloudexit.source":        "azurerm_firewall",
-		"cloudexit.firewall_name": firewallName,
-		"cloudexit.sku_tier":      skuTier,
+		"homeport.source":        "azurerm_firewall",
+		"homeport.firewall_name": firewallName,
+		"homeport.sku_tier":      skuTier,
 		"traefik.enable":          "false",
 	}
 	svc.CapAdd = []string{"NET_ADMIN", "NET_RAW"}
