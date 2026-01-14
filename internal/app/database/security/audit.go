@@ -11,6 +11,16 @@ import (
 	"time"
 )
 
+// Context key types for audit values
+type contextKey string
+
+const (
+	contextKeyUsername  contextKey = "username"
+	contextKeySessionID contextKey = "session_id"
+	contextKeyIPAddress contextKey = "ip_address"
+	contextKeyRequestID contextKey = "request_id"
+)
+
 // QueryAuditEntry represents a logged query execution
 type QueryAuditEntry struct {
 	// Identification
@@ -313,16 +323,16 @@ func hashQuery(query string) string {
 // AuditContext adds audit-related values to a context
 func AuditContext(ctx context.Context, username, sessionID, ipAddress, requestID string) context.Context {
 	if username != "" {
-		ctx = context.WithValue(ctx, "username", username)
+		ctx = context.WithValue(ctx, contextKeyUsername, username)
 	}
 	if sessionID != "" {
-		ctx = context.WithValue(ctx, "session_id", sessionID)
+		ctx = context.WithValue(ctx, contextKeySessionID, sessionID)
 	}
 	if ipAddress != "" {
-		ctx = context.WithValue(ctx, "ip_address", ipAddress)
+		ctx = context.WithValue(ctx, contextKeyIPAddress, ipAddress)
 	}
 	if requestID != "" {
-		ctx = context.WithValue(ctx, "request_id", requestID)
+		ctx = context.WithValue(ctx, contextKeyRequestID, requestID)
 	}
 	return ctx
 }

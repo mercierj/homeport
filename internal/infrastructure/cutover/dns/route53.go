@@ -99,9 +99,7 @@ func (p *Route53Provider) ValidateCredentials(ctx context.Context) error {
 	}
 
 	// Normalize hosted zone ID (remove /hostedzone/ prefix if present)
-	if strings.HasPrefix(p.hostedZoneID, "/hostedzone/") {
-		p.hostedZoneID = strings.TrimPrefix(p.hostedZoneID, "/hostedzone/")
-	}
+	p.hostedZoneID = strings.TrimPrefix(p.hostedZoneID, "/hostedzone/")
 
 	// Would validate with AWS SDK
 	return nil

@@ -320,8 +320,8 @@ func init() {
 	stackCmd.PersistentFlags().IntVar(&stackAPIPort, "api-port", 8080, "API server port")
 
 	// Bind flags to viper
-	viper.BindPFlag("api.host", stackCmd.PersistentFlags().Lookup("api-host"))
-	viper.BindPFlag("api.port", stackCmd.PersistentFlags().Lookup("api-port"))
+	_ = viper.BindPFlag("api.host", stackCmd.PersistentFlags().Lookup("api-host"))
+	_ = viper.BindPFlag("api.port", stackCmd.PersistentFlags().Lookup("api-port"))
 
 	// Add subcommands
 	stackCmd.AddCommand(stackListCmd)

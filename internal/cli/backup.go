@@ -7,7 +7,6 @@ import (
 	"io"
 	"net/http"
 	"os"
-	"strings"
 	"time"
 
 	"github.com/homeport/homeport/internal/cli/ui"
@@ -471,12 +470,4 @@ func formatBytes(bytes int64) string {
 		exp++
 	}
 	return fmt.Sprintf("%.1f %cB", float64(bytes)/float64(div), "KMGTPE"[exp])
-}
-
-// maskValue masks a secret value for display
-func maskValue(value string) string {
-	if len(value) <= 4 {
-		return strings.Repeat("*", len(value))
-	}
-	return value[:2] + strings.Repeat("*", len(value)-4) + value[len(value)-2:]
 }

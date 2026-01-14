@@ -350,7 +350,6 @@ type GenerateResponse struct {
 // Generate creates Docker Compose stack from resources.
 func (s *Service) Generate(ctx context.Context, req GenerateRequest) (*GenerateResponse, error) {
 	results := make([]*mapper.MappingResult, 0)
-	warnings := []string{}
 
 	for _, res := range req.Resources {
 		awsRes := &resource.AWSResource{
@@ -363,7 +362,7 @@ func (s *Service) Generate(ctx context.Context, req GenerateRequest) (*GenerateR
 
 		result, err := s.registry.Map(ctx, awsRes)
 		if err != nil {
-			warnings = append(warnings, fmt.Sprintf("Failed to map %s: %v", res.Name, err))
+			// Mapping failed, skip this resource
 			continue
 		}
 		results = append(results, result)

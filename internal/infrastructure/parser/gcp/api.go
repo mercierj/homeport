@@ -19,7 +19,7 @@ import (
 	"cloud.google.com/go/firestore/apiv1/admin/adminpb"
 	functions "cloud.google.com/go/functions/apiv2"
 	"cloud.google.com/go/functions/apiv2/functionspb"
-	"cloud.google.com/go/pubsub"
+	"cloud.google.com/go/pubsub" //nolint:staticcheck // Deprecated but v2 requires significant migration
 	redis "cloud.google.com/go/redis/apiv1"
 	"cloud.google.com/go/redis/apiv1/redispb"
 	run "cloud.google.com/go/run/apiv2"
@@ -647,12 +647,12 @@ func (p *APIParser) scanGKE(ctx context.Context, infra *resource.Infrastructure,
 			res.Config["location"] = cluster.Location
 			res.Config["status"] = cluster.Status.String()
 			res.Config["current_master_version"] = cluster.CurrentMasterVersion
-			res.Config["current_node_version"] = cluster.CurrentNodeVersion
+			res.Config["current_node_version"] = cluster.CurrentNodeVersion //nolint:staticcheck // Deprecated in GCP API but still useful
 			res.Config["endpoint"] = cluster.Endpoint
 			res.Config["services_ipv4_cidr"] = cluster.ServicesIpv4Cidr
 			res.Config["cluster_ipv4_cidr"] = cluster.ClusterIpv4Cidr
 			res.Config["initial_cluster_version"] = cluster.InitialClusterVersion
-			res.Config["node_count"] = cluster.CurrentNodeCount
+			res.Config["node_count"] = cluster.CurrentNodeCount //nolint:staticcheck // Deprecated in GCP API but still useful
 			res.Config["network"] = cluster.Network
 			res.Config["subnetwork"] = cluster.Subnetwork
 
@@ -712,8 +712,8 @@ func (p *APIParser) scanGKE(ctx context.Context, infra *resource.Infrastructure,
 
 			// Private cluster config
 			if cluster.PrivateClusterConfig != nil {
-				res.Config["enable_private_nodes"] = cluster.PrivateClusterConfig.EnablePrivateNodes
-				res.Config["enable_private_endpoint"] = cluster.PrivateClusterConfig.EnablePrivateEndpoint
+				res.Config["enable_private_nodes"] = cluster.PrivateClusterConfig.EnablePrivateNodes           //nolint:staticcheck // Deprecated in GCP API but still useful
+				res.Config["enable_private_endpoint"] = cluster.PrivateClusterConfig.EnablePrivateEndpoint     //nolint:staticcheck // Deprecated in GCP API but still useful
 				res.Config["master_ipv4_cidr_block"] = cluster.PrivateClusterConfig.MasterIpv4CidrBlock
 			}
 

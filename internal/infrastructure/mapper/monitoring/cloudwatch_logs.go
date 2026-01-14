@@ -410,7 +410,7 @@ echo "  curl '$LOKI_URL/loki/api/v1/query?query={job=\"cloudwatch-import\"}&limi
 func (m *CloudWatchLogsMapper) addMigrationWarnings(result *mapper.MappingResult, res *resource.AWSResource, logGroupName string) {
 	// Retention warning
 	if retentionDays := res.Config["retention_in_days"]; retentionDays != nil {
-		result.AddWarning(fmt.Sprintf("Log retention configured in CloudWatch. Loki retention set accordingly."))
+		result.AddWarning("Log retention configured in CloudWatch. Loki retention set accordingly.")
 	} else {
 		result.AddWarning("No retention set in CloudWatch (logs kept forever). Configure Loki retention as needed.")
 	}

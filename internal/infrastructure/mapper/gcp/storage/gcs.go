@@ -318,12 +318,9 @@ func (m *GCSMapper) isPublicBucket(res *resource.AWSResource) bool {
 		return false
 	}
 
-	// Check IAM configuration for allUsers or allAuthenticatedUsers
-	if iamConfig := res.Config["iam_configuration"]; iamConfig != nil {
-		// GCS uses bucket-level IAM, check if bucket is public via IAM
-		// This would need to check the associated IAM bindings
-		// For now, we'll return false and let the user configure manually
-	}
+	// GCS uses bucket-level IAM, check if bucket is public via IAM
+	// This would need to check the associated IAM bindings
+	// For now, we'll return false and let the user configure manually
 
 	return false
 }

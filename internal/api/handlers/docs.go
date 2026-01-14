@@ -64,7 +64,7 @@ func (h *DocsHandler) HandleSwaggerUI(w http.ResponseWriter, r *http.Request) {
 </body>
 </html>`
 	w.Header().Set("Content-Type", "text/html; charset=utf-8")
-	w.Write([]byte(html))
+	_, _ = w.Write([]byte(html))
 }
 
 // HandleOpenAPISpec serves the OpenAPI specification file.
@@ -76,7 +76,7 @@ func (h *DocsHandler) HandleOpenAPISpec(w http.ResponseWriter, r *http.Request) 
 	}
 	w.Header().Set("Content-Type", "application/yaml")
 	w.Header().Set("Access-Control-Allow-Origin", "*")
-	w.Write(spec)
+	_, _ = w.Write(spec)
 }
 
 // HandleReDoc serves the ReDoc documentation page (alternative to Swagger UI).
@@ -98,5 +98,5 @@ func (h *DocsHandler) HandleReDoc(w http.ResponseWriter, r *http.Request) {
 </body>
 </html>`
 	w.Header().Set("Content-Type", "text/html; charset=utf-8")
-	w.Write([]byte(html))
+	_, _ = w.Write([]byte(html))
 }

@@ -8,13 +8,23 @@ import (
 	"strconv"
 	"strings"
 
+	"github.com/go-chi/chi/v5"
+	chimiddleware "github.com/go-chi/chi/v5/middleware"
+	"github.com/go-chi/render"
 	"github.com/homeport/homeport/internal/api/middleware"
 	"github.com/homeport/homeport/internal/app/database"
 	"github.com/homeport/homeport/internal/app/database/security"
 	"github.com/homeport/homeport/internal/pkg/httputil"
-	"github.com/go-chi/chi/v5"
-	chimiddleware "github.com/go-chi/chi/v5/middleware"
-	"github.com/go-chi/render"
+)
+
+// Context key type for database handler audit values
+type dbContextKey string
+
+const (
+	dbContextKeyRequestID dbContextKey = "request_id"
+	dbContextKeyUsername  dbContextKey = "username"
+	dbContextKeySessionID dbContextKey = "session_id"
+	dbContextKeyIPAddress dbContextKey = "ip_address"
 )
 
 const (
@@ -121,13 +131,13 @@ func addAuditContext(r *http.Request) context.Context {
 
 	// Add request ID
 	if reqID := chimiddleware.GetReqID(ctx); reqID != "" {
-		ctx = context.WithValue(ctx, "request_id", reqID)
+		ctx = context.WithValue(ctx, dbContextKeyRequestID, reqID)
 	}
 
 	// Add username from session
 	if session := middleware.GetSession(r); session != nil {
-		ctx = context.WithValue(ctx, "username", session.Username)
-		ctx = context.WithValue(ctx, "session_id", session.Token[:8]+"...") // Truncated for privacy
+		ctx = context.WithValue(ctx, dbContextKeyUsername, session.Username)
+		ctx = context.WithValue(ctx, dbContextKeySessionID, session.Token[:8]+"...") // Truncated for privacy
 	}
 
 	// Add client IP
@@ -136,7 +146,7 @@ func addAuditContext(r *http.Request) context.Context {
 		if colonIdx := strings.LastIndex(ip, ":"); colonIdx != -1 {
 			ip = ip[:colonIdx]
 		}
-		ctx = context.WithValue(ctx, "ip_address", ip)
+		ctx = context.WithValue(ctx, dbContextKeyIPAddress, ip)
 	}
 
 	return ctx

@@ -88,13 +88,13 @@ func (c *CredentialConfig) ClientOptions(ctx context.Context) ([]option.ClientOp
 		if c.CredentialsFile == "" {
 			return nil, fmt.Errorf("service account file path is required")
 		}
-		opts = append(opts, option.WithCredentialsFile(c.CredentialsFile))
+		opts = append(opts, option.WithCredentialsFile(c.CredentialsFile)) //nolint:staticcheck // Deprecated but no alternative yet
 
 	case CredentialSourceEnvironment:
 		// Use GOOGLE_APPLICATION_CREDENTIALS
 		credFile := os.Getenv("GOOGLE_APPLICATION_CREDENTIALS")
 		if credFile != "" {
-			opts = append(opts, option.WithCredentialsFile(credFile))
+			opts = append(opts, option.WithCredentialsFile(credFile)) //nolint:staticcheck // Deprecated but no alternative yet
 		}
 
 	case CredentialSourceDefault, CredentialSourceUserAccount:

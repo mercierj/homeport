@@ -92,7 +92,7 @@ func (h *DataMigrationHandler) HandleValidate(w http.ResponseWriter, r *http.Req
 	}
 
 	w.Header().Set("Content-Type", "application/json")
-	json.NewEncoder(w).Encode(ValidateResponse{
+	_ = json.NewEncoder(w).Encode(ValidateResponse{
 		Valid:    result.Valid,
 		Errors:   result.Errors,
 		Warnings: result.Warnings,
@@ -127,7 +127,7 @@ func (h *DataMigrationHandler) HandleExecute(w http.ResponseWriter, r *http.Requ
 	if !result.Valid {
 		w.Header().Set("Content-Type", "application/json")
 		w.WriteHeader(http.StatusBadRequest)
-		json.NewEncoder(w).Encode(ValidateResponse{
+		_ = json.NewEncoder(w).Encode(ValidateResponse{
 			Valid:  false,
 			Errors: result.Errors,
 		})
@@ -143,7 +143,7 @@ func (h *DataMigrationHandler) HandleExecute(w http.ResponseWriter, r *http.Requ
 	}
 
 	w.Header().Set("Content-Type", "application/json")
-	json.NewEncoder(w).Encode(ExecuteResponse{
+	_ = json.NewEncoder(w).Encode(ExecuteResponse{
 		MigrationID: migration.ID,
 	})
 }
@@ -210,7 +210,7 @@ func (h *DataMigrationHandler) HandleStatus(w http.ResponseWriter, r *http.Reque
 	}
 
 	w.Header().Set("Content-Type", "application/json")
-	json.NewEncoder(w).Encode(MigrationStatusResponse{
+	_ = json.NewEncoder(w).Encode(MigrationStatusResponse{
 		ID:           migration.ID,
 		Status:       string(migration.Status),
 		CurrentPhase: migration.CurrentPhase,
@@ -229,7 +229,7 @@ func (h *DataMigrationHandler) HandleCancel(w http.ResponseWriter, r *http.Reque
 	}
 
 	w.Header().Set("Content-Type", "application/json")
-	w.Write([]byte(`{"status":"cancelled"}`))
+	_, _ = w.Write([]byte(`{"status":"cancelled"}`))
 }
 
 // HandleListTypes lists available migration types.
@@ -238,7 +238,7 @@ func (h *DataMigrationHandler) HandleListTypes(w http.ResponseWriter, r *http.Re
 	types := h.service.ListExecutors()
 
 	w.Header().Set("Content-Type", "application/json")
-	json.NewEncoder(w).Encode(ListTypesResponse{
+	_ = json.NewEncoder(w).Encode(ListTypesResponse{
 		Types: types,
 	})
 }

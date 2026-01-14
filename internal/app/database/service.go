@@ -142,9 +142,7 @@ func NewServiceWithSecurity(ctx context.Context, cfg Config, secCfg *SecurityCon
 	}
 
 	// Add custom ACL rules
-	for _, rule := range secCfg.CustomACLRules {
-		secMgrConfig.ACL.Rules = append(secMgrConfig.ACL.Rules, rule)
-	}
+	secMgrConfig.ACL.Rules = append(secMgrConfig.ACL.Rules, secCfg.CustomACLRules...)
 
 	secMgr := security.NewManager(secMgrConfig)
 

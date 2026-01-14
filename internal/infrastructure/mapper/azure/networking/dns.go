@@ -240,11 +240,11 @@ func (m *DNSMapper) generatePowerDNSZoneSQL(zoneName string, res *resource.AWSRe
 	sb.WriteString(fmt.Sprintf("-- DOMAIN_ID=$(sqlite3 /var/lib/powerdns/pdns.sqlite3 \"SELECT id FROM domains WHERE name='%s';\")\n\n", zoneName))
 
 	sb.WriteString("-- SOA record\n")
-	sb.WriteString(fmt.Sprintf("INSERT INTO records (domain_id, name, type, content, ttl, prio) VALUES\n"))
+	sb.WriteString("INSERT INTO records (domain_id, name, type, content, ttl, prio) VALUES\n")
 	sb.WriteString(fmt.Sprintf("(%s, '%s', 'SOA', 'ns1.%s. admin.%s. 2024010101 3600 1800 604800 86400', 3600, 0);\n\n", domainID, zoneName, zoneName, zoneName))
 
 	sb.WriteString("-- NS records\n")
-	sb.WriteString(fmt.Sprintf("INSERT INTO records (domain_id, name, type, content, ttl, prio) VALUES\n"))
+	sb.WriteString("INSERT INTO records (domain_id, name, type, content, ttl, prio) VALUES\n")
 	sb.WriteString(fmt.Sprintf("(%s, '%s', 'NS', 'ns1.%s.', 3600, 0),\n", domainID, zoneName, zoneName))
 	sb.WriteString(fmt.Sprintf("(%s, '%s', 'NS', 'ns2.%s.', 3600, 0);\n\n", domainID, zoneName, zoneName))
 
@@ -292,21 +292,4 @@ echo "4. Update your domain registrar's nameservers"
 echo ""
 echo "Alternative: To use PowerDNS instead, see config/powerdns/"
 `, zoneName, zoneName, zoneName, zoneName)
-}
-
-// sanitizeName creates a valid Docker service name.
-func (m *DNSMapper) sanitizeName(name string) string {
-	name = strings.ToLower(name)
-	name = strings.ReplaceAll(name, "_", "-")
-	validName := ""
-	for _, ch := range name {
-		if (ch >= 'a' && ch <= 'z') || (ch >= '0' && ch <= '9') || ch == '-' {
-			validName += string(ch)
-		}
-	}
-	validName = strings.TrimLeft(validName, "-0123456789")
-	if validName == "" {
-		validName = "coredns"
-	}
-	return validName
 }

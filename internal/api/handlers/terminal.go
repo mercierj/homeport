@@ -158,10 +158,10 @@ func (h *TerminalHandler) HandleExec(w http.ResponseWriter, r *http.Request) {
 
 	session, err := h.service.CreateSession(ctx, containerID, uint(cols), uint(rows))
 	if err != nil {
-		sendError(conn, "session_error", err.Error())
+		_ = sendError(conn, "session_error", err.Error())
 		return
 	}
-	defer h.service.CloseSession(session.ID)
+	defer func() { _ = h.service.CloseSession(session.ID) }()
 
 	// Send connected message
 	_ = sendMessage(conn, "connected", ConnectedData{

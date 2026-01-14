@@ -867,8 +867,8 @@ func TestAzureMigration_CompleteStack(t *testing.T) {
 	// Write all files
 	for name, content := range output.Files {
 		filePath := filepath.Join(outputDir, name)
-		os.MkdirAll(filepath.Dir(filePath), 0755)
-		os.WriteFile(filePath, content, 0644)
+		_ = os.MkdirAll(filepath.Dir(filePath), 0755)
+		_ = os.WriteFile(filePath, content, 0644)
 		t.Logf("Generated: %s", name)
 	}
 

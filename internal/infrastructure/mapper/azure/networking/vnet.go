@@ -160,8 +160,8 @@ func (m *VNetMapper) generateNetworkConfig(networkName, subnet string) string {
 
 	sb.WriteString(fmt.Sprintf("# Docker network configuration for: %s\n\n", networkName))
 	sb.WriteString("# To create this network, run:\n")
-	sb.WriteString(fmt.Sprintf("# docker network create \\\n"))
-	sb.WriteString(fmt.Sprintf("#   --driver=bridge \\\n"))
+	sb.WriteString("# docker network create \\\n")
+	sb.WriteString("#   --driver=bridge \\\n")
 
 	if subnet != "" {
 		sb.WriteString(fmt.Sprintf("#   --subnet=%s \\\n", subnet))
@@ -234,7 +234,7 @@ func (m *VNetMapper) generateComposeNetworks(vnetName string, addressSpaces []st
 func (m *VNetMapper) generateSetupScript(vnetName string, addressSpaces []string, subnets []interface{}) string {
 	var sb strings.Builder
 
-	sb.WriteString(fmt.Sprintf("#!/bin/bash\n"))
+	sb.WriteString("#!/bin/bash\n")
 	sb.WriteString(fmt.Sprintf("# Network setup script for Azure VNet: %s\n\n", vnetName))
 	sb.WriteString("set -e\n\n")
 
@@ -254,7 +254,7 @@ func (m *VNetMapper) generateSetupScript(vnetName string, addressSpaces []string
 
 				sb.WriteString(fmt.Sprintf("# Create network: %s\n", networkName))
 				sb.WriteString(fmt.Sprintf("if ! docker network ls | grep -q %s; then\n", networkName))
-				sb.WriteString(fmt.Sprintf("  docker network create \\\n"))
+				sb.WriteString("  docker network create \\\n")
 				sb.WriteString("    --driver=bridge \\\n")
 
 				if addressPrefix != "" {
@@ -274,7 +274,7 @@ func (m *VNetMapper) generateSetupScript(vnetName string, addressSpaces []string
 		networkName := m.sanitizeName(vnetName)
 		sb.WriteString(fmt.Sprintf("# Create network: %s\n", networkName))
 		sb.WriteString(fmt.Sprintf("if ! docker network ls | grep -q %s; then\n", networkName))
-		sb.WriteString(fmt.Sprintf("  docker network create \\\n"))
+		sb.WriteString("  docker network create \\\n")
 		sb.WriteString("    --driver=bridge \\\n")
 		sb.WriteString(fmt.Sprintf("    --subnet=%s \\\n", addressSpaces[0]))
 		sb.WriteString(fmt.Sprintf("    --label homeport.vnet=%s \\\n", vnetName))

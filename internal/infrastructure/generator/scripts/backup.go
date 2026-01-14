@@ -481,7 +481,7 @@ log "Restore completed successfully"
 
 // generateSystemdTimer generates a systemd timer for automated backups.
 func (g *BackupGenerator) generateSystemdTimer() (string, error) {
-	return fmt.Sprintf(`[Unit]
+	return `[Unit]
 Description=Homeport Backup Timer
 Requires=backup.service
 
@@ -492,12 +492,12 @@ Persistent=true
 
 [Install]
 WantedBy=timers.target
-`), nil
+`, nil
 }
 
 // generateSystemdService generates a systemd service for backups.
 func (g *BackupGenerator) generateSystemdService() (string, error) {
-	return fmt.Sprintf(`[Unit]
+	return `[Unit]
 Description=Homeport Backup Service
 After=docker.service
 Requires=docker.service
@@ -510,7 +510,7 @@ StandardError=journal
 
 [Install]
 WantedBy=multi-user.target
-`), nil
+`, nil
 }
 
 // contains checks if a string contains a substring.

@@ -290,7 +290,7 @@ func (h *PolicyHandler) HandleExportOriginal(w http.ResponseWriter, r *http.Requ
 	}
 
 	w.Header().Set("Content-Type", contentType)
-	w.Write(doc)
+	_, _ = w.Write(doc)
 }
 
 // HandleGetSummary returns policy statistics.

@@ -3,7 +3,6 @@ package hetzner
 
 import (
 	"bytes"
-	"fmt"
 	"strings"
 
 	"github.com/homeport/homeport/internal/domain/generator"
@@ -72,7 +71,7 @@ func GenerateComputeTF(categorized *CategorizedResults, config *generator.Target
 
 	// Main application servers
 	buf.WriteString("# Application Servers\n")
-	buf.WriteString(fmt.Sprintf(`resource "hcloud_server" "app" {
+	buf.WriteString(`resource "hcloud_server" "app" {
   count       = var.server_count
   name        = "${local.project_name}-app-${count.index}"
   server_type = var.server_type
@@ -100,7 +99,7 @@ func GenerateComputeTF(categorized *CategorizedResults, config *generator.Target
   }
 }
 
-`))
+`)
 
 	// Server network attachment
 	buf.WriteString("# Attach servers to private network\n")

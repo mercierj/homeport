@@ -155,8 +155,8 @@ CMD ["celery", "-A", "tasks", "worker", "--loglevel=info", "--concurrency=4"]
 `
 }
 
-func (m *CloudTasksMapper) generateTasksExample(queueName string) string {
-	return fmt.Sprintf(`# Celery Tasks
+func (m *CloudTasksMapper) generateTasksExample(_ string) string {
+	return `# Celery Tasks
 # Migration from GCP Cloud Tasks to Celery
 
 from celery import Celery
@@ -193,7 +193,7 @@ def process_data(data):
     """Example data processing task."""
     logger.info(f"Processing data: {data}")
     return {'status': 'completed', 'data': data}
-`)
+`
 }
 
 func (m *CloudTasksMapper) generateComposeSnippet(queueName string) string {

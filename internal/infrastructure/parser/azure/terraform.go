@@ -93,7 +93,7 @@ func (p *TerraformAzureParser) AutoDetect(path string) (bool, float64) {
 	if info.IsDir() {
 		tfCount := 0
 		azureCount := 0
-		filepath.Walk(path, func(p string, info os.FileInfo, err error) error {
+		_ = filepath.Walk(path, func(p string, info os.FileInfo, err error) error {
 			if err != nil || info.IsDir() {
 				return nil
 			}
@@ -157,7 +157,7 @@ func (p *TerraformAzureParser) Parse(ctx context.Context, path string, opts *par
 		}
 
 		// Parse .tf files
-		filepath.Walk(path, func(filePath string, info os.FileInfo, err error) error {
+		_ = filepath.Walk(path, func(filePath string, info os.FileInfo, err error) error {
 			if err != nil || info.IsDir() {
 				return nil
 			}

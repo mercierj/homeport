@@ -163,9 +163,9 @@ resource "google_storage_bucket" "assets" {
 
 		// GCP parser needs a directory
 		gcpDir := filepath.Join(tmpDir, "gcp")
-		os.MkdirAll(gcpDir, 0755)
+		_ = os.MkdirAll(gcpDir, 0755)
 		gcpFilePath := filepath.Join(gcpDir, "main.tf")
-		os.WriteFile(gcpFilePath, []byte(gcpContent), 0644)
+		_ = os.WriteFile(gcpFilePath, []byte(gcpContent), 0644)
 
 		infra, err := p.Parse(ctx, gcpDir, parser.NewParseOptions())
 		if err != nil {
@@ -342,7 +342,6 @@ func TestMultiCloudMigration_HandleMixedInfrastructure(t *testing.T) {
 
 	// Map all resources from all providers
 	var allResults []*mapper.MappingResult
-	var allWarnings []string
 
 	for provider, infra := range infrastructures {
 		t.Logf("Processing %s resources:", provider)
@@ -362,7 +361,6 @@ func TestMultiCloudMigration_HandleMixedInfrastructure(t *testing.T) {
 
 			if result != nil {
 				allResults = append(allResults, result)
-				allWarnings = append(allWarnings, result.Warnings...)
 
 				if result.DockerService != nil {
 					t.Logf("  Mapped %s -> %s", res.ID, result.DockerService.Name)
@@ -618,8 +616,6 @@ func TestMultiCloudMigration_UnifiedOutputGeneration(t *testing.T) {
 
 	// Map all resources
 	var results []*mapper.MappingResult
-	var allConfigs []byte
-	var allScripts []string
 
 	for _, res := range resources {
 		m, err := mapper.Get(res.Type)
@@ -636,16 +632,6 @@ func TestMultiCloudMigration_UnifiedOutputGeneration(t *testing.T) {
 
 		if result != nil {
 			results = append(results, result)
-
-			// Collect configs
-			for _, content := range result.Configs {
-				allConfigs = append(allConfigs, content...)
-			}
-
-			// Collect scripts
-			for name := range result.Scripts {
-				allScripts = append(allScripts, name)
-			}
 		}
 	}
 
@@ -690,15 +676,15 @@ func TestMultiCloudMigration_UnifiedOutputGeneration(t *testing.T) {
 		// Write scripts
 		for name, content := range result.Scripts {
 			scriptPath := filepath.Join(outputDir, "scripts", name)
-			os.MkdirAll(filepath.Dir(scriptPath), 0755)
-			os.WriteFile(scriptPath, content, 0755)
+			_ = os.MkdirAll(filepath.Dir(scriptPath), 0755)
+			_ = os.WriteFile(scriptPath, content, 0755)
 		}
 
 		// Write configs
 		for name, content := range result.Configs {
 			configPath := filepath.Join(outputDir, "configs", name)
-			os.MkdirAll(filepath.Dir(configPath), 0755)
-			os.WriteFile(configPath, content, 0644)
+			_ = os.MkdirAll(filepath.Dir(configPath), 0755)
+			_ = os.WriteFile(configPath, content, 0644)
 		}
 	}
 
@@ -730,7 +716,7 @@ func TestMultiCloudMigration_UnifiedOutputGeneration(t *testing.T) {
 	t.Logf("  - Output directory: %s", outputDir)
 
 	// List all generated files
-	filepath.Walk(outputDir, func(path string, info os.FileInfo, err error) error {
+	_ = filepath.Walk(outputDir, func(path string, info os.FileInfo, err error) error {
 		if err != nil || info.IsDir() {
 			return nil
 		}

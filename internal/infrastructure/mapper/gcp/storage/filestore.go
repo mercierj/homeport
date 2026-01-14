@@ -130,9 +130,9 @@ func (m *FilestoreMapper) Map(ctx context.Context, res *resource.AWSResource) (*
 	}
 
 	// Add usage instructions
-	result.AddManualStep(fmt.Sprintf("NFS server will be accessible at: nfs://<docker-host-ip>:2049/data"))
+	result.AddManualStep("NFS server will be accessible at: nfs://<docker-host-ip>:2049/data")
 	result.AddManualStep("Mount on clients using: mount -t nfs -o vers=4 <docker-host-ip>:/data /mnt/nfs")
-	result.AddManualStep(fmt.Sprintf("Or use the NFS volume driver in docker-compose (see nfs-client-example.yml)"))
+	result.AddManualStep("Or use the NFS volume driver in docker-compose (see nfs-client-example.yml)")
 	result.AddManualStep("Ensure NFS client packages are installed on client systems: nfs-common (Debian/Ubuntu) or nfs-utils (RHEL/CentOS)")
 
 	return result, nil

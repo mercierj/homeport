@@ -366,15 +366,3 @@ func getHAInstanceCount(level target.HALevel) int {
 		return 2 // Default for multi-server
 	}
 }
-
-// For the config level
-func getHAInstanceCountFromLevel(level string) int {
-	switch level {
-	case "multi-server":
-		return 2
-	case "cluster":
-		return 3
-	default:
-		return 1
-	}
-}

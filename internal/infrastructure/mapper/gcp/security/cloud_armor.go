@@ -318,7 +318,7 @@ func (m *CloudArmorMapper) convertVersionedExprToModSec(ruleID int, versionedExp
 		rule.WriteString("# Source IP validation (configured in IP lists)\n")
 	case strings.Contains(expr, "recaptcha"):
 		rule.WriteString("# reCAPTCHA protection requires application-level implementation\n")
-		rule.WriteString(fmt.Sprintf("# Consider using hCaptcha or similar self-hosted solution\n"))
+		rule.WriteString("# Consider using hCaptcha or similar self-hosted solution\n")
 	default:
 		rule.WriteString(fmt.Sprintf("# Versioned expression: %s\n", versionedExpr))
 		rule.WriteString(fmt.Sprintf("# SecRule ... \"id:%d,phase:1,%s,msg:'Versioned expr rule'\"\n", ruleID, modsecAction))

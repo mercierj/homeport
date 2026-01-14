@@ -412,11 +412,7 @@ func ReplicaDockerService(primary *mapper.DockerService, opts *ReplicationOption
 }
 
 // MySQLReplicationConfig returns my.cnf for primary with binlog replication.
-func MySQLReplicationConfig(opts *ReplicationOptions) []byte {
-	if opts == nil {
-		opts = DefaultReplicationOptions("mysql", "mysql")
-	}
-
+func MySQLReplicationConfig(_ *ReplicationOptions) []byte {
 	serverID := 1 // Primary always uses server-id 1
 
 	config := fmt.Sprintf(`# MySQL Primary Replication Configuration

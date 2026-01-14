@@ -228,27 +228,25 @@ func (m *EC2Mapper) extractEBSVolumes(res *resource.AWSResource) []EBSVolume {
 	// Check for EBS block devices
 	if blockDevicesRaw, ok := res.Config["ebs_block_device"]; ok {
 		blockDevices, _ := blockDevicesRaw.([]interface{})
-		if blockDevices != nil {
-			for _, bd := range blockDevices {
-				if bdMap, ok := bd.(map[string]interface{}); ok {
-					device := ""
-					if dn, ok := bdMap["device_name"].(string); ok {
-						device = dn
-					}
-
-					size := 0
-					if vs, ok := bdMap["volume_size"].(float64); ok {
-						size = int(vs)
-					} else if vs, ok := bdMap["volume_size"].(int); ok {
-						size = vs
-					}
-
-					volumes = append(volumes, EBSVolume{
-						Device:     device,
-						MountPoint: m.guessMountPoint(device),
-						Size:       size,
-					})
+		for _, bd := range blockDevices {
+			if bdMap, ok := bd.(map[string]interface{}); ok {
+				device := ""
+				if dn, ok := bdMap["device_name"].(string); ok {
+					device = dn
 				}
+
+				size := 0
+				if vs, ok := bdMap["volume_size"].(float64); ok {
+					size = int(vs)
+				} else if vs, ok := bdMap["volume_size"].(int); ok {
+					size = vs
+				}
+
+				volumes = append(volumes, EBSVolume{
+					Device:     device,
+					MountPoint: m.guessMountPoint(device),
+					Size:       size,
+				})
 			}
 		}
 	}

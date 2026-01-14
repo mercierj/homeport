@@ -128,9 +128,8 @@ func TestResolver_ResolveAll(t *testing.T) {
 
 	ctx := context.Background()
 	resolved, err := resolver.ResolveAll(ctx, manifest)
-	if err != nil {
-		// May have error for optional secrets, that's OK
-	}
+	// May have error for optional secrets, that's OK - we continue regardless
+	_ = err
 
 	// Check resolved secrets
 	if !resolved.Has("DB_PASSWORD") {

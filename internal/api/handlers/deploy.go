@@ -75,7 +75,7 @@ func (h *DeployHandler) HandleStart(w http.ResponseWriter, r *http.Request) {
 	}
 
 	w.Header().Set("Content-Type", "application/json")
-	json.NewEncoder(w).Encode(StartDeploymentResponse{
+	_ = json.NewEncoder(w).Encode(StartDeploymentResponse{
 		DeploymentID: deployment.ID,
 	})
 }
@@ -142,7 +142,7 @@ func (h *DeployHandler) HandleStatus(w http.ResponseWriter, r *http.Request) {
 	}
 
 	w.Header().Set("Content-Type", "application/json")
-	json.NewEncoder(w).Encode(DeploymentStatusResponse{
+	_ = json.NewEncoder(w).Encode(DeploymentStatusResponse{
 		ID:           deployment.ID,
 		Status:       string(deployment.Status),
 		CurrentPhase: deployment.CurrentPhase,
@@ -161,7 +161,7 @@ func (h *DeployHandler) HandleCancel(w http.ResponseWriter, r *http.Request) {
 	}
 
 	w.Header().Set("Content-Type", "application/json")
-	w.Write([]byte(`{"status":"cancelled"}`))
+	_, _ = w.Write([]byte(`{"status":"cancelled"}`))
 }
 
 // HandleRetry retries a failed deployment
@@ -175,7 +175,7 @@ func (h *DeployHandler) HandleRetry(w http.ResponseWriter, r *http.Request) {
 	}
 
 	w.Header().Set("Content-Type", "application/json")
-	json.NewEncoder(w).Encode(StartDeploymentResponse{
+	_ = json.NewEncoder(w).Encode(StartDeploymentResponse{
 		DeploymentID: deployment.ID,
 	})
 }

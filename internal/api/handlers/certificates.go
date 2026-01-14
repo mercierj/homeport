@@ -217,7 +217,7 @@ func (h *CertificatesHandler) HandleACMEChallenge(w http.ResponseWriter, r *http
 	}
 
 	w.Header().Set("Content-Type", "text/plain")
-	w.Write([]byte(response))
+	_, _ = w.Write([]byte(response))
 }
 
 // HandleGetChallenges handles GET /certificates/challenges

@@ -928,7 +928,7 @@ func (g *Generator) estimateCostFallback(results []*mapper.MappingResult, config
 func (g *Generator) generateSummary(categorized *CategorizedResources, config *generator.TargetConfig) string {
 	var buf bytes.Buffer
 
-	buf.WriteString(fmt.Sprintf("Scaleway Terraform Configuration\n"))
+	buf.WriteString("Scaleway Terraform Configuration\n")
 	buf.WriteString(fmt.Sprintf("Project: %s\n", config.ProjectName))
 	buf.WriteString(fmt.Sprintf("HA Level: %s\n", config.HALevel.String()))
 	buf.WriteString("\nResources:\n")

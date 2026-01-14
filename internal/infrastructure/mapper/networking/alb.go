@@ -4,7 +4,6 @@ package networking
 import (
 	"context"
 	"fmt"
-	"strings"
 	"time"
 
 	"github.com/homeport/homeport/internal/domain/mapper"
@@ -289,7 +288,7 @@ func (m *ALBMapper) hasHTTPSListener(res *resource.AWSResource) bool {
 	return false
 }
 
-// ListenerRule represents an ALB listener rule.
+// ListenerRule represents an ALB listener rule (for future use).
 type ListenerRule struct {
 	Priority   int
 	Conditions []RuleCondition
@@ -310,111 +309,18 @@ type RuleAction struct {
 	FixedResponse   map[string]interface{}
 }
 
-// parseListenerRules parses listener rules from the ALB resource.
-func (m *ALBMapper) parseListenerRules(res *resource.AWSResource) []ListenerRule {
-	var rules []ListenerRule
-
-	// Note: In a real implementation, you would fetch listener rule resources
-	// separately as they are typically separate Terraform resources
-
-	return rules
-}
-
-// generateTraefikRouterFromRule converts an ALB listener rule to a Traefik router.
-func (m *ALBMapper) generateTraefikRouterFromRule(rule ListenerRule, index int) string {
-	routerName := fmt.Sprintf("rule-%d", index)
-	routerConfig := fmt.Sprintf("    %s:\n", routerName)
-	routerConfig += "      rule: \""
-
-	// Convert conditions to Traefik rule syntax
-	ruleExprs := []string{}
-	for _, cond := range rule.Conditions {
-		switch cond.Field {
-		case "host-header":
-			for _, value := range cond.Values {
-				ruleExprs = append(ruleExprs, fmt.Sprintf("Host(`%s`)", value))
-			}
-		case "path-pattern":
-			for _, value := range cond.Values {
-				ruleExprs = append(ruleExprs, fmt.Sprintf("PathPrefix(`%s`)", value))
-			}
-		case "http-header":
-			// More complex, would need header name and value
-		case "http-request-method":
-			for _, value := range cond.Values {
-				ruleExprs = append(ruleExprs, fmt.Sprintf("Method(`%s`)", value))
-			}
-		}
-	}
-
-	routerConfig += strings.Join(ruleExprs, " && ")
-	routerConfig += "\"\n"
-	routerConfig += "      entryPoints:\n"
-	routerConfig += "        - websecure\n"
-	routerConfig += "      service: " + routerName + "-service\n"
-
-	return routerConfig
-}
-
-// TargetGroup represents an ALB target group.
+// TargetGroup represents an ALB target group (for future use).
 type TargetGroup struct {
-	Name             string
-	Port             int
-	Protocol         string
-	HealthCheckPath  string
-	HealthCheckPort  int
-	Targets          []Target
+	Name            string
+	Port            int
+	Protocol        string
+	HealthCheckPath string
+	HealthCheckPort int
+	Targets         []Target
 }
 
 // Target represents a target in a target group.
 type Target struct {
 	ID   string
 	Port int
-}
-
-// parseTargetGroups parses target groups from the ALB.
-func (m *ALBMapper) parseTargetGroups(res *resource.AWSResource) []TargetGroup {
-	var groups []TargetGroup
-
-	// Note: In a real implementation, you would fetch target group resources
-	// separately as they are typically separate Terraform resources
-
-	return groups
-}
-
-// generateTraefikServiceFromTargetGroup converts a target group to a Traefik service.
-func (m *ALBMapper) generateTraefikServiceFromTargetGroup(tg TargetGroup) string {
-	serviceName := m.sanitizeName(tg.Name)
-	serviceConfig := fmt.Sprintf("    %s:\n", serviceName)
-	serviceConfig += "      loadBalancer:\n"
-	serviceConfig += "        servers:\n"
-
-	for _, target := range tg.Targets {
-		serviceConfig += fmt.Sprintf("          - url: \"http://%s:%d\"\n", target.ID, target.Port)
-	}
-
-	if tg.HealthCheckPath != "" {
-		serviceConfig += "        healthCheck:\n"
-		serviceConfig += fmt.Sprintf("          path: \"%s\"\n", tg.HealthCheckPath)
-		serviceConfig += "          interval: \"10s\"\n"
-		serviceConfig += "          timeout: \"3s\"\n"
-	}
-
-	return serviceConfig
-}
-
-// sanitizeName sanitizes a name for use in Traefik configuration.
-func (m *ALBMapper) sanitizeName(name string) string {
-	name = strings.ToLower(name)
-	name = strings.ReplaceAll(name, "_", "-")
-	name = strings.ReplaceAll(name, " ", "-")
-
-	validName := ""
-	for _, ch := range name {
-		if (ch >= 'a' && ch <= 'z') || (ch >= '0' && ch <= '9') || ch == '-' {
-			validName += string(ch)
-		}
-	}
-
-	return validName
 }

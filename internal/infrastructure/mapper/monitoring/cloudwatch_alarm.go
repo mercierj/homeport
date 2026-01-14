@@ -901,12 +901,7 @@ scrape_configs:
 }
 
 // generateMigrationScript generates a migration script for CloudWatch alarms.
-func (m *CloudWatchMetricAlarmMapper) generateMigrationScript(res *resource.AWSResource, alarmName string) string {
-	region := res.Region
-	if region == "" {
-		region = "us-east-1"
-	}
-
+func (m *CloudWatchMetricAlarmMapper) generateMigrationScript(_ *resource.AWSResource, alarmName string) string {
 	return fmt.Sprintf(`#!/bin/bash
 # CloudWatch Metric Alarm Migration Script
 # Alarm: %s

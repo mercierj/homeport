@@ -270,7 +270,7 @@ func (h *BundleHandler) ExportBundle(w http.ResponseWriter, r *http.Request) {
 	// Create bundle structure
 	dirs := []string{"compose", "configs", "scripts", "migrations", "data-sync", "secrets", "dns", "validation"}
 	for _, dir := range dirs {
-		os.MkdirAll(filepath.Join(bundleDir, dir), 0755)
+		_ = os.MkdirAll(filepath.Join(bundleDir, dir), 0755)
 	}
 
 	// Create manifest
@@ -296,28 +296,28 @@ func (h *BundleHandler) ExportBundle(w http.ResponseWriter, r *http.Request) {
 	// Write manifest
 	manifestPath := filepath.Join(bundleDir, "manifest.json")
 	manifestData, _ := json.MarshalIndent(manifest, "", "  ")
-	os.WriteFile(manifestPath, manifestData, 0644)
+	_ = os.WriteFile(manifestPath, manifestData, 0644)
 
 	// Create basic compose file
 	composePath := filepath.Join(bundleDir, "compose", "docker-compose.yml")
 	composeContent := generateBasicCompose(req.Resources, req.Options.Domain)
-	os.WriteFile(composePath, []byte(composeContent), 0644)
+	_ = os.WriteFile(composePath, []byte(composeContent), 0644)
 
 	// Create env template
 	envPath := filepath.Join(bundleDir, "secrets", ".env.template")
 	envContent := generateEnvTemplate(req.Resources)
-	os.WriteFile(envPath, []byte(envContent), 0644)
+	_ = os.WriteFile(envPath, []byte(envContent), 0644)
 
 	// Create secrets manifest
 	secrets := extractSecretRefs(req.Resources)
 	secretsManifestPath := filepath.Join(bundleDir, "secrets", "secrets-manifest.json")
 	secretsData, _ := json.MarshalIndent(map[string]interface{}{"secrets": secrets}, "", "  ")
-	os.WriteFile(secretsManifestPath, secretsData, 0644)
+	_ = os.WriteFile(secretsManifestPath, secretsData, 0644)
 
 	// Create README
 	readmePath := filepath.Join(bundleDir, "README.md")
 	readmeContent := generateBundleReadme(manifest, secrets)
-	os.WriteFile(readmePath, []byte(readmeContent), 0644)
+	_ = os.WriteFile(readmePath, []byte(readmeContent), 0644)
 
 	// Create the .hprt archive
 	bundlePath := filepath.Join(h.tempDir, bundleID+".hprt")
@@ -401,7 +401,7 @@ func (h *BundleHandler) ExportBundleStream(w http.ResponseWriter, r *http.Reques
 
 	// Create the actual bundle (simplified)
 	bundleDir := filepath.Join(h.tempDir, bundleID)
-	os.MkdirAll(bundleDir, 0755)
+	_ = os.MkdirAll(bundleDir, 0755)
 
 	manifest := &bundle.Manifest{
 		Version:         "1.0.0",
@@ -421,7 +421,7 @@ func (h *BundleHandler) ExportBundleStream(w http.ResponseWriter, r *http.Reques
 	}
 
 	bundlePath := filepath.Join(h.tempDir, bundleID+".hprt")
-	os.WriteFile(bundlePath, []byte("placeholder"), 0644)
+	_ = os.WriteFile(bundlePath, []byte("placeholder"), 0644)
 
 	secrets := extractSecretRefs(req.Resources)
 
@@ -602,7 +602,7 @@ func (h *BundleHandler) DownloadBundle(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "application/gzip")
 	w.Header().Set("Content-Disposition", fmt.Sprintf("attachment; filename=%s", bundleInfo.Name))
 
-	io.Copy(w, file)
+	_, _ = io.Copy(w, file)
 }
 
 // GetBundleSecrets returns secret references for a bundle
@@ -1361,7 +1361,7 @@ func formatSecretsList(secrets []*SecretRef) string {
 
 func listBundleFiles(dir string) []string {
 	var files []string
-	filepath.Walk(dir, func(path string, info os.FileInfo, err error) error {
+	_ = filepath.Walk(dir, func(path string, info os.FileInfo, err error) error {
 		if err == nil && !info.IsDir() {
 			relPath, _ := filepath.Rel(dir, path)
 			files = append(files, relPath)

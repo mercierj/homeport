@@ -95,7 +95,7 @@ func (p *TerraformGCPParser) AutoDetect(path string) (bool, float64) {
 	if info.IsDir() {
 		tfCount := 0
 		gcpCount := 0
-		filepath.Walk(path, func(p string, info os.FileInfo, err error) error {
+		_ = filepath.Walk(path, func(p string, info os.FileInfo, err error) error {
 			if err != nil || info.IsDir() {
 				return nil
 			}
@@ -160,7 +160,7 @@ func (p *TerraformGCPParser) Parse(ctx context.Context, path string, opts *parse
 		}
 
 		// Parse .tf files
-		filepath.Walk(path, func(filePath string, info os.FileInfo, err error) error {
+		_ = filepath.Walk(path, func(filePath string, info os.FileInfo, err error) error {
 			if err != nil || info.IsDir() {
 				return nil
 			}

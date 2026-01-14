@@ -77,7 +77,7 @@ func (p *TerraformAWSParser) AutoDetect(path string) (bool, float64) {
 		// Count Terraform files
 		tfCount := 0
 		cfnCount := 0
-		filepath.Walk(path, func(p string, info os.FileInfo, err error) error {
+		_ = filepath.Walk(path, func(p string, info os.FileInfo, err error) error {
 			if err != nil || info.IsDir() {
 				return nil
 			}
@@ -161,7 +161,7 @@ func (p *TerraformAWSParser) Parse(ctx context.Context, path string, opts *parse
 		}
 
 		// Parse .tf files for additional context
-		filepath.Walk(path, func(p string, info os.FileInfo, err error) error {
+		_ = filepath.Walk(path, func(p string, info os.FileInfo, err error) error {
 			if err != nil || info.IsDir() {
 				return nil
 			}
