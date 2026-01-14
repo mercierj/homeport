@@ -154,7 +154,7 @@ func (e *EKSToK3sExecutor) Execute(ctx context.Context, m *Migration, config *Mi
 		)
 		if output, err := deployCmd.Output(); err == nil {
 			var deployments interface{}
-			json.Unmarshal(output, &deployments)
+			_ = json.Unmarshal(output, &deployments)
 			workloads[ns+"_deployments"] = deployments
 		}
 
@@ -164,7 +164,7 @@ func (e *EKSToK3sExecutor) Execute(ctx context.Context, m *Migration, config *Mi
 		)
 		if output, err := svcCmd.Output(); err == nil {
 			var services interface{}
-			json.Unmarshal(output, &services)
+			_ = json.Unmarshal(output, &services)
 			workloads[ns+"_services"] = services
 		}
 
@@ -174,7 +174,7 @@ func (e *EKSToK3sExecutor) Execute(ctx context.Context, m *Migration, config *Mi
 		)
 		if output, err := cmCmd.Output(); err == nil {
 			var configmaps interface{}
-			json.Unmarshal(output, &configmaps)
+			_ = json.Unmarshal(output, &configmaps)
 			workloads[ns+"_configmaps"] = configmaps
 		}
 
@@ -184,7 +184,7 @@ func (e *EKSToK3sExecutor) Execute(ctx context.Context, m *Migration, config *Mi
 		)
 		if output, err := secretCmd.Output(); err == nil {
 			var secrets interface{}
-			json.Unmarshal(output, &secrets)
+			_ = json.Unmarshal(output, &secrets)
 			workloads[ns+"_secrets"] = secrets
 		}
 	}

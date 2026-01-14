@@ -118,7 +118,7 @@ func (e *ServiceBusToRabbitMQExecutor) Execute(ctx context.Context, m *Migration
 		} `json:"sku"`
 	}
 	if len(nsOutput) > 0 {
-		json.Unmarshal(nsOutput, &nsInfo)
+		_ = json.Unmarshal(nsOutput, &nsInfo)
 	}
 
 	// Save namespace info
@@ -161,7 +161,7 @@ func (e *ServiceBusToRabbitMQExecutor) Execute(ctx context.Context, m *Migration
 		DeadLetteringOnMessageExpiration bool `json:"deadLetteringOnMessageExpiration"`
 	}
 	if len(queueOutput) > 0 {
-		json.Unmarshal(queueOutput, &queues)
+		_ = json.Unmarshal(queueOutput, &queues)
 	}
 
 	// Get topics
@@ -183,18 +183,18 @@ func (e *ServiceBusToRabbitMQExecutor) Execute(ctx context.Context, m *Migration
 		DefaultMessageTimeToLive string `json:"defaultMessageTimeToLive"`
 	}
 	if len(topicOutput) > 0 {
-		json.Unmarshal(topicOutput, &topics)
+		_ = json.Unmarshal(topicOutput, &topics)
 	}
 
 	// Save queues and topics
 	queuePath := filepath.Join(outputDir, "queues.json")
 	if len(queueOutput) > 0 {
-		os.WriteFile(queuePath, queueOutput, 0644)
+		_ = os.WriteFile(queuePath, queueOutput, 0644)
 	}
 
 	topicPath := filepath.Join(outputDir, "topics.json")
 	if len(topicOutput) > 0 {
-		os.WriteFile(topicPath, topicOutput, 0644)
+		_ = os.WriteFile(topicPath, topicOutput, 0644)
 	}
 
 	if m.IsCancelled() {
@@ -613,13 +613,13 @@ func (e *EventHubToRedpandaExecutor) Execute(ctx context.Context, m *Migration, 
 		} `json:"sku"`
 	}
 	if len(nsOutput) > 0 {
-		json.Unmarshal(nsOutput, &nsInfo)
+		_ = json.Unmarshal(nsOutput, &nsInfo)
 	}
 
 	// Save namespace info
 	nsInfoPath := filepath.Join(outputDir, "namespace-info.json")
 	if len(nsOutput) > 0 {
-		os.WriteFile(nsInfoPath, nsOutput, 0644)
+		_ = os.WriteFile(nsInfoPath, nsOutput, 0644)
 	}
 
 	if m.IsCancelled() {
@@ -650,13 +650,13 @@ func (e *EventHubToRedpandaExecutor) Execute(ctx context.Context, m *Migration, 
 		MessageRetentionInDays int `json:"messageRetentionInDays"`
 	}
 	if len(ehOutput) > 0 {
-		json.Unmarshal(ehOutput, &eventHubs)
+		_ = json.Unmarshal(ehOutput, &eventHubs)
 	}
 
 	// Save event hubs
 	ehPath := filepath.Join(outputDir, "eventhubs.json")
 	if len(ehOutput) > 0 {
-		os.WriteFile(ehPath, ehOutput, 0644)
+		_ = os.WriteFile(ehPath, ehOutput, 0644)
 	}
 
 	if m.IsCancelled() {
@@ -1012,13 +1012,13 @@ func (e *EventGridToRabbitMQExecutor) Execute(ctx context.Context, m *Migration,
 		InputSchema string `json:"inputSchema"`
 	}
 	if len(topicOutput) > 0 {
-		json.Unmarshal(topicOutput, &topicInfo)
+		_ = json.Unmarshal(topicOutput, &topicInfo)
 	}
 
 	// Save topic info
 	topicInfoPath := filepath.Join(outputDir, "topic-info.json")
 	if len(topicOutput) > 0 {
-		os.WriteFile(topicInfoPath, topicOutput, 0644)
+		_ = os.WriteFile(topicInfoPath, topicOutput, 0644)
 	}
 
 	if m.IsCancelled() {
@@ -1055,13 +1055,13 @@ func (e *EventGridToRabbitMQExecutor) Execute(ctx context.Context, m *Migration,
 		} `json:"filter"`
 	}
 	if len(subOutput) > 0 {
-		json.Unmarshal(subOutput, &subscriptions)
+		_ = json.Unmarshal(subOutput, &subscriptions)
 	}
 
 	// Save subscriptions
 	subPath := filepath.Join(outputDir, "subscriptions.json")
 	if len(subOutput) > 0 {
-		os.WriteFile(subPath, subOutput, 0644)
+		_ = os.WriteFile(subPath, subOutput, 0644)
 	}
 
 	if m.IsCancelled() {

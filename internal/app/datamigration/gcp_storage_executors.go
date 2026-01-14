@@ -150,7 +150,7 @@ func (e *GCSToMinIOExecutor) Execute(ctx context.Context, m *Migration, config *
 		"AWS_SECRET_ACCESS_KEY="+minioSecretKey,
 	)
 	// Ignore error if bucket already exists
-	createBucketCmd.Run()
+	_ = createBucketCmd.Run()
 
 	if m.IsCancelled() {
 		return fmt.Errorf("migration cancelled")

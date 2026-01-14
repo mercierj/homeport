@@ -224,7 +224,7 @@ volumes:
 		} `json:"MountTargets"`
 	}
 	if len(mountTargetsOutput) > 0 {
-		json.Unmarshal(mountTargetsOutput, &mountTargets)
+		_ = json.Unmarshal(mountTargetsOutput, &mountTargets)
 		if len(mountTargets.MountTargets) > 0 {
 			mountTargetIP = mountTargets.MountTargets[0].IpAddress
 		}

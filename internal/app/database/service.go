@@ -303,7 +303,7 @@ func (s *Service) ExecuteQuery(ctx context.Context, query string, readOnly bool)
 		}
 		return nil, fmt.Errorf("failed to start transaction: %w", err)
 	}
-	defer tx.Rollback(ctx)
+	defer func() { _ = tx.Rollback(ctx) }()
 
 	rows, err := tx.Query(ctx, query)
 	if err != nil {

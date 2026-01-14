@@ -172,12 +172,12 @@ func (e *EventBridgeToRabbitMQExecutor) Execute(ctx context.Context, m *Migratio
 		targetsOutput, _ := targetsCmd.Output()
 
 		var pattern interface{}
-		json.Unmarshal([]byte(rule.EventPattern), &pattern)
+		_ = json.Unmarshal([]byte(rule.EventPattern), &pattern)
 
 		var targets struct {
 			Targets []interface{} `json:"Targets"`
 		}
-		json.Unmarshal(targetsOutput, &targets)
+		_ = json.Unmarshal(targetsOutput, &targets)
 
 		rulesWithTargets = append(rulesWithTargets, RuleWithTargets{
 			Name:         rule.Name,

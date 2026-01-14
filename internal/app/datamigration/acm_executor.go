@@ -119,7 +119,7 @@ func (e *ACMToLetsEncryptExecutor) Execute(ctx context.Context, m *Migration, co
 			DomainName     string `json:"DomainName"`
 		} `json:"CertificateSummaryList"`
 	}
-	json.Unmarshal(certsOutput, &certsList)
+	_ = json.Unmarshal(certsOutput, &certsList)
 
 	type CertDetails struct {
 		Arn             string   `json:"arn"`
@@ -152,7 +152,7 @@ func (e *ACMToLetsEncryptExecutor) Execute(ctx context.Context, m *Migration, co
 				InUseBy                 []string `json:"InUseBy"`
 			} `json:"Certificate"`
 		}
-		json.Unmarshal(descOutput, &certMeta)
+		_ = json.Unmarshal(descOutput, &certMeta)
 
 		certs = append(certs, CertDetails{
 			Arn:             certMeta.Certificate.CertificateArn,
@@ -179,7 +179,9 @@ func (e *ACMToLetsEncryptExecutor) Execute(ctx context.Context, m *Migration, co
 
 	certsData, _ := json.MarshalIndent(certs, "", "  ")
 	certsPath := filepath.Join(outputDir, "acm-certificates.json")
-	os.WriteFile(certsPath, certsData, 0644)
+	if err := os.WriteFile(certsPath, certsData, 0644); err != nil {
+		return fmt.Errorf("failed to write certificates file: %w", err)
+	}
 
 	// Collect all unique domains
 	domains := make(map[string]bool)
@@ -239,7 +241,9 @@ volumes:
 `, email)
 
 	composePath := filepath.Join(outputDir, "docker-compose.yml")
-	os.WriteFile(composePath, []byte(traefikCompose), 0644)
+	if err := os.WriteFile(composePath, []byte(traefikCompose), 0644); err != nil {
+		return fmt.Errorf("failed to write docker-compose.yml: %w", err)
+	}
 
 	// Generate example service with TLS
 	exampleService := "# Example service with automatic TLS\n" +
@@ -256,7 +260,9 @@ volumes:
 		"      # - \"traefik.http.routers.myapp.tls.domains[0].main=example.com\"\n" +
 		"      # - \"traefik.http.routers.myapp.tls.domains[0].sans=www.example.com,api.example.com\"\n"
 	examplePath := filepath.Join(outputDir, "example-service.yml")
-	os.WriteFile(examplePath, []byte(exampleService), 0644)
+	if err := os.WriteFile(examplePath, []byte(exampleService), 0644); err != nil {
+		return fmt.Errorf("failed to write example-service.yml: %w", err)
+	}
 
 	if m.IsCancelled() {
 		return fmt.Errorf("migration cancelled")
@@ -303,7 +309,9 @@ echo "Certificates issued successfully!"
 echo "Certificates stored in: /etc/letsencrypt/live/"
 `
 	certbotPath := filepath.Join(outputDir, "issue-certificates.sh")
-	os.WriteFile(certbotPath, []byte(certbotScript), 0755)
+	if err := os.WriteFile(certbotPath, []byte(certbotScript), 0755); err != nil {
+		return fmt.Errorf("failed to write certbot script: %w", err)
+	}
 
 	// DNS challenge script for wildcards
 	dnsScript := fmt.Sprintf(`#!/bin/bash
@@ -331,7 +339,9 @@ certbot certonly --manual --preferred-challenges dns \
 echo "Follow the instructions to add DNS TXT records"
 `, email)
 	dnsPath := filepath.Join(outputDir, "issue-wildcard.sh")
-	os.WriteFile(dnsPath, []byte(dnsScript), 0755)
+	if err := os.WriteFile(dnsPath, []byte(dnsScript), 0755); err != nil {
+		return fmt.Errorf("failed to write DNS script: %w", err)
+	}
 
 	if m.IsCancelled() {
 		return fmt.Errorf("migration cancelled")
@@ -401,7 +411,9 @@ Before issuing certificates, ensure:
 `
 
 	readmePath := filepath.Join(outputDir, "README.md")
-	os.WriteFile(readmePath, []byte(readme), 0644)
+	if err := os.WriteFile(readmePath, []byte(readme), 0644); err != nil {
+		return fmt.Errorf("failed to write README: %w", err)
+	}
 
 	EmitProgress(m, 100, "Migration complete")
 	EmitLog(m, "info", fmt.Sprintf("ACM migration complete: %d certificates", len(certs)))

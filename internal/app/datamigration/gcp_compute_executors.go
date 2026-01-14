@@ -842,7 +842,7 @@ func (e *CloudFunctionsToOpenFaaSExecutor) generateOpenFaaSStack(functions []clo
 	for _, fn := range functions {
 		functionName := extractFunctionName(fn.Name)
 		sb.WriteString(fmt.Sprintf("  %s:\n", sanitizeServiceName(functionName)))
-		sb.WriteString(fmt.Sprintf("    lang: dockerfile\n"))
+		sb.WriteString("    lang: dockerfile\n")
 		sb.WriteString(fmt.Sprintf("    handler: ./functions/%s\n", functionName))
 		sb.WriteString(fmt.Sprintf("    image: ${REGISTRY:-localhost:5000}/%s:latest\n", sanitizeServiceName(functionName)))
 
@@ -1018,7 +1018,7 @@ func (e *GKEToK3sExecutor) Execute(ctx context.Context, m *Migration, config *Mi
 		deployCmd := exec.CommandContext(ctx, "kubectl", "get", "deployments", "-n", ns, "-o", "json")
 		if output, err := deployCmd.Output(); err == nil {
 			var deployments interface{}
-			json.Unmarshal(output, &deployments)
+			_ = json.Unmarshal(output, &deployments)
 			workloads[ns+"_deployments"] = deployments
 		}
 
@@ -1026,7 +1026,7 @@ func (e *GKEToK3sExecutor) Execute(ctx context.Context, m *Migration, config *Mi
 		svcCmd := exec.CommandContext(ctx, "kubectl", "get", "services", "-n", ns, "-o", "json")
 		if output, err := svcCmd.Output(); err == nil {
 			var services interface{}
-			json.Unmarshal(output, &services)
+			_ = json.Unmarshal(output, &services)
 			workloads[ns+"_services"] = services
 		}
 
@@ -1034,7 +1034,7 @@ func (e *GKEToK3sExecutor) Execute(ctx context.Context, m *Migration, config *Mi
 		cmCmd := exec.CommandContext(ctx, "kubectl", "get", "configmaps", "-n", ns, "-o", "json")
 		if output, err := cmCmd.Output(); err == nil {
 			var configmaps interface{}
-			json.Unmarshal(output, &configmaps)
+			_ = json.Unmarshal(output, &configmaps)
 			workloads[ns+"_configmaps"] = configmaps
 		}
 
@@ -1042,7 +1042,7 @@ func (e *GKEToK3sExecutor) Execute(ctx context.Context, m *Migration, config *Mi
 		secretCmd := exec.CommandContext(ctx, "kubectl", "get", "secrets", "-n", ns, "-o", "json")
 		if output, err := secretCmd.Output(); err == nil {
 			var secrets interface{}
-			json.Unmarshal(output, &secrets)
+			_ = json.Unmarshal(output, &secrets)
 			workloads[ns+"_secrets"] = secrets
 		}
 
@@ -1050,7 +1050,7 @@ func (e *GKEToK3sExecutor) Execute(ctx context.Context, m *Migration, config *Mi
 		ingressCmd := exec.CommandContext(ctx, "kubectl", "get", "ingress", "-n", ns, "-o", "json")
 		if output, err := ingressCmd.Output(); err == nil {
 			var ingresses interface{}
-			json.Unmarshal(output, &ingresses)
+			_ = json.Unmarshal(output, &ingresses)
 			workloads[ns+"_ingresses"] = ingresses
 		}
 
@@ -1058,7 +1058,7 @@ func (e *GKEToK3sExecutor) Execute(ctx context.Context, m *Migration, config *Mi
 		pvcCmd := exec.CommandContext(ctx, "kubectl", "get", "pvc", "-n", ns, "-o", "json")
 		if output, err := pvcCmd.Output(); err == nil {
 			var pvcs interface{}
-			json.Unmarshal(output, &pvcs)
+			_ = json.Unmarshal(output, &pvcs)
 			workloads[ns+"_pvcs"] = pvcs
 		}
 	}
@@ -1364,7 +1364,7 @@ func (e *AppEngineToDockerExecutor) Execute(ctx context.Context, m *Migration, c
 
 	var services []appEngineService
 	if servicesOutput != nil {
-		json.Unmarshal(servicesOutput, &services)
+		_ = json.Unmarshal(servicesOutput, &services)
 	}
 
 	if len(services) > 0 {

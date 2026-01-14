@@ -352,7 +352,7 @@ func (s *Service) backupVolume(ctx context.Context, volumeName string, tarWriter
 	if err != nil {
 		return fmt.Errorf("failed to create backup container: %w", err)
 	}
-	defer s.dockerClient.ContainerRemove(ctx, resp.ID, container.RemoveOptions{Force: true})
+	defer func() { _ = s.dockerClient.ContainerRemove(ctx, resp.ID, container.RemoveOptions{Force: true}) }()
 
 	// Start the container
 	if err := s.dockerClient.ContainerStart(ctx, resp.ID, container.StartOptions{}); err != nil {
@@ -398,7 +398,7 @@ func (s *Service) backupVolume(ctx context.Context, volumeName string, tarWriter
 	pr, pw := io.Pipe()
 	go func() {
 		defer pw.Close()
-		stdcopy.StdCopy(pw, io.Discard, logsReader)
+		_, _ = stdcopy.StdCopy(pw, io.Discard, logsReader)
 	}()
 
 	// Read the inner tar and write to our outer tar with prefixed paths
@@ -625,7 +625,7 @@ func (s *Service) restoreVolume(ctx context.Context, volumeName, backupPath stri
 	if err != nil {
 		return fmt.Errorf("failed to create restore container: %w", err)
 	}
-	defer s.dockerClient.ContainerRemove(ctx, resp.ID, container.RemoveOptions{Force: true})
+	defer func() { _ = s.dockerClient.ContainerRemove(ctx, resp.ID, container.RemoveOptions{Force: true}) }()
 
 	if err := s.dockerClient.ContainerStart(ctx, resp.ID, container.StartOptions{}); err != nil {
 		return fmt.Errorf("failed to start restore container: %w", err)
@@ -702,7 +702,7 @@ func (s *Service) ensureAlpineImage(ctx context.Context) error {
 		return err
 	}
 	defer reader.Close()
-	io.Copy(io.Discard, reader)
+	_, _ = io.Copy(io.Discard, reader)
 	return nil
 }
 

@@ -126,7 +126,7 @@ func (e *S3ToMinIOExecutor) Execute(ctx context.Context, m *Migration, config *M
 		"AWS_SECRET_ACCESS_KEY="+minioSecretKey,
 	)
 	// Ignore error if bucket already exists
-	createBucketCmd.Run()
+	_ = createBucketCmd.Run()
 
 	if m.IsCancelled() {
 		return fmt.Errorf("migration cancelled")
@@ -301,7 +301,7 @@ func (e *RDSToPostgresExecutor) Execute(ctx context.Context, m *Migration, confi
 		"-c", fmt.Sprintf("CREATE DATABASE %s", dstDatabase),
 	)
 	createDBCmd.Env = append(os.Environ(), "PGPASSWORD="+dstPassword)
-	createDBCmd.Run() // Ignore error if database exists
+	_ = createDBCmd.Run() // Ignore error if database exists
 
 	if m.IsCancelled() {
 		return fmt.Errorf("migration cancelled")
@@ -659,7 +659,7 @@ func (e *ElastiCacheToRedisExecutor) Execute(ctx context.Context, m *Migration, 
 		scanCmd := exec.CommandContext(ctx, "redis-cli", scanArgs...)
 		keys, _ := scanCmd.Output()
 		keysFile := filepath.Join(stagingDir, "keys.txt")
-		os.WriteFile(keysFile, keys, 0644)
+		_ = os.WriteFile(keysFile, keys, 0644)
 		EmitLog(m, "info", "Exported key list for manual migration")
 	} else {
 		EmitLog(m, "info", "RDB dump completed successfully")

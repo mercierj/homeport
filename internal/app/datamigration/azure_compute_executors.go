@@ -127,7 +127,7 @@ func (e *AppServiceToDockerExecutor) Execute(ctx context.Context, m *Migration, 
 		DefaultHostName string `json:"defaultHostName"`
 	}
 	if len(appOutput) > 0 {
-		json.Unmarshal(appOutput, &appInfo)
+		_ = json.Unmarshal(appOutput, &appInfo)
 	}
 
 	// Save app info
@@ -165,7 +165,7 @@ func (e *AppServiceToDockerExecutor) Execute(ctx context.Context, m *Migration, 
 		Value string `json:"value"`
 	}
 	if len(settingsOutput) > 0 {
-		json.Unmarshal(settingsOutput, &settings)
+		_ = json.Unmarshal(settingsOutput, &settings)
 	}
 
 	// Get connection strings
@@ -588,7 +588,7 @@ func (e *FunctionsToOpenFaaSExecutor) Execute(ctx context.Context, m *Migration,
 		} `json:"siteConfig"`
 	}
 	if len(funcOutput) > 0 {
-		json.Unmarshal(funcOutput, &funcInfo)
+		_ = json.Unmarshal(funcOutput, &funcInfo)
 	}
 
 	// Save function info
@@ -618,7 +618,7 @@ func (e *FunctionsToOpenFaaSExecutor) Execute(ctx context.Context, m *Migration,
 		IsDisabled bool  `json:"isDisabled"`
 	}
 	if len(funcListOutput) > 0 {
-		json.Unmarshal(funcListOutput, &functions)
+		_ = json.Unmarshal(funcListOutput, &functions)
 	}
 
 	// Save functions list
@@ -765,7 +765,7 @@ CMD ["fwatchdog"]
 
 		// Write Dockerfile
 		dfPath := filepath.Join(funcDir, "Dockerfile")
-		os.WriteFile(dfPath, []byte(dockerfile), 0644)
+		_ = os.WriteFile(dfPath, []byte(dockerfile), 0644)
 
 		// Write handler template
 		var handlerContent string
@@ -832,7 +832,7 @@ if __name__ == '__main__':
 `, f.Name, f.Name)
 		}
 		handlerPath := filepath.Join(funcDir, handler)
-		os.WriteFile(handlerPath, []byte(handlerContent), 0644)
+		_ = os.WriteFile(handlerPath, []byte(handlerContent), 0644)
 	}
 
 	if m.IsCancelled() {
@@ -954,9 +954,15 @@ scrape_configs:
 
 	// Create credentials directory
 	credentialsDir := filepath.Join(outputDir, "credentials")
-	os.MkdirAll(credentialsDir, 0755)
-	os.WriteFile(filepath.Join(credentialsDir, "basic-auth-user"), []byte("admin"), 0600)
-	os.WriteFile(filepath.Join(credentialsDir, "basic-auth-password"), []byte("changeme"), 0600)
+	if err := os.MkdirAll(credentialsDir, 0755); err != nil {
+		return fmt.Errorf("failed to create credentials directory: %w", err)
+	}
+	if err := os.WriteFile(filepath.Join(credentialsDir, "basic-auth-user"), []byte("admin"), 0600); err != nil {
+		return fmt.Errorf("failed to write basic-auth-user: %w", err)
+	}
+	if err := os.WriteFile(filepath.Join(credentialsDir, "basic-auth-password"), []byte("changeme"), 0600); err != nil {
+		return fmt.Errorf("failed to write basic-auth-password: %w", err)
+	}
 
 	if m.IsCancelled() {
 		return fmt.Errorf("migration cancelled")
@@ -1132,7 +1138,7 @@ func (e *AKSToK3sExecutor) Execute(ctx context.Context, m *Migration, config *Mi
 	}
 
 	credCmd := exec.CommandContext(ctx, "az", credArgs...)
-	credCmd.Run() // Get credentials for kubectl
+	_ = credCmd.Run() // Get credentials for kubectl (ignore error as it may fail without Azure CLI)
 
 	// Get cluster info
 	showArgs := []string{"aks", "show",
@@ -1158,7 +1164,7 @@ func (e *AKSToK3sExecutor) Execute(ctx context.Context, m *Migration, config *Mi
 		} `json:"agentPoolProfiles"`
 	}
 	if len(clusterOutput) > 0 {
-		json.Unmarshal(clusterOutput, &clusterInfo)
+		_ = json.Unmarshal(clusterOutput, &clusterInfo)
 	}
 
 	// Save cluster info
@@ -1206,14 +1212,16 @@ func (e *AKSToK3sExecutor) Execute(ctx context.Context, m *Migration, config *Mi
 	resourceTypes := []string{"deployments", "services", "configmaps", "secrets", "ingresses", "persistentvolumeclaims"}
 	for _, ns := range nsToExport {
 		nsDir := filepath.Join(manifestsDir, ns)
-		os.MkdirAll(nsDir, 0755)
+		if err := os.MkdirAll(nsDir, 0755); err != nil {
+			continue // Skip this namespace if we can't create the directory
+		}
 
 		for _, rt := range resourceTypes {
 			exportCmd := exec.CommandContext(ctx, "kubectl", "get", rt, "-n", ns, "-o", "yaml")
 			output, err := exportCmd.Output()
 			if err == nil && len(output) > 0 {
 				filePath := filepath.Join(nsDir, fmt.Sprintf("%s.yaml", rt))
-				os.WriteFile(filePath, output, 0644)
+				_ = os.WriteFile(filePath, output, 0644)
 			}
 		}
 	}
@@ -1617,7 +1625,7 @@ func (e *ACIToDockerExecutor) Execute(ctx context.Context, m *Migration, config 
 		} `json:"volumes"`
 	}
 	if len(aciOutput) > 0 {
-		json.Unmarshal(aciOutput, &aciInfo)
+		_ = json.Unmarshal(aciOutput, &aciInfo)
 	}
 
 	// Save container group info
@@ -1645,7 +1653,7 @@ func (e *ACIToDockerExecutor) Execute(ctx context.Context, m *Migration, config 
 		}
 		if envContent != "" {
 			envPath := filepath.Join(outputDir, fmt.Sprintf("%s.env", container.Name))
-			os.WriteFile(envPath, []byte(envContent), 0644)
+			_ = os.WriteFile(envPath, []byte(envContent), 0644)
 		}
 	}
 

@@ -143,7 +143,7 @@ func (h *CredentialsHandler) HandleSetStorageCredentials(w http.ResponseWriter, 
 	h.store.SetStorageCredentials(session.Token, &creds)
 
 	w.Header().Set("Content-Type", "application/json")
-	w.Write([]byte(`{"status":"ok"}`))
+	_, _ = w.Write([]byte(`{"status":"ok"}`))
 }
 
 // HandleDeleteStorageCredentials removes storage credentials for the current session
@@ -157,7 +157,7 @@ func (h *CredentialsHandler) HandleDeleteStorageCredentials(w http.ResponseWrite
 	h.store.DeleteStorageCredentials(session.Token)
 
 	w.Header().Set("Content-Type", "application/json")
-	w.Write([]byte(`{"status":"ok"}`))
+	_, _ = w.Write([]byte(`{"status":"ok"}`))
 }
 
 // HandleSetDatabaseCredentials stores database credentials for the current session
@@ -180,7 +180,7 @@ func (h *CredentialsHandler) HandleSetDatabaseCredentials(w http.ResponseWriter,
 	}
 
 	w.Header().Set("Content-Type", "application/json")
-	w.Write([]byte(`{"status":"ok"}`))
+	_, _ = w.Write([]byte(`{"status":"ok"}`))
 }
 
 // HandleDeleteDatabaseCredentials removes database credentials for the current session

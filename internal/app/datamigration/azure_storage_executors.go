@@ -145,7 +145,7 @@ func (e *BlobToMinIOExecutor) Execute(ctx context.Context, m *Migration, config 
 		"AWS_SECRET_ACCESS_KEY="+minioSecretKey,
 	)
 	// Ignore error if bucket already exists
-	createBucketCmd.Run()
+	_ = createBucketCmd.Run()
 
 	if m.IsCancelled() {
 		return fmt.Errorf("migration cancelled")
@@ -175,8 +175,8 @@ func (e *BlobToMinIOExecutor) Execute(ctx context.Context, m *Migration, config 
 	downloadCmd := exec.CommandContext(ctx, "azcopy", downloadArgs...)
 	downloadCmd.Env = azureEnv
 
-	output, err := downloadCmd.CombinedOutput()
-	if err != nil {
+	var output []byte
+	if err = downloadCmd.Run(); err != nil {
 		// Fallback to az storage blob download-batch
 		EmitLog(m, "info", "azcopy not available, falling back to az storage")
 		fallbackArgs := []string{"storage", "blob", "download-batch",

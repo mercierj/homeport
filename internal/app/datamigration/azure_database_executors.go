@@ -922,7 +922,7 @@ func (e *AzureCacheToRedisExecutor) Execute(ctx context.Context, m *Migration, c
 		ProvisioningState string `json:"provisioningState"`
 	}
 	if len(cacheOutput) > 0 {
-		json.Unmarshal(cacheOutput, &cacheInfo)
+		_ = json.Unmarshal(cacheOutput, &cacheInfo)
 	}
 
 	// Save cache info

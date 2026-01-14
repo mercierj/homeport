@@ -115,13 +115,13 @@ func (e *KeyVaultToVaultExecutor) Execute(ctx context.Context, m *Migration, con
 		} `json:"properties"`
 	}
 	if len(vaultOutput) > 0 {
-		json.Unmarshal(vaultOutput, &vaultInfo)
+		_ = json.Unmarshal(vaultOutput, &vaultInfo)
 	}
 
 	// Save vault info
 	vaultInfoPath := filepath.Join(outputDir, "vault-info.json")
 	if len(vaultOutput) > 0 {
-		os.WriteFile(vaultInfoPath, vaultOutput, 0644)
+		_ = os.WriteFile(vaultInfoPath, vaultOutput, 0644)
 	}
 
 	if m.IsCancelled() {
@@ -156,13 +156,13 @@ func (e *KeyVaultToVaultExecutor) Execute(ctx context.Context, m *Migration, con
 		Name string `json:"name"`
 	}
 	if len(secretListOutput) > 0 {
-		json.Unmarshal(secretListOutput, &secrets)
+		_ = json.Unmarshal(secretListOutput, &secrets)
 	}
 
 	// Save secret metadata
 	secretMetadataPath := filepath.Join(outputDir, "secret-metadata.json")
 	if len(secretListOutput) > 0 {
-		os.WriteFile(secretMetadataPath, secretListOutput, 0644)
+		_ = os.WriteFile(secretMetadataPath, secretListOutput, 0644)
 	}
 
 	// Generate secret export script (actual values)
@@ -218,7 +218,7 @@ echo "IMPORTANT: Secure these files and delete after import!"
 	// Save key metadata
 	keyMetadataPath := filepath.Join(outputDir, "key-metadata.json")
 	if len(keyListOutput) > 0 {
-		os.WriteFile(keyMetadataPath, keyListOutput, 0644)
+		_ = os.WriteFile(keyMetadataPath, keyListOutput, 0644)
 	}
 
 	// Get list of certificates
@@ -236,7 +236,7 @@ echo "IMPORTANT: Secure these files and delete after import!"
 	// Save certificate metadata
 	certMetadataPath := filepath.Join(outputDir, "certificate-metadata.json")
 	if len(certListOutput) > 0 {
-		os.WriteFile(certMetadataPath, certListOutput, 0644)
+		_ = os.WriteFile(certMetadataPath, certListOutput, 0644)
 	}
 
 	if m.IsCancelled() {
@@ -306,7 +306,9 @@ cluster_addr = "https://127.0.0.1:8201"
 ui = true
 `
 	vaultConfigDir := filepath.Join(outputDir, "vault-config")
-	os.MkdirAll(vaultConfigDir, 0755)
+	if err := os.MkdirAll(vaultConfigDir, 0755); err != nil {
+		return fmt.Errorf("failed to create vault config directory: %w", err)
+	}
 	vaultConfigPath := filepath.Join(vaultConfigDir, "vault.hcl")
 	if err := os.WriteFile(vaultConfigPath, []byte(vaultConfig), 0644); err != nil {
 		return fmt.Errorf("failed to write vault config: %w", err)
@@ -322,7 +324,7 @@ ui = true
 	EmitProgress(m, 80, "Creating import scripts")
 
 	// Generate Vault import script
-	importScript := fmt.Sprintf(`#!/bin/bash
+	importScript := `#!/bin/bash
 # HashiCorp Vault Import Script
 # Imports secrets from Key Vault export
 
@@ -342,7 +344,7 @@ vault secrets enable -path=secret kv-v2 2>/dev/null || echo "KV engine already e
 
 # Import secrets
 echo "Importing secrets..."
-`)
+`
 
 	for _, secret := range secrets {
 		importScript += fmt.Sprintf(`
@@ -380,12 +382,12 @@ echo "rm -rf $SECRETS_DIR"
 	var keyCount, certCount int
 	if len(keyListOutput) > 0 {
 		var keys []interface{}
-		json.Unmarshal(keyListOutput, &keys)
+		_ = json.Unmarshal(keyListOutput, &keys)
 		keyCount = len(keys)
 	}
 	if len(certListOutput) > 0 {
 		var certs []interface{}
-		json.Unmarshal(certListOutput, &certs)
+		_ = json.Unmarshal(certListOutput, &certs)
 		certCount = len(certs)
 	}
 
@@ -1065,13 +1067,13 @@ func (e *AzureDNSToCoreDNSExecutor) Execute(ctx context.Context, m *Migration, c
 		NumberOfRecordSets int   `json:"numberOfRecordSets"`
 	}
 	if len(zoneOutput) > 0 {
-		json.Unmarshal(zoneOutput, &zoneInfo)
+		_ = json.Unmarshal(zoneOutput, &zoneInfo)
 	}
 
 	// Save zone info
 	zoneInfoPath := filepath.Join(outputDir, "zone-info.json")
 	if len(zoneOutput) > 0 {
-		os.WriteFile(zoneInfoPath, zoneOutput, 0644)
+		_ = os.WriteFile(zoneInfoPath, zoneOutput, 0644)
 	}
 
 	if m.IsCancelled() {
@@ -1130,13 +1132,13 @@ func (e *AzureDNSToCoreDNSExecutor) Execute(ctx context.Context, m *Migration, c
 		} `json:"soaRecord"`
 	}
 	if len(recordOutput) > 0 {
-		json.Unmarshal(recordOutput, &recordSets)
+		_ = json.Unmarshal(recordOutput, &recordSets)
 	}
 
 	// Save records
 	recordPath := filepath.Join(outputDir, "records.json")
 	if len(recordOutput) > 0 {
-		os.WriteFile(recordPath, recordOutput, 0644)
+		_ = os.WriteFile(recordPath, recordOutput, 0644)
 	}
 
 	if m.IsCancelled() {
@@ -1149,7 +1151,7 @@ func (e *AzureDNSToCoreDNSExecutor) Execute(ctx context.Context, m *Migration, c
 	EmitProgress(m, 65, "Generating configuration")
 
 	// Generate Docker Compose for CoreDNS
-	dockerCompose := fmt.Sprintf(`version: '3.8'
+	dockerCompose := `version: '3.8'
 
 services:
   coredns:
@@ -1167,7 +1169,7 @@ services:
   # Optional: DNS admin UI
   # dnsmasq-webui:
   #   image: ...
-`)
+`
 
 	composePath := filepath.Join(outputDir, "docker-compose.yml")
 	if err := os.WriteFile(composePath, []byte(dockerCompose), 0644); err != nil {

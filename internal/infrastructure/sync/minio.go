@@ -332,7 +332,7 @@ func (m *MinIOSync) parseRcloneProgress(reader io.Reader, reporter *sync.Progres
 					parts := strings.Split(line[idx+1:], "%")
 					if len(parts) > 0 {
 						var pct float64
-						fmt.Sscanf(strings.TrimSpace(parts[0]), "%f", &pct)
+						_, _ = fmt.Sscanf(strings.TrimSpace(parts[0]), "%f", &pct)
 						// Calculate bytes done from percentage
 						progress := reporter.GetProgress()
 						if progress != nil && progress.BytesTotal > 0 {

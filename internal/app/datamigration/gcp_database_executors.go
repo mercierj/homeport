@@ -90,10 +90,6 @@ func (e *CloudSQLToPostgresExecutor) Execute(ctx context.Context, m *Migration, 
 	instanceName := config.Source["instance_name"].(string)
 	srcDatabase := config.Source["database"].(string)
 	serviceAccountKey, hasKey := config.Source["service_account_key"].(string)
-	region, _ := config.Source["region"].(string)
-	if region == "" {
-		region = "us-central1"
-	}
 
 	// Extract destination configuration
 	dstHost := fmt.Sprintf("%v", config.Destination["host"])
@@ -172,7 +168,7 @@ func (e *CloudSQLToPostgresExecutor) Execute(ctx context.Context, m *Migration, 
 		"postgres",
 	)
 	createDBCmd.Env = append(os.Environ(), "PGPASSWORD="+dstPassword)
-	createDBCmd.Run() // Ignore error if database exists
+	_ = createDBCmd.Run() // Ignore error if database exists
 
 	if m.IsCancelled() {
 		return fmt.Errorf("migration cancelled")
@@ -230,7 +226,7 @@ func (e *CloudSQLToPostgresExecutor) Execute(ctx context.Context, m *Migration, 
 		// Clean up GCS file
 		cleanupCmd := exec.CommandContext(ctx, "gsutil", "rm", exportBucket)
 		cleanupCmd.Env = envVars
-		cleanupCmd.Run() // Best effort cleanup
+		_ = cleanupCmd.Run() // Best effort cleanup
 	}
 
 	if m.IsCancelled() {
@@ -534,7 +530,7 @@ func (e *FirestoreToMongoDBExecutor) Execute(ctx context.Context, m *Migration, 
 	// Clean up GCS export
 	cleanupCmd := exec.CommandContext(ctx, "gsutil", "-m", "rm", "-r", exportBucket)
 	cleanupCmd.Env = envVars
-	cleanupCmd.Run() // Best effort cleanup
+	_ = cleanupCmd.Run() // Best effort cleanup
 
 	// Phase 6: Verifying data
 	EmitPhase(m, phases[5], 6)
@@ -781,9 +777,9 @@ func (e *MemorystoreToRedisExecutor) Execute(ctx context.Context, m *Migration, 
 	}
 
 	// Clean up GCS export
-	cleanupCmd := exec.CommandContext(ctx, "gsutil", "rm", exportBucket)
-	cleanupCmd.Env = envVars
-	cleanupCmd.Run() // Best effort cleanup
+	cleanupCmd2 := exec.CommandContext(ctx, "gsutil", "rm", exportBucket)
+	cleanupCmd2.Env = envVars
+	_ = cleanupCmd2.Run() // Best effort cleanup
 
 	if m.IsCancelled() {
 		return fmt.Errorf("migration cancelled")
@@ -1370,9 +1366,9 @@ func (e *SpannerToCockroachExecutor) Execute(ctx context.Context, m *Migration, 
 	}
 
 	// Clean up GCS export
-	cleanupCmd := exec.CommandContext(ctx, "gsutil", "-m", "rm", "-r", exportBucket)
-	cleanupCmd.Env = envVars
-	cleanupCmd.Run() // Best effort cleanup
+	cleanupCmd3 := exec.CommandContext(ctx, "gsutil", "-m", "rm", "-r", exportBucket)
+	cleanupCmd3.Env = envVars
+	_ = cleanupCmd3.Run() // Best effort cleanup
 
 	// Phase 6: Verifying data integrity
 	EmitPhase(m, phases[5], 6)

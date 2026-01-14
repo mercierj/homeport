@@ -119,7 +119,7 @@ func (e *CloudWatchToPrometheusExecutor) Execute(ctx context.Context, m *Migrati
 		EmitLog(m, "warn", "Failed to fetch log groups, continuing...")
 	} else {
 		logGroupsPath := filepath.Join(outputDir, "log-groups.json")
-		os.WriteFile(logGroupsPath, logGroupsOutput, 0644)
+		_ = os.WriteFile(logGroupsPath, logGroupsOutput, 0644)
 	}
 
 	if m.IsCancelled() {
@@ -141,7 +141,7 @@ func (e *CloudWatchToPrometheusExecutor) Execute(ctx context.Context, m *Migrati
 		EmitLog(m, "warn", "Failed to fetch alarms, continuing...")
 	} else {
 		alarmsPath := filepath.Join(outputDir, "alarms.json")
-		os.WriteFile(alarmsPath, alarmsOutput, 0644)
+		_ = os.WriteFile(alarmsPath, alarmsOutput, 0644)
 	}
 
 	var alarmsResult struct {
@@ -160,7 +160,7 @@ func (e *CloudWatchToPrometheusExecutor) Execute(ctx context.Context, m *Migrati
 			} `json:"Dimensions"`
 		} `json:"MetricAlarms"`
 	}
-	json.Unmarshal(alarmsOutput, &alarmsResult)
+	_ = json.Unmarshal(alarmsOutput, &alarmsResult)
 
 	if m.IsCancelled() {
 		return fmt.Errorf("migration cancelled")
@@ -183,7 +183,7 @@ func (e *CloudWatchToPrometheusExecutor) Execute(ctx context.Context, m *Migrati
 			DashboardName string `json:"DashboardName"`
 		} `json:"DashboardEntries"`
 	}
-	json.Unmarshal(dashboardListOutput, &dashboardList)
+	_ = json.Unmarshal(dashboardListOutput, &dashboardList)
 
 	dashboards := make(map[string]interface{})
 	for _, d := range dashboardList.DashboardEntries {
@@ -197,15 +197,15 @@ func (e *CloudWatchToPrometheusExecutor) Execute(ctx context.Context, m *Migrati
 		var dash struct {
 			DashboardBody string `json:"DashboardBody"`
 		}
-		json.Unmarshal(dashOutput, &dash)
+		_ = json.Unmarshal(dashOutput, &dash)
 		var body interface{}
-		json.Unmarshal([]byte(dash.DashboardBody), &body)
+		_ = json.Unmarshal([]byte(dash.DashboardBody), &body)
 		dashboards[d.DashboardName] = body
 	}
 
 	dashboardsData, _ := json.MarshalIndent(dashboards, "", "  ")
 	dashboardsPath := filepath.Join(outputDir, "dashboards.json")
-	os.WriteFile(dashboardsPath, dashboardsData, 0644)
+	_ = os.WriteFile(dashboardsPath, dashboardsData, 0644)
 
 	if m.IsCancelled() {
 		return fmt.Errorf("migration cancelled")
@@ -219,8 +219,12 @@ func (e *CloudWatchToPrometheusExecutor) Execute(ctx context.Context, m *Migrati
 	// Generate Prometheus alert rules from CloudWatch alarms
 	alertRules := e.generatePrometheusAlertRules(alarmsResult.MetricAlarms)
 	alertRulesPath := filepath.Join(outputDir, "prometheus", "alert_rules.yml")
-	os.MkdirAll(filepath.Dir(alertRulesPath), 0755)
-	os.WriteFile(alertRulesPath, []byte(alertRules), 0644)
+	if err := os.MkdirAll(filepath.Dir(alertRulesPath), 0755); err != nil {
+		return fmt.Errorf("failed to create prometheus directory: %w", err)
+	}
+	if err := os.WriteFile(alertRulesPath, []byte(alertRules), 0644); err != nil {
+		return fmt.Errorf("failed to write alert rules: %w", err)
+	}
 
 	// Prometheus config
 	prometheusConfig := `global:
@@ -253,7 +257,9 @@ scrape_configs:
       - targets: []
 `
 	prometheusConfigPath := filepath.Join(outputDir, "prometheus", "prometheus.yml")
-	os.WriteFile(prometheusConfigPath, []byte(prometheusConfig), 0644)
+	if err := os.WriteFile(prometheusConfigPath, []byte(prometheusConfig), 0644); err != nil {
+		return fmt.Errorf("failed to write prometheus config: %w", err)
+	}
 
 	if m.IsCancelled() {
 		return fmt.Errorf("migration cancelled")
@@ -265,14 +271,16 @@ scrape_configs:
 	EmitProgress(m, 75, "Generating Grafana dashboards")
 
 	grafanaDir := filepath.Join(outputDir, "grafana", "dashboards")
-	os.MkdirAll(grafanaDir, 0755)
+	if err := os.MkdirAll(grafanaDir, 0755); err != nil {
+		return fmt.Errorf("failed to create grafana directory: %w", err)
+	}
 
 	// Convert CloudWatch dashboards to Grafana format
 	for name, dashboard := range dashboards {
 		grafanaDash := e.convertToGrafanaDashboard(name, dashboard)
 		dashData, _ := json.MarshalIndent(grafanaDash, "", "  ")
 		dashPath := filepath.Join(grafanaDir, name+".json")
-		os.WriteFile(dashPath, dashData, 0644)
+		_ = os.WriteFile(dashPath, dashData, 0644)
 	}
 
 	// Docker compose for monitoring stack
@@ -346,11 +354,15 @@ volumes:
   loki-data:
 `
 	composePath := filepath.Join(outputDir, "docker-compose.yml")
-	os.WriteFile(composePath, []byte(monitoringCompose), 0644)
+	if err := os.WriteFile(composePath, []byte(monitoringCompose), 0644); err != nil {
+		return fmt.Errorf("failed to write docker-compose.yml: %w", err)
+	}
 
 	// Alertmanager config
 	alertmanagerDir := filepath.Join(outputDir, "alertmanager")
-	os.MkdirAll(alertmanagerDir, 0755)
+	if err := os.MkdirAll(alertmanagerDir, 0755); err != nil {
+		return fmt.Errorf("failed to create alertmanager directory: %w", err)
+	}
 	alertmanagerConfig := `global:
   resolve_timeout: 5m
 
@@ -367,11 +379,15 @@ receivers:
     # webhook_configs:
     #   - url: 'http://your-webhook-url'
 `
-	os.WriteFile(filepath.Join(alertmanagerDir, "alertmanager.yml"), []byte(alertmanagerConfig), 0644)
+	if err := os.WriteFile(filepath.Join(alertmanagerDir, "alertmanager.yml"), []byte(alertmanagerConfig), 0644); err != nil {
+		return fmt.Errorf("failed to write alertmanager config: %w", err)
+	}
 
 	// Loki config
 	lokiDir := filepath.Join(outputDir, "loki")
-	os.MkdirAll(lokiDir, 0755)
+	if err := os.MkdirAll(lokiDir, 0755); err != nil {
+		return fmt.Errorf("failed to create loki directory: %w", err)
+	}
 	lokiConfig := `auth_enabled: false
 
 server:
@@ -398,11 +414,15 @@ schema_config:
         prefix: index_
         period: 24h
 `
-	os.WriteFile(filepath.Join(lokiDir, "loki-config.yml"), []byte(lokiConfig), 0644)
+	if err := os.WriteFile(filepath.Join(lokiDir, "loki-config.yml"), []byte(lokiConfig), 0644); err != nil {
+		return fmt.Errorf("failed to write loki config: %w", err)
+	}
 
 	// Promtail config
 	promtailDir := filepath.Join(outputDir, "promtail")
-	os.MkdirAll(promtailDir, 0755)
+	if err := os.MkdirAll(promtailDir, 0755); err != nil {
+		return fmt.Errorf("failed to create promtail directory: %w", err)
+	}
 	promtailConfig := `server:
   http_listen_port: 9080
   grpc_listen_port: 0
@@ -422,12 +442,18 @@ scrape_configs:
           job: varlogs
           __path__: /var/log/*log
 `
-	os.WriteFile(filepath.Join(promtailDir, "promtail-config.yml"), []byte(promtailConfig), 0644)
+	if err := os.WriteFile(filepath.Join(promtailDir, "promtail-config.yml"), []byte(promtailConfig), 0644); err != nil {
+		return fmt.Errorf("failed to write promtail config: %w", err)
+	}
 
 	// Grafana provisioning
 	provisioningDir := filepath.Join(outputDir, "grafana", "provisioning")
-	os.MkdirAll(filepath.Join(provisioningDir, "datasources"), 0755)
-	os.MkdirAll(filepath.Join(provisioningDir, "dashboards"), 0755)
+	if err := os.MkdirAll(filepath.Join(provisioningDir, "datasources"), 0755); err != nil {
+		return fmt.Errorf("failed to create datasources directory: %w", err)
+	}
+	if err := os.MkdirAll(filepath.Join(provisioningDir, "dashboards"), 0755); err != nil {
+		return fmt.Errorf("failed to create dashboards directory: %w", err)
+	}
 
 	datasources := `apiVersion: 1
 datasources:
@@ -441,7 +467,7 @@ datasources:
     access: proxy
     url: http://loki:3100
 `
-	os.WriteFile(filepath.Join(provisioningDir, "datasources", "datasources.yml"), []byte(datasources), 0644)
+	_ = os.WriteFile(filepath.Join(provisioningDir, "datasources", "datasources.yml"), []byte(datasources), 0644)
 
 	dashboardsProvisioning := `apiVersion: 1
 providers:
@@ -454,7 +480,7 @@ providers:
     options:
       path: /var/lib/grafana/dashboards
 `
-	os.WriteFile(filepath.Join(provisioningDir, "dashboards", "dashboards.yml"), []byte(dashboardsProvisioning), 0644)
+	_ = os.WriteFile(filepath.Join(provisioningDir, "dashboards", "dashboards.yml"), []byte(dashboardsProvisioning), 0644)
 
 	if m.IsCancelled() {
 		return fmt.Errorf("migration cancelled")
@@ -523,7 +549,7 @@ docker-compose up -d
 `, region, len(dashboardList.DashboardEntries), len(alarmsResult.MetricAlarms), len(dashboards))
 
 	readmePath := filepath.Join(outputDir, "README.md")
-	os.WriteFile(readmePath, []byte(readme), 0644)
+	_ = os.WriteFile(readmePath, []byte(readme), 0644)
 
 	EmitProgress(m, 100, "Migration complete")
 	EmitLog(m, "info", "CloudWatch migration to Prometheus/Grafana complete")

@@ -593,9 +593,9 @@ func TestRcloneSync_Verify_NilEndpoints(t *testing.T) {
 	ctx := context.Background()
 
 	_, err := r.Verify(ctx, nil, nil)
-	// Should return an error
+	// Should return an error - nil endpoints should fail
 	if err == nil {
-		// This might also fail at configureRemote step
+		t.Error("expected error for nil endpoints")
 	}
 }
 

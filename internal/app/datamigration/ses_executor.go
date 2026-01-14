@@ -112,7 +112,7 @@ func (e *SESToMailhogExecutor) Execute(ctx context.Context, m *Migration, config
 	var identitiesList struct {
 		Identities []string `json:"Identities"`
 	}
-	json.Unmarshal(identitiesOutput, &identitiesList)
+	_ = json.Unmarshal(identitiesOutput, &identitiesList)
 
 	type IdentityDetails struct {
 		Identity         string            `json:"identity"`
@@ -137,7 +137,7 @@ func (e *SESToMailhogExecutor) Execute(ctx context.Context, m *Migration, config
 				VerificationStatus string `json:"VerificationStatus"`
 			} `json:"VerificationAttributes"`
 		}
-		json.Unmarshal(verifyOutput, &verifyAttrs)
+		_ = json.Unmarshal(verifyOutput, &verifyAttrs)
 
 		// Get DKIM attributes
 		dkimCmd := exec.CommandContext(ctx, "aws", "ses", "get-identity-dkim-attributes",
@@ -154,7 +154,7 @@ func (e *SESToMailhogExecutor) Execute(ctx context.Context, m *Migration, config
 				DkimTokens             []string `json:"DkimTokens"`
 			} `json:"DkimAttributes"`
 		}
-		json.Unmarshal(dkimOutput, &dkimAttrs)
+		_ = json.Unmarshal(dkimOutput, &dkimAttrs)
 
 		details := IdentityDetails{
 			Identity: identity,
@@ -195,11 +195,13 @@ func (e *SESToMailhogExecutor) Execute(ctx context.Context, m *Migration, config
 			Name string `json:"Name"`
 		} `json:"TemplatesMetadata"`
 	}
-	json.Unmarshal(templatesListOutput, &templatesList)
+	_ = json.Unmarshal(templatesListOutput, &templatesList)
 
 	templates := make(map[string]interface{})
 	templatesDir := filepath.Join(outputDir, "templates")
-	os.MkdirAll(templatesDir, 0755)
+	if err := os.MkdirAll(templatesDir, 0755); err != nil {
+		return fmt.Errorf("failed to create templates directory: %w", err)
+	}
 
 	for _, tmpl := range templatesList.TemplatesMetadata {
 		getTemplateCmd := exec.CommandContext(ctx, "aws", "ses", "get-template",
@@ -217,30 +219,30 @@ func (e *SESToMailhogExecutor) Execute(ctx context.Context, m *Migration, config
 				TextPart     string `json:"TextPart"`
 			} `json:"Template"`
 		}
-		json.Unmarshal(tmplOutput, &template)
+		_ = json.Unmarshal(tmplOutput, &template)
 
 		templates[tmpl.Name] = template.Template
 
 		// Save HTML template
 		if template.Template.HtmlPart != "" {
 			htmlPath := filepath.Join(templatesDir, tmpl.Name+".html")
-			os.WriteFile(htmlPath, []byte(template.Template.HtmlPart), 0644)
+			_ = os.WriteFile(htmlPath, []byte(template.Template.HtmlPart), 0644)
 		}
 		// Save text template
 		if template.Template.TextPart != "" {
 			textPath := filepath.Join(templatesDir, tmpl.Name+".txt")
-			os.WriteFile(textPath, []byte(template.Template.TextPart), 0644)
+			_ = os.WriteFile(textPath, []byte(template.Template.TextPart), 0644)
 		}
 	}
 
 	// Save identities and templates
 	identitiesData, _ := json.MarshalIndent(identities, "", "  ")
 	identitiesPath := filepath.Join(outputDir, "ses-identities.json")
-	os.WriteFile(identitiesPath, identitiesData, 0644)
+	_ = os.WriteFile(identitiesPath, identitiesData, 0644)
 
 	templatesData, _ := json.MarshalIndent(templates, "", "  ")
 	templatesPath := filepath.Join(outputDir, "ses-templates.json")
-	os.WriteFile(templatesPath, templatesData, 0644)
+	_ = os.WriteFile(templatesPath, templatesData, 0644)
 
 	if m.IsCancelled() {
 		return fmt.Errorf("migration cancelled")
@@ -279,7 +281,7 @@ volumes:
 # 3. Ensure proper DNS (MX, SPF, DKIM, DMARC)
 `
 	composePath := filepath.Join(outputDir, "docker-compose.yml")
-	os.WriteFile(composePath, []byte(postalCompose), 0644)
+	_ = os.WriteFile(composePath, []byte(postalCompose), 0644)
 
 	if m.IsCancelled() {
 		return fmt.Errorf("migration cancelled")
@@ -319,7 +321,7 @@ SMTP_TLS=false
 # _dmarc.yourdomain.com: v=DMARC1; p=quarantine; rua=mailto:dmarc@yourdomain.com
 `
 	smtpConfigPath := filepath.Join(outputDir, "smtp-config.txt")
-	os.WriteFile(smtpConfigPath, []byte(smtpConfig), 0644)
+	_ = os.WriteFile(smtpConfigPath, []byte(smtpConfig), 0644)
 
 	// Python email sending example
 	pythonExample := `#!/usr/bin/env python3
@@ -390,7 +392,7 @@ if __name__ == '__main__':
     )
 `
 	pythonPath := filepath.Join(outputDir, "send_email.py")
-	os.WriteFile(pythonPath, []byte(pythonExample), 0755)
+	_ = os.WriteFile(pythonPath, []byte(pythonExample), 0755)
 
 	if m.IsCancelled() {
 		return fmt.Errorf("migration cancelled")
@@ -485,7 +487,7 @@ _dmarc.yourdomain.com. TXT "v=DMARC1; p=quarantine; rua=mailto:dmarc@yourdomain.
 `
 
 	readmePath := filepath.Join(outputDir, "README.md")
-	os.WriteFile(readmePath, []byte(readme), 0644)
+	_ = os.WriteFile(readmePath, []byte(readme), 0644)
 
 	EmitProgress(m, 100, "Migration complete")
 	EmitLog(m, "info", fmt.Sprintf("SES migration complete: %d identities, %d templates", len(identities), len(templates)))

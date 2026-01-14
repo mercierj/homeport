@@ -115,7 +115,7 @@ func (e *KMSToVaultExecutor) Execute(ctx context.Context, m *Migration, config *
 			KeyArn string `json:"KeyArn"`
 		} `json:"Keys"`
 	}
-	json.Unmarshal(keysOutput, &keysList)
+	_ = json.Unmarshal(keysOutput, &keysList)
 
 	// Get details for each key
 	type KeyDetails struct {
@@ -152,7 +152,7 @@ func (e *KMSToVaultExecutor) Execute(ctx context.Context, m *Migration, config *
 				KeyManager  string `json:"KeyManager"`
 			} `json:"KeyMetadata"`
 		}
-		json.Unmarshal(descOutput, &keyMeta)
+		_ = json.Unmarshal(descOutput, &keyMeta)
 
 		// Skip AWS managed keys
 		if keyMeta.KeyMetadata.KeyManager == "AWS" {
@@ -171,7 +171,7 @@ func (e *KMSToVaultExecutor) Execute(ctx context.Context, m *Migration, config *
 				AliasName string `json:"AliasName"`
 			} `json:"Aliases"`
 		}
-		json.Unmarshal(aliasOutput, &aliases)
+		_ = json.Unmarshal(aliasOutput, &aliases)
 
 		aliasNames := make([]string, 0)
 		for _, a := range aliases.Aliases {
@@ -204,7 +204,7 @@ func (e *KMSToVaultExecutor) Execute(ctx context.Context, m *Migration, config *
 
 	keysData, _ := json.MarshalIndent(keys, "", "  ")
 	keysPath := filepath.Join(outputDir, "kms-keys.json")
-	os.WriteFile(keysPath, keysData, 0644)
+	_ = os.WriteFile(keysPath, keysData, 0644)
 
 	if m.IsCancelled() {
 		return fmt.Errorf("migration cancelled")
@@ -239,7 +239,7 @@ volumes:
   vault-data:
 `
 	composePath := filepath.Join(outputDir, "docker-compose.yml")
-	os.WriteFile(composePath, []byte(vaultCompose), 0644)
+	_ = os.WriteFile(composePath, []byte(vaultCompose), 0644)
 
 	if m.IsCancelled() {
 		return fmt.Errorf("migration cancelled")
@@ -299,7 +299,7 @@ echo "Keys created successfully!"
 vault list transit/keys
 `
 	setupScriptPath := filepath.Join(outputDir, "setup-vault.sh")
-	os.WriteFile(setupScriptPath, []byte(setupScript), 0755)
+	_ = os.WriteFile(setupScriptPath, []byte(setupScript), 0755)
 
 	// Generate encryption example
 	encryptExample := `#!/bin/bash
@@ -322,7 +322,7 @@ DECRYPTED=$(vault write -format=json transit/decrypt/$KEY_NAME ciphertext=$CIPHE
 echo "Plaintext: $(echo $DECRYPTED | base64 -d)"
 `
 	encryptExamplePath := filepath.Join(outputDir, "encrypt-example.sh")
-	os.WriteFile(encryptExamplePath, []byte(encryptExample), 0755)
+	_ = os.WriteFile(encryptExamplePath, []byte(encryptExample), 0755)
 
 	if m.IsCancelled() {
 		return fmt.Errorf("migration cancelled")
@@ -397,7 +397,7 @@ Data encrypted with KMS must be:
 `, region, len(keys))
 
 	readmePath := filepath.Join(outputDir, "README.md")
-	os.WriteFile(readmePath, []byte(readme), 0644)
+	_ = os.WriteFile(readmePath, []byte(readme), 0644)
 
 	EmitProgress(m, 100, "Migration complete")
 	EmitLog(m, "info", fmt.Sprintf("KMS migration complete: %d keys", len(keys)))

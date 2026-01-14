@@ -114,7 +114,7 @@ func (e *SNSToNATSExecutor) Execute(ctx context.Context, m *Migration, config *M
 			TopicArn string `json:"TopicArn"`
 		} `json:"Topics"`
 	}
-	json.Unmarshal(topicsOutput, &topicsList)
+	_ = json.Unmarshal(topicsOutput, &topicsList)
 
 	type TopicDetails struct {
 		Arn           string                   `json:"arn"`
@@ -145,7 +145,7 @@ func (e *SNSToNATSExecutor) Execute(ctx context.Context, m *Migration, config *M
 		var attrs struct {
 			Attributes map[string]string `json:"Attributes"`
 		}
-		json.Unmarshal(attrOutput, &attrs)
+		_ = json.Unmarshal(attrOutput, &attrs)
 
 		// Get subscriptions
 		subsCmd := exec.CommandContext(ctx, "aws", "sns", "list-subscriptions-by-topic",
@@ -157,7 +157,7 @@ func (e *SNSToNATSExecutor) Execute(ctx context.Context, m *Migration, config *M
 		var subs struct {
 			Subscriptions []map[string]interface{} `json:"Subscriptions"`
 		}
-		json.Unmarshal(subsOutput, &subs)
+		_ = json.Unmarshal(subsOutput, &subs)
 
 		topics = append(topics, TopicDetails{
 			Arn:           topic.TopicArn,
@@ -182,7 +182,7 @@ func (e *SNSToNATSExecutor) Execute(ctx context.Context, m *Migration, config *M
 
 	topicsData, _ := json.MarshalIndent(topics, "", "  ")
 	topicsPath := filepath.Join(outputDir, "sns-topics.json")
-	os.WriteFile(topicsPath, topicsData, 0644)
+	_ = os.WriteFile(topicsPath, topicsData, 0644)
 
 	if m.IsCancelled() {
 		return fmt.Errorf("migration cancelled")
@@ -224,7 +224,7 @@ volumes:
   nats-data:
 `
 	composePath := filepath.Join(outputDir, "docker-compose.yml")
-	os.WriteFile(composePath, []byte(natsCompose), 0644)
+	_ = os.WriteFile(composePath, []byte(natsCompose), 0644)
 
 	if m.IsCancelled() {
 		return fmt.Errorf("migration cancelled")
@@ -270,7 +270,7 @@ echo "Streams created successfully!"
 nats stream list --server=$NATS_URL
 `
 	setupPath := filepath.Join(outputDir, "setup-nats.sh")
-	os.WriteFile(setupPath, []byte(setupScript), 0755)
+	_ = os.WriteFile(setupPath, []byte(setupScript), 0755)
 
 	// Publisher example
 	publisherExample := `#!/usr/bin/env python3
@@ -307,7 +307,7 @@ if __name__ == "__main__":
     ))
 `
 	publisherPath := filepath.Join(outputDir, "publisher_example.py")
-	os.WriteFile(publisherPath, []byte(publisherExample), 0755)
+	_ = os.WriteFile(publisherPath, []byte(publisherExample), 0755)
 
 	// Subscriber example
 	subscriberExample := `#!/usr/bin/env python3
@@ -354,7 +354,7 @@ if __name__ == "__main__":
     asyncio.run(subscribe("my-topic", process_message))
 `
 	subscriberPath := filepath.Join(outputDir, "subscriber_example.py")
-	os.WriteFile(subscriberPath, []byte(subscriberExample), 0755)
+	_ = os.WriteFile(subscriberPath, []byte(subscriberExample), 0755)
 
 	if m.IsCancelled() {
 		return fmt.Errorf("migration cancelled")
@@ -430,7 +430,7 @@ SNS topics are mapped to NATS subjects:
 `
 
 	readmePath := filepath.Join(outputDir, "README.md")
-	os.WriteFile(readmePath, []byte(readme), 0644)
+	_ = os.WriteFile(readmePath, []byte(readme), 0644)
 
 	EmitProgress(m, 100, "Migration complete")
 	EmitLog(m, "info", fmt.Sprintf("SNS migration complete: %d topics", len(topics)))

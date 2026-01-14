@@ -89,13 +89,6 @@ type gcpSecret struct {
 	} `json:"replication"`
 }
 
-// gcpSecretVersion represents a secret version.
-type gcpSecretVersion struct {
-	Name       string `json:"name"`
-	State      string `json:"state"`
-	CreateTime string `json:"createTime"`
-}
-
 // Execute performs the migration.
 func (e *SecretManagerToVaultExecutor) Execute(ctx context.Context, m *Migration, config *MigrationConfig) error {
 	phases := e.GetPhases()
@@ -280,7 +273,7 @@ volumes:
 	}
 	metadataJSON, _ := json.MarshalIndent(secretsMetadata, "", "  ")
 	metadataPath := filepath.Join(outputDir, "secrets-metadata.json")
-	os.WriteFile(metadataPath, metadataJSON, 0644)
+	_ = os.WriteFile(metadataPath, metadataJSON, 0644)
 
 	if m.IsCancelled() {
 		return fmt.Errorf("migration cancelled")
@@ -402,7 +395,7 @@ Delete these files after successful import to Vault!
 `, projectID, len(secretsData), vaultPath, vaultPath)
 
 	readmePath := filepath.Join(outputDir, "README.md")
-	os.WriteFile(readmePath, []byte(readme), 0644)
+	_ = os.WriteFile(readmePath, []byte(readme), 0644)
 
 	EmitProgress(m, 100, "Migration complete")
 	EmitLog(m, "info", fmt.Sprintf("Secret Manager migration complete: %d secrets exported", len(secretsData)))
@@ -757,7 +750,7 @@ func (e *IdentityPlatformToKeycloakExecutor) Execute(ctx context.Context, m *Mig
 	// Save original users data for reference
 	usersJSON, _ := json.MarshalIndent(allUsers, "", "  ")
 	usersExportPath := filepath.Join(outputDir, "identity-platform-users.json")
-	os.WriteFile(usersExportPath, usersJSON, 0644)
+	_ = os.WriteFile(usersExportPath, usersJSON, 0644)
 
 	// Generate Docker Compose for Keycloak
 	keycloakCompose := `version: '3.8'
@@ -794,7 +787,7 @@ volumes:
   keycloak-db:
 `
 	composePath := filepath.Join(outputDir, "docker-compose.yml")
-	os.WriteFile(composePath, []byte(keycloakCompose), 0644)
+	_ = os.WriteFile(composePath, []byte(keycloakCompose), 0644)
 
 	// Generate provider configuration guide
 	providerGuide := fmt.Sprintf(`# Identity Provider Configuration Guide
@@ -864,7 +857,7 @@ docker-compose up -d
 `
 
 	providerGuidePath := filepath.Join(outputDir, "PROVIDER_GUIDE.md")
-	os.WriteFile(providerGuidePath, []byte(providerGuide), 0644)
+	_ = os.WriteFile(providerGuidePath, []byte(providerGuide), 0644)
 
 	// Generate README
 	readme := fmt.Sprintf(`# Identity Platform to Keycloak Migration
@@ -905,7 +898,7 @@ Access Keycloak Admin Console:
 `, projectID, len(allUsers), len(providers))
 
 	readmePath := filepath.Join(outputDir, "README.md")
-	os.WriteFile(readmePath, []byte(readme), 0644)
+	_ = os.WriteFile(readmePath, []byte(readme), 0644)
 
 	EmitProgress(m, 100, "Migration complete")
 	EmitLog(m, "info", fmt.Sprintf("Identity Platform migration complete: %d users", len(allUsers)))
@@ -1153,7 +1146,7 @@ func (e *CloudDNSToCoreDNSExecutor) Execute(ctx context.Context, m *Migration, c
 	// Save all zone data as JSON
 	zonesJSON, _ := json.MarshalIndent(allZoneRecords, "", "  ")
 	zonesJSONPath := filepath.Join(outputDir, "cloud-dns-export.json")
-	os.WriteFile(zonesJSONPath, zonesJSON, 0644)
+	_ = os.WriteFile(zonesJSONPath, zonesJSON, 0644)
 
 	if m.IsCancelled() {
 		return fmt.Errorf("migration cancelled")
@@ -1189,7 +1182,7 @@ func (e *CloudDNSToCoreDNSExecutor) Execute(ctx context.Context, m *Migration, c
 `
 
 	corefilePath := filepath.Join(outputDir, "Corefile")
-	os.WriteFile(corefilePath, []byte(corefile), 0644)
+	_ = os.WriteFile(corefilePath, []byte(corefile), 0644)
 
 	if m.IsCancelled() {
 		return fmt.Errorf("migration cancelled")
@@ -1203,7 +1196,7 @@ func (e *CloudDNSToCoreDNSExecutor) Execute(ctx context.Context, m *Migration, c
 	for _, zr := range allZoneRecords {
 		zoneFile := generateZoneFile(zr.Zone, zr.Records)
 		zoneFilePath := filepath.Join(zonesDir, zr.Zone.Name+".zone")
-		os.WriteFile(zoneFilePath, []byte(zoneFile), 0644)
+		_ = os.WriteFile(zoneFilePath, []byte(zoneFile), 0644)
 		EmitLog(m, "info", fmt.Sprintf("Created zone file: %s.zone", zr.Zone.Name))
 	}
 
@@ -1230,7 +1223,7 @@ networks:
     driver: bridge
 `
 	composePath := filepath.Join(outputDir, "docker-compose.yml")
-	os.WriteFile(composePath, []byte(corednsCompose), 0644)
+	_ = os.WriteFile(composePath, []byte(corednsCompose), 0644)
 
 	// Generate README
 	totalRecords := 0
@@ -1300,7 +1293,7 @@ dig @localhost example.com
 `
 
 	readmePath := filepath.Join(outputDir, "README.md")
-	os.WriteFile(readmePath, []byte(readme), 0644)
+	_ = os.WriteFile(readmePath, []byte(readme), 0644)
 
 	EmitProgress(m, 100, "Migration complete")
 	EmitLog(m, "info", fmt.Sprintf("Cloud DNS migration complete: %d zones, %d records", len(allZoneRecords), totalRecords))
