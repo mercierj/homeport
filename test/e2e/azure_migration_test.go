@@ -296,7 +296,7 @@ func TestAzureMigration_ARMTemplate(t *testing.T) {
 		}
 
 		gen := compose.NewGenerator("azure-migration-test")
-		output, err := gen.Generate(results)
+		output, err := gen.GenerateLegacy(results)
 		if err != nil {
 			t.Fatalf("Failed to generate Docker Compose: %v", err)
 		}
@@ -859,7 +859,7 @@ func TestAzureMigration_CompleteStack(t *testing.T) {
 
 	// Generate Docker Compose
 	gen := compose.NewGenerator("azure-complete-stack")
-	output, err := gen.Generate(results)
+	output, err := gen.GenerateLegacy(results)
 	if err != nil {
 		t.Fatalf("Failed to generate output: %v", err)
 	}

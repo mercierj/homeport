@@ -270,7 +270,7 @@ func TestMultiCloudMigration_MergeResults(t *testing.T) {
 
 	// Generate merged Docker Compose
 	gen := compose.NewGenerator("multi-cloud-stack")
-	output, err := gen.Generate(results)
+	output, err := gen.GenerateLegacy(results)
 	if err != nil {
 		t.Fatalf("Failed to generate output: %v", err)
 	}
@@ -379,7 +379,7 @@ func TestMultiCloudMigration_HandleMixedInfrastructure(t *testing.T) {
 
 	// Generate unified output
 	gen := compose.NewGenerator("mixed-infrastructure")
-	output, err := gen.Generate(allResults)
+	output, err := gen.GenerateLegacy(allResults)
 	if err != nil {
 		t.Fatalf("Failed to generate output: %v", err)
 	}
@@ -459,7 +459,7 @@ func TestMultiCloudMigration_ConflictResolution(t *testing.T) {
 
 	// Try to generate Docker Compose
 	gen := compose.NewGenerator("conflict-test")
-	output, err := gen.Generate(results)
+	output, err := gen.GenerateLegacy(results)
 	if err != nil {
 		// Expect either successful generation or a meaningful error
 		t.Logf("Generation with conflicts: %v", err)
@@ -657,7 +657,7 @@ func TestMultiCloudMigration_UnifiedOutputGeneration(t *testing.T) {
 
 	// Generate unified Docker Compose
 	gen := compose.NewGenerator("multi-cloud-unified")
-	output, err := gen.Generate(results)
+	output, err := gen.GenerateLegacy(results)
 	if err != nil {
 		t.Fatalf("Failed to generate output: %v", err)
 	}

@@ -154,7 +154,7 @@ func TestAWSMigration_Terraform(t *testing.T) {
 		}
 
 		gen := compose.NewGenerator("aws-migration-test")
-		output, err := gen.Generate(results)
+		output, err := gen.GenerateLegacy(results)
 		if err != nil {
 			t.Fatalf("Failed to generate Docker Compose: %v", err)
 		}
@@ -412,7 +412,7 @@ Resources:
 
 		// Generate Docker Compose
 		gen := compose.NewGenerator("aws-cfn-migration")
-		output, err := gen.Generate(results)
+		output, err := gen.GenerateLegacy(results)
 		if err != nil {
 			t.Fatalf("Failed to generate output: %v", err)
 		}

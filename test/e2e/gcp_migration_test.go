@@ -266,7 +266,7 @@ resource "google_pubsub_subscription" "events_sub" {
 		}
 
 		gen := compose.NewGenerator("gcp-migration-test")
-		output, err := gen.Generate(results)
+		output, err := gen.GenerateLegacy(results)
 		if err != nil {
 			t.Fatalf("Failed to generate Docker Compose: %v", err)
 		}
@@ -680,7 +680,7 @@ func TestGCPMigration_CompleteStack(t *testing.T) {
 
 	// Generate Docker Compose
 	gen := compose.NewGenerator("gcp-complete-stack")
-	output, err := gen.Generate(results)
+	output, err := gen.GenerateLegacy(results)
 	if err != nil {
 		t.Fatalf("Failed to generate output: %v", err)
 	}

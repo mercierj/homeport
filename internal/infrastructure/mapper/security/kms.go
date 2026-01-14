@@ -216,7 +216,7 @@ echo "  Encrypt: vault write transit/encrypt/%s plaintext=\$(echo -n 'secret' | 
 echo "  Decrypt: vault write transit/decrypt/%s ciphertext=vault:v1:..."
 echo "  Rotate:  vault write -f transit/keys/%s/rotate"
 echo ""
-`, keyID, keyUsage, keySpec, aliasComment, keyID, keyID, vaultKeyType, keyID, keyID, vaultKeyType, keyID, keyID, keyID, keyID)
+`, keyID, keyUsage, keySpec, aliasComment, keyID, keyID, vaultKeyType, keyID, keyID, vaultKeyType, keyID, keyID, keyID)
 }
 
 func (m *KMSMapper) mapKeySpecToVaultType(keySpec string) string {

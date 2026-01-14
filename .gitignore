@@ -48,7 +48,8 @@ analysis.json
 homeport
 
 # Embedded frontend (generated from web/dist)
-internal/api/static/
+internal/api/static/*
+!internal/api/static/.gitkeep
 
 # Temporary files
 *.tmp

@@ -1,0 +1,3 @@
+# Placeholder for Go embed directive
+# This file ensures the static directory exists for CI builds
+# Real content is built from web/ and copied here during deployment
