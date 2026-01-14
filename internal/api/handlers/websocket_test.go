@@ -292,7 +292,7 @@ func TestWebSocketIntegration(t *testing.T) {
 			Data:      nil,
 		}
 		data, _ := json.Marshal(msg)
-		conn.WriteMessage(websocket.TextMessage, data)
+		_ = conn.WriteMessage(websocket.TextMessage, data)
 	}))
 	defer server.Close()
 

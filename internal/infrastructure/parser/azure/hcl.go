@@ -88,7 +88,7 @@ func (p *HCLParser) AutoDetect(path string) (bool, float64) {
 	if info.IsDir() {
 		tfCount := 0
 		azureCount := 0
-		filepath.Walk(path, func(filePath string, info os.FileInfo, err error) error {
+		_ = filepath.Walk(path, func(filePath string, info os.FileInfo, err error) error {
 			if err != nil || info.IsDir() {
 				return nil
 			}

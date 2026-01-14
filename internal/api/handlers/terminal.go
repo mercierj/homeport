@@ -164,7 +164,7 @@ func (h *TerminalHandler) HandleExec(w http.ResponseWriter, r *http.Request) {
 	defer h.service.CloseSession(session.ID)
 
 	// Send connected message
-	sendMessage(conn, "connected", ConnectedData{
+	_ = sendMessage(conn, "connected", ConnectedData{
 		SessionID:   session.ID,
 		ContainerID: containerID,
 	})
@@ -203,7 +203,7 @@ func (h *TerminalHandler) readFromContainer(conn *websocket.Conn, session *termi
 		if n > 0 {
 			session.UpdateActivity()
 
-			conn.SetWriteDeadline(time.Now().Add(WriteTimeout))
+			_ = conn.SetWriteDeadline(time.Now().Add(WriteTimeout))
 			if err := sendMessage(conn, "output", OutputData{Data: string(buf[:n])}); err != nil {
 				logger.Debug("WebSocket write error", "error", err)
 				return
@@ -219,7 +219,7 @@ func (h *TerminalHandler) readFromWebSocket(ctx context.Context, conn *websocket
 
 	// Set up pong handler
 	conn.SetPongHandler(func(string) error {
-		conn.SetReadDeadline(time.Now().Add(ReadTimeout))
+		_ = conn.SetReadDeadline(time.Now().Add(ReadTimeout))
 		return nil
 	})
 
@@ -228,12 +228,12 @@ func (h *TerminalHandler) readFromWebSocket(ctx context.Context, conn *websocket
 		case <-ctx.Done():
 			return
 		case <-pingTicker.C:
-			conn.SetWriteDeadline(time.Now().Add(WriteTimeout))
+			_ = conn.SetWriteDeadline(time.Now().Add(WriteTimeout))
 			if err := conn.WriteMessage(websocket.PingMessage, nil); err != nil {
 				return
 			}
 		default:
-			conn.SetReadDeadline(time.Now().Add(ReadTimeout))
+			_ = conn.SetReadDeadline(time.Now().Add(ReadTimeout))
 			_, message, err := conn.ReadMessage()
 			if err != nil {
 				if websocket.IsUnexpectedCloseError(err, websocket.CloseGoingAway, websocket.CloseNormalClosure) {
@@ -266,10 +266,10 @@ func (h *TerminalHandler) readFromWebSocket(ctx context.Context, conn *websocket
 				if err := json.Unmarshal(msg.Data, &resize); err != nil {
 					continue
 				}
-				h.service.ResizeSession(ctx, session.ID, resize.Cols, resize.Rows)
+				_ = h.service.ResizeSession(ctx, session.ID, resize.Cols, resize.Rows)
 
 			case MsgTypePing:
-				sendMessage(conn, "pong", nil)
+				_ = sendMessage(conn, "pong", nil)
 			}
 		}
 	}

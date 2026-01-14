@@ -4,7 +4,6 @@ package ovh
 import (
 	"github.com/homeport/homeport/internal/domain/generator"
 	"github.com/homeport/homeport/internal/domain/mapper"
-	"github.com/homeport/homeport/internal/domain/target"
 )
 
 // getRegion returns the OVH region from config or default.
@@ -13,28 +12,6 @@ func getRegion(config *generator.TargetConfig) string {
 		return config.TargetConfig.OVH.Region
 	}
 	return "GRA11" // Default to Gravelines, France
-}
-
-// getKubeNodeConfig returns Kubernetes node configuration based on source and config.
-// Returns nodeCount and nodeFlavor.
-func getKubeNodeConfig(res *mapper.MappingResult, config *generator.TargetConfig) (int, string) {
-	nodeCount := 3
-	nodeFlavor := "b2-7"
-
-	// Adjust based on HA level
-	switch config.HALevel {
-	case target.HALevelNone, target.HALevelBasic:
-		nodeCount = 1
-		nodeFlavor = "d2-4"
-	case target.HALevelMultiServer:
-		nodeCount = 2
-		nodeFlavor = "b2-7"
-	case target.HALevelCluster:
-		nodeCount = 3
-		nodeFlavor = "b2-15"
-	}
-
-	return nodeCount, nodeFlavor
 }
 
 // getBlockStorageSize returns an estimated block storage size for the result.

@@ -80,7 +80,7 @@ func (m *CacheMapper) Map(ctx context.Context, res *resource.AWSResource) (*mapp
 		result.AddManualStep("Configure Redis Sentinel or Redis Cluster for HA")
 	}
 
-	if res.GetConfigBool("enable_non_ssl_port") == false {
+	if !res.GetConfigBool("enable_non_ssl_port") {
 		result.AddWarning("SSL-only mode detected. Configure TLS for Redis if required.")
 	}
 

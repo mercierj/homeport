@@ -367,9 +367,9 @@ func init() {
 	serviceLogsCmd.Flags().IntVar(&serviceTail, "tail", 100, "number of lines to show from the end of the logs")
 
 	// Bind flags to viper
-	viper.BindPFlag("service.stack_id", serviceCmd.PersistentFlags().Lookup("stack-id"))
-	viper.BindPFlag("api.host", serviceCmd.PersistentFlags().Lookup("api-host"))
-	viper.BindPFlag("api.port", serviceCmd.PersistentFlags().Lookup("api-port"))
+	_ = viper.BindPFlag("service.stack_id", serviceCmd.PersistentFlags().Lookup("stack-id"))
+	_ = viper.BindPFlag("api.host", serviceCmd.PersistentFlags().Lookup("api-host"))
+	_ = viper.BindPFlag("api.port", serviceCmd.PersistentFlags().Lookup("api-port"))
 
 	// Add subcommands
 	serviceCmd.AddCommand(serviceListCmd)

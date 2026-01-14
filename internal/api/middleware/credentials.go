@@ -194,5 +194,5 @@ func (h *CredentialsHandler) HandleDeleteDatabaseCredentials(w http.ResponseWrit
 	h.store.DeleteDatabaseCredentials(session.Token)
 
 	w.Header().Set("Content-Type", "application/json")
-	w.Write([]byte(`{"status":"ok"}`))
+	_, _ = w.Write([]byte(`{"status":"ok"}`))
 }

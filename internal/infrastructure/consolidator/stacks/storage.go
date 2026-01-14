@@ -141,7 +141,6 @@ func (m *StorageMerger) Merge(ctx context.Context, results []*mapper.MappingResu
 	}
 
 	// Add source resources and collect metadata
-	var allWarnings []string
 	originalBuckets := make(map[string]string) // Maps normalized name to original name
 
 	for _, result := range results {
@@ -159,9 +158,6 @@ func (m *StorageMerger) Merge(ctx context.Context, results []*mapper.MappingResu
 		// Track original bucket names
 		normalizedName := consolidator.NormalizeName(result.SourceResourceName)
 		originalBuckets[normalizedName] = result.SourceResourceName
-
-		// Collect warnings
-		allWarnings = append(allWarnings, result.Warnings...)
 	}
 
 	// Store bucket mapping in metadata
@@ -224,37 +220,6 @@ func (m *StorageMerger) extractBucketNames(results []*mapper.MappingResult) []st
 	}
 
 	return buckets
-}
-
-// generateBucketPolicy generates a MinIO bucket policy based on source configuration.
-func (m *StorageMerger) generateBucketPolicy(sourceName string, sourceType string) string {
-	// Default policy - read/write for authenticated users
-	policy := fmt.Sprintf(`{
-    "Version": "2012-10-17",
-    "Statement": [
-        {
-            "Effect": "Allow",
-            "Principal": {"AWS": ["*"]},
-            "Action": [
-                "s3:GetBucketLocation",
-                "s3:ListBucket"
-            ],
-            "Resource": ["arn:aws:s3:::%s"]
-        },
-        {
-            "Effect": "Allow",
-            "Principal": {"AWS": ["*"]},
-            "Action": [
-                "s3:GetObject",
-                "s3:PutObject",
-                "s3:DeleteObject"
-            ],
-            "Resource": ["arn:aws:s3:::%s/*"]
-        }
-    ]
-}`, sourceName, sourceName)
-
-	return policy
 }
 
 // generateMCSetupScript generates a MinIO client setup script to create buckets.
@@ -349,9 +314,9 @@ func (m *StorageMerger) generateMigrationScript(results []*mapper.MappingResult)
 
 		for _, bucket := range awsBuckets {
 			sb.WriteString(fmt.Sprintf("echo 'Syncing bucket: %s'\n", bucket))
-			sb.WriteString(fmt.Sprintf("# Using aws s3 sync\n"))
+			sb.WriteString("# Using aws s3 sync\n")
 			sb.WriteString(fmt.Sprintf("# aws s3 sync s3://%s s3://%s --endpoint-url $MINIO_ENDPOINT\n", bucket, bucket))
-			sb.WriteString(fmt.Sprintf("# Or using rclone\n"))
+			sb.WriteString("# Or using rclone\n")
 			sb.WriteString(fmt.Sprintf("# rclone sync aws:%s minio:%s --progress\n\n", bucket, bucket))
 		}
 	}

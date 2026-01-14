@@ -222,7 +222,7 @@ func (h *BackupHandler) HandleDownloadBackup(w http.ResponseWriter, r *http.Requ
 	w.Header().Set("Content-Length", fmt.Sprintf("%d", info.Size()))
 
 	// Stream the file
-	io.Copy(w, file)
+	_, _ = io.Copy(w, file)
 }
 
 // HandleListVolumes handles GET /volumes

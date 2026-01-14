@@ -5,7 +5,6 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
-	"strings"
 
 	"github.com/homeport/homeport/internal/domain/mapper"
 	"github.com/homeport/homeport/internal/domain/resource"
@@ -596,14 +595,4 @@ providers:
       path: /var/lib/grafana/dashboards
 `
 	return []byte(config)
-}
-
-// Helper function to check if a string contains any of the given substrings.
-func containsAny(s string, substrs []string) bool {
-	for _, substr := range substrs {
-		if strings.Contains(s, substr) {
-			return true
-		}
-	}
-	return false
 }

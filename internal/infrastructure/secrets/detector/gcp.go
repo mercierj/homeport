@@ -237,20 +237,18 @@ func (d *GCPDetector) detectCloudFunctionSecrets(res *resource.AWSResource) []*s
 
 	// Check environment_variables
 	envVars := secrets.GetConfigMap(config, "environment_variables")
-	if envVars != nil {
-		for key := range envVars {
-			if secrets.IsSensitiveEnvName(key) {
-				detected = append(detected, &secrets.DetectedSecret{
-					Name:         secrets.NormalizeEnvName(key),
-					Source:       secrets.SourceManual,
-					Description:  fmt.Sprintf("Environment variable %s from Cloud Function %s", key, resName),
-					Required:     true,
-					Type:         secrets.InferSecretType(key),
-					ResourceID:   res.ID,
-					ResourceName: resName,
-					ResourceType: res.Type,
-				})
-			}
+	for key := range envVars {
+		if secrets.IsSensitiveEnvName(key) {
+			detected = append(detected, &secrets.DetectedSecret{
+				Name:         secrets.NormalizeEnvName(key),
+				Source:       secrets.SourceManual,
+				Description:  fmt.Sprintf("Environment variable %s from Cloud Function %s", key, resName),
+				Required:     true,
+				Type:         secrets.InferSecretType(key),
+				ResourceID:   res.ID,
+				ResourceName: resName,
+				ResourceType: res.Type,
+			})
 		}
 	}
 

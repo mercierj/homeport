@@ -488,12 +488,8 @@ func (s *Service) RestoreBackup(ctx context.Context, backupID, targetStackID str
 			continue
 		}
 
-		volName := filepath.Dir(header.Name)
-		if idx := filepath.SplitList(volName); len(idx) > 0 {
-			volName = idx[0]
-		}
 		// Get the first path component as volume name
-		volName = header.Name
+		volName := header.Name
 		if idx := len(header.Name); idx > 0 {
 			for i, c := range header.Name {
 				if c == '/' {
@@ -751,6 +747,6 @@ func (s *Service) loadData() error {
 // generateID generates a unique ID.
 func generateID() string {
 	bytes := make([]byte, 16)
-	rand.Read(bytes)
+	_, _ = rand.Read(bytes)
 	return hex.EncodeToString(bytes)
 }

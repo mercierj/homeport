@@ -122,10 +122,7 @@ func (m *MessagingMerger) Merge(ctx context.Context, results []*mapper.MappingRe
 	rabbitmqConfig := m.generateRabbitMQConfig()
 	stk.AddConfig("rabbitmq/rabbitmq.conf", rabbitmqConfig)
 
-	// Add source resources and collect warnings/manual steps
-	var allWarnings []string
-	var allManualSteps []string
-
+	// Add source resources
 	for _, result := range results {
 		if result == nil {
 			continue
@@ -137,10 +134,6 @@ func (m *MessagingMerger) Merge(ctx context.Context, results []*mapper.MappingRe
 			Name: result.SourceResourceName,
 		}
 		stk.AddSourceResource(res)
-
-		// Collect warnings
-		allWarnings = append(allWarnings, result.Warnings...)
-		allManualSteps = append(allManualSteps, result.ManualSteps...)
 	}
 
 	// Add metadata about consolidated resources

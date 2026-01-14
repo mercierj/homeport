@@ -44,11 +44,8 @@ type Server struct {
 	identityHandler  *handlers.IdentityHandler
 	functionsHandler *handlers.FunctionsHandler
 	dnsHandler       *handlers.DNSHandler
-	queuesService    *queues.Service
 	queuesHandler    *handlers.QueuesHandler
-	cacheService     *cache.Service
 	cacheHandler     *handlers.CacheHandler
-	secretsService   *secrets.Service
 	secretsHandler   *handlers.SecretsHandler
 	backupHandler    *handlers.BackupHandler
 	stacksHandler    *handlers.StacksHandler

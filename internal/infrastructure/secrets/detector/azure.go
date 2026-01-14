@@ -262,43 +262,41 @@ func (d *AzureDetector) detectAppServiceSecrets(res *resource.AWSResource) []*se
 		}
 	}
 
-	if appSettings != nil {
-		for key, value := range appSettings {
-			// Check for Key Vault references
-			if strValue, ok := value.(string); ok && strings.HasPrefix(strValue, "@Microsoft.KeyVault") {
-				// Extract Key Vault reference
-				// Format: @Microsoft.KeyVault(SecretUri=https://myvault.vault.azure.net/secrets/mysecret/)
-				kvRef := extractKeyVaultReference(strValue)
-				if kvRef != "" {
-					detected = append(detected, &secrets.DetectedSecret{
-						Name:             secrets.NormalizeEnvName(key),
-						Source:           secrets.SourceAzureKeyVault,
-						Key:              kvRef,
-						Description:      fmt.Sprintf("App setting %s for %s (from Key Vault)", key, resName),
-						Required:         true,
-						Type:             secrets.InferSecretType(key),
-						ResourceID:       res.ID,
-						ResourceName:     resName,
-						ResourceType:     res.Type,
-						DeduplicationKey: secrets.SourceAzureKeyVault.String() + ":" + kvRef,
-					})
-					continue
-				}
-			}
-
-			// Check for sensitive names
-			if secrets.IsSensitiveEnvName(key) {
+	for key, value := range appSettings {
+		// Check for Key Vault references
+		if strValue, ok := value.(string); ok && strings.HasPrefix(strValue, "@Microsoft.KeyVault") {
+			// Extract Key Vault reference
+			// Format: @Microsoft.KeyVault(SecretUri=https://myvault.vault.azure.net/secrets/mysecret/)
+			kvRef := extractKeyVaultReference(strValue)
+			if kvRef != "" {
 				detected = append(detected, &secrets.DetectedSecret{
-					Name:         secrets.NormalizeEnvName(key),
-					Source:       secrets.SourceManual,
-					Description:  fmt.Sprintf("App setting %s from %s", key, resName),
-					Required:     true,
-					Type:         secrets.InferSecretType(key),
-					ResourceID:   res.ID,
-					ResourceName: resName,
-					ResourceType: res.Type,
+					Name:             secrets.NormalizeEnvName(key),
+					Source:           secrets.SourceAzureKeyVault,
+					Key:              kvRef,
+					Description:      fmt.Sprintf("App setting %s for %s (from Key Vault)", key, resName),
+					Required:         true,
+					Type:             secrets.InferSecretType(key),
+					ResourceID:       res.ID,
+					ResourceName:     resName,
+					ResourceType:     res.Type,
+					DeduplicationKey: secrets.SourceAzureKeyVault.String() + ":" + kvRef,
 				})
+				continue
 			}
+		}
+
+		// Check for sensitive names
+		if secrets.IsSensitiveEnvName(key) {
+			detected = append(detected, &secrets.DetectedSecret{
+				Name:         secrets.NormalizeEnvName(key),
+				Source:       secrets.SourceManual,
+				Description:  fmt.Sprintf("App setting %s from %s", key, resName),
+				Required:     true,
+				Type:         secrets.InferSecretType(key),
+				ResourceID:   res.ID,
+				ResourceName: resName,
+				ResourceType: res.Type,
+			})
 		}
 	}
 

@@ -355,15 +355,15 @@ func TestAzureMigration_ARMTemplate(t *testing.T) {
 			// Write scripts
 			for name, content := range result.Scripts {
 				scriptPath := filepath.Join(scriptsDir, name)
-				os.MkdirAll(filepath.Dir(scriptPath), 0755)
-				os.WriteFile(scriptPath, content, 0755)
+				_ = os.MkdirAll(filepath.Dir(scriptPath), 0755)
+				_ = os.WriteFile(scriptPath, content, 0755)
 			}
 
 			// Write configs
 			for name, content := range result.Configs {
 				configPath := filepath.Join(configsDir, name)
-				os.MkdirAll(filepath.Dir(configPath), 0755)
-				os.WriteFile(configPath, content, 0644)
+				_ = os.MkdirAll(filepath.Dir(configPath), 0755)
+				_ = os.WriteFile(configPath, content, 0644)
 			}
 		}
 

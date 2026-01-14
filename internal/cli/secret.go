@@ -143,7 +143,7 @@ func init() {
 
 	// Global secret flags
 	secretCmd.PersistentFlags().StringVar(&secretAPIURL, "api-url", "http://localhost:8080", "API server URL")
-	viper.BindPFlag("api_url", secretCmd.PersistentFlags().Lookup("api-url"))
+	_ = viper.BindPFlag("api_url", secretCmd.PersistentFlags().Lookup("api-url"))
 
 	// Get command flags
 	secretGetCmd.Flags().BoolVarP(&secretReveal, "reveal", "r", false, "reveal the secret value")

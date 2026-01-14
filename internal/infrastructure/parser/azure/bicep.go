@@ -74,7 +74,7 @@ func (p *BicepParser) AutoDetect(path string) (bool, float64) {
 
 	if info.IsDir() {
 		bicepCount := 0
-		filepath.Walk(path, func(filePath string, info os.FileInfo, err error) error {
+		_ = filepath.Walk(path, func(filePath string, info os.FileInfo, err error) error {
 			if err != nil || info.IsDir() {
 				return nil
 			}

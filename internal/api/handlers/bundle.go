@@ -181,7 +181,7 @@ type BundleSummary struct {
 func NewBundleHandler() *BundleHandler {
 	tempDir := os.TempDir()
 	bundleDir := filepath.Join(tempDir, "homeport-bundles")
-	os.MkdirAll(bundleDir, 0755)
+	_ = os.MkdirAll(bundleDir, 0755)
 
 	return &BundleHandler{
 		bundles:      make(map[string]*BundleInfo),
@@ -1023,11 +1023,6 @@ func pullAWSSecretSingle(secretName, accessKeyID, secretAccessKey, region string
 	}
 
 	return secretValue, nil
-}
-
-// pullAWSSecret retrieves a secret from AWS Secrets Manager (legacy single-secret function)
-func pullAWSSecret(secretName, accessKeyID, secretAccessKey, region string) (string, error) {
-	return pullAWSSecretSingle(secretName, accessKeyID, secretAccessKey, region)
 }
 
 // pullGCPSecret retrieves a secret from GCP Secret Manager

@@ -41,7 +41,7 @@ func (p *TerraformAzureParser) Validate(path string) error {
 	if info.IsDir() {
 		found := false
 		hasAzure := false
-		filepath.Walk(path, func(p string, info os.FileInfo, err error) error {
+		_ = filepath.Walk(path, func(p string, info os.FileInfo, err error) error {
 			if err != nil {
 				return nil
 			}

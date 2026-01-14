@@ -77,7 +77,7 @@ func (p *CloudFormationParser) AutoDetect(path string) (bool, float64) {
 
 	if info.IsDir() {
 		count := 0
-		filepath.Walk(path, func(p string, info os.FileInfo, err error) error {
+		_ = filepath.Walk(path, func(p string, info os.FileInfo, err error) error {
 			if err == nil && !info.IsDir() && isCloudFormationFile(p) {
 				// Verify it's actually CloudFormation
 				if isActualCloudFormation(p) {

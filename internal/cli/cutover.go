@@ -82,7 +82,7 @@ func init() {
 	cutoverCmd.Flags().StringVar(&cutoverAPIToken, "api-token", "", "DNS provider API token")
 	cutoverCmd.Flags().StringVar(&cutoverZoneID, "zone-id", "", "DNS zone ID (Cloudflare zone ID or Route53 hosted zone ID)")
 
-	cutoverCmd.MarkFlagRequired("bundle")
+	_ = cutoverCmd.MarkFlagRequired("bundle")
 }
 
 func runCutover(cmd *cobra.Command, args []string) error {

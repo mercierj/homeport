@@ -39,7 +39,7 @@ func (p *ARMParser) Validate(path string) error {
 
 	if info.IsDir() {
 		found := false
-		filepath.Walk(path, func(p string, info os.FileInfo, err error) error {
+		_ = filepath.Walk(path, func(p string, info os.FileInfo, err error) error {
 			if err != nil || info.IsDir() {
 				return nil
 			}
@@ -72,7 +72,7 @@ func (p *ARMParser) AutoDetect(path string) (bool, float64) {
 	if info.IsDir() {
 		armCount := 0
 		totalJSON := 0
-		filepath.Walk(path, func(p string, info os.FileInfo, err error) error {
+		_ = filepath.Walk(path, func(p string, info os.FileInfo, err error) error {
 			if err != nil || info.IsDir() {
 				return nil
 			}
@@ -110,7 +110,7 @@ func (p *ARMParser) Parse(ctx context.Context, path string, opts *parser.ParseOp
 	infra := resource.NewInfrastructure(resource.ProviderAzure)
 
 	if info.IsDir() {
-		filepath.Walk(path, func(filePath string, info os.FileInfo, err error) error {
+		_ = filepath.Walk(path, func(filePath string, info os.FileInfo, err error) error {
 			if err != nil || info.IsDir() {
 				return nil
 			}

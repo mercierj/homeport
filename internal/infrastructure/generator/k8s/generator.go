@@ -772,12 +772,8 @@ spec:
 func (g *Generator) generateStackIngress(svc *stack.Service, namespace string, config *generator.TargetConfig, stackType stack.StackType) string {
 	name := sanitizeName(svc.Name)
 	host := config.BaseURL
-	if strings.HasPrefix(host, "http://") {
-		host = strings.TrimPrefix(host, "http://")
-	}
-	if strings.HasPrefix(host, "https://") {
-		host = strings.TrimPrefix(host, "https://")
-	}
+	host = strings.TrimPrefix(host, "http://")
+	host = strings.TrimPrefix(host, "https://")
 
 	port := "80"
 	if len(svc.Ports) > 0 {
@@ -1047,12 +1043,8 @@ spec:
 func (g *Generator) generateIngress(svc *mapper.DockerService, namespace string, config *generator.TargetConfig) string {
 	name := sanitizeName(svc.Name)
 	host := config.BaseURL
-	if strings.HasPrefix(host, "http://") {
-		host = strings.TrimPrefix(host, "http://")
-	}
-	if strings.HasPrefix(host, "https://") {
-		host = strings.TrimPrefix(host, "https://")
-	}
+	host = strings.TrimPrefix(host, "http://")
+	host = strings.TrimPrefix(host, "https://")
 
 	port := "80"
 	if len(svc.Ports) > 0 {

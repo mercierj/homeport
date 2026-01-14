@@ -1146,9 +1146,7 @@ func (p *APIParser) scanRoute53(ctx context.Context, cfg aws.Config, infra *reso
 		for _, zone := range result.HostedZones {
 			zoneID := aws.ToString(zone.Id)
 			// Zone ID comes as /hostedzone/Z123... - extract just the ID
-			if strings.HasPrefix(zoneID, "/hostedzone/") {
-				zoneID = strings.TrimPrefix(zoneID, "/hostedzone/")
-			}
+			zoneID = strings.TrimPrefix(zoneID, "/hostedzone/")
 
 			zoneName := aws.ToString(zone.Name)
 			// Remove trailing dot from zone name for display

@@ -137,13 +137,13 @@ func init() {
 
 	// Global backup flags
 	backupCmd.PersistentFlags().StringVar(&backupAPIURL, "api-url", "http://localhost:8080", "API server URL")
-	viper.BindPFlag("api_url", backupCmd.PersistentFlags().Lookup("api-url"))
+	_ = viper.BindPFlag("api_url", backupCmd.PersistentFlags().Lookup("api-url"))
 
 	// Create command flags
 	backupCreateCmd.Flags().StringVarP(&backupName, "name", "n", "", "backup name (required)")
 	backupCreateCmd.Flags().StringVarP(&backupDesc, "description", "d", "", "backup description")
 	backupCreateCmd.Flags().StringSliceVarP(&backupVolumes, "volumes", "V", nil, "volumes to backup (comma-separated)")
-	backupCreateCmd.MarkFlagRequired("name")
+	_ = backupCreateCmd.MarkFlagRequired("name")
 
 	// Restore command flags
 	backupRestoreCmd.Flags().StringSliceVarP(&backupVolumes, "volumes", "V", nil, "volumes to restore (comma-separated)")

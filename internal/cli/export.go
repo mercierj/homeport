@@ -138,8 +138,8 @@ func init() {
 	exportCmd.Flags().StringVarP(&exportProfile, "profile", "p", "", "AWS profile name")
 	exportCmd.Flags().StringVar(&exportProject, "project", "", "GCP project ID")
 
-	exportCmd.MarkFlagRequired("output")
-	exportCmd.MarkFlagRequired("source")
+	_ = exportCmd.MarkFlagRequired("output")
+	_ = exportCmd.MarkFlagRequired("source")
 }
 
 // performExport performs the bundle export

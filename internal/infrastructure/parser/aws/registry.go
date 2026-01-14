@@ -41,7 +41,7 @@ func (p *TerraformAWSParser) Validate(path string) error {
 	if info.IsDir() {
 		// Check for .tf or .tfstate files
 		found := false
-		filepath.Walk(path, func(p string, info os.FileInfo, err error) error {
+		_ = filepath.Walk(path, func(p string, info os.FileInfo, err error) error {
 			if err != nil {
 				return nil
 			}
