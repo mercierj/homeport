@@ -109,7 +109,7 @@ func (m *MySQLSync) Sync(ctx context.Context, source, target *sync.Endpoint, pro
 	// Start dump
 	if err := dumpProc.Start(); err != nil {
 		pipeWriter.Close()
-		restoreProc.Process.Kill()
+		_ = restoreProc.Process.Kill()
 		return fmt.Errorf("failed to start mysqldump: %w", err)
 	}
 
@@ -504,7 +504,7 @@ func (m *MySQLTableSync) syncTable(ctx context.Context, source, target *sync.End
 
 	if err := dumpProc.Start(); err != nil {
 		pipeWriter.Close()
-		restoreProc.Process.Kill()
+		_ = restoreProc.Process.Kill()
 		return fmt.Errorf("failed to start dump: %w", err)
 	}
 

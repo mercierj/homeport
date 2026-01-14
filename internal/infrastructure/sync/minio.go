@@ -122,7 +122,7 @@ func (m *MinIOSync) estimateSizeRclone(ctx context.Context, source *sync.Endpoin
 	outputStr := string(output)
 	if idx := strings.Index(outputStr, `"bytes":`); idx >= 0 {
 		remaining := outputStr[idx+8:]
-		fmt.Sscanf(remaining, "%d", &totalBytes)
+		_, _ = fmt.Sscanf(remaining, "%d", &totalBytes)
 	}
 
 	return totalBytes, nil
@@ -154,7 +154,7 @@ func (m *MinIOSync) estimateSizeMC(ctx context.Context, source *sync.Endpoint) (
 	outputStr := string(output)
 	if idx := strings.Index(outputStr, `"size":`); idx >= 0 {
 		remaining := outputStr[idx+7:]
-		fmt.Sscanf(remaining, "%d", &totalBytes)
+		_, _ = fmt.Sscanf(remaining, "%d", &totalBytes)
 	}
 
 	return totalBytes, nil
@@ -224,7 +224,7 @@ func (m *MinIOSync) countObjects(ctx context.Context, source *sync.Endpoint) (in
 		outputStr := string(output)
 		if idx := strings.Index(outputStr, `"count":`); idx >= 0 {
 			remaining := outputStr[idx+8:]
-			fmt.Sscanf(remaining, "%d", &count)
+			_, _ = fmt.Sscanf(remaining, "%d", &count)
 		}
 		return count, nil
 	}

@@ -177,7 +177,7 @@ func (r *DetectorRegistry) DetectAll(ctx context.Context, resources []*resource.
 			// If duplicate name, try with a suffix
 			if strings.Contains(err.Error(), "duplicate") {
 				ref.Name = ref.Name + "_" + strings.ToUpper(secret.ResourceID[:min(4, len(secret.ResourceID))])
-				manifest.AddSecret(ref) // Ignore error on retry
+				_ = manifest.AddSecret(ref) // Ignore error on retry
 			}
 		}
 	}

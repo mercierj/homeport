@@ -162,14 +162,14 @@ func (s *Service) initDefaultRoles() {
 // generateID creates a new random ID
 func generateID() string {
 	b := make([]byte, 16)
-	rand.Read(b)
+	_, _ = rand.Read(b)
 	return hex.EncodeToString(b)
 }
 
 // generateToken creates a new random token
 func generateToken() string {
 	b := make([]byte, 32)
-	rand.Read(b)
+	_, _ = rand.Read(b)
 	return hex.EncodeToString(b)
 }
 

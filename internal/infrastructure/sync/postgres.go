@@ -103,7 +103,7 @@ func (p *PostgresSync) Sync(ctx context.Context, source, target *sync.Endpoint, 
 	// Start dump
 	if err := dumpProc.Start(); err != nil {
 		pipeWriter.Close()
-		restoreProc.Process.Kill()
+		_ = restoreProc.Process.Kill()
 		return fmt.Errorf("failed to start pg_dump: %w", err)
 	}
 
@@ -511,7 +511,7 @@ func (p *PostgresStreamSync) syncTable(ctx context.Context, source, target *sync
 
 	if err := copyOut.Start(); err != nil {
 		pipeWriter.Close()
-		copyIn.Process.Kill()
+		_ = copyIn.Process.Kill()
 		return fmt.Errorf("failed to start COPY OUT: %w", err)
 	}
 
