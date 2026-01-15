@@ -226,7 +226,7 @@ export function StackManager({ onStackSelect, onError }: StackManagerProps) {
     try {
       const response = await getStackLogs(stack.id, service, 200);
       setLogs(response.logs);
-    } catch (err) {
+    } catch {
       setLogs('Failed to fetch logs');
     }
   };

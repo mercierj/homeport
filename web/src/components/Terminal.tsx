@@ -31,6 +31,7 @@ export function Terminal({ container, onClose }: TerminalProps) {
   const [isMaximized, setIsMaximized] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [sessionId, setSessionId] = useState<string | null>(null);
+  const [terminalSize, setTerminalSize] = useState('');
 
   // Initialize terminal
   useEffect(() => {
@@ -117,10 +118,14 @@ export function Terminal({ container, onClose }: TerminalProps) {
       if (fitAddonRef.current && xtermRef.current) {
         fitAddonRef.current.fit();
         connection.resize(xtermRef.current.cols, xtermRef.current.rows);
+        setTerminalSize(`${xtermRef.current.cols}x${xtermRef.current.rows}`);
       }
     };
 
     window.addEventListener('resize', handleResize);
+
+    // Set initial size after mount
+    handleResize();
 
     // Focus terminal
     xterm.focus();
@@ -246,9 +251,7 @@ export function Terminal({ container, onClose }: TerminalProps) {
                 ? `Error: ${error}`
                 : 'Disconnected'}
         </span>
-        <span>
-          {xtermRef.current ? `${xtermRef.current.cols}x${xtermRef.current.rows}` : ''}
-        </span>
+        <span>{terminalSize}</span>
       </div>
     </div>
   );

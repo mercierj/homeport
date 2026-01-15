@@ -49,7 +49,7 @@ export default function Policies() {
     setEditingPolicy(policy);
   };
 
-  const handleEditSave = (_updatedPolicy: Policy) => {
+  const handleEditSave = () => {
     queryClient.invalidateQueries({ queryKey: ['policies'] });
     setEditingPolicy(null);
   };

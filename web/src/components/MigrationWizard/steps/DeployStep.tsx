@@ -23,7 +23,6 @@ import {
   type SSHDeployConfig,
   type PhaseEvent,
   type LogEvent,
-  type CompleteEvent,
   type ErrorEvent,
 } from '@/lib/deploy-api';
 
@@ -97,7 +96,7 @@ export function DeployStep() {
     addLog(event.level, event.message);
   };
 
-  const handleCompleteEvent = (_event: CompleteEvent) => {
+  const handleCompleteEvent = () => {
     setIsDeploying(false);
     setDeployComplete(true);
     setDeployProgress(100);
@@ -223,7 +222,7 @@ export function DeployStep() {
       try {
         await cancelDeployment(deploymentId);
         addLog('info', 'Deployment cancelled');
-      } catch (err) {
+      } catch {
         addLog('error', 'Failed to cancel deployment');
       }
     }

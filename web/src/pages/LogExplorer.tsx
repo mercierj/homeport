@@ -281,6 +281,7 @@ export function LogExplorer() {
 
   // State
   const [selectedContainers, setSelectedContainers] = useState<Set<string>>(new Set());
+  const hasAutoSelectedRef = useRef(false);
   const [selectedSeverities, setSelectedSeverities] = useState<Set<LogSeverity>>(new Set(['error', 'warn', 'info', 'debug', 'trace']));
   const [timeRange, setTimeRange] = useState('1h');
   const [searchQuery, setSearchQuery] = useState('');
@@ -303,10 +304,11 @@ export function LogExplorer() {
 
   // Auto-select all running containers on first load
   useEffect(() => {
-    if (runningContainers.length > 0 && selectedContainers.size === 0) {
+    if (!hasAutoSelectedRef.current && runningContainers.length > 0 && selectedContainers.size === 0) {
+      hasAutoSelectedRef.current = true;
       setSelectedContainers(new Set(runningContainers.map(c => c.name)));
     }
-  }, [runningContainers.length]);
+  }, [runningContainers, selectedContainers.size]);
 
   // Fetch logs
   const fetchLogs = useCallback(async () => {

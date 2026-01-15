@@ -22,7 +22,7 @@ const EXCLUDED_TYPES = [
 ];
 
 // Stack type mapping for consolidation preview
-export const STACK_TYPE_MAP: Record<string, { displayName: string; types: string[] }> = {
+const STACK_TYPE_MAP: Record<string, { displayName: string; types: string[] }> = {
   database: {
     displayName: 'Database',
     types: ['aws_db_instance', 'aws_rds_cluster', 'google_sql_database_instance', 'azurerm_postgresql_server', 'azurerm_mysql_server', 'azurerm_mssql_server'],

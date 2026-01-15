@@ -40,7 +40,7 @@ export interface Column {
 
 export interface QueryResult {
   columns: string[];
-  rows: any[][];
+  rows: unknown[][];
   row_count: number;
   duration?: string;
 }

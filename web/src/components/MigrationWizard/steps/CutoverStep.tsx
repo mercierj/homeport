@@ -43,7 +43,7 @@ interface HealthCheck {
 }
 
 export function CutoverStep() {
-  const { bundleId, bundleManifest, setError, nextStep } = useWizardStore();
+  const { bundleId, setError, nextStep } = useWizardStore();
 
   const [dnsChanges, setDNSChanges] = useState<DNSChange[]>([]);
   const [healthChecks, setHealthChecks] = useState<HealthCheck[]>([]);
@@ -63,15 +63,6 @@ export function CutoverStep() {
     // Users can skip this step or we could add manual DNS entry
     return { changes: [], checks: [] };
   };
-
-  // Initialize from bundle on mount
-  useEffect(() => {
-    if (dnsChanges.length === 0) {
-      const { changes, checks } = buildFromManifest();
-      setDNSChanges(changes);
-      setHealthChecks(checks);
-    }
-  }, [bundleManifest]);
 
   // Cleanup SSE subscription on unmount
   useEffect(() => {

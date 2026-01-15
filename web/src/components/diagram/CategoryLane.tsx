@@ -1,4 +1,4 @@
-import { memo } from 'react';
+import { createElement, memo } from 'react';
 import { type NodeProps } from '@xyflow/react';
 import {
   Server,
@@ -49,9 +49,14 @@ function getCategoryIcon(category: string): LucideIcon {
   return categoryIcons[category] || Server;
 }
 
+// Pre-render icon to avoid creating components during render
+function renderCategoryIcon(category: string) {
+  const IconComponent = getCategoryIcon(category);
+  return createElement(IconComponent, { className: 'w-4 h-4 text-white' });
+}
+
 function CategoryLaneComponent({ data }: NodeProps) {
   const { label, color, width, height, category } = data as CategoryLaneData;
-  const Icon = getCategoryIcon(category);
 
   return (
     <div
@@ -76,7 +81,7 @@ function CategoryLaneComponent({ data }: NodeProps) {
           className="w-6 h-6 rounded-full flex items-center justify-center"
           style={{ backgroundColor: 'rgba(255,255,255,0.2)' }}
         >
-          <Icon className="w-4 h-4 text-white" />
+          {renderCategoryIcon(category)}
         </div>
         <span className="font-semibold text-xs uppercase tracking-wide text-white drop-shadow-sm">
           {label}

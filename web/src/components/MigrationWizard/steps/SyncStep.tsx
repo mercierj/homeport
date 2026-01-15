@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect, useRef, useCallback } from 'react';
 import {
   Database,
   HardDrive,
@@ -75,7 +75,7 @@ export function SyncStep() {
   const unsubscribeRef = useRef<(() => void) | null>(null);
 
   // Build sync tasks from bundle manifest
-  const buildSyncTasksFromManifest = (): SyncTask[] => {
+  const buildSyncTasksFromManifest = useCallback((): SyncTask[] => {
     const tasks: SyncTask[] = [];
 
     if (!bundleManifest?.data_sync) {
@@ -121,17 +121,21 @@ export function SyncStep() {
     }
 
     return tasks;
-  };
+  }, [bundleManifest]);
+
+  // Track if we've initialized
+  const hasInitialized = useRef(false);
 
   // Initialize tasks from bundle on mount
   useEffect(() => {
-    if (syncTasks.length === 0) {
+    if (!hasInitialized.current && syncTasks.length === 0) {
+      hasInitialized.current = true;
       const tasks = buildSyncTasksFromManifest();
       if (tasks.length > 0) {
         setSyncTasks(tasks);
       }
     }
-  }, [bundleManifest]);
+  }, [buildSyncTasksFromManifest, setSyncTasks, syncTasks.length]);
 
   // Cleanup SSE subscription on unmount
   useEffect(() => {
@@ -201,7 +205,7 @@ export function SyncStep() {
     setSyncError(event.error || 'Sync task failed');
   };
 
-  const handleSyncComplete = (_event: SyncEvent) => {
+  const handleSyncComplete = () => {
     setSyncProgress(100);
     setIsSyncing(false);
     setSyncComplete(true);
@@ -292,7 +296,7 @@ export function SyncStep() {
     if (syncId) {
       try {
         await cancelSync(syncId);
-      } catch (err) {
+      } catch {
         // Ignore cancel errors
       }
     }
