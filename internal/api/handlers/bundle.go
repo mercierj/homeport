@@ -18,8 +18,10 @@ import (
 	"github.com/go-chi/chi/v5"
 	"github.com/go-chi/render"
 	"github.com/google/uuid"
+	apprunbook "github.com/homeport/homeport/internal/app/runbook"
 	"github.com/homeport/homeport/internal/domain/bundle"
 	"github.com/homeport/homeport/internal/domain/resource"
+	domainrunbook "github.com/homeport/homeport/internal/domain/runbook"
 	"github.com/homeport/homeport/internal/infrastructure/secrets/detector"
 	"github.com/homeport/homeport/pkg/version"
 )
@@ -49,14 +51,14 @@ type BundleHandler struct {
 
 // BundleInfo represents bundle metadata
 type BundleInfo struct {
-	ID        string            `json:"bundle_id"`
-	Name      string            `json:"name"`
-	Manifest  *bundle.Manifest  `json:"manifest"`
-	Secrets   []*SecretRef      `json:"secrets"`
-	Files     []string          `json:"files"`
-	Size      int64             `json:"size"`
-	FilePath  string            `json:"-"` // Not exposed in API
-	CreatedAt time.Time         `json:"created_at"`
+	ID        string           `json:"bundle_id"`
+	Name      string           `json:"name"`
+	Manifest  *bundle.Manifest `json:"manifest"`
+	Secrets   []*SecretRef     `json:"secrets"`
+	Files     []string         `json:"files"`
+	Size      int64            `json:"size"`
+	FilePath  string           `json:"-"` // Not exposed in API
+	CreatedAt time.Time        `json:"created_at"`
 }
 
 // SecretRef represents a secret reference
@@ -66,6 +68,47 @@ type SecretRef struct {
 	Key         string `json:"key,omitempty"`
 	Description string `json:"description,omitempty"`
 	Required    bool   `json:"required"`
+}
+
+func saveBundleRunbook(bundleID string, includeSync bool, secrets []*SecretRef) {
+	_ = apprunbook.NewService(".").Save(buildBundleRunbook(bundleID, includeSync, secrets))
+}
+
+func buildBundleRunbook(bundleID string, includeSync bool, secrets []*SecretRef) *domainrunbook.Runbook {
+	now := time.Now().UTC()
+	steps := []domainrunbook.Step{}
+	addStep := func(id, name, group string, stepType domainrunbook.StepType) {
+		optional := stepType == domainrunbook.StepTypeRollback
+		steps = append(steps, domainrunbook.Step{
+			ID:               id,
+			Name:             name,
+			Group:            group,
+			Type:             stepType,
+			Status:           domainrunbook.StepStatusPending,
+			Optional:         optional,
+			Executor:         "noop",
+			SuccessCondition: "passed",
+		})
+	}
+
+	if len(secrets) > 0 {
+		addStep("credentials", "Resolve required secrets", "Credentials", domainrunbook.StepTypeInput)
+	}
+	addStep("provision", "Deploy generated stack", "Provision", domainrunbook.StepTypeCommand)
+	if includeSync {
+		addStep("sync", "Synchronize migration data", "Sync", domainrunbook.StepTypeDataVerify)
+	}
+	addStep("validate", "Validate migrated services", "Validate", domainrunbook.StepTypeHealth)
+	addStep("cutover", "Validate cutover readiness", "Cutover", domainrunbook.StepTypeDNSCheck)
+	addStep("rollback", "Prepare rollback path", "Rollback", domainrunbook.StepTypeRollback)
+
+	return &domainrunbook.Runbook{
+		ID:        bundleID,
+		Name:      "Migration runbook",
+		Steps:     steps,
+		CreatedAt: now,
+		UpdatedAt: now,
+	}
 }
 
 // CreateBundleRequest represents a request to create a bundle
@@ -348,6 +391,7 @@ func (h *BundleHandler) ExportBundle(w http.ResponseWriter, r *http.Request) {
 	h.bundlesMu.Lock()
 	h.bundles[bundleID] = bundleInfo
 	h.bundlesMu.Unlock()
+	saveBundleRunbook(bundleID, req.Options.IncludeMigration, secrets)
 
 	respondJSON(w, r, http.StatusOK, CreateBundleResponse{
 		BundleID:    bundleID,
@@ -437,6 +481,7 @@ func (h *BundleHandler) ExportBundleStream(w http.ResponseWriter, r *http.Reques
 	h.bundlesMu.Lock()
 	h.bundles[bundleID] = bundleInfo
 	h.bundlesMu.Unlock()
+	saveBundleRunbook(bundleID, req.Options.IncludeMigration, secrets)
 
 	// Send complete
 	sendSSE(w, flusher, "complete", CreateBundleResponse{
@@ -532,6 +577,7 @@ func (h *BundleHandler) UploadBundle(w http.ResponseWriter, r *http.Request) {
 	h.bundlesMu.Lock()
 	h.bundles[bundleID] = bundleInfo
 	h.bundlesMu.Unlock()
+	saveBundleRunbook(bundleID, true, secrets)
 
 	respondJSON(w, r, http.StatusOK, UploadBundleResponse{
 		BundleID: bundleID,
@@ -812,9 +858,9 @@ func (h *BundleHandler) PullSecrets(w http.ResponseWriter, r *http.Request) {
 
 // awsSecretRequest holds info for a secret to fetch
 type awsSecretRequest struct {
-	name      string // friendly name
-	key       string // ARN or secret name
-	region    string
+	name   string // friendly name
+	key    string // ARN or secret name
+	region string
 }
 
 // pullAWSSecretsBatch retrieves multiple secrets from AWS Secrets Manager in batch

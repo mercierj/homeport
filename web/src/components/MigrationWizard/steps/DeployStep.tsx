@@ -25,6 +25,7 @@ import {
   type LogEvent,
   type ErrorEvent,
 } from '@/lib/deploy-api';
+import { RunbookSteps } from '../RunbookSteps';
 
 // Deployment phases - these come from backend but we show placeholders
 interface DeployPhase {
@@ -247,6 +248,8 @@ export function DeployStep() {
 
   return (
     <div className="space-y-6">
+      <RunbookSteps runbookId={bundleId} />
+
       {/* Target selection */}
       {!isDeploying && !deployComplete && (
         <>

@@ -23,6 +23,7 @@ import {
   type DNSChangeRequest,
   type CutoverEvent,
 } from '@/lib/cutover-api';
+import { RunbookSteps } from '../RunbookSteps';
 
 interface DNSChange {
   id: string;
@@ -54,6 +55,7 @@ export function CutoverStep() {
   const [cutoverId, setCutoverId] = useState<string | null>(null);
   const [isDryRun, setIsDryRun] = useState(true);
   const [logs, setLogs] = useState<string[]>([]);
+  const [runbookReady, setRunbookReady] = useState(true);
   const unsubscribeRef = useRef<(() => void) | null>(null);
 
   // Build DNS changes and health checks
@@ -559,6 +561,8 @@ export function CutoverStep() {
         </div>
       )}
 
+      <RunbookSteps runbookId={bundleId} onRequiredPassedChange={setRunbookReady} />
+
       {/* Actions */}
       <div className="flex items-center justify-between pt-4 border-t border-border">
         {!isCuttingOver && !cutoverComplete && (
@@ -620,6 +624,7 @@ export function CutoverStep() {
             </div>
             <button
               onClick={nextStep}
+              disabled={!runbookReady}
               className={buttonVariants({ variant: 'primary' })}
             >
               Complete Migration

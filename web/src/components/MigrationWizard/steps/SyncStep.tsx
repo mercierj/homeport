@@ -23,6 +23,7 @@ import {
   type SyncTaskRequest,
   type SyncEvent,
 } from '@/lib/sync-api';
+import { RunbookSteps } from '../RunbookSteps';
 
 // Sync type icons
 const SYNC_TYPE_ICONS: Record<string, React.ElementType> = {
@@ -53,6 +54,7 @@ function formatDuration(seconds: number): string {
 
 export function SyncStep() {
   const {
+    bundleId,
     bundleManifest,
     syncTasks,
     syncProgress,
@@ -325,6 +327,8 @@ export function SyncStep() {
 
   return (
     <div className="space-y-6">
+      <RunbookSteps runbookId={bundleId} />
+
       {/* Header */}
       <div>
         <h3 className="text-lg font-semibold mb-2">Data Synchronization</h3>

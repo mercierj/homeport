@@ -9,6 +9,7 @@ import (
 	"strings"
 	"time"
 
+	apprunbook "github.com/homeport/homeport/internal/app/runbook"
 	"github.com/homeport/homeport/internal/cli/ui"
 	"github.com/homeport/homeport/internal/domain/generator"
 	"github.com/homeport/homeport/internal/domain/mapper"
@@ -28,11 +29,12 @@ var (
 	migrateIncludeMonitoring bool
 	migrateConsolidate       bool
 	// New flags for Sprint 7
-	migrateProvider     string
-	migrateRegion       string
-	migrateHALevel      string
-	migrateInstanceType string
-	migrateSSL          bool
+	migrateProvider       string
+	migrateRegion         string
+	migrateHALevel        string
+	migrateInstanceType   string
+	migrateSSL            bool
+	migrateStrictClickBam bool
 )
 
 // migrateCmd represents the migrate command
@@ -152,6 +154,7 @@ func init() {
 	migrateCmd.Flags().StringVar(&migrateHALevel, "ha-level", "basic", "high availability level (none, basic, multi-server, cluster)")
 	migrateCmd.Flags().StringVar(&migrateInstanceType, "instance-type", "", "override default instance type selection")
 	migrateCmd.Flags().BoolVar(&migrateSSL, "ssl", true, "enable SSL/TLS for services")
+	migrateCmd.Flags().BoolVar(&migrateStrictClickBam, "strict-click-bam", false, "fail if migration requires unresolved guided or manual steps")
 }
 
 // MigrationConfig represents the configuration for migration
@@ -163,11 +166,12 @@ type MigrationConfig struct {
 	IncludeMonitoring bool
 	Consolidate       bool
 	// Provider options (Sprint 7)
-	Provider     string
-	Region       string
-	HALevel      string
-	InstanceType string
-	SSL          bool
+	Provider       string
+	Region         string
+	HALevel        string
+	InstanceType   string
+	SSL            bool
+	StrictClickBam bool
 }
 
 // performMigration performs the actual migration
@@ -184,6 +188,7 @@ func performMigration(inputPath string) error {
 		HALevel:           migrateHALevel,
 		InstanceType:      migrateInstanceType,
 		SSL:               migrateSSL,
+		StrictClickBam:    migrateStrictClickBam,
 	}
 
 	// Step 1: Analyze infrastructure
@@ -329,6 +334,14 @@ func performProviderMigration(config *MigrationConfig, analysis *AnalysisResult)
 	if IsVerbose() {
 		ui.Info(fmt.Sprintf("Mapped %d resources", len(mappingResults)))
 	}
+	if config.StrictClickBam {
+		if err := validateStrictClickBam(mappingResults); err != nil {
+			return err
+		}
+	}
+	if err := saveRunbooks(config.OutputPath, mappingResults); err != nil {
+		return err
+	}
 
 	// Step 3: Configure generator
 	if !IsQuiet() {
@@ -448,6 +461,36 @@ func performProviderMigration(config *MigrationConfig, analysis *AnalysisResult)
 	return nil
 }
 
+func validateStrictClickBam(results []*mapper.MappingResult) error {
+	for _, result := range results {
+		book, err := apprunbook.FromMappingResult(result)
+		if err != nil {
+			return fmt.Errorf("build runbook: %w", err)
+		}
+		if apprunbook.HasUnresolvedManualText(book) {
+			return fmt.Errorf("%s has unresolved manual text", book.ID)
+		}
+		if book.HasBlockedRequiredStep() {
+			return fmt.Errorf("%s has blocked required steps", book.ID)
+		}
+	}
+	return nil
+}
+
+func saveRunbooks(outputDir string, results []*mapper.MappingResult) error {
+	service := apprunbook.NewService(outputDir)
+	for _, result := range results {
+		book, err := apprunbook.FromMappingResult(result)
+		if err != nil {
+			return fmt.Errorf("build runbook: %w", err)
+		}
+		if err := service.Save(book); err != nil {
+			return fmt.Errorf("save runbook %s: %w", book.ID, err)
+		}
+	}
+	return nil
+}
+
 // ComposeFile represents a Docker Compose file structure for YAML serialization.
 type ComposeFile struct {
 	Services map[string]ComposeService `yaml:"services"`
@@ -549,6 +592,7 @@ func generateDockerCompose(config *MigrationConfig, analysis *AnalysisResult) er
 	allScripts := make(map[string][]byte)
 	allWarnings := []string{}
 	allManualSteps := []string{}
+	mappingResults := []*mapper.MappingResult{}
 
 	// Process each resource from analysis
 	for _, resSummary := range analysis.Resources {
@@ -585,6 +629,7 @@ func generateDockerCompose(config *MigrationConfig, analysis *AnalysisResult) er
 		if result == nil || result.DockerService == nil {
 			continue
 		}
+		mappingResults = append(mappingResults, result)
 
 		// Add the service to compose
 		svc := convertDockerService(result.DockerService)
@@ -607,6 +652,14 @@ func generateDockerCompose(config *MigrationConfig, analysis *AnalysisResult) er
 				DriverOpts: vol.DriverOpts,
 			}
 		}
+	}
+	if config.StrictClickBam {
+		if err := validateStrictClickBam(mappingResults); err != nil {
+			return err
+		}
+	}
+	if err := saveRunbooks(config.OutputPath, mappingResults); err != nil {
+		return err
 	}
 
 	// Add monitoring if requested
@@ -709,6 +762,15 @@ func generateConsolidatedDockerCompose(config *MigrationConfig, analysis *Analys
 			mappingResults = append(mappingResults, result)
 			sourceResourceCount++
 		}
+	}
+
+	if config.StrictClickBam {
+		if err := validateStrictClickBam(mappingResults); err != nil {
+			return err
+		}
+	}
+	if err := saveRunbooks(config.OutputPath, mappingResults); err != nil {
+		return err
 	}
 
 	// Step 2: Consolidate using the consolidator
@@ -1075,7 +1137,7 @@ func addMonitoringServices(compose *ComposeFile) {
 		DependsOn: []string{"prometheus"},
 		Networks:  []string{"homeport"},
 		Labels: map[string]string{
-			"homeport.source":                         "monitoring",
+			"homeport.source":                          "monitoring",
 			"traefik.enable":                           "true",
 			"traefik.http.routers.grafana.rule":        "Host(`grafana.localhost`)",
 			"traefik.http.routers.grafana.entrypoints": "web",

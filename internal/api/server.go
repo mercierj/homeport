@@ -19,6 +19,7 @@ import (
 	appPolicy "github.com/homeport/homeport/internal/app/policy"
 	"github.com/homeport/homeport/internal/app/providers"
 	"github.com/homeport/homeport/internal/app/queues"
+	apprunbook "github.com/homeport/homeport/internal/app/runbook"
 	"github.com/homeport/homeport/internal/app/secrets"
 	"github.com/homeport/homeport/internal/app/stacks"
 	"github.com/homeport/homeport/internal/pkg/logger"
@@ -50,12 +51,13 @@ type Server struct {
 	backupHandler    *handlers.BackupHandler
 	stacksHandler    *handlers.StacksHandler
 	terminalHandler  *handlers.TerminalHandler
-	policyHandler     *handlers.PolicyHandler
-	migrateHandler    *handlers.MigrateHandler
-	deployHandler     *handlers.DeployHandler
-	syncHandler       *handlers.SyncHandler
-	cutoverHandler    *handlers.CutoverHandler
-	providersHandler  *handlers.ProvidersHandler
+	policyHandler    *handlers.PolicyHandler
+	migrateHandler   *handlers.MigrateHandler
+	deployHandler    *handlers.DeployHandler
+	syncHandler      *handlers.SyncHandler
+	cutoverHandler   *handlers.CutoverHandler
+	providersHandler *handlers.ProvidersHandler
+	runbookHandler   *handlers.RunbookHandler
 }
 
 func NewServer(cfg Config) (*Server, error) {
@@ -141,6 +143,9 @@ func NewServer(cfg Config) (*Server, error) {
 
 	// Initialize Cutover handler
 	s.cutoverHandler = handlers.NewCutoverHandler()
+
+	// Initialize Runbook handler
+	s.runbookHandler = handlers.NewRunbookHandler(apprunbook.NewService("."))
 
 	// Initialize Providers handler
 	providersSvc := providers.NewService()
@@ -324,6 +329,11 @@ func (s *Server) setupRoutes() {
 		// Cutover routes
 		if s.cutoverHandler != nil {
 			s.cutoverHandler.RegisterRoutes(r)
+		}
+
+		// Runbook routes
+		if s.runbookHandler != nil {
+			s.runbookHandler.RegisterRoutes(r)
 		}
 
 		// Providers routes
