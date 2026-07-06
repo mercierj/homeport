@@ -195,6 +195,7 @@ services:
     cutover: false
     rollback: false
     status: mapped
+    blocker: DynamoDB table API maps to Scylla Alternator; Streams require adapter support or guided CDC migration
   - provider: aws
     service: EBS
     resource_types:
@@ -759,7 +760,8 @@ services:
     validate: false
     cutover: false
     rollback: false
-    status: mapped
+    status: guided
+    blocker: no Bigtable-compatible local API adapter exists yet
   - provider: gcp
     service: Cloud Armor
     resource_types:
@@ -1048,7 +1050,8 @@ services:
     validate: false
     cutover: false
     rollback: false
-    status: mapped
+    status: guided
+    blocker: no Firestore-compatible local API adapter exists yet
   - provider: gcp
     service: GKE
     resource_types:
@@ -1616,7 +1619,8 @@ services:
     validate: false
     cutover: false
     rollback: false
-    status: mapped
+    status: guided
+    blocker: Mongo API mode can use Mongo-compatible targets; SQL, Gremlin, and Table APIs need adapters or guided migration
   - provider: azure
     service: Data Factory
     resource_types: []

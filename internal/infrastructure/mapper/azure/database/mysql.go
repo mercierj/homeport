@@ -8,6 +8,7 @@ import (
 
 	"github.com/homeport/homeport/internal/domain/mapper"
 	"github.com/homeport/homeport/internal/domain/resource"
+	"github.com/homeport/homeport/internal/infrastructure/mapper/shared/datarunbook"
 )
 
 // MySQLMapper converts Azure Database for MySQL to MySQL containers.
@@ -65,6 +66,9 @@ func (m *MySQLMapper) Map(ctx context.Context, res *resource.AWSResource) (*mapp
 
 	migrationScript := m.generateMigrationScript(serverName)
 	result.AddScript("migrate_azure_mysql.sh", []byte(migrationScript))
+	for _, step := range datarunbook.SQL("mysql", "azure_db", "migrate_azure_mysql.sh") {
+		result.AddRunbookStep(step)
+	}
 
 	if res.GetConfigBool("high_availability_enabled") {
 		result.AddWarning("High availability is enabled. Consider setting up MySQL replication.")

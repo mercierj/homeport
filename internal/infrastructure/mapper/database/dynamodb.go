@@ -9,6 +9,7 @@ import (
 
 	"github.com/homeport/homeport/internal/domain/mapper"
 	"github.com/homeport/homeport/internal/domain/resource"
+	"github.com/homeport/homeport/internal/infrastructure/mapper/shared/datarunbook"
 )
 
 // DynamoDBMapper converts AWS DynamoDB tables to ScyllaDB containers.
@@ -72,6 +73,9 @@ func (m *DynamoDBMapper) Map(ctx context.Context, res *resource.AWSResource) (*m
 
 	migrationScript := m.generateMigrationScript(tableName)
 	result.AddScript("migrate_dynamodb.sh", []byte(migrationScript))
+	for _, step := range datarunbook.DynamoDB(tableName, streamEnabled) {
+		result.AddRunbookStep(step)
+	}
 
 	result.AddWarning("ScyllaDB Alternator provides DynamoDB-compatible API on port 8000. Update your SDK endpoint.")
 	result.AddWarning("Consider using ScyllaDB Alternator for easier migration. See: https://www.scylladb.com/alternator/")

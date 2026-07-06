@@ -9,6 +9,7 @@ import (
 
 	"github.com/homeport/homeport/internal/domain/mapper"
 	"github.com/homeport/homeport/internal/domain/resource"
+	"github.com/homeport/homeport/internal/infrastructure/mapper/shared/datarunbook"
 )
 
 // ElastiCacheMapper converts AWS ElastiCache clusters to Redis or Memcached.
@@ -153,6 +154,9 @@ func (m *ElastiCacheMapper) createRedisService(res *resource.AWSResource, cluste
 	// Add migration script
 	migrationScript := m.generateRedisMigrationScript(clusterID)
 	result.AddScript("migrate_redis.sh", []byte(migrationScript))
+	for _, step := range datarunbook.Redis(clusterID, "migrate_redis.sh", res.GetConfigBool("transit_encryption_enabled"), clusterModeEnabled || numCacheNodes > 1) {
+		result.AddRunbookStep(step)
+	}
 
 	return result, nil
 }

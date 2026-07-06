@@ -9,6 +9,7 @@ import (
 
 	"github.com/homeport/homeport/internal/domain/mapper"
 	"github.com/homeport/homeport/internal/domain/resource"
+	"github.com/homeport/homeport/internal/infrastructure/mapper/shared/datarunbook"
 )
 
 // CacheMapper converts Azure Cache for Redis to Redis containers.
@@ -74,6 +75,9 @@ func (m *CacheMapper) Map(ctx context.Context, res *resource.AWSResource) (*mapp
 
 	migrationScript := m.generateMigrationScript(cacheName)
 	result.AddScript("migrate_azure_cache.sh", []byte(migrationScript))
+	for _, step := range datarunbook.Redis(cacheName, "migrate_azure_cache.sh", !res.GetConfigBool("enable_non_ssl_port"), strings.ToLower(skuName) == "premium") {
+		result.AddRunbookStep(step)
+	}
 
 	if strings.ToLower(skuName) == "premium" {
 		result.AddWarning("Premium tier detected. Consider Redis Cluster mode for high availability.")

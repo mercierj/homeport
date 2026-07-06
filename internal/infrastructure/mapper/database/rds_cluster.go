@@ -9,6 +9,7 @@ import (
 
 	"github.com/homeport/homeport/internal/domain/mapper"
 	"github.com/homeport/homeport/internal/domain/resource"
+	"github.com/homeport/homeport/internal/infrastructure/mapper/shared/datarunbook"
 )
 
 // RDSClusterMapper converts AWS RDS Aurora clusters to PostgreSQL/MySQL with replication.
@@ -108,6 +109,9 @@ func (m *RDSClusterMapper) createPostgresClusterService(res *resource.AWSResourc
 
 	migrationScript := m.generateClusterMigrationScript(dbName, clusterID, "postgres")
 	result.AddScript("migrate_cluster.sh", []byte(migrationScript))
+	for _, step := range datarunbook.SQL("postgres", dbName, "migrate_cluster.sh") {
+		result.AddRunbookStep(step)
+	}
 
 	result.AddWarning("Aurora clusters have built-in replication. See replica-service.yml for manual replication setup.")
 
@@ -181,6 +185,9 @@ func (m *RDSClusterMapper) createMySQLClusterService(res *resource.AWSResource, 
 
 	migrationScript := m.generateClusterMigrationScript(dbName, clusterID, "mysql")
 	result.AddScript("migrate_cluster.sh", []byte(migrationScript))
+	for _, step := range datarunbook.SQL("mysql", dbName, "migrate_cluster.sh") {
+		result.AddRunbookStep(step)
+	}
 
 	result.AddWarning("Aurora clusters have built-in replication. See replica-service.yml for manual replication setup.")
 

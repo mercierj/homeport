@@ -9,6 +9,7 @@ import (
 
 	"github.com/homeport/homeport/internal/domain/mapper"
 	"github.com/homeport/homeport/internal/domain/resource"
+	"github.com/homeport/homeport/internal/infrastructure/mapper/shared/datarunbook"
 )
 
 // CloudSQLMapper converts GCP CloudSQL instances to PostgreSQL/MySQL containers.
@@ -78,6 +79,9 @@ func (m *CloudSQLMapper) createPostgresService(res *resource.AWSResource, instan
 
 	migrationScript := m.generatePostgresMigrationScript(instanceName)
 	result.AddScript("migrate_cloudsql.sh", []byte(migrationScript))
+	for _, step := range datarunbook.SQL("postgres", "cloudsql_db", "migrate_cloudsql.sh") {
+		result.AddRunbookStep(step)
+	}
 
 	result.AddManualStep("Update database credentials in docker-compose.yml")
 	result.AddManualStep("Use Cloud SQL Proxy or direct export to migrate data")
@@ -119,6 +123,9 @@ func (m *CloudSQLMapper) createMySQLService(res *resource.AWSResource, instanceN
 
 	migrationScript := m.generateMySQLMigrationScript(instanceName)
 	result.AddScript("migrate_cloudsql.sh", []byte(migrationScript))
+	for _, step := range datarunbook.SQL("mysql", "cloudsql_db", "migrate_cloudsql.sh") {
+		result.AddRunbookStep(step)
+	}
 
 	result.AddManualStep("Update database credentials in docker-compose.yml")
 	result.AddManualStep("Use Cloud SQL Proxy or gcloud sql export to migrate data")

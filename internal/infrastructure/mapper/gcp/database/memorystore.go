@@ -8,6 +8,7 @@ import (
 
 	"github.com/homeport/homeport/internal/domain/mapper"
 	"github.com/homeport/homeport/internal/domain/resource"
+	"github.com/homeport/homeport/internal/infrastructure/mapper/shared/datarunbook"
 )
 
 // MemorystoreMapper converts GCP Memorystore to Redis containers.
@@ -72,6 +73,9 @@ func (m *MemorystoreMapper) Map(ctx context.Context, res *resource.AWSResource) 
 
 	migrationScript := m.generateMigrationScript(instanceName)
 	result.AddScript("migrate_memorystore.sh", []byte(migrationScript))
+	for _, step := range datarunbook.Redis(instanceName, "migrate_memorystore.sh", false, tier == "STANDARD_HA") {
+		result.AddRunbookStep(step)
+	}
 
 	if tier == "STANDARD_HA" {
 		result.AddWarning("Standard HA tier detected. Consider setting up Redis Sentinel for high availability.")

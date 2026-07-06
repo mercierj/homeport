@@ -8,6 +8,7 @@ import (
 
 	"github.com/homeport/homeport/internal/domain/mapper"
 	"github.com/homeport/homeport/internal/domain/resource"
+	"github.com/homeport/homeport/internal/infrastructure/mapper/shared/datarunbook"
 )
 
 // AzureSQLMapper converts Azure SQL Database to SQL Server containers.
@@ -68,6 +69,9 @@ func (m *AzureSQLMapper) Map(ctx context.Context, res *resource.AWSResource) (*m
 
 	migrationScript := m.generateMigrationScript(dbName)
 	result.AddScript("migrate_azuresql.sh", []byte(migrationScript))
+	for _, step := range datarunbook.SQL("mssql", dbName, "migrate_azuresql.sh") {
+		result.AddRunbookStep(step)
+	}
 
 	result.AddWarning("SQL Server Developer Edition is for development only. Use Express or get a license for production.")
 	result.AddWarning("Update the SA_PASSWORD - never use default passwords in production!")

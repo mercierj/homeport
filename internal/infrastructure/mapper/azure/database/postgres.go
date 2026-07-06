@@ -8,6 +8,7 @@ import (
 
 	"github.com/homeport/homeport/internal/domain/mapper"
 	"github.com/homeport/homeport/internal/domain/resource"
+	"github.com/homeport/homeport/internal/infrastructure/mapper/shared/datarunbook"
 )
 
 // PostgresMapper converts Azure Database for PostgreSQL to PostgreSQL containers.
@@ -65,6 +66,9 @@ func (m *PostgresMapper) Map(ctx context.Context, res *resource.AWSResource) (*m
 
 	migrationScript := m.generateMigrationScript(serverName)
 	result.AddScript("migrate_azure_postgres.sh", []byte(migrationScript))
+	for _, step := range datarunbook.SQL("postgres", "azure_db", "migrate_azure_postgres.sh") {
+		result.AddRunbookStep(step)
+	}
 
 	if res.GetConfigBool("high_availability_enabled") {
 		result.AddWarning("High availability is enabled. Consider setting up PostgreSQL streaming replication.")

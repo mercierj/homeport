@@ -46,7 +46,7 @@
 | gcp | App Engine | mapped | google_app_engine_application |
 | gcp | Artifact Registry | missing |  |
 | gcp | BigQuery | missing |  |
-| gcp | Bigtable | mapped | google_bigtable_instance |
+| gcp | Bigtable | guided | google_bigtable_instance |
 | gcp | Cloud Armor | mapped | google_compute_security_policy |
 | gcp | Cloud Build | missing |  |
 | gcp | Cloud CDN | mapped | google_compute_backend_bucket |
@@ -64,7 +64,7 @@
 | gcp | Dataproc | missing |  |
 | gcp | Eventarc | missing |  |
 | gcp | Filestore | mapped | google_filestore_instance |
-| gcp | Firestore | mapped | google_firestore_database |
+| gcp | Firestore | guided | google_firestore_database |
 | gcp | GKE | mapped | google_container_cluster |
 | gcp | IAM | mapped | google_project_iam_member |
 | gcp | Identity Platform | mapped | google_identity_platform_config |
@@ -99,7 +99,7 @@
 | azure | Container Apps | missing |  |
 | azure | Container Instances | mapped | azurerm_container_group |
 | azure | Container Registry | missing |  |
-| azure | Cosmos DB | mapped | azurerm_cosmosdb_account |
+| azure | Cosmos DB | guided | azurerm_cosmosdb_account |
 | azure | Data Factory | missing |  |
 | azure | Databricks | missing |  |
 | azure | Event Grid | mapped | azurerm_eventgrid_topic |

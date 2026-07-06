@@ -9,6 +9,7 @@ import (
 
 	"github.com/homeport/homeport/internal/domain/mapper"
 	"github.com/homeport/homeport/internal/domain/resource"
+	"github.com/homeport/homeport/internal/infrastructure/mapper/shared/datarunbook"
 )
 
 // RDSMapper converts AWS RDS instances to PostgreSQL/MySQL containers.
@@ -111,6 +112,9 @@ func (m *RDSMapper) createPostgresService(res *resource.AWSResource, dbName, ins
 	// Generate migration script
 	migrationScript := m.generatePostgresMigrationScript(res, dbName)
 	result.AddScript("migrate_database.sh", []byte(migrationScript))
+	for _, step := range datarunbook.SQL("postgres", dbName, "migrate_database.sh") {
+		result.AddRunbookStep(step)
+	}
 
 	// Add warnings for RDS-specific features
 	if res.GetConfigBool("multi_az") {
@@ -203,6 +207,9 @@ func (m *RDSMapper) createMySQLService(res *resource.AWSResource, dbName, engine
 	// Generate migration script
 	migrationScript := m.generateMySQLMigrationScript(res, dbName)
 	result.AddScript("migrate_database.sh", []byte(migrationScript))
+	for _, step := range datarunbook.SQL(engine, dbName, "migrate_database.sh") {
+		result.AddRunbookStep(step)
+	}
 
 	// Add warnings for RDS-specific features
 	if res.GetConfigBool("multi_az") {
