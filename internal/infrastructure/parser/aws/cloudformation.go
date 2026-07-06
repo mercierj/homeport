@@ -485,6 +485,8 @@ func mapCFNTypeToResourceType(cfnType string) resource.Type {
 		"AWS::Bedrock::ProvisionedModelThroughput":  resource.TypeBedrockModel,
 		"AWS::SageMaker::Endpoint":                  resource.TypeSageMakerEndpoint,
 		"AWS::Textract::Adapter":                    resource.TypeTextractAdapter,
+		"AWS::Transcribe::Vocabulary":               resource.TypeTranscribeVocabulary,
+		"AWS::Transcribe::LanguageModel":            resource.TypeTranscribeVocabulary,
 
 		// Storage
 		"AWS::S3::Bucket":      resource.TypeS3Bucket,

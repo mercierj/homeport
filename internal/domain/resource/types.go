@@ -19,6 +19,7 @@ const (
 	TypeBedrockModel              Type = "aws_bedrock_inference_profile"
 	TypeSageMakerEndpoint         Type = "aws_sagemaker_endpoint"
 	TypeTextractAdapter           Type = "aws_textract_adapter"
+	TypeTranscribeVocabulary      Type = "aws_transcribe_vocabulary"
 	TypeCodeBuild                 Type = "aws_codebuild_project"
 	TypeCodePipeline              Type = "aws_codepipeline"
 	TypeCodeDeployApp             Type = "aws_codedeploy_app"

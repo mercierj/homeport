@@ -304,6 +304,8 @@ func mapAWSTerraformType(tfType string) resource.Type {
 		"aws_bedrock_provisioned_model_throughput": resource.TypeBedrockModel,
 		"aws_sagemaker_endpoint":                   resource.TypeSageMakerEndpoint,
 		"aws_textract_adapter":                     resource.TypeTextractAdapter,
+		"aws_transcribe_vocabulary":                resource.TypeTranscribeVocabulary,
+		"aws_transcribe_language_model":            resource.TypeTranscribeVocabulary,
 		"aws_ecr_repository":                       resource.TypeECRRepository,
 		"aws_ecrpublic_repository":                 resource.TypeECRRepository,
 

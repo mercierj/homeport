@@ -176,6 +176,8 @@ func mapTerraformTypeToResourceType(tfType string) resource.Type {
 		return resource.TypeSageMakerEndpoint
 	case "aws_textract_adapter":
 		return resource.TypeTextractAdapter
+	case "aws_transcribe_vocabulary", "aws_transcribe_language_model":
+		return resource.TypeTranscribeVocabulary
 
 	// Storage
 	case "aws_s3_bucket":

@@ -95,6 +95,7 @@ var CategoryMapping = map[Type]Category{
 	TypeBedrockModel:              CategoryServerless,
 	TypeSageMakerEndpoint:         CategoryCompute,
 	TypeTextractAdapter:           CategoryCompute,
+	TypeTranscribeVocabulary:      CategoryCompute,
 	TypeCodeBuild:                 CategoryDevOps,
 	TypeCodePipeline:              CategoryDevOps,
 	TypeCodeDeployApp:             CategoryDevOps,
