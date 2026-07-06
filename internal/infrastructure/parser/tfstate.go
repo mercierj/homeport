@@ -222,6 +222,8 @@ func mapTerraformTypeToResourceType(tfType string) resource.Type {
 		return resource.TypeWAFWebACL
 	case "aws_shield_protection", "aws_shield_protection_group":
 		return resource.TypeShieldProtection
+	case "aws_securityhub_account", "aws_securityhub_standards_subscription":
+		return resource.TypeSecurityHubAccount
 
 	// Messaging
 	case "aws_sqs_queue":

@@ -92,6 +92,7 @@ func (r *Registry) RegisterDefaults() {
 	r.Register(security.NewGuardDutyMapper())
 	r.Register(security.NewWAFMapper())
 	r.Register(security.NewShieldMapper())
+	r.Register(security.NewSecurityHubMapper())
 	r.Register(security.NewLakeFormationMapper())
 
 	// AWS Messaging mappers

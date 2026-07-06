@@ -129,13 +129,14 @@ var CategoryMapping = map[Type]Category{
 	TypeAppMeshMesh:       CategoryNetworking,
 
 	// AWS Security
-	TypeCognitoPool:       CategoryAuth,
-	TypeSecretsManager:    CategorySecrets,
-	TypeIAMRole:           CategoryIAM,
-	TypeACMCertificate:    CategoryCertificate,
-	TypeGuardDutyDetector: CategorySecurity,
-	TypeWAFWebACL:         CategoryFirewall,
-	TypeShieldProtection:  CategoryFirewall,
+	TypeCognitoPool:        CategoryAuth,
+	TypeSecretsManager:     CategorySecrets,
+	TypeIAMRole:            CategoryIAM,
+	TypeACMCertificate:     CategoryCertificate,
+	TypeGuardDutyDetector:  CategorySecurity,
+	TypeWAFWebACL:          CategoryFirewall,
+	TypeShieldProtection:   CategoryFirewall,
+	TypeSecurityHubAccount: CategorySecurity,
 
 	// AWS Messaging
 	TypeSQSQueue:    CategoryQueue,

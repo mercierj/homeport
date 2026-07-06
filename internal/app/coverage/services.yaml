@@ -974,13 +974,23 @@ services:
     service: Security Hub
     category: security/governance
     source_api: securityhub
-    resource_types: []
+    resource_types: [aws_securityhub_account]
     terraform_resource_types: [aws_securityhub_account, aws_securityhub_standards_subscription]
-    target: DefectDojo or Wazuh
-    api_compatibility_strategy: export findings and standards into open security posture tooling
-    impossibility_notes: Security Hub finding aggregation API is not modeled
-    status: missing
-    blocker: not modeled yet
+    target: Wazuh
+    api_compatibility_strategy: generated_patch
+    manual_steps_resolved: true
+    discover: true
+    cost: true
+    provision: true
+    migrate: true
+    api_compat: true
+    env_dns: true
+    ha: true
+    backup: true
+    validate: true
+    cutover: true
+    rollback: true
+    status: full
   - provider: aws
     service: Config
     category: security/governance
