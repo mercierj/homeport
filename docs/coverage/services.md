@@ -64,7 +64,7 @@
 | gcp | Artifact Registry | full | google_artifact_registry_repository |
 | gcp | BigQuery | full | google_bigquery_dataset |
 | gcp | Bigtable | full | google_bigtable_instance |
-| gcp | Cloud Armor | mapped | google_compute_security_policy |
+| gcp | Cloud Armor | full | google_compute_security_policy |
 | gcp | Cloud Build | missing |  |
 | gcp | Cloud CDN | mapped | google_compute_backend_bucket |
 | gcp | Cloud DNS | mapped | google_dns_managed_zone |

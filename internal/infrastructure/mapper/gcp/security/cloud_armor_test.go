@@ -7,7 +7,61 @@ import (
 
 	"github.com/homeport/homeport/internal/domain/mapper"
 	"github.com/homeport/homeport/internal/domain/resource"
+	domainrunbook "github.com/homeport/homeport/internal/domain/runbook"
 )
+
+func TestCloudArmorConformanceManagedAToZ(t *testing.T) {
+	result, err := NewCloudArmorMapper().Map(context.Background(), managedCloudArmorFixture())
+	if err != nil {
+		t.Fatal(err)
+	}
+	if len(result.ManualSteps) != 0 {
+		t.Fatalf("manual steps = %#v, want generated Cloud Armor migration", result.ManualSteps)
+	}
+	if result.DockerService.Image != "owasp/modsecurity-crs:nginx-alpine" || result.DockerService.Deploy == nil || result.DockerService.Deploy.Replicas < 2 {
+		t.Fatalf("service does not provision HA ModSecurity target: %#v", result.DockerService)
+	}
+	for _, file := range []string{
+		"config/modsecurity/rules/cloud-armor-custom.conf",
+		"config/nginx/nginx.conf",
+		"config/cloud-armor/app-change.env",
+		"config/cloud-armor/policy-report.yaml",
+	} {
+		if _, ok := result.Configs[file]; !ok {
+			t.Fatalf("missing config %s", file)
+		}
+	}
+	appEnv := string(result.Configs["config/cloud-armor/app-change.env"])
+	for _, want := range []string{"APP_CHANGE_MODE=generated_patch", "SOURCE_CLOUD_ARMOR_POLICY=edge-waf", "TARGET_WAF_ENDPOINT=http://nginx-modsecurity:8080"} {
+		if !strings.Contains(appEnv, want) {
+			t.Fatalf("app-change env missing %q:\n%s", want, appEnv)
+		}
+	}
+	report := string(result.Configs["config/cloud-armor/policy-report.yaml"])
+	for _, want := range []string{"google_compute_security_policy", "modsecurity", "adaptive_protection: generated_monitoring"} {
+		if !strings.Contains(report, want) {
+			t.Fatalf("policy report missing %q:\n%s", want, report)
+		}
+	}
+	for _, file := range []string{"setup_waf.sh", "migrate_cloud_armor.sh", "backup_cloud_armor.sh", "validate_cloud_armor.sh"} {
+		if _, ok := result.Scripts[file]; !ok {
+			t.Fatalf("missing script %s", file)
+		}
+	}
+	for id, stepType := range map[string]domainrunbook.StepType{
+		"discover-cloud-armor-policy": domainrunbook.StepTypeCommand,
+		"provision-modsecurity-waf":   domainrunbook.StepTypeCommand,
+		"migrate-cloud-armor-rules":   domainrunbook.StepTypeCommand,
+		"validate-modsecurity-waf":    domainrunbook.StepTypeCommand,
+		"backup-cloud-armor-waf":      domainrunbook.StepTypeCommand,
+		"cutover-cloud-armor-backend": domainrunbook.StepTypeAPICall,
+		"rollback-cloud-armor-policy": domainrunbook.StepTypeRollback,
+	} {
+		if !hasCloudArmorRunbookStep(result, id, stepType) {
+			t.Fatalf("missing %s runbook step: %#v", id, result.RunbookSteps)
+		}
+	}
+}
 
 func TestNewCloudArmorMapper(t *testing.T) {
 	m := NewCloudArmorMapper()
@@ -17,6 +71,40 @@ func TestNewCloudArmorMapper(t *testing.T) {
 	if m.ResourceType() != resource.TypeCloudArmor {
 		t.Errorf("ResourceType() = %v, want %v", m.ResourceType(), resource.TypeCloudArmor)
 	}
+}
+
+func managedCloudArmorFixture() *resource.AWSResource {
+	return &resource.AWSResource{
+		ID:   "edge-waf",
+		Type: resource.TypeCloudArmor,
+		Name: "edge-waf",
+		Config: map[string]interface{}{
+			"name":        "edge-waf",
+			"description": "Managed edge WAF",
+			"rule": []interface{}{
+				map[string]interface{}{
+					"action":      "deny(403)",
+					"priority":    1000,
+					"description": "Block SQL injection",
+					"match": map[string]interface{}{
+						"expr": map[string]interface{}{
+							"expression": "evaluatePreconfiguredExpr('sqli-stable')",
+						},
+					},
+				},
+			},
+			"adaptive_protection_config": map[string]interface{}{"enabled": true},
+		},
+	}
+}
+
+func hasCloudArmorRunbookStep(result *mapper.MappingResult, id string, stepType domainrunbook.StepType) bool {
+	for _, step := range result.RunbookSteps {
+		if step.ID == id && step.Type == stepType {
+			return true
+		}
+	}
+	return false
 }
 
 func TestCloudArmorMapper_ResourceType(t *testing.T) {
@@ -253,7 +341,7 @@ func TestCloudArmorMapper_Map(t *testing.T) {
 							"priority":    3000,
 							"description": "Rate limit API",
 							"rate_limit_options": map[string]interface{}{
-								"rate_limit_http_request_count":       100.0,
+								"rate_limit_http_request_count":        100.0,
 								"rate_limit_http_request_interval_sec": 60.0,
 							},
 						},

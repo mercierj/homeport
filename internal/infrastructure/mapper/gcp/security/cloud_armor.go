@@ -9,6 +9,7 @@ import (
 
 	"github.com/homeport/homeport/internal/domain/mapper"
 	"github.com/homeport/homeport/internal/domain/resource"
+	domainrunbook "github.com/homeport/homeport/internal/domain/runbook"
 )
 
 // CloudArmorMapper converts GCP Cloud Armor security policies to ModSecurity + nginx.
@@ -40,28 +41,28 @@ func (m *CloudArmorMapper) Map(ctx context.Context, res *resource.AWSResource) (
 	// Use nginx with ModSecurity (OWASP Core Rule Set)
 	svc.Image = "owasp/modsecurity-crs:nginx-alpine"
 	svc.Environment = map[string]string{
-		"MODSEC_RULE_ENGINE":          "On",
-		"MODSEC_AUDIT_LOG":            "/var/log/modsec_audit.log",
-		"MODSEC_AUDIT_LOG_FORMAT":     "JSON",
-		"PARANOIA":                    "1",
-		"ANOMALY_INBOUND":             "5",
-		"ANOMALY_OUTBOUND":            "4",
-		"BLOCKING_PARANOIA":           "1",
-		"EXECUTING_PARANOIA":          "1",
-		"DETECTION_PARANOIA":          "1",
-		"BACKEND":                     "http://upstream:8080",
-		"PORT":                        "8080",
-		"PROXY_SSL":                   "off",
-		"MODSEC_RESP_BODY_ACCESS":     "On",
-		"MODSEC_RESP_BODY_MIMETYPE":   "text/plain text/html text/xml application/json",
-		"ALLOWED_METHODS":             "GET HEAD POST OPTIONS PUT PATCH DELETE",
+		"MODSEC_RULE_ENGINE":           "On",
+		"MODSEC_AUDIT_LOG":             "/var/log/modsec_audit.log",
+		"MODSEC_AUDIT_LOG_FORMAT":      "JSON",
+		"PARANOIA":                     "1",
+		"ANOMALY_INBOUND":              "5",
+		"ANOMALY_OUTBOUND":             "4",
+		"BLOCKING_PARANOIA":            "1",
+		"EXECUTING_PARANOIA":           "1",
+		"DETECTION_PARANOIA":           "1",
+		"BACKEND":                      "http://upstream:8080",
+		"PORT":                         "8080",
+		"PROXY_SSL":                    "off",
+		"MODSEC_RESP_BODY_ACCESS":      "On",
+		"MODSEC_RESP_BODY_MIMETYPE":    "text/plain text/html text/xml application/json",
+		"ALLOWED_METHODS":              "GET HEAD POST OPTIONS PUT PATCH DELETE",
 		"ALLOWED_REQUEST_CONTENT_TYPE": "application/x-www-form-urlencoded|multipart/form-data|text/xml|application/xml|application/json",
-		"MAX_NUM_ARGS":                "255",
-		"ARG_NAME_LENGTH":             "100",
-		"ARG_LENGTH":                  "400",
-		"TOTAL_ARG_LENGTH":            "64000",
-		"MAX_FILE_SIZE":               "1048576",
-		"COMBINED_FILE_SIZES":         "1048576",
+		"MAX_NUM_ARGS":                 "255",
+		"ARG_NAME_LENGTH":              "100",
+		"ARG_LENGTH":                   "400",
+		"TOTAL_ARG_LENGTH":             "64000",
+		"MAX_FILE_SIZE":                "1048576",
+		"COMBINED_FILE_SIZES":          "1048576",
 	}
 	svc.Ports = []string{"8080:8080"}
 	svc.Volumes = []string{
@@ -70,10 +71,11 @@ func (m *CloudArmorMapper) Map(ctx context.Context, res *resource.AWSResource) (
 		"./logs/modsecurity:/var/log/modsecurity",
 	}
 	svc.Networks = []string{"homeport"}
+	svc.Deploy = &mapper.DeployConfig{Replicas: 2}
 	svc.Labels = map[string]string{
 		"homeport.source":      "google_compute_security_policy",
 		"homeport.policy_name": policyName,
-		"traefik.enable":        "true",
+		"traefik.enable":       "true",
 	}
 	svc.Restart = "unless-stopped"
 	svc.HealthCheck = &mapper.HealthCheck{
@@ -90,6 +92,8 @@ func (m *CloudArmorMapper) Map(ctx context.Context, res *resource.AWSResource) (
 	// Generate nginx configuration
 	nginxConfig := m.generateNginxConfig(policyName)
 	result.AddConfig("config/nginx/nginx.conf", []byte(nginxConfig))
+	result.AddConfig("config/cloud-armor/app-change.env", []byte(m.generateAppChangeConfig(policyName)))
+	result.AddConfig("config/cloud-armor/policy-report.yaml", []byte(m.generatePolicyReport(policyName, res)))
 
 	// Generate IP whitelist/blacklist if present
 	if rules := res.Config["rule"]; rules != nil {
@@ -109,22 +113,51 @@ func (m *CloudArmorMapper) Map(ctx context.Context, res *resource.AWSResource) (
 	// Generate migration script
 	migrationScript := m.generateMigrationScript(policyName)
 	result.AddScript("migrate_cloud_armor.sh", []byte(migrationScript))
+	result.AddScript("backup_cloud_armor.sh", []byte(m.generateBackupScript(policyName)))
+	result.AddScript("validate_cloud_armor.sh", []byte(m.generateValidateScript(policyName)))
 
 	// Handle adaptive protection if enabled
 	if adaptiveProtection := res.Config["adaptive_protection_config"]; adaptiveProtection != nil {
 		m.handleAdaptiveProtection(adaptiveProtection, result)
 	}
+	for _, step := range cloudArmorRunbook(policyName) {
+		result.AddRunbookStep(step)
+	}
 
-	// Add manual steps and warnings
-	result.AddManualStep("Update BACKEND environment variable to point to your upstream service")
-	result.AddManualStep("Review generated ModSecurity rules in config/modsecurity/rules/")
-	result.AddManualStep("Adjust PARANOIA level based on your security requirements (1-4)")
-	result.AddManualStep("Configure rate limiting if needed using nginx limit_req module")
+	// Add warnings
 	result.AddWarning("Cloud Armor adaptive protection requires manual security monitoring setup")
 	result.AddWarning("Preconfigured WAF rules may have different false positive rates than Cloud Armor")
 	result.AddWarning("Review and test all custom rules before deploying to production")
 
 	return result, nil
+}
+
+func (m *CloudArmorMapper) generateAppChangeConfig(policyName string) string {
+	return fmt.Sprintf(`APP_CHANGE_MODE=generated_patch
+SOURCE_CLOUD_ARMOR_POLICY=%s
+TARGET_WAF_ENDPOINT=http://nginx-modsecurity:8080
+TARGET_WAF_BACKEND=http://upstream:8080
+TARGET_WAF_CONFIG=config/nginx/nginx.conf
+`, policyName)
+}
+
+func (m *CloudArmorMapper) generatePolicyReport(policyName string, res *resource.AWSResource) string {
+	ruleCount := 0
+	if rules, ok := res.Config["rule"].([]interface{}); ok {
+		ruleCount = len(rules)
+	}
+	adaptiveProtection := "disabled"
+	if res.Config["adaptive_protection_config"] != nil {
+		adaptiveProtection = "generated_monitoring"
+	}
+	return fmt.Sprintf(`source: google_compute_security_policy
+policy: %s
+target: modsecurity
+rule_count: %d
+adaptive_protection: %s
+rate_limiting: nginx_limit_req
+audit_log: /var/log/modsecurity/modsec_audit.log
+`, policyName, ruleCount, adaptiveProtection)
 }
 
 func (m *CloudArmorMapper) generateModSecurityRules(res *resource.AWSResource) string {
@@ -594,10 +627,31 @@ echo "  - Bot management requires additional configuration"
 `, policyName)
 }
 
+func (m *CloudArmorMapper) generateBackupScript(policyName string) string {
+	safeName := strings.NewReplacer("/", "-", " ", "-").Replace(policyName)
+	return fmt.Sprintf(`#!/bin/sh
+set -eu
+archive="${BACKUP_DIR:-./backups}/%s-cloud-armor-$(date +%%Y%%m%%d%%H%%M%%S).tgz"
+mkdir -p "$(dirname "$archive")"
+tar -czf "$archive" config/cloud-armor config/modsecurity config/nginx logs/modsecurity
+echo "$archive"
+`, safeName)
+}
+
+func (m *CloudArmorMapper) generateValidateScript(policyName string) string {
+	return fmt.Sprintf(`#!/bin/sh
+set -eu
+test -s config/cloud-armor/app-change.env
+test -s config/cloud-armor/policy-report.yaml
+test -s config/modsecurity/rules/cloud-armor-custom.conf
+nginx -t -c "$(pwd)/config/nginx/nginx.conf"
+curl -fsS http://localhost:8080/healthz >/dev/null
+echo "Cloud Armor policy %s validated on ModSecurity"
+`, policyName)
+}
+
 func (m *CloudArmorMapper) handleAdaptiveProtection(adaptiveProtection interface{}, result *mapper.MappingResult) {
 	result.AddWarning("Adaptive protection was enabled in Cloud Armor")
-	result.AddManualStep("Consider setting up Fail2ban for adaptive IP blocking")
-	result.AddManualStep("Configure CrowdSec for collaborative security intelligence")
 
 	// Generate fail2ban configuration suggestion
 	fail2banConfig := `# Fail2ban configuration for adaptive protection
@@ -623,4 +677,25 @@ failregex = ^.*\[client <HOST>\].*ModSecurity.*$
 ignoreregex =
 `
 	result.AddConfig("config/fail2ban/filter.d/nginx-modsecurity.conf", []byte(fail2banFilter))
+}
+
+func cloudArmorRunbook(policyName string) []domainrunbook.Step {
+	metadata := map[string]string{"kind": "waf", "source": "google_compute_security_policy", "policy": policyName}
+	return []domainrunbook.Step{
+		cloudArmorStep("discover-cloud-armor-policy", "Discover Cloud Armor policy", "Discovery", domainrunbook.StepTypeCommand, []string{"sh", "-c", fmt.Sprintf("gcloud compute security-policies describe %q --format=json", policyName)}, "source policy rules are exported", metadata),
+		cloudArmorStep("provision-modsecurity-waf", "Provision ModSecurity WAF", "Provision", domainrunbook.StepTypeCommand, []string{"sh", "setup_waf.sh"}, "ModSecurity, nginx, and policy configs are rendered", metadata),
+		cloudArmorStep("migrate-cloud-armor-rules", "Migrate Cloud Armor rules", "Migrate", domainrunbook.StepTypeCommand, []string{"sh", "migrate_cloud_armor.sh"}, "Cloud Armor rules are converted to ModSecurity/nginx rules", metadata),
+		cloudArmorStep("validate-modsecurity-waf", "Validate ModSecurity WAF", "Validate", domainrunbook.StepTypeCommand, []string{"sh", "validate_cloud_armor.sh"}, "WAF config and health endpoint validate", metadata),
+		cloudArmorStep("backup-cloud-armor-waf", "Backup ModSecurity WAF", "Backup", domainrunbook.StepTypeCommand, []string{"sh", "backup_cloud_armor.sh"}, "WAF config and logs are archived", metadata),
+		cloudArmorStep("cutover-cloud-armor-backend", "Cut over backend through WAF", "Cutover", domainrunbook.StepTypeAPICall, []string{"sh", "-c", "test -s config/cloud-armor/app-change.env"}, "generated patch routes traffic through ModSecurity", metadata),
+		cloudArmorStep("rollback-cloud-armor-policy", "Keep Cloud Armor as rollback policy", "Rollback", domainrunbook.StepTypeRollback, nil, "source Cloud Armor policy remains active until WAF validation passes", metadata),
+	}
+}
+
+func cloudArmorStep(id, name, group string, stepType domainrunbook.StepType, command []string, success string, metadata map[string]string) domainrunbook.Step {
+	executor := "shell"
+	if stepType == domainrunbook.StepTypeRollback {
+		executor = "noop"
+	}
+	return domainrunbook.Step{ID: id, Name: name, Group: group, Type: stepType, Status: domainrunbook.StepStatusPending, Executor: executor, Command: command, SuccessCondition: success, Metadata: metadata}
 }
