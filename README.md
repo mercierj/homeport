@@ -76,6 +76,14 @@ make acceptance
 
 The wizard is considered ready only when Go tests, the production web build, and the Playwright A-to-Z smoke test pass.
 
+### 100% managed A-to-Z migration
+
+HomePort supports the centralized `/migrate` A-to-Z workflow for every service listed in `docs/coverage/services.md`.
+
+This claim is gated by `make acceptance-100-managed`.
+
+The gate requires every service coverage row to be `full`, every blocker to be cleared, every application compatibility issue to be handled by an adapter or exact generated change report, and the centralized wizard E2E checks to pass.
+
 ### Centralized A-to-Z migration UX
 
 The supported migration journey is `/migrate`.

@@ -1,4 +1,4 @@
-.PHONY: help build build-cli build-with-web install clean test run deps version acceptance
+.PHONY: help build build-cli build-with-web install clean test run deps version acceptance acceptance-100-managed
 
 # Build variables
 BINARY_NAME=homeport
@@ -106,3 +106,14 @@ build-with-web: deps ## Build with embedded web frontend
 
 acceptance: test web-build ## Run full A-to-Z readiness checks
 	cd $(WEB_DIR) && npm run test:e2e -- --reporter=line
+
+acceptance-100-managed: ## Run final 100% managed A-to-Z acceptance gate
+	go test ./internal/domain/coverage ./internal/app/coverage ./internal/cli
+	go test ./internal/domain/appchange ./internal/app/appchange
+	go test ./internal/domain/conformance ./internal/app/conformance
+	go test ./internal/infrastructure/parser/aws/... ./internal/infrastructure/parser/gcp/... ./internal/infrastructure/parser/azure/...
+	go test ./internal/infrastructure/mapper/...
+	go test ./internal/app/datamigration ./test/compat/... ./test/integration/aws/... ./test/integration/gcp/... ./test/integration/azure/...
+	go run ./cmd/homeport coverage assert-full --catalog docs/coverage/services.yaml
+	cd $(WEB_DIR) && npm run build
+	cd $(WEB_DIR) && npm run test:e2e -- --reporter=line centralized-a-z-wizard.spec.ts a-z-wizard-smoke.spec.ts centralized-entry.spec.ts
