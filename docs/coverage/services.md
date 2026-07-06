@@ -56,7 +56,7 @@
 | aws | Control Tower | full | aws_controltower_control |
 | aws | Textract | full | aws_textract_adapter |
 | aws | Transcribe | full | aws_transcribe_vocabulary |
-| aws | Translate | missing |  |
+| aws | Translate | full | aws_translate_text |
 | aws | Rekognition | missing | aws_rekognition_collection, aws_rekognition_project |
 | aws | Comprehend | missing | aws_comprehend_document_classifier, aws_comprehend_entity_recognizer |
 | gcp | Apigee | missing |  |

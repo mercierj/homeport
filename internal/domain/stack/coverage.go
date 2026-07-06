@@ -28,6 +28,7 @@ var ResourceMapping = map[resource.Type]StackType{
 	resource.TypeSageMakerEndpoint:         StackTypePassthrough, // ML inference endpoints stay individual
 	resource.TypeTextractAdapter:           StackTypePassthrough, // OCR adapters stay explicit document pipelines
 	resource.TypeTranscribeVocabulary:      StackTypePassthrough, // Speech vocabularies stay explicit transcription pipelines
+	resource.TypeTranslateText:             StackTypePassthrough, // Translation clients stay explicit API adapters
 	resource.TypeCodeBuild:                 StackTypePassthrough, // Build projects stay individual
 	resource.TypeCodePipeline:              StackTypePassthrough, // Pipelines remain workflow definitions
 	resource.TypeCodeDeployApp:             StackTypePassthrough, // Deploy strategies remain rollout definitions

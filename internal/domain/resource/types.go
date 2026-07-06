@@ -20,6 +20,7 @@ const (
 	TypeSageMakerEndpoint         Type = "aws_sagemaker_endpoint"
 	TypeTextractAdapter           Type = "aws_textract_adapter"
 	TypeTranscribeVocabulary      Type = "aws_transcribe_vocabulary"
+	TypeTranslateText             Type = "aws_translate_text"
 	TypeCodeBuild                 Type = "aws_codebuild_project"
 	TypeCodePipeline              Type = "aws_codepipeline"
 	TypeCodeDeployApp             Type = "aws_codedeploy_app"
