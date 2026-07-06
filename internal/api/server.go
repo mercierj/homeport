@@ -23,6 +23,7 @@ import (
 	apprunbook "github.com/homeport/homeport/internal/app/runbook"
 	"github.com/homeport/homeport/internal/app/secrets"
 	"github.com/homeport/homeport/internal/app/stacks"
+	appwizard "github.com/homeport/homeport/internal/app/wizard"
 	"github.com/homeport/homeport/internal/pkg/logger"
 )
 
@@ -60,6 +61,7 @@ type Server struct {
 	providersHandler *handlers.ProvidersHandler
 	runbookHandler   *handlers.RunbookHandler
 	compatHandler    *handlers.CompatHandler
+	wizardHandler    *handlers.WizardHandler
 }
 
 func NewServer(cfg Config) (*Server, error) {
@@ -148,6 +150,9 @@ func NewServer(cfg Config) (*Server, error) {
 
 	// Initialize Runbook handler
 	s.runbookHandler = handlers.NewRunbookHandler(apprunbook.NewService("."))
+
+	// Initialize Wizard handler
+	s.wizardHandler = handlers.NewWizardHandler(appwizard.NewService("."))
 
 	// Initialize compatibility gateway handler
 	s.compatHandler = handlers.NewCompatHandler(compat.NewDefaultRegistry())
@@ -339,6 +344,11 @@ func (s *Server) setupRoutes() {
 		// Runbook routes
 		if s.runbookHandler != nil {
 			s.runbookHandler.RegisterRoutes(r)
+		}
+
+		// Wizard routes
+		if s.wizardHandler != nil {
+			s.wizardHandler.RegisterRoutes(r)
 		}
 
 		// Compatibility gateway routes

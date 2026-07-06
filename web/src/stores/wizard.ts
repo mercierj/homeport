@@ -1,5 +1,6 @@
 import { create } from 'zustand';
 import type { Resource, AnalyzeResponse, DiscoverProgressEvent } from '@/lib/migrate-api';
+import type { WizardSession, WizardSessionStep } from '@/lib/wizard-session-api';
 
 // Wizard step definitions
 export type WizardStep =
@@ -175,6 +176,8 @@ export interface ConsolidationPreview {
 
 // Wizard state
 export interface WizardState {
+  sessionId: string | null;
+
   // Entry point
   entryPoint: WizardEntryPoint;
 
@@ -255,6 +258,8 @@ export interface WizardState {
   error: string | null;
 
   // Actions
+  setSessionId: (sessionId: string | null) => void;
+  hydrateFromSession: (session: WizardSession) => void;
   setEntryPoint: (entryPoint: WizardEntryPoint) => void;
   goToStep: (step: WizardStep) => void;
   nextStep: () => void;
@@ -356,6 +361,7 @@ const defaultAzureCredentials: AzureCredentials = {
 };
 
 const initialState = {
+  sessionId: null,
   entryPoint: null as WizardEntryPoint,
   currentStep: 'analyze' as WizardStep,
   completedSteps: [] as WizardStep[],
@@ -413,6 +419,26 @@ const initialState = {
 
 export const useWizardStore = create<WizardState>((set, get) => ({
   ...initialState,
+
+  setSessionId: (sessionId) => set({ sessionId }),
+
+  hydrateFromSession: (session) => {
+    const toWizardStep = (step: WizardSessionStep): WizardStep =>
+      step === 'done' ? 'cutover' : step;
+    set({
+      sessionId: session.id,
+      currentStep: toWizardStep(session.current_step),
+      completedSteps: session.completed_steps
+        .filter((step) => step !== 'done')
+        .map((step) => step as WizardStep),
+      sourceProvider: (session.source_provider as WizardState['sourceProvider']) || null,
+      bundleId: session.bundle_id || null,
+      secretsResolved: session.secrets_resolved,
+      deploymentId: session.deployment_id || null,
+      syncPlanId: session.sync_plan_id || null,
+      cutoverPlanId: session.cutover_id || null,
+    });
+  },
 
   // Navigation
   setEntryPoint: (entryPoint) => {
