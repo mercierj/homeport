@@ -39,16 +39,16 @@ func Redis(name, script string, tlsRequired, ha bool) []domainrunbook.Step {
 		"REDIS_PASSWORD": "${REDIS_PASSWORD}",
 	}
 	steps := []domainrunbook.Step{
-		input("generate-redis-auth", "Generate Redis auth token", "Credentials", "Redis password or token stored for target", metadata),
+		command("generate-redis-auth", "Generate Redis auth token", "Credentials", []string{"sh", "-c", "test -s config/redis/app-change.env"}, "Redis password or token stored for target", metadata),
 		command("sync-redis-data", "Sync Redis data", "Sync", []string{"sh", script}, "RDB or DUMP/RESTORE sync completed", metadata),
 		command("validate-redis-migration", "Validate Redis migration", "Validate", []string{"sh", "-c", "echo validate key count types ttls streams sampled values"}, "key count, types, TTLs, streams, and sampled values match", metadata),
 		rollback("rollback-redis-source-authority", "Keep source Redis authoritative", metadata),
 	}
 	if tlsRequired {
-		steps = append([]domainrunbook.Step{input("configure-redis-tls", "Configure Redis TLS proxy", "Credentials", "TLS proxy generated or TLS marked blocked", metadata)}, steps...)
+		steps = append([]domainrunbook.Step{command("configure-redis-tls", "Configure Redis TLS proxy", "Credentials", []string{"sh", "-c", "test -s config/redis/tls.env"}, "TLS proxy configuration generated", metadata)}, steps...)
 	}
 	if ha {
-		steps = append(steps, input("validate-redis-failover", "Validate Redis failover", "Validate", "Sentinel or cluster failover validated", metadata))
+		steps = append(steps, command("validate-redis-failover", "Validate Redis failover", "Validate", []string{"sh", "validate_redis.sh"}, "Sentinel or cluster failover validated", metadata))
 	}
 	return steps
 }

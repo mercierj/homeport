@@ -2,10 +2,12 @@ package database
 
 import (
 	"context"
+	"strings"
 	"testing"
 
 	"github.com/homeport/homeport/internal/domain/mapper"
 	"github.com/homeport/homeport/internal/domain/resource"
+	domainrunbook "github.com/homeport/homeport/internal/domain/runbook"
 )
 
 func TestNewElastiCacheMapper(t *testing.T) {
@@ -16,6 +18,82 @@ func TestNewElastiCacheMapper(t *testing.T) {
 	if m.ResourceType() != resource.TypeElastiCache {
 		t.Errorf("ResourceType() = %v, want %v", m.ResourceType(), resource.TypeElastiCache)
 	}
+}
+
+func TestElastiCacheConformanceManagedAToZ(t *testing.T) {
+	result, err := NewElastiCacheMapper().Map(context.Background(), managedElastiCacheFixture())
+	if err != nil {
+		t.Fatal(err)
+	}
+	if len(result.ManualSteps) != 0 {
+		t.Fatalf("manual steps = %#v, want generated ElastiCache migration", result.ManualSteps)
+	}
+	if result.DockerService.Deploy == nil || result.DockerService.Deploy.Replicas < 2 {
+		t.Fatalf("service does not provision HA Redis target: %#v", result.DockerService.Deploy)
+	}
+	for _, file := range []string{"config/redis/redis.conf", "config/redis/app-change.env", "config/redis/tls.env", "config/redis/cluster.env"} {
+		if _, ok := result.Configs[file]; !ok {
+			t.Fatalf("missing config %s", file)
+		}
+	}
+	appEnv := string(result.Configs["config/redis/app-change.env"])
+	for _, want := range []string{"SOURCE_CLUSTER=orders-cache", "TARGET_ENDPOINT=redis:6379", "APP_CHANGE_MODE=generated_patch"} {
+		if !strings.Contains(appEnv, want) {
+			t.Fatalf("app-change env missing %q:\n%s", want, appEnv)
+		}
+	}
+	for _, file := range []string{"migrate_redis.sh", "setup_redis_cluster.sh", "backup_redis_config.sh", "validate_redis.sh"} {
+		if _, ok := result.Scripts[file]; !ok {
+			t.Fatalf("missing script %s", file)
+		}
+	}
+	for id, stepType := range map[string]domainrunbook.StepType{
+		"generate-redis-auth":             domainrunbook.StepTypeCommand,
+		"configure-redis-tls":             domainrunbook.StepTypeCommand,
+		"sync-redis-data":                 domainrunbook.StepTypeCommand,
+		"validate-redis-migration":        domainrunbook.StepTypeCommand,
+		"validate-redis-failover":         domainrunbook.StepTypeCommand,
+		"backup-elasticache-config":       domainrunbook.StepTypeCommand,
+		"cutover-elasticache-endpoint":    domainrunbook.StepTypeAPICall,
+		"rollback-redis-source-authority": domainrunbook.StepTypeRollback,
+	} {
+		if !hasElastiCacheRunbookStep(result, id, stepType) {
+			t.Fatalf("missing %s runbook step: %#v", id, result.RunbookSteps)
+		}
+	}
+	for _, step := range result.RunbookSteps {
+		if step.Type == domainrunbook.StepTypeInput {
+			t.Fatalf("manual input runbook step = %#v, want executable conformance", step)
+		}
+	}
+}
+
+func managedElastiCacheFixture() *resource.AWSResource {
+	return &resource.AWSResource{
+		ID:   "orders-cache",
+		Type: resource.TypeElastiCache,
+		Name: "orders-cache",
+		Config: map[string]interface{}{
+			"cluster_id":                 "orders-cache",
+			"engine":                     "redis",
+			"engine_version":             "7.0",
+			"num_cache_nodes":            float64(3),
+			"cluster_mode_enabled":       true,
+			"auth_token":                 "managed",
+			"transit_encryption_enabled": true,
+			"at_rest_encryption_enabled": true,
+			"snapshot_retention_limit":   float64(7),
+		},
+	}
+}
+
+func hasElastiCacheRunbookStep(result *mapper.MappingResult, id string, stepType domainrunbook.StepType) bool {
+	for _, step := range result.RunbookSteps {
+		if step.ID == id && step.Type == stepType {
+			return true
+		}
+	}
+	return false
 }
 
 func TestElastiCacheMapper_ResourceType(t *testing.T) {

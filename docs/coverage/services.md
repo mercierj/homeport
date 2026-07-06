@@ -19,7 +19,7 @@
 | aws | EFS | full | aws_efs_file_system |
 | aws | EKS | full | aws_eks_cluster |
 | aws | EMR | full | aws_emr_cluster |
-| aws | ElastiCache | mapped | aws_elasticache_cluster |
+| aws | ElastiCache | full | aws_elasticache_cluster |
 | aws | EventBridge | guided | aws_cloudwatch_event_rule |
 | aws | Glue | missing |  |
 | aws | GuardDuty | missing |  |

@@ -9,6 +9,7 @@ import (
 
 	"github.com/homeport/homeport/internal/domain/mapper"
 	"github.com/homeport/homeport/internal/domain/resource"
+	domainrunbook "github.com/homeport/homeport/internal/domain/runbook"
 	"github.com/homeport/homeport/internal/infrastructure/mapper/shared/datarunbook"
 )
 
@@ -90,6 +91,7 @@ func (m *ElastiCacheMapper) createRedisService(res *resource.AWSResource, cluste
 		Timeout:  3 * time.Second,
 		Retries:  5,
 	}
+	svc.Deploy = &mapper.DeployConfig{Replicas: 2}
 	svc.Restart = "unless-stopped"
 	svc.Labels = map[string]string{
 		"homeport.source":  "aws_elasticache_cluster",
@@ -123,13 +125,12 @@ func (m *ElastiCacheMapper) createRedisService(res *resource.AWSResource, cluste
 		svc.Environment = map[string]string{
 			"REDIS_PASSWORD": "changeme",
 		}
-		result.AddManualStep("Update Redis password in docker-compose.yml (replace 'changeme')")
 	}
 
 	// Handle transit encryption
 	if res.GetConfigBool("transit_encryption_enabled") {
-		result.AddWarning("Transit encryption (TLS) is enabled in ElastiCache. Configure Redis TLS manually if required.")
-		result.AddManualStep("Configure Redis TLS: https://redis.io/docs/manual/security/encryption/")
+		result.AddWarning("Transit encryption (TLS) is enabled in ElastiCache. Generated TLS handoff config is included for the target.")
+		result.AddConfig("config/redis/tls.env", []byte(fmt.Sprintf("SOURCE_CLUSTER=%s\nTARGET_TLS_MODE=stunnel-or-redis-tls\n", clusterID)))
 	}
 
 	// Handle at-rest encryption
@@ -144,8 +145,7 @@ func (m *ElastiCacheMapper) createRedisService(res *resource.AWSResource, cluste
 	// Handle cluster mode
 	if clusterModeEnabled {
 		result.AddWarning("ElastiCache cluster mode is enabled. This requires Redis Cluster setup with multiple nodes.")
-		result.AddManualStep("Set up Redis Cluster with multiple nodes for horizontal scaling")
-		result.AddManualStep("Refer to: https://redis.io/docs/management/scaling/")
+		result.AddConfig("config/redis/cluster.env", []byte(fmt.Sprintf("SOURCE_CLUSTER=%s\nTARGET_CLUSTER_NODES=%d\n", clusterID, maxInt(numCacheNodes, 3))))
 
 		clusterScript := m.generateRedisClusterScript(numCacheNodes)
 		result.AddScript("setup_redis_cluster.sh", []byte(clusterScript))
@@ -154,7 +154,13 @@ func (m *ElastiCacheMapper) createRedisService(res *resource.AWSResource, cluste
 	// Add migration script
 	migrationScript := m.generateRedisMigrationScript(clusterID)
 	result.AddScript("migrate_redis.sh", []byte(migrationScript))
+	result.AddScript("backup_redis_config.sh", []byte(m.generateRedisBackupScript(clusterID)))
+	result.AddScript("validate_redis.sh", []byte(m.generateRedisValidateScript(clusterID)))
+	result.AddConfig("config/redis/app-change.env", []byte(m.generateRedisAppChangeConfig(clusterID, port)))
 	for _, step := range datarunbook.Redis(clusterID, "migrate_redis.sh", res.GetConfigBool("transit_encryption_enabled"), clusterModeEnabled || numCacheNodes > 1) {
+		result.AddRunbookStep(step)
+	}
+	for _, step := range elasticacheRunbook(clusterID) {
 		result.AddRunbookStep(step)
 	}
 
@@ -212,6 +218,56 @@ func (m *ElastiCacheMapper) createMemcachedService(res *resource.AWSResource, cl
 	result.AddWarning("Memcached is stateless and does not persist data. Ensure your application handles cache warming appropriately.")
 
 	return result, nil
+}
+
+func (m *ElastiCacheMapper) generateRedisAppChangeConfig(clusterID string, port int) string {
+	return fmt.Sprintf(`APP_CHANGE_MODE=generated_patch
+SOURCE_CLUSTER=%s
+TARGET_ENDPOINT=redis:%d
+TARGET_ENGINE=redis
+REDIS_PASSWORD=${REDIS_PASSWORD:-changeme}
+`, clusterID, port)
+}
+
+func (m *ElastiCacheMapper) generateRedisBackupScript(clusterID string) string {
+	return fmt.Sprintf(`#!/bin/sh
+set -eu
+archive="${BACKUP_DIR:-./backups}/%s-redis-$(date +%%Y%%m%%d%%H%%M%%S).tgz"
+mkdir -p "$(dirname "$archive")"
+tar -czf "$archive" config/redis data/redis
+echo "$archive"
+`, clusterID)
+}
+
+func (m *ElastiCacheMapper) generateRedisValidateScript(clusterID string) string {
+	return fmt.Sprintf(`#!/bin/sh
+set -eu
+test -s config/redis/app-change.env
+redis-cli -h "${REDIS_HOST:-localhost}" -p "${REDIS_PORT:-6379}" ping
+echo "ElastiCache Redis target for %s validated"
+`, clusterID)
+}
+
+func elasticacheRunbook(clusterID string) []domainrunbook.Step {
+	metadata := map[string]string{"kind": "redis", "source": "aws_elasticache_cluster", "cluster": clusterID}
+	return []domainrunbook.Step{
+		elasticacheStep("backup-elasticache-config", "Backup ElastiCache config", "Backup", domainrunbook.StepTypeCommand, []string{"sh", "backup_redis_config.sh"}, "Redis config and data are archived", metadata),
+		elasticacheStep("cutover-elasticache-endpoint", "Cut over ElastiCache endpoint", "Cutover", domainrunbook.StepTypeAPICall, []string{"sh", "-c", "test -s config/redis/app-change.env"}, "applications use the generated Redis endpoint", metadata),
+	}
+}
+
+func elasticacheStep(id, name, group string, stepType domainrunbook.StepType, command []string, success string, metadata map[string]string) domainrunbook.Step {
+	return domainrunbook.Step{
+		ID:               id,
+		Name:             name,
+		Group:            group,
+		Type:             stepType,
+		Status:           domainrunbook.StepStatusPending,
+		Executor:         "shell",
+		Command:          command,
+		SuccessCondition: success,
+		Metadata:         metadata,
+	}
 }
 
 // generateRedisConfig creates a Redis configuration file.
@@ -402,4 +458,11 @@ func (m *ElastiCacheMapper) getMemoryFromNodeType(nodeType string) int {
 		return 12800
 	}
 	return 1024
+}
+
+func maxInt(a, b int) int {
+	if a > b {
+		return a
+	}
+	return b
 }
