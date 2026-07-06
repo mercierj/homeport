@@ -8,14 +8,14 @@ import (
 )
 
 // ═══════════════════════════════════════════════════════════════════════════════
-// ResourceMapping - Complete mapping of all 94 resource types to stack types
+// ResourceMapping - Complete mapping of all 95 resource types to stack types
 // ═══════════════════════════════════════════════════════════════════════════════
 
 // ResourceMapping maps every resource.Type constant to its corresponding StackType.
-// This provides 100% coverage of all 94 resource types (40 AWS + 25 GCP + 29 Azure).
+// This provides 100% coverage of all 95 resource types (41 AWS + 25 GCP + 29 Azure).
 var ResourceMapping = map[resource.Type]StackType{
 	// ─────────────────────────────────────────────────────
-	// AWS Resource Types (40 types)
+	// AWS Resource Types (41 types)
 	// ─────────────────────────────────────────────────────
 
 	// AWS Compute and devops
@@ -42,6 +42,7 @@ var ResourceMapping = map[resource.Type]StackType{
 	resource.TypeAthenaWorkgroup:     StackTypeDatabase,    // Query workgroups consolidate with data query engines
 	resource.TypeEMRCluster:          StackTypePassthrough, // Spark clusters stay individual
 	resource.TypeGlueCatalogDatabase: StackTypeDatabase,    // Catalog databases consolidate with metadata stores
+	resource.TypeOpenSearchDomain:    StackTypeDatabase,    // Search indexes consolidate with datastore services
 
 	// AWS Networking (6 types) - All passthrough
 	resource.TypeALB:               StackTypePassthrough, // Load balancers stay individual

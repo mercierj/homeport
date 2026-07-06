@@ -110,6 +110,7 @@ var CategoryMapping = map[Type]Category{
 	TypeAthenaWorkgroup:     CategorySQLDatabase,
 	TypeEMRCluster:          CategoryCompute,
 	TypeGlueCatalogDatabase: CategorySQLDatabase,
+	TypeOpenSearchDomain:    CategoryNoSQLDatabase,
 
 	// AWS Networking
 	TypeALB:               CategoryLoadBalancer,

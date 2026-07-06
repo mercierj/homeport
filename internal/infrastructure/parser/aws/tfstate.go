@@ -320,6 +320,8 @@ func mapAWSTerraformType(tfType string) resource.Type {
 		"aws_athena_database":               resource.TypeAthenaWorkgroup,
 		"aws_emr_cluster":                   resource.TypeEMRCluster,
 		"aws_glue_catalog_database":         resource.TypeGlueCatalogDatabase,
+		"aws_opensearch_domain":             resource.TypeOpenSearchDomain,
+		"aws_elasticsearch_domain":          resource.TypeOpenSearchDomain,
 
 		// Networking
 		"aws_lb":                      resource.TypeALB,

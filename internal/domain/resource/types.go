@@ -34,6 +34,7 @@ const (
 	TypeAthenaWorkgroup     Type = "aws_athena_workgroup"
 	TypeEMRCluster          Type = "aws_emr_cluster"
 	TypeGlueCatalogDatabase Type = "aws_glue_catalog_database"
+	TypeOpenSearchDomain    Type = "aws_opensearch_domain"
 
 	// AWS Networking
 	TypeALB               Type = "aws_lb"

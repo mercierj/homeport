@@ -57,6 +57,7 @@ func (r *Registry) RegisterDefaults() {
 	r.Register(database.NewAthenaMapper())
 	r.Register(database.NewEMRMapper())
 	r.Register(database.NewGlueMapper())
+	r.Register(database.NewOpenSearchMapper())
 
 	// AWS Compute mappers
 	r.Register(compute.NewEC2Mapper())

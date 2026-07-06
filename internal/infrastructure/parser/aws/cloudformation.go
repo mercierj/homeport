@@ -497,6 +497,8 @@ func mapCFNTypeToResourceType(cfnType string) resource.Type {
 		"AWS::ElastiCache::ReplicationGroup": resource.TypeElastiCache,
 		"AWS::EMR::Cluster":                  resource.TypeEMRCluster,
 		"AWS::Glue::Database":                resource.TypeGlueCatalogDatabase,
+		"AWS::OpenSearchService::Domain":     resource.TypeOpenSearchDomain,
+		"AWS::Elasticsearch::Domain":         resource.TypeOpenSearchDomain,
 
 		// Networking
 		"AWS::ElasticLoadBalancingV2::LoadBalancer": resource.TypeALB,
