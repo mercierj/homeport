@@ -43,6 +43,7 @@ func RegisterAll(registry MapperRegistrar) {
 	registry.Register(networking.NewCloudDNSMapper())
 	registry.Register(networking.NewCloudCDNMapper())
 	registry.Register(networking.NewVPCMapper())
+	registry.Register(networking.NewApigeeMapper())
 
 	// Security mappers
 	registry.Register(security.NewIdentityPlatformMapper())

@@ -317,13 +317,13 @@ func mapDMTypeToResourceType(dmType string) resource.Type {
 
 	mapping := map[string]resource.Type{
 		// Compute
-		"compute.v1.instance":        resource.TypeGCEInstance,
+		"compute.v1.instance":         resource.TypeGCEInstance,
 		"compute.v1.instancetemplate": resource.TypeGCEInstance,
-		"compute.beta.instance":      resource.TypeGCEInstance,
+		"compute.beta.instance":       resource.TypeGCEInstance,
 
 		// Storage
-		"storage.v1.bucket":         resource.TypeGCSBucket,
-		"compute.v1.disk":           resource.TypePersistentDisk,
+		"storage.v1.bucket": resource.TypeGCSBucket,
+		"compute.v1.disk":   resource.TypePersistentDisk,
 
 		// Database
 		"sqladmin.v1beta4.instance": resource.TypeCloudSQL,
@@ -332,26 +332,28 @@ func mapDMTypeToResourceType(dmType string) resource.Type {
 		"redis.v1.instance":         resource.TypeMemorystore,
 
 		// Networking
-		"compute.v1.network":          resource.TypeGCPVPCNetwork,
-		"compute.v1.subnetwork":       resource.TypeGCPVPCNetwork,
-		"compute.v1.globaladdress":    resource.TypeCloudLB,
-		"compute.v1.backendservice":   resource.TypeCloudLB,
-		"compute.v1.forwardingrule":   resource.TypeCloudLB,
-		"dns.v1.managedzone":          resource.TypeCloudDNS,
+		"compute.v1.network":        resource.TypeGCPVPCNetwork,
+		"compute.v1.subnetwork":     resource.TypeGCPVPCNetwork,
+		"compute.v1.globaladdress":  resource.TypeCloudLB,
+		"compute.v1.backendservice": resource.TypeCloudLB,
+		"apigee.v1.organization":    resource.TypeApigeeOrganization,
+		"apigee.v1.environment":     resource.TypeApigeeOrganization,
+		"compute.v1.forwardingrule": resource.TypeCloudLB,
+		"dns.v1.managedzone":        resource.TypeCloudDNS,
 
 		// Security
-		"iam.v1.serviceaccount":      resource.TypeGCPIAM,
-		"compute.v1.firewall":        resource.TypeCloudArmor,
-		"secretmanager.v1.secret":    resource.TypeSecretManager,
+		"iam.v1.serviceaccount":   resource.TypeGCPIAM,
+		"compute.v1.firewall":     resource.TypeCloudArmor,
+		"secretmanager.v1.secret": resource.TypeSecretManager,
 
 		// Messaging
-		"pubsub.v1.topic":            resource.TypePubSubTopic,
-		"pubsub.v1.subscription":     resource.TypePubSubSubscription,
-		"cloudscheduler.v1.job":      resource.TypeCloudScheduler,
-		"cloudtasks.v2.queue":        resource.TypeCloudTasks,
+		"pubsub.v1.topic":        resource.TypePubSubTopic,
+		"pubsub.v1.subscription": resource.TypePubSubSubscription,
+		"cloudscheduler.v1.job":  resource.TypeCloudScheduler,
+		"cloudtasks.v2.queue":    resource.TypeCloudTasks,
 
 		// Containers
-		"container.v1.cluster":       resource.TypeGKE,
+		"container.v1.cluster": resource.TypeGKE,
 	}
 
 	// Try direct match

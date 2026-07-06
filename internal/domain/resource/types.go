@@ -113,11 +113,12 @@ const (
 	TypeSpanner     Type = "google_spanner_instance"
 
 	// GCP Networking
-	TypeCloudLB       Type = "google_compute_backend_service"
-	TypeCloudDNS      Type = "google_dns_managed_zone"
-	TypeCloudCDN      Type = "google_compute_backend_bucket"
-	TypeCloudArmor    Type = "google_compute_security_policy"
-	TypeGCPVPCNetwork Type = "google_compute_network"
+	TypeCloudLB            Type = "google_compute_backend_service"
+	TypeCloudDNS           Type = "google_dns_managed_zone"
+	TypeCloudCDN           Type = "google_compute_backend_bucket"
+	TypeCloudArmor         Type = "google_compute_security_policy"
+	TypeGCPVPCNetwork      Type = "google_compute_network"
+	TypeApigeeOrganization Type = "google_apigee_organization"
 
 	// GCP Security
 	TypeIdentityPlatform Type = "google_identity_platform_config"

@@ -189,11 +189,12 @@ var CategoryMapping = map[Type]Category{
 	TypeSpanner:     CategorySQLDatabase,
 
 	// GCP Networking
-	TypeCloudLB:       CategoryLoadBalancer,
-	TypeCloudDNS:      CategoryDNS,
-	TypeCloudCDN:      CategoryCDN,
-	TypeCloudArmor:    CategoryFirewall,
-	TypeGCPVPCNetwork: CategoryVPC,
+	TypeCloudLB:            CategoryLoadBalancer,
+	TypeCloudDNS:           CategoryDNS,
+	TypeCloudCDN:           CategoryCDN,
+	TypeCloudArmor:         CategoryFirewall,
+	TypeGCPVPCNetwork:      CategoryVPC,
+	TypeApigeeOrganization: CategoryLoadBalancer,
 
 	// GCP Security
 	TypeIdentityPlatform: CategoryAuth,

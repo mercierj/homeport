@@ -302,15 +302,15 @@ func (p *TFStateParser) shouldIncludeResource(res *resource.Resource, opts *pars
 func mapGCPTerraformType(tfType string) resource.Type {
 	mapping := map[string]resource.Type{
 		// Compute
-		"google_compute_instance":          resource.TypeGCEInstance,
-		"google_cloud_run_service":         resource.TypeCloudRun,
-		"google_cloudfunctions_function":   resource.TypeCloudFunction,
-		"google_container_cluster":         resource.TypeGKE,
-		"google_app_engine_application":    resource.TypeAppEngine,
+		"google_compute_instance":        resource.TypeGCEInstance,
+		"google_cloud_run_service":       resource.TypeCloudRun,
+		"google_cloudfunctions_function": resource.TypeCloudFunction,
+		"google_container_cluster":       resource.TypeGKE,
+		"google_app_engine_application":  resource.TypeAppEngine,
 
 		// Storage
-		"google_storage_bucket":    resource.TypeGCSBucket,
-		"google_compute_disk":      resource.TypePersistentDisk,
+		"google_storage_bucket":     resource.TypeGCSBucket,
+		"google_compute_disk":       resource.TypePersistentDisk,
 		"google_filestore_instance": resource.TypeFilestore,
 
 		// Database
@@ -321,11 +321,13 @@ func mapGCPTerraformType(tfType string) resource.Type {
 		"google_spanner_instance":      resource.TypeSpanner,
 
 		// Networking
-		"google_compute_backend_service":  resource.TypeCloudLB,
-		"google_dns_managed_zone":         resource.TypeCloudDNS,
-		"google_compute_backend_bucket":   resource.TypeCloudCDN,
-		"google_compute_security_policy":  resource.TypeCloudArmor,
-		"google_compute_network":          resource.TypeGCPVPCNetwork,
+		"google_compute_backend_service": resource.TypeCloudLB,
+		"google_dns_managed_zone":        resource.TypeCloudDNS,
+		"google_compute_backend_bucket":  resource.TypeCloudCDN,
+		"google_compute_security_policy": resource.TypeCloudArmor,
+		"google_compute_network":         resource.TypeGCPVPCNetwork,
+		"google_apigee_organization":     resource.TypeApigeeOrganization,
+		"google_apigee_environment":      resource.TypeApigeeOrganization,
 
 		// Security
 		"google_identity_platform_config": resource.TypeIdentityPlatform,
@@ -333,10 +335,10 @@ func mapGCPTerraformType(tfType string) resource.Type {
 		"google_project_iam_member":       resource.TypeGCPIAM,
 
 		// Messaging
-		"google_pubsub_topic":         resource.TypePubSubTopic,
-		"google_pubsub_subscription":  resource.TypePubSubSubscription,
-		"google_cloud_tasks_queue":    resource.TypeCloudTasks,
-		"google_cloud_scheduler_job":  resource.TypeCloudScheduler,
+		"google_pubsub_topic":        resource.TypePubSubTopic,
+		"google_pubsub_subscription": resource.TypePubSubSubscription,
+		"google_cloud_tasks_queue":   resource.TypeCloudTasks,
+		"google_cloud_scheduler_job": resource.TypeCloudScheduler,
 	}
 
 	if resType, ok := mapping[tfType]; ok {
@@ -347,9 +349,9 @@ func mapGCPTerraformType(tfType string) resource.Type {
 
 // TerraformState represents a Terraform state file.
 type TerraformState struct {
-	Version          int                   `json:"version"`
-	TerraformVersion string                `json:"terraform_version"`
-	Resources        []StateResource       `json:"resources"`
+	Version          int                    `json:"version"`
+	TerraformVersion string                 `json:"terraform_version"`
+	Resources        []StateResource        `json:"resources"`
 	Outputs          map[string]StateOutput `json:"outputs,omitempty"`
 }
 

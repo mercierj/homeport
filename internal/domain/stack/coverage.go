@@ -98,7 +98,7 @@ var ResourceMapping = map[resource.Type]StackType{
 	resource.TypeXRaySamplingRule:      StackTypeObservability, // Tracing consolidates
 
 	// ─────────────────────────────────────────────────────
-	// GCP Resource Types (25 types)
+	// GCP Resource Types (26 types)
 	// ─────────────────────────────────────────────────────
 
 	// GCP Compute (5 types) - Passthrough except serverless
@@ -120,12 +120,13 @@ var ResourceMapping = map[resource.Type]StackType{
 	resource.TypeMemorystore: StackTypeCache,    // Cache consolidates
 	resource.TypeSpanner:     StackTypeDatabase, // Distributed SQL consolidates
 
-	// GCP Networking (5 types) - All passthrough
-	resource.TypeCloudLB:       StackTypePassthrough, // Load balancers stay individual
-	resource.TypeCloudDNS:      StackTypePassthrough, // DNS stays individual
-	resource.TypeCloudCDN:      StackTypePassthrough, // CDN stays individual
-	resource.TypeCloudArmor:    StackTypePassthrough, // Firewall stays individual
-	resource.TypeGCPVPCNetwork: StackTypePassthrough, // VPC stays individual
+	// GCP Networking (6 types) - All passthrough
+	resource.TypeCloudLB:            StackTypePassthrough, // Load balancers stay individual
+	resource.TypeCloudDNS:           StackTypePassthrough, // DNS stays individual
+	resource.TypeCloudCDN:           StackTypePassthrough, // CDN stays individual
+	resource.TypeCloudArmor:         StackTypePassthrough, // Firewall stays individual
+	resource.TypeGCPVPCNetwork:      StackTypePassthrough, // VPC stays individual
+	resource.TypeApigeeOrganization: StackTypePassthrough, // API gateways stay individual
 
 	// GCP Security (3 types)
 	resource.TypeIdentityPlatform: StackTypeAuth,        // Auth consolidates
