@@ -130,7 +130,7 @@ export interface SyncTask {
 }
 
 // Deploy target types
-export type DeployTarget = 'local' | 'ssh';
+export type DeployTarget = 'local' | 'ssh' | 'cloud';
 
 export interface SSHConfig {
   host: string;

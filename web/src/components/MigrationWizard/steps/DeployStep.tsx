@@ -1,5 +1,7 @@
 import { useState, useEffect, useRef } from 'react';
 import {
+  Cloud,
+  Download,
   Server,
   Globe,
   Key,
@@ -15,16 +17,26 @@ import { cn } from '@/lib/utils';
 import { buttonVariants } from '@/lib/button-variants';
 import { useWizardStore } from '@/stores/wizard';
 import { getBundleCompose } from '@/lib/bundle-api';
+import { ProviderComparison } from '@/components/DeploymentWizard/ProviderComparison';
+import { ProviderConfigForm } from '@/components/DeploymentWizard/ProviderConfigForm';
+import { TerraformExport } from '@/components/DeploymentWizard/TerraformExport';
 import {
+  applyCloudDeploy,
+  getCloudDeploy,
+  startCloudDeploy,
   startDeployment,
   subscribeToDeployment,
   cancelDeployment,
+  type CloudDeployJob,
   type LocalDeployConfig,
   type SSHDeployConfig,
   type PhaseEvent,
   type LogEvent,
   type ErrorEvent,
 } from '@/lib/deploy-api';
+import { downloadStack } from '@/lib/migrate-api';
+import { useDeploymentStore } from '@/stores/deployment';
+import type { Provider } from '@/lib/providers-api';
 import { RunbookSteps } from '../RunbookSteps';
 
 // Deployment phases - these come from backend but we show placeholders
@@ -39,6 +51,7 @@ export function DeployStep() {
   const {
     bundleId,
     bundleManifest,
+    selectedResources,
     deployTarget,
     sshConfig,
     deployProgress,
@@ -58,7 +71,99 @@ export function DeployStep() {
   const [deployComplete, setDeployComplete] = useState(false);
   const [deployError, setDeployError] = useState<string | null>(null);
   const [logs, setLogs] = useState<string[]>([]);
+  const [cloudStep, setCloudStep] = useState<'compare' | 'configure' | 'export'>('compare');
+  const [selectedCloudProvider, setSelectedCloudProvider] = useState<'hetzner' | 'scaleway' | 'ovh' | null>(null);
+  const [selectedCloudBaseCost, setSelectedCloudBaseCost] = useState(0);
+  const [cloudJob, setCloudJob] = useState<CloudDeployJob | null>(null);
+  const { cloudConfig, setCloudProvider } = useDeploymentStore();
   const unsubscribeRef = useRef<(() => void) | null>(null);
+
+  const cloudResources = selectedResources;
+  const cloudMappingResults = {
+    resources: cloudResources,
+    warnings: bundleManifest ? [] : [],
+    provider: bundleManifest?.source?.provider ?? 'unknown',
+  };
+  const isCloudProvider = (provider: Provider): provider is 'hetzner' | 'scaleway' | 'ovh' =>
+    provider === 'hetzner' || provider === 'scaleway' || provider === 'ovh';
+  const cloudProjectName = cloudConfig.domain || 'homeport-cloud';
+
+  const pollCloudJob = async (id: string): Promise<CloudDeployJob> => {
+    for (;;) {
+      const job = await getCloudDeploy(id);
+      setCloudJob(job);
+      if (job.status === 'planned' || job.status === 'applied' || job.status === 'failed') return job;
+      await new Promise((resolve) => setTimeout(resolve, 1000));
+    }
+  };
+
+  const handleCloudProviderSelect = (provider: Provider, baseCost: number) => {
+    if (!isCloudProvider(provider)) return;
+    setCloudProvider(provider);
+    setSelectedCloudProvider(provider);
+    setSelectedCloudBaseCost(baseCost);
+    setCloudJob(null);
+    setCloudStep('configure');
+  };
+
+  const handleCloudPlan = async () => {
+    if (!selectedCloudProvider || !cloudConfig.region) {
+      setError('Please select a cloud provider and region');
+      return;
+    }
+    try {
+      const job = await startCloudDeploy({
+        resources: cloudResources,
+        config: {
+          provider: selectedCloudProvider,
+          project_name: cloudProjectName,
+          domain: cloudConfig.domain,
+          region: cloudConfig.region.id,
+        },
+        apply: false,
+      });
+      setCloudJob(job);
+      await pollCloudJob(job.id);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Terraform plan failed');
+    }
+  };
+
+  const handleCloudApply = async () => {
+    if (!cloudJob?.id) return;
+    try {
+      setCloudJob(await applyCloudDeploy(cloudJob.id));
+      await pollCloudJob(cloudJob.id);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Terraform apply failed');
+    }
+  };
+
+  const handleDockerZipDownload = async () => {
+    if (selectedResources.length === 0) {
+      setError('Select resources before exporting Docker ZIP.');
+      return;
+    }
+    try {
+      const blob = await downloadStack(selectedResources, {
+        domain: bundleManifest?.source?.provider || 'homeport.local',
+        consolidate: true,
+        include_migration: true,
+        include_monitoring: true,
+        ha: false,
+      });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = 'homeport-docker-stack.zip';
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      URL.revokeObjectURL(url);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Docker ZIP download failed');
+    }
+  };
 
   // Cleanup SSE subscription on unmount
   useEffect(() => {
@@ -130,6 +235,11 @@ export function DeployStep() {
 
     if (deployTarget === 'ssh' && (!sshConfig.host || !sshConfig.username)) {
       setError('Please configure SSH connection settings');
+      return;
+    }
+
+    if (deployTarget === 'cloud') {
+      setError('Use the cloud provider controls to plan or apply Terraform.');
       return;
     }
 
@@ -256,54 +366,55 @@ export function DeployStep() {
           <div>
             <h3 className="text-lg font-semibold mb-2">Select Deployment Target</h3>
             <p className="text-muted-foreground">
-              Choose where to deploy your Docker stack. You can deploy locally
-              or to a remote server via SSH.
+              Choose where to deploy your Docker stack.
             </p>
           </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            {/* Local deployment */}
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
             <button
               onClick={() => setDeployTarget('local')}
+              aria-label="Local Docker"
               className={cn(
                 'card-action p-6 text-left',
                 deployTarget === 'local' && 'card-action-active border-primary'
               )}
             >
-              <div className="flex items-start gap-4">
-                <div className="p-3 rounded-lg bg-primary/10">
-                  <Server className="w-6 h-6 text-primary" />
-                </div>
-                <div>
-                  <h4 className="font-semibold">Local Deployment</h4>
-                  <p className="text-sm text-muted-foreground mt-1">
-                    Deploy to this machine using Docker Compose
-                  </p>
-                </div>
-              </div>
+              <Server className="w-6 h-6 text-primary mb-3" />
+              <h4 className="font-semibold">Local Docker</h4>
+              <p className="text-sm text-muted-foreground mt-1">Deploy this bundle on the current machine.</p>
             </button>
 
-            {/* Remote deployment */}
             <button
               onClick={() => setDeployTarget('ssh')}
+              aria-label="Remote SSH"
               className={cn(
                 'card-action p-6 text-left',
                 deployTarget === 'ssh' && 'card-action-active border-primary'
               )}
             >
-              <div className="flex items-start gap-4">
-                <div className="p-3 rounded-lg bg-accent/10">
-                  <Globe className="w-6 h-6 text-accent" />
-                </div>
-                <div>
-                  <h4 className="font-semibold">Remote Server (SSH)</h4>
-                  <p className="text-sm text-muted-foreground mt-1">
-                    Deploy to a remote server via secure SSH connection
-                  </p>
-                </div>
-              </div>
+              <Globe className="w-6 h-6 text-accent mb-3" />
+              <h4 className="font-semibold">Remote SSH</h4>
+              <p className="text-sm text-muted-foreground mt-1">Deploy this bundle to a remote Docker host.</p>
+            </button>
+
+            <button
+              onClick={() => setDeployTarget('cloud')}
+              aria-label="Cloud Provider"
+              className={cn(
+                'card-action p-6 text-left',
+                deployTarget === 'cloud' && 'card-action-active border-primary'
+              )}
+            >
+              <Cloud className="w-6 h-6 text-accent mb-3" />
+              <h4 className="font-semibold">Cloud Provider</h4>
+              <p className="text-sm text-muted-foreground mt-1">Compare EU providers, export Terraform, plan, then apply.</p>
             </button>
           </div>
+
+          <button onClick={handleDockerZipDownload} className={cn(buttonVariants({ variant: 'outline' }), 'gap-2')}>
+            <Download className="w-4 h-4" />
+            Download Docker ZIP
+          </button>
 
           {/* SSH configuration */}
           {deployTarget === 'ssh' && (
@@ -385,8 +496,58 @@ export function DeployStep() {
             </div>
           )}
 
+          {deployTarget === 'cloud' && cloudStep === 'compare' && (
+            <ProviderComparison
+              mappingResults={cloudMappingResults}
+              onSelect={handleCloudProviderSelect}
+              onBack={() => setDeployTarget(null)}
+            />
+          )}
+          {deployTarget === 'cloud' && cloudStep === 'configure' && selectedCloudProvider && (
+            <>
+              <ProviderConfigForm
+                provider={selectedCloudProvider}
+                baseCost={selectedCloudBaseCost}
+                onBack={() => setCloudStep('compare')}
+                onDeploy={handleCloudPlan}
+                deployLabel={cloudJob?.status === 'running' ? 'Running Terraform...' : 'Plan Terraform Deploy'}
+              />
+              <div className="flex flex-wrap items-center gap-3 border-t pt-4">
+                <button
+                  onClick={() => setCloudStep('export')}
+                  disabled={!cloudConfig.region}
+                  className={buttonVariants({ variant: 'outline' })}
+                >
+                  Download Terraform ZIP
+                </button>
+                {cloudJob?.status === 'planned' && (
+                  <button onClick={handleCloudApply} className={buttonVariants({ variant: 'primary' })}>
+                    Apply Terraform
+                  </button>
+                )}
+                {cloudJob && (
+                  <span className="text-sm text-muted-foreground">
+                    Terraform job {cloudJob.status}{cloudJob.error ? `: ${cloudJob.error}` : ''}
+                  </span>
+                )}
+              </div>
+            </>
+          )}
+          {deployTarget === 'cloud' && cloudStep === 'export' && selectedCloudProvider && cloudConfig.region && (
+            <TerraformExport
+              provider={selectedCloudProvider}
+              resources={cloudResources}
+              config={{
+                project_name: cloudProjectName,
+                domain: cloudConfig.domain,
+                region: cloudConfig.region.id,
+              }}
+              onBack={() => setCloudStep('configure')}
+            />
+          )}
+
           {/* Deploy button */}
-          {deployTarget && (
+          {deployTarget && deployTarget !== 'cloud' && (
             <div className="flex justify-center pt-4">
               <button
                 onClick={handleDeploy}

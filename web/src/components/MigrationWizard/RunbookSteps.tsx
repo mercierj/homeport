@@ -46,6 +46,11 @@ interface RunbookStepsProps {
   onRequiredPassedChange?: (passed: boolean) => void;
 }
 
+const normalizeRunbook = (runbook: Runbook): Runbook => ({
+  ...runbook,
+  steps: Array.isArray(runbook.steps) ? runbook.steps : [],
+});
+
 export function RunbookSteps({ runbookId, onRequiredPassedChange }: RunbookStepsProps) {
   const [runbook, setRunbook] = useState<Runbook | null>(null);
   const [loadingStepId, setLoadingStepId] = useState<string | null>(null);
@@ -73,7 +78,7 @@ export function RunbookSteps({ runbookId, onRequiredPassedChange }: RunbookSteps
     getRunbook(runbookId)
       .then((data) => {
         if (!cancelled) {
-          setRunbook(data);
+          setRunbook(normalizeRunbook(data));
           setError(null);
         }
       })
@@ -93,7 +98,7 @@ export function RunbookSteps({ runbookId, onRequiredPassedChange }: RunbookSteps
 
   const refresh = async () => {
     if (!runbookId) return;
-    setRunbook(await getRunbook(runbookId));
+    setRunbook(normalizeRunbook(await getRunbook(runbookId)));
   };
 
   const runStep = async (step: RunbookStep) => {

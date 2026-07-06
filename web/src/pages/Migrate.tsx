@@ -32,6 +32,7 @@ export default function Migrate() {
     cutoverPlanId,
     setEntryPoint,
     setSessionId,
+    hydrateFromSession,
     setError,
     reset,
     bundleManifest,
@@ -42,9 +43,22 @@ export default function Migrate() {
     if (entryPoint === null || sessionId) return;
 
     void createWizardSession()
-      .then((session) => setSessionId(session.id))
+      .then((session) => {
+        const isAdvancedSession =
+          session.current_step !== 'analyze' ||
+          session.completed_steps.length > 0 ||
+          !!session.bundle_id ||
+          session.secrets_resolved;
+
+        if (isAdvancedSession) {
+          hydrateFromSession(session);
+          return;
+        }
+
+        setSessionId(session.id);
+      })
       .catch((error) => setError(error instanceof Error ? error.message : 'Failed to create wizard session'));
-  }, [entryPoint, sessionId, setError, setSessionId]);
+  }, [entryPoint, hydrateFromSession, sessionId, setError, setSessionId]);
 
   useEffect(() => {
     if (!sessionId) return;

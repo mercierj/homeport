@@ -55,3 +55,38 @@ test('bundle entry keeps the upload step after session creation', async ({ page 
 
   await expect(page.getByRole('heading', { name: 'Upload Migration Bundle' })).toBeVisible();
 });
+
+test('wizard deploy step exposes local ssh and cloud choices in one flow', async ({ page }) => {
+  await page.route('**/api/v1/**', async (route) => {
+    const url = route.request().url();
+    if (url.includes('/wizard/sessions')) {
+      await route.fulfill({
+        contentType: 'application/json',
+        body: JSON.stringify({
+          id: 'session-1',
+          current_step: 'deploy',
+          completed_steps: ['analyze', 'export', 'secrets'],
+          bundle_id: 'bundle-1',
+          secrets_resolved: true,
+        }),
+      });
+      return;
+    }
+    if (url.includes('/bundle/bundle-1/compose')) {
+      await route.fulfill({
+        contentType: 'application/json',
+        body: JSON.stringify({ content: 'services:\\n  app:\\n    image: nginx' }),
+      });
+      return;
+    }
+    await route.fulfill({ contentType: 'application/json', body: '{}' });
+  });
+
+  await page.goto('/migrate');
+  await page.getByRole('button', { name: /Analyze Source/i }).click();
+  await expect(page.getByText('Select Deployment Target')).toBeVisible();
+  await expect(page.getByRole('button', { name: /Local Docker/i })).toBeVisible();
+  await expect(page.getByRole('button', { name: /Remote SSH/i })).toBeVisible();
+  await expect(page.getByRole('button', { name: /Cloud Provider/i })).toBeVisible();
+  await expect(page.getByRole('button', { name: /Download Docker ZIP/i })).toBeVisible();
+});
