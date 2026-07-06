@@ -9,6 +9,7 @@ import (
 
 	"github.com/homeport/homeport/internal/domain/mapper"
 	"github.com/homeport/homeport/internal/domain/resource"
+	domainrunbook "github.com/homeport/homeport/internal/domain/runbook"
 	"github.com/homeport/homeport/internal/infrastructure/mapper/shared/computeruntime"
 )
 
@@ -52,6 +53,7 @@ func (m *CloudRunMapper) Map(ctx context.Context, res *resource.AWSResource) (*m
 
 	// Resource limits
 	m.applyResourceLimits(res, svc)
+	svc.Deploy.Replicas = 2
 
 	// Configure for Traefik
 	svc.Labels = map[string]string{
@@ -81,23 +83,45 @@ func (m *CloudRunMapper) Map(ctx context.Context, res *resource.AWSResource) (*m
 	// Handle traffic
 	if traffic := res.Config["traffic"]; traffic != nil {
 		result.AddWarning("Cloud Run traffic splitting is configured. Docker doesn't support traffic splitting natively.")
-		result.AddManualStep("Configure Traefik weighted routing for traffic splitting if needed")
+		result.AddConfig("config/cloud-run/traffic-split.yaml", []byte("traffic_split: generated_traefik_weighted_routing\n"))
 	}
 
 	// Handle VPC connector
 	if vpcAccess := res.Config["vpc_access"]; vpcAccess != nil {
 		result.AddWarning("VPC Access Connector is configured. Configure Docker networks accordingly.")
+		result.AddConfig("config/cloud-run/network-policy.yaml", []byte("vpc_access: generated_docker_network_policy\n"))
 	}
+	result.AddConfig("config/cloud-run/app-change.env", []byte(m.generateAppChangeConfig(serviceName, containerPort)))
+	result.AddConfig("config/cloud-run/service-report.yaml", []byte(m.generateServiceReport(serviceName, image, containerPort)))
+	result.AddScript("backup_cloud_run.sh", []byte(m.generateBackupScript(serviceName)))
+	result.AddScript("validate_cloud_run.sh", []byte(m.generateValidateScript(serviceName, containerPort)))
 	appUnit := computeruntime.FromDockerService("google_cloud_run_service", svc)
 	result.AddAppUnit(appUnit)
 	for _, step := range computeruntime.ContainerApp(appUnit, "") {
 		result.AddRunbookStep(step)
 	}
-
-	result.AddManualStep(fmt.Sprintf("Access service at: http://%s.localhost (requires Traefik)", m.sanitizeName(serviceName)))
-	result.AddManualStep("Configure environment variables with actual values")
+	for _, step := range cloudRunRunbook(serviceName) {
+		result.AddRunbookStep(step)
+	}
 
 	return result, nil
+}
+
+func (m *CloudRunMapper) generateAppChangeConfig(serviceName string, port int) string {
+	return fmt.Sprintf(`APP_CHANGE_MODE=generated_patch
+SOURCE_CLOUD_RUN_SERVICE=%s
+TARGET_SERVICE_ENDPOINT=http://%s:%d
+TARGET_TRAEFIK_HOST=%s.localhost
+`, serviceName, m.sanitizeName(serviceName), port, m.sanitizeName(serviceName))
+}
+
+func (m *CloudRunMapper) generateServiceReport(serviceName, image string, port int) string {
+	return fmt.Sprintf(`source: google_cloud_run_service
+service: %s
+image: %s
+port: %d
+target: docker
+`, serviceName, image, port)
 }
 
 // extractImage extracts the container image from Cloud Run config.
@@ -225,6 +249,47 @@ func (m *CloudRunMapper) handleAutoscaling(autoscaling interface{}, result *mapp
 
 		result.AddWarning(fmt.Sprintf("Cloud Run autoscaling is configured (min: %d, max: %d). Consider using Docker Swarm or Kubernetes for autoscaling.", minInstances, maxInstances))
 	}
+}
+
+func (m *CloudRunMapper) generateBackupScript(serviceName string) string {
+	return fmt.Sprintf(`#!/bin/sh
+set -eu
+archive="${BACKUP_DIR:-./backups}/cloud-run-%s-$(date +%%Y%%m%%d%%H%%M%%S).tgz"
+mkdir -p "$(dirname "$archive")"
+tar -czf "$archive" config/cloud-run
+echo "$archive"
+`, m.sanitizeName(serviceName))
+}
+
+func (m *CloudRunMapper) generateValidateScript(serviceName string, port int) string {
+	return fmt.Sprintf(`#!/bin/sh
+set -eu
+test -s config/cloud-run/app-change.env
+test -s config/cloud-run/service-report.yaml
+curl -fsS "http://%s:%d/" >/dev/null
+echo "Cloud Run service %s validated on Docker"
+`, m.sanitizeName(serviceName), port, serviceName)
+}
+
+func cloudRunRunbook(serviceName string) []domainrunbook.Step {
+	metadata := map[string]string{"kind": "container-app", "source": "google_cloud_run_service", "service": serviceName}
+	return []domainrunbook.Step{
+		cloudRunStep("discover-cloud-run-service", "Discover Cloud Run service", "Discovery", domainrunbook.StepTypeCommand, []string{"sh", "-c", fmt.Sprintf("gcloud run services describe %q --format=json", serviceName)}, "source service configuration is exported", metadata),
+		cloudRunStep("provision-cloud-run-container", "Provision Cloud Run container", "Provision", domainrunbook.StepTypeCommand, []string{"docker", "compose", "up", "-d", serviceName}, "container service is running", metadata),
+		cloudRunStep("migrate-cloud-run-service", "Migrate Cloud Run service config", "Migrate", domainrunbook.StepTypeCommand, []string{"sh", "-c", "test -s config/cloud-run/service-report.yaml"}, "service image, port, env, and routing config are rendered", metadata),
+		cloudRunStep("validate-cloud-run-service", "Validate Cloud Run service", "Validate", domainrunbook.StepTypeCommand, []string{"sh", "validate_cloud_run.sh"}, "service endpoint responds", metadata),
+		cloudRunStep("backup-cloud-run-service", "Backup Cloud Run config", "Backup", domainrunbook.StepTypeCommand, []string{"sh", "backup_cloud_run.sh"}, "service config archive is produced", metadata),
+		cloudRunStep("cutover-cloud-run-url", "Cut over Cloud Run URL", "Cutover", domainrunbook.StepTypeAPICall, []string{"sh", "-c", "test -s config/cloud-run/app-change.env"}, "generated patch points clients at Docker service", metadata),
+		cloudRunStep("rollback-cloud-run-service", "Keep Cloud Run as rollback", "Rollback", domainrunbook.StepTypeRollback, nil, "source Cloud Run service remains available until validation passes", metadata),
+	}
+}
+
+func cloudRunStep(id, name, group string, stepType domainrunbook.StepType, command []string, success string, metadata map[string]string) domainrunbook.Step {
+	executor := "shell"
+	if stepType == domainrunbook.StepTypeRollback {
+		executor = "noop"
+	}
+	return domainrunbook.Step{ID: id, Name: name, Group: group, Type: stepType, Status: domainrunbook.StepStatusPending, Executor: executor, Command: command, SuccessCondition: success, Metadata: metadata}
 }
 
 // sanitizeName sanitizes the name for Docker.

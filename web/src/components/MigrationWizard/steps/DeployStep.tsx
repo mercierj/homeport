@@ -79,6 +79,9 @@ export function DeployStep() {
   const unsubscribeRef = useRef<(() => void) | null>(null);
 
   const cloudResources = selectedResources;
+  const hasResourceDetails = selectedResources.length > 0;
+  const resourceExportUnavailableMessage =
+    'Docker ZIP and cloud Terraform exports require analyzed resources. Uploaded bundles can still deploy locally or over SSH.';
   const cloudMappingResults = {
     resources: cloudResources,
     warnings: bundleManifest ? [] : [],
@@ -107,6 +110,10 @@ export function DeployStep() {
   };
 
   const handleCloudPlan = async () => {
+    if (!hasResourceDetails) {
+      setError(resourceExportUnavailableMessage);
+      return;
+    }
     if (!selectedCloudProvider || !cloudConfig.region) {
       setError('Please select a cloud provider and region');
       return;
@@ -140,8 +147,8 @@ export function DeployStep() {
   };
 
   const handleDockerZipDownload = async () => {
-    if (selectedResources.length === 0) {
-      setError('Select resources before exporting Docker ZIP.');
+    if (!hasResourceDetails) {
+      setError(resourceExportUnavailableMessage);
       return;
     }
     try {
@@ -400,18 +407,30 @@ export function DeployStep() {
             <button
               onClick={() => setDeployTarget('cloud')}
               aria-label="Cloud Provider"
+              disabled={!hasResourceDetails}
+              title={!hasResourceDetails ? resourceExportUnavailableMessage : undefined}
               className={cn(
                 'card-action p-6 text-left',
+                !hasResourceDetails && 'opacity-60 cursor-not-allowed',
                 deployTarget === 'cloud' && 'card-action-active border-primary'
               )}
             >
               <Cloud className="w-6 h-6 text-accent mb-3" />
               <h4 className="font-semibold">Cloud Provider</h4>
-              <p className="text-sm text-muted-foreground mt-1">Compare EU providers, export Terraform, plan, then apply.</p>
+              <p className="text-sm text-muted-foreground mt-1">
+                {hasResourceDetails
+                  ? 'Compare EU providers, export Terraform, plan, then apply.'
+                  : 'Requires analyzed resources before Terraform export.'}
+              </p>
             </button>
           </div>
 
-          <button onClick={handleDockerZipDownload} className={cn(buttonVariants({ variant: 'outline' }), 'gap-2')}>
+          <button
+            onClick={handleDockerZipDownload}
+            disabled={!hasResourceDetails}
+            title={!hasResourceDetails ? resourceExportUnavailableMessage : undefined}
+            className={cn(buttonVariants({ variant: 'outline' }), 'gap-2')}
+          >
             <Download className="w-4 h-4" />
             Download Docker ZIP
           </button>

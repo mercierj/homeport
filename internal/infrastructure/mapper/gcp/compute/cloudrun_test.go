@@ -2,11 +2,55 @@ package compute
 
 import (
 	"context"
+	"strings"
 	"testing"
 
 	"github.com/homeport/homeport/internal/domain/mapper"
 	"github.com/homeport/homeport/internal/domain/resource"
+	domainrunbook "github.com/homeport/homeport/internal/domain/runbook"
 )
+
+func TestCloudRunConformanceManagedAToZ(t *testing.T) {
+	result, err := NewCloudRunMapper().Map(context.Background(), managedCloudRunFixture())
+	if err != nil {
+		t.Fatal(err)
+	}
+	if len(result.ManualSteps) != 0 {
+		t.Fatalf("manual steps = %#v, want generated Cloud Run migration", result.ManualSteps)
+	}
+	if result.DockerService.Image != "gcr.io/demo/api:latest" || result.DockerService.Deploy == nil || result.DockerService.Deploy.Replicas < 2 {
+		t.Fatalf("service does not provision HA Cloud Run container: %#v", result.DockerService)
+	}
+	for _, file := range []string{"config/cloud-run/app-change.env", "config/cloud-run/service-report.yaml"} {
+		if _, ok := result.Configs[file]; !ok {
+			t.Fatalf("missing config %s", file)
+		}
+	}
+	appEnv := string(result.Configs["config/cloud-run/app-change.env"])
+	for _, want := range []string{"APP_CHANGE_MODE=generated_patch", "SOURCE_CLOUD_RUN_SERVICE=orders-api", "TARGET_SERVICE_ENDPOINT=http://orders-api:8080"} {
+		if !strings.Contains(appEnv, want) {
+			t.Fatalf("app-change env missing %q:\n%s", want, appEnv)
+		}
+	}
+	for _, file := range []string{"backup_cloud_run.sh", "validate_cloud_run.sh"} {
+		if _, ok := result.Scripts[file]; !ok {
+			t.Fatalf("missing script %s", file)
+		}
+	}
+	for id, stepType := range map[string]domainrunbook.StepType{
+		"discover-cloud-run-service":    domainrunbook.StepTypeCommand,
+		"provision-cloud-run-container": domainrunbook.StepTypeCommand,
+		"migrate-cloud-run-service":     domainrunbook.StepTypeCommand,
+		"validate-cloud-run-service":    domainrunbook.StepTypeCommand,
+		"backup-cloud-run-service":      domainrunbook.StepTypeCommand,
+		"cutover-cloud-run-url":         domainrunbook.StepTypeAPICall,
+		"rollback-cloud-run-service":    domainrunbook.StepTypeRollback,
+	} {
+		if !hasCloudRunRunbookStep(result, id, stepType) {
+			t.Fatalf("missing %s runbook step: %#v", id, result.RunbookSteps)
+		}
+	}
+}
 
 func TestNewCloudRunMapper(t *testing.T) {
 	m := NewCloudRunMapper()
@@ -16,6 +60,36 @@ func TestNewCloudRunMapper(t *testing.T) {
 	if m.ResourceType() != resource.TypeCloudRun {
 		t.Errorf("ResourceType() = %v, want %v", m.ResourceType(), resource.TypeCloudRun)
 	}
+}
+
+func managedCloudRunFixture() *resource.AWSResource {
+	return &resource.AWSResource{
+		ID:   "projects/demo/locations/europe-west1/services/orders-api",
+		Type: resource.TypeCloudRun,
+		Name: "orders-api",
+		Config: map[string]interface{}{
+			"name": "orders-api",
+			"template": map[string]interface{}{
+				"spec": map[string]interface{}{
+					"containers": []interface{}{
+						map[string]interface{}{
+							"image": "gcr.io/demo/api:latest",
+							"ports": []interface{}{map[string]interface{}{"container_port": float64(8080)}},
+						},
+					},
+				},
+			},
+		},
+	}
+}
+
+func hasCloudRunRunbookStep(result *mapper.MappingResult, id string, stepType domainrunbook.StepType) bool {
+	for _, step := range result.RunbookSteps {
+		if step.ID == id && step.Type == stepType {
+			return true
+		}
+	}
+	return false
 }
 
 func TestCloudRunMapper_ResourceType(t *testing.T) {

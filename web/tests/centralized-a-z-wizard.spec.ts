@@ -6,6 +6,8 @@ function mockCoreApis(
     currentStep?: 'analyze' | 'export' | 'secrets' | 'deploy' | 'sync' | 'cutover' | 'done';
     completedSteps?: string[];
     cutoverPreview?: unknown;
+    selectedResources?: string[];
+    sessionPatches?: Array<Record<string, unknown>>;
   } = {}
 ) {
   const currentStep = options.currentStep ?? 'analyze';
@@ -15,12 +17,16 @@ function mockCoreApis(
     const url = route.request().url();
     const method = route.request().method();
     if (url.includes('/wizard/sessions')) {
+      if (method === 'PATCH') {
+        options.sessionPatches?.push(JSON.parse(route.request().postData() || '{}'));
+      }
       await route.fulfill({
         contentType: 'application/json',
         body: JSON.stringify({
           id: 'session-1',
           current_step: currentStep,
           completed_steps: completedSteps,
+          selected_resources: options.selectedResources,
           bundle_id: 'bundle-1',
           secrets_resolved: false,
         }),
@@ -169,6 +175,37 @@ test('wizard deploy step contains local ssh and cloud targets', async ({ page })
   await expect(page.getByRole('button', { name: /Local Docker/i })).toBeVisible();
   await expect(page.getByRole('button', { name: /Remote SSH/i })).toBeVisible();
   await expect(page.getByRole('button', { name: /Cloud Provider/i })).toBeVisible();
+});
+
+test('resumed deploy session preserves selected resource ids', async ({ page }) => {
+  const sessionPatches: Array<Record<string, unknown>> = [];
+
+  await mockCoreApis(page, {
+    currentStep: 'deploy',
+    completedSteps: ['analyze', 'export', 'secrets'],
+    selectedResources: ['res-1'],
+    sessionPatches,
+  });
+  await page.goto('/migrate');
+  await page.getByRole('button', { name: /Analyze Source/i }).click();
+
+  await expect.poll(() => sessionPatches.length).toBeGreaterThan(0);
+  expect(sessionPatches.some((patch) => JSON.stringify(patch.selected_resources) === JSON.stringify(['res-1']))).toBe(true);
+  expect(sessionPatches.some((patch) => JSON.stringify(patch.selected_resources) === JSON.stringify([]))).toBe(false);
+});
+
+test('bundle-only deploy disables resource export actions', async ({ page }) => {
+  await mockCoreApis(page, {
+    currentStep: 'deploy',
+    completedSteps: ['analyze', 'export', 'secrets'],
+  });
+  await page.goto('/migrate');
+  await page.getByRole('button', { name: /Analyze Source/i }).click();
+
+  await expect(page.getByRole('button', { name: /Local Docker/i })).toBeEnabled();
+  await expect(page.getByRole('button', { name: /Remote SSH/i })).toBeEnabled();
+  await expect(page.getByRole('button', { name: /Cloud Provider/i })).toBeDisabled();
+  await expect(page.getByRole('button', { name: /Download Docker ZIP/i })).toBeDisabled();
 });
 
 test('wizard shows exact application changes before export', async ({ page }) => {

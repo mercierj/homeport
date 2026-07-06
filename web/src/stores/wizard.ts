@@ -197,6 +197,7 @@ export interface WizardState {
   sourceProvider: 'aws' | 'gcp' | 'azure' | null;
   analysisResult: AnalyzeResponse | null;
   selectedResources: Resource[];
+  selectedResourceIds: string[];
   isAnalyzing: boolean;
 
   // Cloud credentials (for API discovery)
@@ -377,6 +378,7 @@ const initialState = {
   sourceProvider: null,
   analysisResult: null,
   selectedResources: [] as Resource[],
+  selectedResourceIds: [] as string[],
   isAnalyzing: false,
 
   awsCredentials: { ...defaultAWSCredentials },
@@ -436,6 +438,7 @@ export const useWizardStore = create<WizardState>((set, get) => ({
       completedSteps: session.completed_steps
         .map((step) => step as WizardStep),
       sourceProvider: (session.source_provider as WizardState['sourceProvider']) || null,
+      selectedResourceIds: session.selected_resources || [],
       bundleId: session.bundle_id || null,
       secretsResolved: session.secrets_resolved,
       deploymentId: session.deployment_id || null,
@@ -490,12 +493,17 @@ export const useWizardStore = create<WizardState>((set, get) => ({
   setSourcePath: (sourcePath) => set({ sourcePath }),
   setSourceProvider: (sourceProvider) => set({ sourceProvider }),
   setAnalysisResult: (analysisResult) => {
+    const selectedResources = analysisResult?.resources || [];
     set({
       analysisResult,
-      selectedResources: analysisResult?.resources || [],
+      selectedResources,
+      selectedResourceIds: selectedResources.map((resource) => resource.id),
     });
   },
-  setSelectedResources: (selectedResources) => set({ selectedResources }),
+  setSelectedResources: (selectedResources) => set({
+    selectedResources,
+    selectedResourceIds: selectedResources.map((resource) => resource.id),
+  }),
   setIsAnalyzing: (isAnalyzing) => set({ isAnalyzing }),
 
   // Cloud credentials actions

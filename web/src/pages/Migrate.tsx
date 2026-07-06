@@ -26,6 +26,7 @@ export default function Migrate() {
     entryPoint,
     sourceProvider,
     selectedResources,
+    selectedResourceIds,
     bundleId,
     secretsResolved,
     deploymentId,
@@ -68,11 +69,14 @@ export default function Migrate() {
     const completed_steps = completedSteps
       .filter((step) => step !== 'upload')
       .map((step) => step as WizardSessionStep);
+    const selected_resource_ids = selectedResources.length > 0
+      ? selectedResources.map((resource) => resource.id)
+      : selectedResourceIds;
     const patch = {
       current_step,
       completed_steps,
       source_provider: sourceProvider || undefined,
-      selected_resources: selectedResources.map((resource) => resource.id),
+      selected_resources: selected_resource_ids,
       bundle_id: bundleId || undefined,
       secrets_resolved: secretsResolved,
       deployment_id: deploymentId || undefined,
@@ -93,6 +97,7 @@ export default function Migrate() {
     cutoverPlanId,
     deploymentId,
     secretsResolved,
+    selectedResourceIds,
     selectedResources,
     sessionId,
     setError,

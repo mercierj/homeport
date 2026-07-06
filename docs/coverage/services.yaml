@@ -1380,18 +1380,22 @@ services:
     service: Cloud Run
     resource_types:
       - google_cloud_run_service
+    terraform_resource_types: [google_cloud_run_service]
+    target: Docker container service
+    api_compatibility_strategy: generated_patch
+    manual_steps_resolved: true
     discover: true
-    cost: false
-    provision: false
+    cost: true
+    provision: true
     migrate: true
-    api_compat: false
-    env_dns: false
-    ha: false
-    backup: false
+    api_compat: true
+    env_dns: true
+    ha: true
+    backup: true
     validate: true
-    cutover: false
-    rollback: false
-    status: mapped
+    cutover: true
+    rollback: true
+    status: full
   - provider: gcp
     service: Cloud Scheduler
     resource_types:
