@@ -65,6 +65,7 @@ const (
 	TypeMSKCluster  Type = "aws_msk_cluster"
 	TypeSESIdentity Type = "aws_ses_domain_identity"
 	TypeMQBroker    Type = "aws_mq_broker"
+	TypeIoTThing    Type = "aws_iot_thing"
 
 	// AWS Security (additional)
 	TypeKMSKey Type = "aws_kms_key"

@@ -141,6 +141,7 @@ var CategoryMapping = map[Type]Category{
 	TypeMSKCluster:  CategoryStream,
 	TypeSESIdentity: CategoryPubSub, // Email service (SES)
 	TypeMQBroker:    CategoryQueue,
+	TypeIoTThing:    CategoryPubSub,
 
 	// AWS Security (additional)
 	TypeKMSKey: CategorySecrets, // Key Management Service

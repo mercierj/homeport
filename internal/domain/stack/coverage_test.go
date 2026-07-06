@@ -6,7 +6,7 @@ import (
 	"github.com/homeport/homeport/internal/domain/resource"
 )
 
-// TestResourceMappingCoverage verifies that all 103 resource types are mapped.
+// TestResourceMappingCoverage verifies that all 104 resource types are mapped.
 func TestResourceMappingCoverage(t *testing.T) {
 	err := ValidateMappingCoverage()
 	if err != nil {
@@ -17,10 +17,10 @@ func TestResourceMappingCoverage(t *testing.T) {
 // TestResourceMappingCount verifies exact count of mapped resources.
 func TestResourceMappingCount(t *testing.T) {
 	// Expected counts from types.go
-	expectedAWS := 49
+	expectedAWS := 50
 	expectedGCP := 25
 	expectedAzure := 29
-	expectedTotal := expectedAWS + expectedGCP + expectedAzure // 103
+	expectedTotal := expectedAWS + expectedGCP + expectedAzure // 104
 
 	actualTotal := len(ResourceMapping)
 	if actualTotal != expectedTotal {
@@ -47,7 +47,7 @@ func TestResourceMappingProviderCounts(t *testing.T) {
 		counts[provider]++
 	}
 
-	expectedAWS := 49
+	expectedAWS := 50
 	expectedGCP := 25
 	expectedAzure := 29
 
@@ -86,6 +86,7 @@ func TestGetStackTypeForResource(t *testing.T) {
 		{resource.TypeSESIdentity, StackTypeMessaging, true},
 		{resource.TypeStepFunctionsStateMachine, StackTypeMessaging, true},
 		{resource.TypeMQBroker, StackTypeMessaging, true},
+		{resource.TypeIoTThing, StackTypeMessaging, true},
 
 		// AWS Storage
 		{resource.TypeS3Bucket, StackTypeStorage, true},
@@ -250,12 +251,12 @@ func TestGetStackTypeForResourceString(t *testing.T) {
 func TestGetResourceMappingStats(t *testing.T) {
 	stats := GetResourceMappingStats()
 
-	if stats.TotalTypes != 103 {
-		t.Errorf("TotalTypes = %d, expected 103", stats.TotalTypes)
+	if stats.TotalTypes != 104 {
+		t.Errorf("TotalTypes = %d, expected 104", stats.TotalTypes)
 	}
 
-	if stats.CoveredTypes != 103 {
-		t.Errorf("CoveredTypes = %d, expected 103", stats.CoveredTypes)
+	if stats.CoveredTypes != 104 {
+		t.Errorf("CoveredTypes = %d, expected 104", stats.CoveredTypes)
 	}
 
 	if len(stats.UncoveredTypes) != 0 {
@@ -268,8 +269,8 @@ func TestGetResourceMappingStats(t *testing.T) {
 	}
 
 	// Verify provider counts
-	if stats.ByProvider[resource.ProviderAWS] != 49 {
-		t.Errorf("AWS count = %d, expected 49", stats.ByProvider[resource.ProviderAWS])
+	if stats.ByProvider[resource.ProviderAWS] != 50 {
+		t.Errorf("AWS count = %d, expected 50", stats.ByProvider[resource.ProviderAWS])
 	}
 	if stats.ByProvider[resource.ProviderGCP] != 25 {
 		t.Errorf("GCP count = %d, expected 25", stats.ByProvider[resource.ProviderGCP])
@@ -300,7 +301,7 @@ func TestStackTypeDistribution(t *testing.T) {
 	expectedMinimums := map[StackType]int{
 		StackTypeDatabase:      10, // RDS, DynamoDB, CloudSQL, Firestore, Bigtable, Spanner, AzureSQL, etc.
 		StackTypeCache:         3,  // ElastiCache, Memorystore, AzureCache
-		StackTypeMessaging:     15, // SQS, SNS, MQ, EventBridge, Kinesis, SES, Step Functions, PubSub, ServiceBus, etc.
+		StackTypeMessaging:     16, // SQS, SNS, MQ, IoT, EventBridge, Kinesis, SES, Step Functions, PubSub, ServiceBus, etc.
 		StackTypeStorage:       7,  // S3, EFS, GCS, Filestore, BlobStorage, AzureStorageAcct, AzureFiles
 		StackTypeObservability: 4,  // CloudWatch alarms, logs, dashboards, X-Ray
 		StackTypeAuth:          3,  // Cognito, IdentityPlatform, AzureADB2C
@@ -450,8 +451,8 @@ func TestGetResourceTypesForStackByProvider(t *testing.T) {
 // TestAllResourceTypes verifies AllResourceTypes returns all mapped types.
 func TestAllResourceTypes(t *testing.T) {
 	types := AllResourceTypes()
-	if len(types) != 103 {
-		t.Errorf("AllResourceTypes returned %d types, expected 103", len(types))
+	if len(types) != 104 {
+		t.Errorf("AllResourceTypes returned %d types, expected 104", len(types))
 	}
 
 	// Verify each type is actually in the mapping

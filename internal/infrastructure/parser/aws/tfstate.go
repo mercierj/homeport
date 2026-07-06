@@ -358,6 +358,8 @@ func mapAWSTerraformType(tfType string) resource.Type {
 		"aws_msk_cluster":            resource.TypeMSKCluster,
 		"aws_msk_serverless_cluster": resource.TypeMSKCluster,
 		"aws_mq_broker":              resource.TypeMQBroker,
+		"aws_iot_thing":              resource.TypeIoTThing,
+		"aws_iot_topic_rule":         resource.TypeIoTThing,
 
 		// Monitoring
 		"aws_cloudwatch_metric_alarm": resource.TypeCloudWatchMetricAlarm,

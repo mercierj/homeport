@@ -236,6 +236,8 @@ func mapTerraformTypeToResourceType(tfType string) resource.Type {
 		return resource.TypeXRaySamplingRule
 	case "aws_mq_broker":
 		return resource.TypeMQBroker
+	case "aws_iot_thing", "aws_iot_topic_rule":
+		return resource.TypeIoTThing
 	case "aws_codebuild_project":
 		return resource.TypeCodeBuild
 	case "aws_codepipeline":

@@ -73,6 +73,7 @@ var ResourceMapping = map[resource.Type]StackType{
 	resource.TypeMSKCluster:  StackTypeMessaging, // Kafka stream consolidates
 	resource.TypeSESIdentity: StackTypeMessaging, // Email service consolidates
 	resource.TypeMQBroker:    StackTypeMessaging, // Managed brokers consolidate with open brokers
+	resource.TypeIoTThing:    StackTypeMessaging, // IoT topics and rules consolidate with MQTT brokers
 
 	// AWS Security additional (1 type)
 	resource.TypeKMSKey: StackTypeSecrets, // Key management consolidates with secrets

@@ -45,7 +45,7 @@
 | aws | Lake Formation | full | aws_lakeformation_permissions |
 | aws | QuickSight | full | aws_quicksight_dashboard |
 | aws | MQ | full | aws_mq_broker |
-| aws | IoT Core | missing | aws_iot_thing, aws_iot_topic_rule |
+| aws | IoT Core | full | aws_iot_thing |
 | aws | App Mesh | missing | aws_appmesh_mesh, aws_appmesh_virtual_node |
 | aws | CodeDeploy | missing | aws_codedeploy_app, aws_codedeploy_deployment_group |
 | aws | CloudFormation full import | missing | aws_cloudformation_stack |

@@ -869,13 +869,23 @@ services:
     service: IoT Core
     category: app/integration
     source_api: iot
-    resource_types: []
+    resource_types: [aws_iot_thing]
     terraform_resource_types: [aws_iot_thing, aws_iot_topic_rule]
     target: EMQX
-    api_compatibility_strategy: export things, certificates, and topic rules into MQTT-native routing
-    impossibility_notes: IoT Core registry and rules APIs require guided replacement
-    status: missing
-    blocker: not modeled yet
+    api_compatibility_strategy: generated_patch
+    manual_steps_resolved: true
+    discover: true
+    cost: true
+    provision: true
+    migrate: true
+    api_compat: true
+    env_dns: true
+    ha: true
+    backup: true
+    validate: true
+    cutover: true
+    rollback: true
+    status: full
   - provider: aws
     service: App Mesh
     category: app/integration
