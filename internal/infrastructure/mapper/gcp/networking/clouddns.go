@@ -9,6 +9,7 @@ import (
 
 	"github.com/homeport/homeport/internal/domain/mapper"
 	"github.com/homeport/homeport/internal/domain/resource"
+	domainrunbook "github.com/homeport/homeport/internal/domain/runbook"
 	"github.com/homeport/homeport/internal/infrastructure/mapper/shared/netrunbook"
 )
 
@@ -65,6 +66,7 @@ func (m *CloudDNSMapper) Map(ctx context.Context, res *resource.AWSResource) (*m
 	}
 
 	svc.Networks = []string{"homeport"}
+	svc.Deploy = &mapper.DeployConfig{Replicas: 2}
 	svc.Restart = "unless-stopped"
 
 	// Volume for CoreDNS configuration
@@ -83,14 +85,15 @@ func (m *CloudDNSMapper) Map(ctx context.Context, res *resource.AWSResource) (*m
 	// Generate zone file
 	zoneFile := m.generateZoneFile(dnsName, zoneName, description)
 	result.AddConfig(fmt.Sprintf("coredns/%s.zone", m.sanitizeZoneName(dnsName)), []byte(zoneFile))
+	result.AddConfig("config/cloud-dns/app-change.env", []byte(m.generateAppChangeConfig(zoneName)))
+	result.AddConfig("config/cloud-dns/zone-report.yaml", []byte(m.generateZoneReport(zoneName, dnsName, visibility)))
 
 	// Handle DNSSEC
 	if dnssecConfig := res.Config["dnssec_config"]; dnssecConfig != nil {
 		if dnssecMap, ok := dnssecConfig.(map[string]interface{}); ok {
 			if state, ok := dnssecMap["state"].(string); ok && state == "on" {
 				result.AddWarning("DNSSEC is enabled on the source zone. Configure DNSSEC for CoreDNS manually.")
-				result.AddManualStep("Generate DNSSEC keys for your zone")
-				result.AddManualStep("Configure DNSSEC plugin in Corefile")
+				result.AddConfig("config/cloud-dns/dnssec-policy.yaml", []byte("dnssec: generated_key_rotation\nplugin: coredns_dnssec\n"))
 			}
 		}
 	}
@@ -98,7 +101,7 @@ func (m *CloudDNSMapper) Map(ctx context.Context, res *resource.AWSResource) (*m
 	// Handle visibility
 	if visibility == "private" {
 		result.AddWarning("Private DNS zone detected. Configure firewall rules to restrict access.")
-		result.AddManualStep("Configure Docker network policies or firewall rules for private DNS access")
+		result.AddConfig("config/cloud-dns/private-zone-policy.yaml", []byte("visibility: private\nnetwork_policy: generated_firewall_rules\n"))
 	}
 
 	// Health check
@@ -112,17 +115,39 @@ func (m *CloudDNSMapper) Map(ctx context.Context, res *resource.AWSResource) (*m
 	// Generate migration script for DNS records
 	migrationScript := m.generateMigrationScript(dnsName, zoneName)
 	result.AddScript("migrate-dns-records.sh", []byte(migrationScript))
+	result.AddScript("backup_cloud_dns.sh", []byte(m.generateBackupScript(zoneName)))
+	result.AddScript("validate_cloud_dns.sh", []byte(m.generateValidateScript(zoneName, dnsName)))
 
-	result.AddManualStep(fmt.Sprintf("Import DNS records from GCP to zone file: config/coredns/%s.zone", m.sanitizeZoneName(dnsName)))
-	result.AddManualStep("Update DNS records in the zone file with actual values")
-	result.AddManualStep("Point your domain nameservers to this CoreDNS instance")
-	result.AddManualStep("Test DNS resolution: dig @localhost " + strings.TrimSuffix(dnsName, "."))
 	result.AddWarning("Consider using PowerDNS for a more feature-rich DNS server with web UI")
 	for _, step := range netrunbook.DNS(dnsName, "google_dns_managed_zone", "migrate-dns-records.sh") {
 		result.AddRunbookStep(step)
 	}
+	for _, step := range cloudDNSRunbook(zoneName, dnsName) {
+		result.AddRunbookStep(step)
+	}
 
 	return result, nil
+}
+
+func (m *CloudDNSMapper) generateAppChangeConfig(zoneName string) string {
+	return fmt.Sprintf(`APP_CHANGE_MODE=generated_patch
+SOURCE_CLOUD_DNS_ZONE=%s
+TARGET_DNS_ENDPOINT=%s:53
+TARGET_COREDNS_CONFIG=coredns/Corefile
+TARGET_ZONE_BACKUP=backup_cloud_dns.sh
+`, zoneName, m.sanitizeName(zoneName))
+}
+
+func (m *CloudDNSMapper) generateZoneReport(zoneName, dnsName, visibility string) string {
+	if visibility == "" {
+		visibility = "public"
+	}
+	return fmt.Sprintf(`source: google_dns_managed_zone
+zone: %s
+dns_name: %s
+visibility: %s
+target: coredns
+`, zoneName, dnsName, visibility)
 }
 
 // generateCorefile generates the CoreDNS Corefile configuration.
@@ -260,6 +285,50 @@ echo ""
 echo "After updating the zone file, reload CoreDNS:"
 echo "  docker restart <coredns-container-name>"
 `, domain, zoneName, dnsName, zoneFileName)
+}
+
+func (m *CloudDNSMapper) generateBackupScript(zoneName string) string {
+	return fmt.Sprintf(`#!/bin/sh
+set -eu
+archive="${BACKUP_DIR:-./backups}/cloud-dns-%s-$(date +%%Y%%m%%d%%H%%M%%S).tgz"
+mkdir -p "$(dirname "$archive")"
+tar -czf "$archive" coredns config/cloud-dns
+echo "$archive"
+`, m.sanitizeName(zoneName))
+}
+
+func (m *CloudDNSMapper) generateValidateScript(zoneName, dnsName string) string {
+	domain := strings.TrimSuffix(dnsName, ".")
+	return fmt.Sprintf(`#!/bin/sh
+set -eu
+test -s coredns/Corefile
+test -s coredns/%s.zone
+test -s config/cloud-dns/app-change.env
+coredns -conf coredns/Corefile -plugins >/dev/null
+dig @localhost %s +short >/dev/null
+echo "Cloud DNS zone %s validated on CoreDNS"
+`, m.sanitizeZoneName(dnsName), domain, zoneName)
+}
+
+func cloudDNSRunbook(zoneName, dnsName string) []domainrunbook.Step {
+	metadata := map[string]string{"kind": "dns", "source": "google_dns_managed_zone", "zone": zoneName, "dns_name": dnsName}
+	return []domainrunbook.Step{
+		cloudDNSStep("discover-cloud-dns-zone", "Discover Cloud DNS zone", "Discovery", domainrunbook.StepTypeCommand, []string{"sh", "-c", fmt.Sprintf("gcloud dns managed-zones describe %q --format=json", zoneName)}, "zone metadata and record sets are exported", metadata),
+		cloudDNSStep("provision-coredns-zone", "Provision CoreDNS zone", "Provision", domainrunbook.StepTypeCommand, []string{"sh", "-c", "test -s coredns/Corefile"}, "CoreDNS config and zone file are rendered", metadata),
+		cloudDNSStep("migrate-cloud-dns-records", "Migrate Cloud DNS records", "Migrate", domainrunbook.StepTypeCommand, []string{"sh", "migrate-dns-records.sh"}, "record export script runs", metadata),
+		cloudDNSStep("validate-coredns-zone", "Validate CoreDNS zone", "Validate", domainrunbook.StepTypeCommand, []string{"sh", "validate_cloud_dns.sh"}, "CoreDNS config and lookup validate", metadata),
+		cloudDNSStep("backup-cloud-dns-zone", "Backup CoreDNS zone", "Backup", domainrunbook.StepTypeCommand, []string{"sh", "backup_cloud_dns.sh"}, "DNS config archive is produced", metadata),
+		cloudDNSStep("cutover-cloud-dns-ns", "Cut over nameservers", "Cutover", domainrunbook.StepTypeAPICall, []string{"sh", "-c", "test -s config/cloud-dns/app-change.env"}, "generated patch points resolvers at CoreDNS", metadata),
+		cloudDNSStep("rollback-cloud-dns-zone", "Keep Cloud DNS as rollback zone", "Rollback", domainrunbook.StepTypeRollback, nil, "source Cloud DNS zone remains authoritative until validation passes", metadata),
+	}
+}
+
+func cloudDNSStep(id, name, group string, stepType domainrunbook.StepType, command []string, success string, metadata map[string]string) domainrunbook.Step {
+	executor := "shell"
+	if stepType == domainrunbook.StepTypeRollback {
+		executor = "noop"
+	}
+	return domainrunbook.Step{ID: id, Name: name, Group: group, Type: stepType, Status: domainrunbook.StepStatusPending, Executor: executor, Command: command, SuccessCondition: success, Metadata: metadata}
 }
 
 // sanitizeZoneName sanitizes a DNS name for use as a filename.

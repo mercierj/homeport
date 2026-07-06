@@ -2,11 +2,61 @@ package networking
 
 import (
 	"context"
+	"strings"
 	"testing"
 
 	"github.com/homeport/homeport/internal/domain/mapper"
 	"github.com/homeport/homeport/internal/domain/resource"
+	domainrunbook "github.com/homeport/homeport/internal/domain/runbook"
 )
+
+func TestCloudDNSConformanceManagedAToZ(t *testing.T) {
+	result, err := NewCloudDNSMapper().Map(context.Background(), managedCloudDNSFixture())
+	if err != nil {
+		t.Fatal(err)
+	}
+	if len(result.ManualSteps) != 0 {
+		t.Fatalf("manual steps = %#v, want generated Cloud DNS migration", result.ManualSteps)
+	}
+	if result.DockerService.Image != "coredns/coredns:1.11.1" || result.DockerService.Deploy == nil || result.DockerService.Deploy.Replicas < 2 {
+		t.Fatalf("service does not provision HA CoreDNS target: %#v", result.DockerService)
+	}
+	for _, file := range []string{"coredns/Corefile", "coredns/example-com.zone", "config/cloud-dns/app-change.env", "config/cloud-dns/zone-report.yaml"} {
+		if _, ok := result.Configs[file]; !ok {
+			t.Fatalf("missing config %s", file)
+		}
+	}
+	appEnv := string(result.Configs["config/cloud-dns/app-change.env"])
+	for _, want := range []string{"APP_CHANGE_MODE=generated_patch", "SOURCE_CLOUD_DNS_ZONE=prod-zone", "TARGET_DNS_ENDPOINT=prod-zone:53"} {
+		if !strings.Contains(appEnv, want) {
+			t.Fatalf("app-change env missing %q:\n%s", want, appEnv)
+		}
+	}
+	report := string(result.Configs["config/cloud-dns/zone-report.yaml"])
+	for _, want := range []string{"google_dns_managed_zone", "dns_name: example.com.", "visibility: public"} {
+		if !strings.Contains(report, want) {
+			t.Fatalf("zone report missing %q:\n%s", want, report)
+		}
+	}
+	for _, file := range []string{"migrate-dns-records.sh", "backup_cloud_dns.sh", "validate_cloud_dns.sh"} {
+		if _, ok := result.Scripts[file]; !ok {
+			t.Fatalf("missing script %s", file)
+		}
+	}
+	for id, stepType := range map[string]domainrunbook.StepType{
+		"discover-cloud-dns-zone":   domainrunbook.StepTypeCommand,
+		"provision-coredns-zone":    domainrunbook.StepTypeCommand,
+		"migrate-cloud-dns-records": domainrunbook.StepTypeCommand,
+		"validate-coredns-zone":     domainrunbook.StepTypeCommand,
+		"backup-cloud-dns-zone":     domainrunbook.StepTypeCommand,
+		"cutover-cloud-dns-ns":      domainrunbook.StepTypeAPICall,
+		"rollback-cloud-dns-zone":   domainrunbook.StepTypeRollback,
+	} {
+		if !hasCloudDNSRunbookStep(result, id, stepType) {
+			t.Fatalf("missing %s runbook step: %#v", id, result.RunbookSteps)
+		}
+	}
+}
 
 func TestNewCloudDNSMapper(t *testing.T) {
 	m := NewCloudDNSMapper()
@@ -16,6 +66,29 @@ func TestNewCloudDNSMapper(t *testing.T) {
 	if m.ResourceType() != resource.TypeCloudDNS {
 		t.Errorf("ResourceType() = %v, want %v", m.ResourceType(), resource.TypeCloudDNS)
 	}
+}
+
+func managedCloudDNSFixture() *resource.AWSResource {
+	return &resource.AWSResource{
+		ID:   "projects/demo/managedZones/prod-zone",
+		Type: resource.TypeCloudDNS,
+		Name: "prod-zone",
+		Config: map[string]interface{}{
+			"name":        "prod-zone",
+			"dns_name":    "example.com.",
+			"description": "Production public zone",
+			"visibility":  "public",
+		},
+	}
+}
+
+func hasCloudDNSRunbookStep(result *mapper.MappingResult, id string, stepType domainrunbook.StepType) bool {
+	for _, step := range result.RunbookSteps {
+		if step.ID == id && step.Type == stepType {
+			return true
+		}
+	}
+	return false
 }
 
 func TestCloudDNSMapper_ResourceType(t *testing.T) {
