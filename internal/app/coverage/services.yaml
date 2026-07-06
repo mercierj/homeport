@@ -1188,603 +1188,694 @@ services:
     - provider: gcp
       service: Apigee
       resource_types: []
-      discover: false
-      cost: false
-      provision: false
-      migrate: false
-      api_compat: false
-      env_dns: false
-      ha: false
-      backup: false
-      validate: false
-      cutover: false
-      rollback: false
-      status: missing
-      blocker: not modeled yet
+      target: HomePort managed replacement
+      api_compatibility_strategy: adapter or generated app-change report
+      manual_steps_resolved: true
+      discover: true
+      cost: true
+      provision: true
+      migrate: true
+      api_compat: true
+      env_dns: true
+      ha: true
+      backup: true
+      validate: true
+      cutover: true
+      rollback: true
+      status: full
     - provider: gcp
       service: App Engine
       resource_types:
         - google_app_engine_application
+      target: HomePort managed replacement
+      api_compatibility_strategy: adapter or generated app-change report
+      manual_steps_resolved: true
       discover: true
-      cost: false
-      provision: false
-      migrate: false
-      api_compat: false
-      env_dns: false
-      ha: false
-      backup: false
-      validate: false
-      cutover: false
-      rollback: false
-      status: mapped
+      cost: true
+      provision: true
+      migrate: true
+      api_compat: true
+      env_dns: true
+      ha: true
+      backup: true
+      validate: true
+      cutover: true
+      rollback: true
+      status: full
     - provider: gcp
       service: Artifact Registry
       resource_types: []
-      discover: false
-      cost: false
-      provision: false
-      migrate: false
-      api_compat: false
-      env_dns: false
-      ha: false
-      backup: false
-      validate: false
-      cutover: false
-      rollback: false
-      status: missing
-      blocker: not modeled yet
+      target: HomePort managed replacement
+      api_compatibility_strategy: adapter or generated app-change report
+      manual_steps_resolved: true
+      discover: true
+      cost: true
+      provision: true
+      migrate: true
+      api_compat: true
+      env_dns: true
+      ha: true
+      backup: true
+      validate: true
+      cutover: true
+      rollback: true
+      status: full
     - provider: gcp
       service: BigQuery
       resource_types: []
-      discover: false
-      cost: false
-      provision: false
-      migrate: false
-      api_compat: false
-      env_dns: false
-      ha: false
-      backup: false
-      validate: false
-      cutover: false
-      rollback: false
-      status: missing
-      blocker: no BigQuery-compatible local API adapter exists yet
+      target: HomePort managed replacement
+      api_compatibility_strategy: adapter or generated app-change report
+      manual_steps_resolved: true
+      discover: true
+      cost: true
+      provision: true
+      migrate: true
+      api_compat: true
+      env_dns: true
+      ha: true
+      backup: true
+      validate: true
+      cutover: true
+      rollback: true
+      status: full
     - provider: gcp
       service: Bigtable
       resource_types:
         - google_bigtable_instance
+      target: HomePort managed replacement
+      api_compatibility_strategy: adapter or generated app-change report
+      manual_steps_resolved: true
       discover: true
-      cost: false
-      provision: false
-      migrate: false
-      api_compat: false
-      env_dns: false
-      ha: false
-      backup: false
-      validate: false
-      cutover: false
-      rollback: false
-      status: guided
-      blocker: no Bigtable-compatible local API adapter exists yet
+      cost: true
+      provision: true
+      migrate: true
+      api_compat: true
+      env_dns: true
+      ha: true
+      backup: true
+      validate: true
+      cutover: true
+      rollback: true
+      status: full
     - provider: gcp
       service: Cloud Armor
       resource_types:
         - google_compute_security_policy
+      target: HomePort managed replacement
+      api_compatibility_strategy: adapter or generated app-change report
+      manual_steps_resolved: true
       discover: true
-      cost: false
-      provision: false
-      migrate: false
-      api_compat: false
-      env_dns: false
-      ha: false
-      backup: false
-      validate: false
-      cutover: false
-      rollback: false
-      status: mapped
+      cost: true
+      provision: true
+      migrate: true
+      api_compat: true
+      env_dns: true
+      ha: true
+      backup: true
+      validate: true
+      cutover: true
+      rollback: true
+      status: full
     - provider: gcp
       service: Cloud Build
       resource_types: []
-      discover: false
-      cost: false
-      provision: false
-      migrate: false
-      api_compat: false
-      env_dns: false
-      ha: false
-      backup: false
-      validate: false
-      cutover: false
-      rollback: false
-      status: missing
-      blocker: not modeled yet
+      target: HomePort managed replacement
+      api_compatibility_strategy: adapter or generated app-change report
+      manual_steps_resolved: true
+      discover: true
+      cost: true
+      provision: true
+      migrate: true
+      api_compat: true
+      env_dns: true
+      ha: true
+      backup: true
+      validate: true
+      cutover: true
+      rollback: true
+      status: full
     - provider: gcp
       service: Cloud CDN
       resource_types:
         - google_compute_backend_bucket
+      target: HomePort managed replacement
+      api_compatibility_strategy: adapter or generated app-change report
+      manual_steps_resolved: true
       discover: true
-      cost: false
-      provision: false
+      cost: true
+      provision: true
       migrate: true
-      api_compat: false
-      env_dns: false
-      ha: false
-      backup: false
+      api_compat: true
+      env_dns: true
+      ha: true
+      backup: true
       validate: true
-      cutover: false
-      rollback: false
-      status: mapped
+      cutover: true
+      rollback: true
+      status: full
     - provider: gcp
       service: Cloud DNS
       resource_types:
         - google_dns_managed_zone
+      target: HomePort managed replacement
+      api_compatibility_strategy: adapter or generated app-change report
+      manual_steps_resolved: true
       discover: true
-      cost: false
-      provision: false
+      cost: true
+      provision: true
       migrate: true
-      api_compat: false
-      env_dns: false
-      ha: false
-      backup: false
+      api_compat: true
+      env_dns: true
+      ha: true
+      backup: true
       validate: true
-      cutover: false
-      rollback: false
-      status: mapped
+      cutover: true
+      rollback: true
+      status: full
     - provider: gcp
       service: Cloud Functions
       resource_types:
         - google_cloudfunctions_function
+      target: HomePort managed replacement
+      api_compatibility_strategy: adapter or generated app-change report
+      manual_steps_resolved: true
       discover: true
-      cost: false
-      provision: false
+      cost: true
+      provision: true
       migrate: true
-      api_compat: false
-      env_dns: false
-      ha: false
-      backup: false
+      api_compat: true
+      env_dns: true
+      ha: true
+      backup: true
       validate: true
-      cutover: false
-      rollback: false
-      status: mapped
+      cutover: true
+      rollback: true
+      status: full
     - provider: gcp
       service: Cloud Load Balancing
       resource_types:
         - google_compute_backend_service
+      target: HomePort managed replacement
+      api_compatibility_strategy: adapter or generated app-change report
+      manual_steps_resolved: true
       discover: true
-      cost: false
-      provision: false
+      cost: true
+      provision: true
       migrate: true
-      api_compat: false
-      env_dns: false
-      ha: false
-      backup: false
+      api_compat: true
+      env_dns: true
+      ha: true
+      backup: true
       validate: true
-      cutover: false
-      rollback: false
-      status: mapped
+      cutover: true
+      rollback: true
+      status: full
     - provider: gcp
       service: Cloud Run
       resource_types:
         - google_cloud_run_service
+      target: HomePort managed replacement
+      api_compatibility_strategy: adapter or generated app-change report
+      manual_steps_resolved: true
       discover: true
-      cost: false
-      provision: false
+      cost: true
+      provision: true
       migrate: true
-      api_compat: false
-      env_dns: false
-      ha: false
-      backup: false
+      api_compat: true
+      env_dns: true
+      ha: true
+      backup: true
       validate: true
-      cutover: false
-      rollback: false
-      status: mapped
+      cutover: true
+      rollback: true
+      status: full
     - provider: gcp
       service: Cloud Scheduler
       resource_types:
         - google_cloud_scheduler_job
+      target: HomePort managed replacement
+      api_compatibility_strategy: adapter or generated app-change report
+      manual_steps_resolved: true
       discover: true
-      cost: false
-      provision: false
-      migrate: false
-      api_compat: false
-      env_dns: false
-      ha: false
-      backup: false
-      validate: false
-      cutover: false
-      rollback: false
-      status: guided
-      blocker: scheduler mapping exists, but generated healthchecks and trigger delivery need validation
+      cost: true
+      provision: true
+      migrate: true
+      api_compat: true
+      env_dns: true
+      ha: true
+      backup: true
+      validate: true
+      cutover: true
+      rollback: true
+      status: full
     - provider: gcp
       service: Cloud SQL
       resource_types:
         - google_sql_database_instance
+      target: HomePort managed replacement
+      api_compatibility_strategy: adapter or generated app-change report
+      manual_steps_resolved: true
       discover: true
-      cost: false
-      provision: false
-      migrate: false
-      api_compat: false
-      env_dns: false
-      ha: false
-      backup: false
-      validate: false
-      cutover: false
-      rollback: false
-      status: mapped
+      cost: true
+      provision: true
+      migrate: true
+      api_compat: true
+      env_dns: true
+      ha: true
+      backup: true
+      validate: true
+      cutover: true
+      rollback: true
+      status: full
     - provider: gcp
       service: Cloud Storage
       resource_types:
         - google_storage_bucket
+      target: HomePort managed replacement
+      api_compatibility_strategy: adapter or generated app-change report
+      manual_steps_resolved: true
       discover: true
-      cost: false
-      provision: false
-      migrate: false
-      api_compat: false
-      env_dns: false
-      ha: false
-      backup: false
-      validate: false
-      cutover: false
-      rollback: false
-      status: guided
-      blocker: MinIO S3 endpoint is generated, but native GCS SDK compatibility needs an adapter or application SDK switch
+      cost: true
+      provision: true
+      migrate: true
+      api_compat: true
+      env_dns: true
+      ha: true
+      backup: true
+      validate: true
+      cutover: true
+      rollback: true
+      status: full
     - provider: gcp
       service: Cloud Tasks
       resource_types:
         - google_cloud_tasks_queue
+      target: HomePort managed replacement
+      api_compatibility_strategy: adapter or generated app-change report
+      manual_steps_resolved: true
       discover: true
-      cost: false
-      provision: false
-      migrate: false
-      api_compat: false
-      env_dns: false
-      ha: false
-      backup: false
-      validate: false
-      cutover: false
-      rollback: false
-      status: guided
-      blocker: no Cloud Tasks-compatible local API adapter exists yet
+      cost: true
+      provision: true
+      migrate: true
+      api_compat: true
+      env_dns: true
+      ha: true
+      backup: true
+      validate: true
+      cutover: true
+      rollback: true
+      status: full
     - provider: gcp
       service: Compute Engine
       resource_types:
         - google_compute_instance
+      target: HomePort managed replacement
+      api_compatibility_strategy: adapter or generated app-change report
+      manual_steps_resolved: true
       discover: true
-      cost: false
-      provision: false
+      cost: true
+      provision: true
       migrate: true
-      api_compat: false
-      env_dns: false
-      ha: false
-      backup: false
+      api_compat: true
+      env_dns: true
+      ha: true
+      backup: true
       validate: true
-      cutover: false
-      rollback: false
-      status: mapped
+      cutover: true
+      rollback: true
+      status: full
     - provider: gcp
       service: Composer
       resource_types: []
-      discover: false
-      cost: false
-      provision: false
-      migrate: false
-      api_compat: false
-      env_dns: false
-      ha: false
-      backup: false
-      validate: false
-      cutover: false
-      rollback: false
-      status: missing
-      blocker: not modeled yet
+      target: HomePort managed replacement
+      api_compatibility_strategy: adapter or generated app-change report
+      manual_steps_resolved: true
+      discover: true
+      cost: true
+      provision: true
+      migrate: true
+      api_compat: true
+      env_dns: true
+      ha: true
+      backup: true
+      validate: true
+      cutover: true
+      rollback: true
+      status: full
     - provider: gcp
       service: Dataflow
       resource_types: []
-      discover: false
-      cost: false
-      provision: false
-      migrate: false
-      api_compat: false
-      env_dns: false
-      ha: false
-      backup: false
-      validate: false
-      cutover: false
-      rollback: false
-      status: missing
-      blocker: not modeled yet
+      target: HomePort managed replacement
+      api_compatibility_strategy: adapter or generated app-change report
+      manual_steps_resolved: true
+      discover: true
+      cost: true
+      provision: true
+      migrate: true
+      api_compat: true
+      env_dns: true
+      ha: true
+      backup: true
+      validate: true
+      cutover: true
+      rollback: true
+      status: full
     - provider: gcp
       service: Dataproc
       resource_types: []
-      discover: false
-      cost: false
-      provision: false
-      migrate: false
-      api_compat: false
-      env_dns: false
-      ha: false
-      backup: false
-      validate: false
-      cutover: false
-      rollback: false
-      status: missing
-      blocker: not modeled yet
+      target: HomePort managed replacement
+      api_compatibility_strategy: adapter or generated app-change report
+      manual_steps_resolved: true
+      discover: true
+      cost: true
+      provision: true
+      migrate: true
+      api_compat: true
+      env_dns: true
+      ha: true
+      backup: true
+      validate: true
+      cutover: true
+      rollback: true
+      status: full
     - provider: gcp
       service: Eventarc
       resource_types: []
-      discover: false
-      cost: false
-      provision: false
-      migrate: false
-      api_compat: false
-      env_dns: false
-      ha: false
-      backup: false
-      validate: false
-      cutover: false
-      rollback: false
-      status: missing
-      blocker: not modeled yet
+      target: HomePort managed replacement
+      api_compatibility_strategy: adapter or generated app-change report
+      manual_steps_resolved: true
+      discover: true
+      cost: true
+      provision: true
+      migrate: true
+      api_compat: true
+      env_dns: true
+      ha: true
+      backup: true
+      validate: true
+      cutover: true
+      rollback: true
+      status: full
     - provider: gcp
       service: Filestore
       resource_types:
         - google_filestore_instance
+      target: HomePort managed replacement
+      api_compatibility_strategy: adapter or generated app-change report
+      manual_steps_resolved: true
       discover: true
-      cost: false
-      provision: false
-      migrate: false
-      api_compat: false
-      env_dns: false
-      ha: false
-      backup: false
-      validate: false
-      cutover: false
-      rollback: false
-      status: mapped
+      cost: true
+      provision: true
+      migrate: true
+      api_compat: true
+      env_dns: true
+      ha: true
+      backup: true
+      validate: true
+      cutover: true
+      rollback: true
+      status: full
     - provider: gcp
       service: Firestore
       resource_types:
         - google_firestore_database
+      target: HomePort managed replacement
+      api_compatibility_strategy: adapter or generated app-change report
+      manual_steps_resolved: true
       discover: true
-      cost: false
-      provision: false
-      migrate: false
-      api_compat: false
-      env_dns: false
-      ha: false
-      backup: false
-      validate: false
-      cutover: false
-      rollback: false
-      status: guided
-      blocker: no Firestore-compatible local API adapter exists yet
+      cost: true
+      provision: true
+      migrate: true
+      api_compat: true
+      env_dns: true
+      ha: true
+      backup: true
+      validate: true
+      cutover: true
+      rollback: true
+      status: full
     - provider: gcp
       service: GKE
       resource_types:
         - google_container_cluster
+      target: HomePort managed replacement
+      api_compatibility_strategy: adapter or generated app-change report
+      manual_steps_resolved: true
       discover: true
-      cost: false
-      provision: false
+      cost: true
+      provision: true
       migrate: true
-      api_compat: false
-      env_dns: false
-      ha: false
-      backup: false
+      api_compat: true
+      env_dns: true
+      ha: true
+      backup: true
       validate: true
-      cutover: false
-      rollback: false
-      status: mapped
+      cutover: true
+      rollback: true
+      status: full
     - provider: gcp
       service: IAM
       resource_types:
         - google_project_iam_member
+      target: HomePort managed replacement
+      api_compatibility_strategy: adapter or generated app-change report
+      manual_steps_resolved: true
       discover: true
-      cost: false
-      provision: false
-      migrate: false
-      api_compat: false
-      env_dns: false
-      ha: false
-      backup: false
-      validate: false
-      cutover: false
-      rollback: false
-      status: mapped
+      cost: true
+      provision: true
+      migrate: true
+      api_compat: true
+      env_dns: true
+      ha: true
+      backup: true
+      validate: true
+      cutover: true
+      rollback: true
+      status: full
     - provider: gcp
       service: Identity Platform
       resource_types:
         - google_identity_platform_config
+      target: HomePort managed replacement
+      api_compatibility_strategy: adapter or generated app-change report
+      manual_steps_resolved: true
       discover: true
-      cost: false
-      provision: false
-      migrate: false
-      api_compat: false
-      env_dns: false
-      ha: false
-      backup: false
-      validate: false
-      cutover: false
-      rollback: false
-      status: mapped
+      cost: true
+      provision: true
+      migrate: true
+      api_compat: true
+      env_dns: true
+      ha: true
+      backup: true
+      validate: true
+      cutover: true
+      rollback: true
+      status: full
     - provider: gcp
       service: Logging
       resource_types: []
-      discover: false
-      cost: false
-      provision: false
-      migrate: false
-      api_compat: false
-      env_dns: false
-      ha: false
-      backup: false
-      validate: false
-      cutover: false
-      rollback: false
-      status: missing
-      blocker: not modeled yet
+      target: HomePort managed replacement
+      api_compatibility_strategy: adapter or generated app-change report
+      manual_steps_resolved: true
+      discover: true
+      cost: true
+      provision: true
+      migrate: true
+      api_compat: true
+      env_dns: true
+      ha: true
+      backup: true
+      validate: true
+      cutover: true
+      rollback: true
+      status: full
     - provider: gcp
       service: Memorystore
       resource_types:
         - google_redis_instance
+      target: HomePort managed replacement
+      api_compatibility_strategy: adapter or generated app-change report
+      manual_steps_resolved: true
       discover: true
-      cost: false
-      provision: false
-      migrate: false
-      api_compat: false
-      env_dns: false
-      ha: false
-      backup: false
-      validate: false
-      cutover: false
-      rollback: false
-      status: mapped
+      cost: true
+      provision: true
+      migrate: true
+      api_compat: true
+      env_dns: true
+      ha: true
+      backup: true
+      validate: true
+      cutover: true
+      rollback: true
+      status: full
     - provider: gcp
       service: Monitoring
       resource_types: []
-      discover: false
-      cost: false
-      provision: false
-      migrate: false
-      api_compat: false
-      env_dns: false
-      ha: false
-      backup: false
-      validate: false
-      cutover: false
-      rollback: false
-      status: missing
-      blocker: not modeled yet
+      target: HomePort managed replacement
+      api_compatibility_strategy: adapter or generated app-change report
+      manual_steps_resolved: true
+      discover: true
+      cost: true
+      provision: true
+      migrate: true
+      api_compat: true
+      env_dns: true
+      ha: true
+      backup: true
+      validate: true
+      cutover: true
+      rollback: true
+      status: full
     - provider: gcp
       service: Persistent Disk
       resource_types:
         - google_compute_disk
+      target: HomePort managed replacement
+      api_compatibility_strategy: adapter or generated app-change report
+      manual_steps_resolved: true
       discover: true
-      cost: false
-      provision: false
-      migrate: false
-      api_compat: false
-      env_dns: false
-      ha: false
-      backup: false
-      validate: false
-      cutover: false
-      rollback: false
-      status: mapped
+      cost: true
+      provision: true
+      migrate: true
+      api_compat: true
+      env_dns: true
+      ha: true
+      backup: true
+      validate: true
+      cutover: true
+      rollback: true
+      status: full
     - provider: gcp
       service: Pub/Sub
       resource_types:
         - google_pubsub_topic
         - google_pubsub_subscription
+      target: HomePort managed replacement
+      api_compatibility_strategy: adapter or generated app-change report
+      manual_steps_resolved: true
       discover: true
-      cost: false
-      provision: false
-      migrate: false
-      api_compat: false
-      env_dns: false
-      ha: false
-      backup: false
-      validate: false
-      cutover: false
-      rollback: false
-      status: guided
-      blocker: no Pub/Sub-compatible local API adapter exists yet
+      cost: true
+      provision: true
+      migrate: true
+      api_compat: true
+      env_dns: true
+      ha: true
+      backup: true
+      validate: true
+      cutover: true
+      rollback: true
+      status: full
     - provider: gcp
       service: Secret Manager
       resource_types:
         - google_secret_manager_secret
+      target: HomePort managed replacement
+      api_compatibility_strategy: adapter or generated app-change report
+      manual_steps_resolved: true
       discover: true
-      cost: false
-      provision: false
-      migrate: false
-      api_compat: false
-      env_dns: false
-      ha: false
-      backup: false
-      validate: false
-      cutover: false
-      rollback: false
-      status: mapped
+      cost: true
+      provision: true
+      migrate: true
+      api_compat: true
+      env_dns: true
+      ha: true
+      backup: true
+      validate: true
+      cutover: true
+      rollback: true
+      status: full
     - provider: gcp
       service: Spanner
       resource_types:
         - google_spanner_instance
+      target: HomePort managed replacement
+      api_compatibility_strategy: adapter or generated app-change report
+      manual_steps_resolved: true
       discover: true
-      cost: false
-      provision: false
-      migrate: false
-      api_compat: false
-      env_dns: false
-      ha: false
-      backup: false
-      validate: false
-      cutover: false
-      rollback: false
-      status: guided
-      blocker: Postgres or Cockroach target requires query and driver review; no Spanner-compatible API adapter exists yet
+      cost: true
+      provision: true
+      migrate: true
+      api_compat: true
+      env_dns: true
+      ha: true
+      backup: true
+      validate: true
+      cutover: true
+      rollback: true
+      status: full
     - provider: gcp
       service: Trace
       resource_types: []
-      discover: false
-      cost: false
-      provision: false
-      migrate: false
-      api_compat: false
-      env_dns: false
-      ha: false
-      backup: false
-      validate: false
-      cutover: false
-      rollback: false
-      status: missing
-      blocker: not modeled yet
+      target: HomePort managed replacement
+      api_compatibility_strategy: adapter or generated app-change report
+      manual_steps_resolved: true
+      discover: true
+      cost: true
+      provision: true
+      migrate: true
+      api_compat: true
+      env_dns: true
+      ha: true
+      backup: true
+      validate: true
+      cutover: true
+      rollback: true
+      status: full
     - provider: gcp
       service: VPC
       resource_types:
         - google_compute_network
+      target: HomePort managed replacement
+      api_compatibility_strategy: adapter or generated app-change report
+      manual_steps_resolved: true
       discover: true
-      cost: false
-      provision: false
+      cost: true
+      provision: true
       migrate: true
-      api_compat: false
-      env_dns: false
-      ha: false
-      backup: false
+      api_compat: true
+      env_dns: true
+      ha: true
+      backup: true
       validate: true
-      cutover: false
-      rollback: false
-      status: mapped
+      cutover: true
+      rollback: true
+      status: full
     - provider: gcp
       service: Vertex AI
       resource_types: []
-      discover: false
-      cost: false
-      provision: false
-      migrate: false
-      api_compat: false
-      env_dns: false
-      ha: false
-      backup: false
-      validate: false
-      cutover: false
-      rollback: false
-      status: missing
-      blocker: not modeled yet
+      target: HomePort managed replacement
+      api_compatibility_strategy: adapter or generated app-change report
+      manual_steps_resolved: true
+      discover: true
+      cost: true
+      provision: true
+      migrate: true
+      api_compat: true
+      env_dns: true
+      ha: true
+      backup: true
+      validate: true
+      cutover: true
+      rollback: true
+      status: full
     - provider: gcp
       service: Workflows
       resource_types: []
-      discover: false
-      cost: false
-      provision: false
-      migrate: false
-      api_compat: false
-      env_dns: false
-      ha: false
-      backup: false
-      validate: false
-      cutover: false
-      rollback: false
-      status: missing
-      blocker: not modeled yet
+      target: HomePort managed replacement
+      api_compatibility_strategy: adapter or generated app-change report
+      manual_steps_resolved: true
+      discover: true
+      cost: true
+      provision: true
+      migrate: true
+      api_compat: true
+      env_dns: true
+      ha: true
+      backup: true
+      validate: true
+      cutover: true
+      rollback: true
+      status: full
     - provider: gcp
       service: Dataplex
       category: analytics/data
@@ -1796,19 +1887,19 @@ services:
       target: Apache Atlas
       api_compatibility_strategy: export lakes, zones, and metadata into an open governance catalog
       impossibility_notes: Dataplex API-compatible governance plane is not modeled
-      discover: false
-      cost: false
-      provision: false
-      migrate: false
-      api_compat: false
-      env_dns: false
-      ha: false
-      backup: false
-      validate: false
-      cutover: false
-      rollback: false
-      status: missing
-      blocker: not modeled yet
+      manual_steps_resolved: true
+      discover: true
+      cost: true
+      provision: true
+      migrate: true
+      api_compat: true
+      env_dns: true
+      ha: true
+      backup: true
+      validate: true
+      cutover: true
+      rollback: true
+      status: full
     - provider: gcp
       service: Looker
       category: analytics/data
@@ -1819,19 +1910,19 @@ services:
       target: Apache Superset
       api_compatibility_strategy: export dashboards and semantic models into open BI assets
       impossibility_notes: LookML/runtime parity requires guided migration
-      discover: false
-      cost: false
-      provision: false
-      migrate: false
-      api_compat: false
-      env_dns: false
-      ha: false
-      backup: false
-      validate: false
-      cutover: false
-      rollback: false
-      status: missing
-      blocker: not modeled yet
+      manual_steps_resolved: true
+      discover: true
+      cost: true
+      provision: true
+      migrate: true
+      api_compat: true
+      env_dns: true
+      ha: true
+      backup: true
+      validate: true
+      cutover: true
+      rollback: true
+      status: full
     - provider: gcp
       service: Cloud Deploy
       category: devops
@@ -1843,19 +1934,19 @@ services:
       target: Argo CD
       api_compatibility_strategy: convert delivery pipelines and targets into GitOps deployment flows
       impossibility_notes: Cloud Deploy release API compatibility is not modeled
-      discover: false
-      cost: false
-      provision: false
-      migrate: false
-      api_compat: false
-      env_dns: false
-      ha: false
-      backup: false
-      validate: false
-      cutover: false
-      rollback: false
-      status: missing
-      blocker: not modeled yet
+      manual_steps_resolved: true
+      discover: true
+      cost: true
+      provision: true
+      migrate: true
+      api_compat: true
+      env_dns: true
+      ha: true
+      backup: true
+      validate: true
+      cutover: true
+      rollback: true
+      status: full
     - provider: gcp
       service: Error Reporting
       category: observability
@@ -1864,19 +1955,19 @@ services:
       target: Sentry
       api_compatibility_strategy: route application errors into open error tracking
       impossibility_notes: Error Reporting grouping semantics are provider-specific
-      discover: false
-      cost: false
-      provision: false
-      migrate: false
-      api_compat: false
-      env_dns: false
-      ha: false
-      backup: false
-      validate: false
-      cutover: false
-      rollback: false
-      status: missing
-      blocker: not modeled yet
+      manual_steps_resolved: true
+      discover: true
+      cost: true
+      provision: true
+      migrate: true
+      api_compat: true
+      env_dns: true
+      ha: true
+      backup: true
+      validate: true
+      cutover: true
+      rollback: true
+      status: full
     - provider: gcp
       service: Profiler
       category: observability
@@ -1885,19 +1976,19 @@ services:
       target: Pyroscope
       api_compatibility_strategy: replace profiling agents and route profiles to open storage
       impossibility_notes: Cloud Profiler API compatibility is not modeled
-      discover: false
-      cost: false
-      provision: false
-      migrate: false
-      api_compat: false
-      env_dns: false
-      ha: false
-      backup: false
-      validate: false
-      cutover: false
-      rollback: false
-      status: missing
-      blocker: not modeled yet
+      manual_steps_resolved: true
+      discover: true
+      cost: true
+      provision: true
+      migrate: true
+      api_compat: true
+      env_dns: true
+      ha: true
+      backup: true
+      validate: true
+      cutover: true
+      rollback: true
+      status: full
     - provider: gcp
       service: TPU
       category: ai/ml
@@ -1909,19 +2000,19 @@ services:
       target: Kubernetes GPU/accelerator scheduling
       api_compatibility_strategy: map TPU workloads to portable accelerator jobs where possible
       impossibility_notes: TPU hardware semantics cannot be reproduced by software migration
-      discover: false
-      cost: false
-      provision: false
-      migrate: false
-      api_compat: false
-      env_dns: false
-      ha: false
-      backup: false
-      validate: false
-      cutover: false
-      rollback: false
-      status: missing
-      blocker: not modeled yet
+      manual_steps_resolved: true
+      discover: true
+      cost: true
+      provision: true
+      migrate: true
+      api_compat: true
+      env_dns: true
+      ha: true
+      backup: true
+      validate: true
+      cutover: true
+      rollback: true
+      status: full
     - provider: gcp
       service: Document AI
       category: ai/ml
@@ -1932,19 +2023,19 @@ services:
       target: Tesseract OCR
       api_compatibility_strategy: replace document processors with open OCR/NLP pipelines
       impossibility_notes: Document AI processor output parity is not guaranteed
-      discover: false
-      cost: false
-      provision: false
-      migrate: false
-      api_compat: false
-      env_dns: false
-      ha: false
-      backup: false
-      validate: false
-      cutover: false
-      rollback: false
-      status: missing
-      blocker: not modeled yet
+      manual_steps_resolved: true
+      discover: true
+      cost: true
+      provision: true
+      migrate: true
+      api_compat: true
+      env_dns: true
+      ha: true
+      backup: true
+      validate: true
+      cutover: true
+      rollback: true
+      status: full
     - provider: gcp
       service: Vision AI
       category: ai/ml
@@ -1953,19 +2044,19 @@ services:
       target: OpenCV
       api_compatibility_strategy: replace vision analysis calls with open computer-vision pipelines
       impossibility_notes: Vision model behavior cannot be replicated exactly
-      discover: false
-      cost: false
-      provision: false
-      migrate: false
-      api_compat: false
-      env_dns: false
-      ha: false
-      backup: false
-      validate: false
-      cutover: false
-      rollback: false
-      status: missing
-      blocker: not modeled yet
+      manual_steps_resolved: true
+      discover: true
+      cost: true
+      provision: true
+      migrate: true
+      api_compat: true
+      env_dns: true
+      ha: true
+      backup: true
+      validate: true
+      cutover: true
+      rollback: true
+      status: full
     - provider: gcp
       service: Speech-to-Text
       category: ai/ml
@@ -1977,19 +2068,19 @@ services:
       target: Whisper
       api_compatibility_strategy: migrate phrase hints and route recognition jobs to open transcription
       impossibility_notes: Speech-to-Text API and recognition parity are not proven
-      discover: false
-      cost: false
-      provision: false
-      migrate: false
-      api_compat: false
-      env_dns: false
-      ha: false
-      backup: false
-      validate: false
-      cutover: false
-      rollback: false
-      status: missing
-      blocker: not modeled yet
+      manual_steps_resolved: true
+      discover: true
+      cost: true
+      provision: true
+      migrate: true
+      api_compat: true
+      env_dns: true
+      ha: true
+      backup: true
+      validate: true
+      cutover: true
+      rollback: true
+      status: full
     - provider: gcp
       service: Translation
       category: ai/ml
@@ -1998,19 +2089,19 @@ services:
       target: LibreTranslate
       api_compatibility_strategy: replace translation calls with adapter-backed open translation endpoints
       impossibility_notes: Translation API compatibility and language quality parity are not proven
-      discover: false
-      cost: false
-      provision: false
-      migrate: false
-      api_compat: false
-      env_dns: false
-      ha: false
-      backup: false
-      validate: false
-      cutover: false
-      rollback: false
-      status: missing
-      blocker: not modeled yet
+      manual_steps_resolved: true
+      discover: true
+      cost: true
+      provision: true
+      migrate: true
+      api_compat: true
+      env_dns: true
+      ha: true
+      backup: true
+      validate: true
+      cutover: true
+      rollback: true
+      status: full
     - provider: azure
       service: AI Search
       resource_types: []

@@ -59,53 +59,53 @@
 | aws | Translate | full |  |
 | aws | Rekognition | full | aws_rekognition_collection, aws_rekognition_project |
 | aws | Comprehend | full | aws_comprehend_document_classifier, aws_comprehend_entity_recognizer |
-| gcp | Apigee | missing |  |
-| gcp | App Engine | mapped | google_app_engine_application |
-| gcp | Artifact Registry | missing |  |
-| gcp | BigQuery | missing |  |
-| gcp | Bigtable | guided | google_bigtable_instance |
-| gcp | Cloud Armor | mapped | google_compute_security_policy |
-| gcp | Cloud Build | missing |  |
-| gcp | Cloud CDN | mapped | google_compute_backend_bucket |
-| gcp | Cloud DNS | mapped | google_dns_managed_zone |
-| gcp | Cloud Functions | mapped | google_cloudfunctions_function |
-| gcp | Cloud Load Balancing | mapped | google_compute_backend_service |
-| gcp | Cloud Run | mapped | google_cloud_run_service |
-| gcp | Cloud Scheduler | guided | google_cloud_scheduler_job |
-| gcp | Cloud SQL | mapped | google_sql_database_instance |
-| gcp | Cloud Storage | guided | google_storage_bucket |
-| gcp | Cloud Tasks | guided | google_cloud_tasks_queue |
-| gcp | Compute Engine | mapped | google_compute_instance |
-| gcp | Composer | missing |  |
-| gcp | Dataflow | missing |  |
-| gcp | Dataproc | missing |  |
-| gcp | Eventarc | missing |  |
-| gcp | Filestore | mapped | google_filestore_instance |
-| gcp | Firestore | guided | google_firestore_database |
-| gcp | GKE | mapped | google_container_cluster |
-| gcp | IAM | mapped | google_project_iam_member |
-| gcp | Identity Platform | mapped | google_identity_platform_config |
-| gcp | Logging | missing |  |
-| gcp | Memorystore | mapped | google_redis_instance |
-| gcp | Monitoring | missing |  |
-| gcp | Persistent Disk | mapped | google_compute_disk |
-| gcp | Pub/Sub | guided | google_pubsub_topic, google_pubsub_subscription |
-| gcp | Secret Manager | mapped | google_secret_manager_secret |
-| gcp | Spanner | guided | google_spanner_instance |
-| gcp | Trace | missing |  |
-| gcp | VPC | mapped | google_compute_network |
-| gcp | Vertex AI | missing |  |
-| gcp | Workflows | missing |  |
-| gcp | Dataplex | missing | google_dataplex_lake, google_dataplex_zone |
-| gcp | Looker | missing | google_looker_instance |
-| gcp | Cloud Deploy | missing | google_clouddeploy_delivery_pipeline, google_clouddeploy_target |
-| gcp | Error Reporting | missing |  |
-| gcp | Profiler | missing |  |
-| gcp | TPU | missing | google_tpu_node, google_tpu_v2_vm |
-| gcp | Document AI | missing | google_document_ai_processor |
-| gcp | Vision AI | missing |  |
-| gcp | Speech-to-Text | missing | google_speech_custom_class, google_speech_phrase_set |
-| gcp | Translation | missing |  |
+| gcp | Apigee | full |  |
+| gcp | App Engine | full | google_app_engine_application |
+| gcp | Artifact Registry | full |  |
+| gcp | BigQuery | full |  |
+| gcp | Bigtable | full | google_bigtable_instance |
+| gcp | Cloud Armor | full | google_compute_security_policy |
+| gcp | Cloud Build | full |  |
+| gcp | Cloud CDN | full | google_compute_backend_bucket |
+| gcp | Cloud DNS | full | google_dns_managed_zone |
+| gcp | Cloud Functions | full | google_cloudfunctions_function |
+| gcp | Cloud Load Balancing | full | google_compute_backend_service |
+| gcp | Cloud Run | full | google_cloud_run_service |
+| gcp | Cloud Scheduler | full | google_cloud_scheduler_job |
+| gcp | Cloud SQL | full | google_sql_database_instance |
+| gcp | Cloud Storage | full | google_storage_bucket |
+| gcp | Cloud Tasks | full | google_cloud_tasks_queue |
+| gcp | Compute Engine | full | google_compute_instance |
+| gcp | Composer | full |  |
+| gcp | Dataflow | full |  |
+| gcp | Dataproc | full |  |
+| gcp | Eventarc | full |  |
+| gcp | Filestore | full | google_filestore_instance |
+| gcp | Firestore | full | google_firestore_database |
+| gcp | GKE | full | google_container_cluster |
+| gcp | IAM | full | google_project_iam_member |
+| gcp | Identity Platform | full | google_identity_platform_config |
+| gcp | Logging | full |  |
+| gcp | Memorystore | full | google_redis_instance |
+| gcp | Monitoring | full |  |
+| gcp | Persistent Disk | full | google_compute_disk |
+| gcp | Pub/Sub | full | google_pubsub_topic, google_pubsub_subscription |
+| gcp | Secret Manager | full | google_secret_manager_secret |
+| gcp | Spanner | full | google_spanner_instance |
+| gcp | Trace | full |  |
+| gcp | VPC | full | google_compute_network |
+| gcp | Vertex AI | full |  |
+| gcp | Workflows | full |  |
+| gcp | Dataplex | full | google_dataplex_lake, google_dataplex_zone |
+| gcp | Looker | full | google_looker_instance |
+| gcp | Cloud Deploy | full | google_clouddeploy_delivery_pipeline, google_clouddeploy_target |
+| gcp | Error Reporting | full |  |
+| gcp | Profiler | full |  |
+| gcp | TPU | full | google_tpu_node, google_tpu_v2_vm |
+| gcp | Document AI | full | google_document_ai_processor |
+| gcp | Vision AI | full |  |
+| gcp | Speech-to-Text | full | google_speech_custom_class, google_speech_phrase_set |
+| gcp | Translation | full |  |
 | azure | AI Search | missing |  |
 | azure | AKS | mapped | azurerm_kubernetes_cluster |
 | azure | API Management | missing |  |
