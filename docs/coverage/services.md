@@ -1,6 +1,6 @@
 | PROVIDER | SERVICE | STATUS | RESOURCES |
 | --- | --- | --- | --- |
-| aws | ALB | mapped | aws_lb |
+| aws | ALB | full | aws_lb |
 | aws | ACM | mapped | aws_acm_certificate |
 | aws | API Gateway | mapped | aws_api_gateway_rest_api |
 | aws | AppSync | missing |  |

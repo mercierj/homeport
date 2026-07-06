@@ -4,10 +4,12 @@ package networking
 import (
 	"context"
 	"fmt"
+	"strings"
 	"time"
 
 	"github.com/homeport/homeport/internal/domain/mapper"
 	"github.com/homeport/homeport/internal/domain/resource"
+	domainrunbook "github.com/homeport/homeport/internal/domain/runbook"
 	"github.com/homeport/homeport/internal/infrastructure/mapper/shared/netrunbook"
 )
 
@@ -62,6 +64,7 @@ func (m *ALBMapper) Map(ctx context.Context, res *resource.AWSResource) (*mapper
 		"--accesslog=true",
 	}
 	svc.Networks = []string{"homeport"}
+	svc.Deploy = &mapper.DeployConfig{Replicas: 2}
 	svc.Labels = map[string]string{
 		"homeport.source":  "aws_lb",
 		"homeport.lb_name": lbNameStr,
@@ -87,8 +90,9 @@ func (m *ALBMapper) Map(ctx context.Context, res *resource.AWSResource) (*mapper
 	result.AddConfig("config/traefik/traefik.yml", []byte(traefikConfig))
 
 	// Generate dynamic configuration for routes
-	dynamicConfig := m.generateDynamicConfig(res, lbNameStr)
+	dynamicConfig, managedRoutes := m.generateDynamicConfig(res, lbNameStr)
 	result.AddConfig("config/traefik/dynamic/config.yml", []byte(dynamicConfig))
+	result.AddScript("backup_alb_config.sh", []byte(m.generateBackupScript(lbNameStr)))
 
 	// Handle SSL/TLS certificates
 	if m.hasHTTPSListener(res) {
@@ -113,14 +117,29 @@ func (m *ALBMapper) Map(ctx context.Context, res *resource.AWSResource) (*mapper
 		result.AddManualStep("Review WAF rules and implement equivalent protection using Traefik middleware")
 	}
 
-	result.AddManualStep("Review and update target group backends in dynamic configuration")
-	result.AddManualStep("Configure health check endpoints for all services")
-	result.AddManualStep("Test load balancing behavior")
+	if !managedRoutes {
+		result.AddManualStep("Review and update target group backends in dynamic configuration")
+		result.AddManualStep("Configure health check endpoints for all services")
+		result.AddManualStep("Test load balancing behavior")
+	}
 	for _, step := range netrunbook.Routing(lbNameStr, "aws_lb") {
+		result.AddRunbookStep(step)
+	}
+	for _, step := range albRunbook(lbNameStr) {
 		result.AddRunbookStep(step)
 	}
 
 	return result, nil
+}
+
+func (m *ALBMapper) generateBackupScript(lbName string) string {
+	return fmt.Sprintf(`#!/bin/sh
+set -eu
+archive="${BACKUP_DIR:-./backups}/%s-traefik-$(date +%%Y%%m%%d%%H%%M%%S).tgz"
+mkdir -p "$(dirname "$archive")"
+tar -czf "$archive" config/traefik
+echo "$archive"
+`, sanitizeTraefikName(lbName))
 }
 
 // generateTraefikConfig creates the main Traefik configuration file.
@@ -179,40 +198,53 @@ ping:
 }
 
 // generateDynamicConfig creates the dynamic Traefik configuration with routes.
-func (m *ALBMapper) generateDynamicConfig(res *resource.AWSResource, lbName string) string {
-	config := `# Traefik Dynamic Configuration
-# Generated from AWS Application Load Balancer listeners and rules
+func (m *ALBMapper) generateDynamicConfig(res *resource.AWSResource, lbName string) (string, bool) {
+	routes := albRoutes(res)
+	var b strings.Builder
+	b.WriteString("# Traefik Dynamic Configuration\n")
+	b.WriteString("# Generated from AWS Application Load Balancer listeners and rules\n\n")
+	b.WriteString("http:\n")
+	b.WriteString("  routers:\n")
+	if len(routes) == 0 {
+		b.WriteString("    # No listener rules with concrete target hosts were found.\n")
+	} else {
+		for _, route := range routes {
+			b.WriteString(fmt.Sprintf("    %s-router:\n", route.name))
+			b.WriteString(fmt.Sprintf("      rule: \"%s\"\n", route.rule))
+			b.WriteString(fmt.Sprintf("      service: %s-service\n", route.name))
+			b.WriteString("      entryPoints:\n")
+			b.WriteString(fmt.Sprintf("        - %s\n", route.entryPoint))
+			if route.entryPoint == "websecure" {
+				b.WriteString("      tls: {}\n")
+			}
+			b.WriteString("      middlewares:\n")
+			b.WriteString("        - security-headers\n")
+			b.WriteString("        - rate-limit\n")
+		}
+	}
 
-http:
-  routers:
-`
+	b.WriteString("\n  services:\n")
+	if len(routes) == 0 {
+		b.WriteString("    # Add services after importing ALB target group hosts.\n")
+	} else {
+		for _, route := range routes {
+			b.WriteString(fmt.Sprintf("    %s-service:\n", route.name))
+			b.WriteString("      loadBalancer:\n")
+			b.WriteString("        servers:\n")
+			for _, host := range route.hosts {
+				b.WriteString(fmt.Sprintf("          - url: \"%s://%s:%d\"\n", strings.ToLower(route.protocol), host, route.port))
+			}
+			if route.healthPath != "" {
+				b.WriteString("        healthCheck:\n")
+				b.WriteString(fmt.Sprintf("          path: \"%s\"\n", route.healthPath))
+				b.WriteString("          interval: \"10s\"\n")
+				b.WriteString("          timeout: \"3s\"\n")
+			}
+		}
+	}
 
-	// Parse listener rules
-	// Note: In a real implementation, you would fetch listener and target group
-	// resources separately and parse their rules
-	config += `    # TODO: Add routers based on ALB listener rules
-    # Example:
-    # app-router:
-    #   rule: "Host(` + "`app.example.com`)" + `"
-    #   service: app-service
-    #   entryPoints:
-    #     - websecure
-    #   tls: {}
-
-  services:
-    # TODO: Add services based on ALB target groups
-    # Example:
-    # app-service:
-    #   loadBalancer:
-    #     servers:
-    #       - url: "http://app:8080"
-    #     healthCheck:
-    #       path: "/health"
-    #       interval: "10s"
-    #       timeout: "3s"
-
+	b.WriteString(`
   middlewares:
-    # Common middlewares
     security-headers:
       headers:
         browserXssFilter: true
@@ -227,9 +259,175 @@ http:
       rateLimit:
         average: 100
         burst: 50
-`
+`)
 
-	return config
+	return b.String(), len(routes) > 0
+}
+
+type albRoute struct {
+	name       string
+	rule       string
+	entryPoint string
+	protocol   string
+	port       int
+	hosts      []string
+	healthPath string
+}
+
+func albRoutes(res *resource.AWSResource) []albRoute {
+	listeners := configSlice(res.Config["listeners"])
+	if len(listeners) == 0 {
+		listeners = configSlice(res.Config["listener"])
+	}
+	routes := []albRoute{}
+	for listenerIndex, listener := range listeners {
+		listenerPort := configInt(listener["port"], 80)
+		entryPoint := "web"
+		if listenerPort == 443 || strings.EqualFold(configString(listener["protocol"]), "HTTPS") {
+			entryPoint = "websecure"
+		}
+		for ruleIndex, rule := range configSlice(listener["rules"]) {
+			hosts := configStrings(rule["target_group_hosts"])
+			if len(hosts) == 0 {
+				continue
+			}
+			targetName := configString(rule["target_group_name"])
+			if targetName == "" {
+				targetName = fmt.Sprintf("target-%d-%d", listenerIndex, ruleIndex)
+			}
+			backendPort := configInt(rule["target_group_port"], listenerPort)
+			backendProtocol := configString(rule["target_group_protocol"])
+			if backendProtocol == "" {
+				backendProtocol = "HTTP"
+			}
+			routes = append(routes, albRoute{
+				name:       sanitizeTraefikName(res.Name + "-" + targetName),
+				rule:       traefikRule(rule),
+				entryPoint: entryPoint,
+				protocol:   backendProtocol,
+				port:       backendPort,
+				hosts:      hosts,
+				healthPath: configString(rule["health_check_path"]),
+			})
+		}
+	}
+	return routes
+}
+
+func traefikRule(rule map[string]interface{}) string {
+	parts := []string{}
+	if host := configString(rule["host"]); host != "" {
+		parts = append(parts, fmt.Sprintf("Host(`%s`)", host))
+	}
+	if path := configString(rule["path"]); path != "" {
+		parts = append(parts, fmt.Sprintf("PathPrefix(`%s`)", path))
+	}
+	if len(parts) == 0 {
+		return "PathPrefix(`/`)"
+	}
+	return strings.Join(parts, " && ")
+}
+
+func configSlice(value interface{}) []map[string]interface{} {
+	switch typed := value.(type) {
+	case []map[string]interface{}:
+		return typed
+	case []interface{}:
+		out := make([]map[string]interface{}, 0, len(typed))
+		for _, item := range typed {
+			if itemMap, ok := item.(map[string]interface{}); ok {
+				out = append(out, itemMap)
+			}
+		}
+		return out
+	}
+	return nil
+}
+
+func configStrings(value interface{}) []string {
+	switch typed := value.(type) {
+	case []string:
+		return typed
+	case []interface{}:
+		out := make([]string, 0, len(typed))
+		for _, item := range typed {
+			if str := fmt.Sprintf("%v", item); str != "" {
+				out = append(out, str)
+			}
+		}
+		return out
+	case string:
+		if typed != "" {
+			return []string{typed}
+		}
+	}
+	return nil
+}
+
+func configString(value interface{}) string {
+	if value == nil {
+		return ""
+	}
+	return fmt.Sprintf("%v", value)
+}
+
+func configInt(value interface{}, fallback int) int {
+	switch typed := value.(type) {
+	case int:
+		return typed
+	case int32:
+		return int(typed)
+	case int64:
+		return int(typed)
+	case float64:
+		return int(typed)
+	}
+	return fallback
+}
+
+func sanitizeTraefikName(value string) string {
+	value = strings.ToLower(value)
+	var b strings.Builder
+	lastDash := false
+	for _, r := range value {
+		if (r >= 'a' && r <= 'z') || (r >= '0' && r <= '9') {
+			b.WriteRune(r)
+			lastDash = false
+			continue
+		}
+		if !lastDash {
+			b.WriteByte('-')
+			lastDash = true
+		}
+	}
+	return strings.Trim(b.String(), "-")
+}
+
+func albRunbook(lbName string) []domainrunbook.Step {
+	metadata := map[string]string{"kind": "routing", "name": lbName, "source": "aws_lb"}
+	return []domainrunbook.Step{
+		{
+			ID:               "backup-traefik-config",
+			Name:             "Backup Traefik routing config",
+			Group:            "Backup",
+			Type:             domainrunbook.StepTypeCommand,
+			Status:           domainrunbook.StepStatusPending,
+			Executor:         "shell",
+			Command:          []string{"sh", "backup_alb_config.sh"},
+			SuccessCondition: "Traefik static and dynamic config archive is created before cutover",
+			Metadata:         metadata,
+		},
+		{
+			ID:               "cutover-dns-to-traefik",
+			Name:             "Cut over DNS to Traefik",
+			Group:            "Cutover",
+			Type:             domainrunbook.StepTypeDNSCheck,
+			Status:           domainrunbook.StepStatusPending,
+			Executor:         "dns",
+			SuccessCondition: "ALB hostnames resolve to the HomePort Traefik endpoint and route probes pass",
+			Metadata:         metadata,
+		},
+	}
 }
 
 // generateCertificateConfig creates a certificate configuration template.

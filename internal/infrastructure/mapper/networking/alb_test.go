@@ -2,10 +2,12 @@ package networking
 
 import (
 	"context"
+	"strings"
 	"testing"
 
 	"github.com/homeport/homeport/internal/domain/mapper"
 	"github.com/homeport/homeport/internal/domain/resource"
+	domainrunbook "github.com/homeport/homeport/internal/domain/runbook"
 )
 
 func TestNewALBMapper(t *testing.T) {
@@ -156,4 +158,130 @@ func TestALBMapper_Map(t *testing.T) {
 			}
 		})
 	}
+}
+
+func TestALBMapper_MapBuildsDeterministicRoutesWhenListenersAndTargetsAreKnown(t *testing.T) {
+	res := &resource.AWSResource{
+		ID:   "arn:aws:elasticloadbalancing:us-east-1:123456789012:loadbalancer/app/shop/50dc6c495c0c9188",
+		Type: resource.TypeALB,
+		Name: "shop",
+		Config: map[string]interface{}{
+			"name": "shop",
+			"listeners": []interface{}{
+				map[string]interface{}{
+					"port":     80,
+					"protocol": "HTTP",
+					"rules": []interface{}{
+						map[string]interface{}{
+							"host":               "shop.example.com",
+							"path":               "/api",
+							"target_group_name":  "api",
+							"health_check_path":  "/ready",
+							"target_group_port":  8080,
+							"target_group_hosts": []interface{}{"api-1", "api-2"},
+						},
+					},
+				},
+			},
+		},
+	}
+
+	result, err := NewALBMapper().Map(context.Background(), res)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if len(result.ManualSteps) != 0 {
+		t.Fatalf("manual steps = %#v, want none when listeners and targets are known", result.ManualSteps)
+	}
+	dynamic := string(result.Configs["config/traefik/dynamic/config.yml"])
+	for _, want := range []string{
+		"shop-api-router:",
+		"rule: \"Host(`shop.example.com`) && PathPrefix(`/api`)\"",
+		"service: shop-api-service",
+		"url: \"http://api-1:8080\"",
+		"url: \"http://api-2:8080\"",
+		"path: \"/ready\"",
+	} {
+		if !strings.Contains(dynamic, want) {
+			t.Fatalf("dynamic config missing %q:\n%s", want, dynamic)
+		}
+	}
+	if strings.Contains(dynamic, "TODO") {
+		t.Fatalf("dynamic config still contains TODO:\n%s", dynamic)
+	}
+}
+
+func TestALBConformanceManagedAToZ(t *testing.T) {
+	result, err := NewALBMapper().Map(context.Background(), managedALBFixture())
+	if err != nil {
+		t.Fatal(err)
+	}
+	if len(result.ManualSteps) != 0 {
+		t.Fatalf("manual steps = %#v, want fully generated migration", result.ManualSteps)
+	}
+	if result.DockerService.Image != "traefik:v3.0" || result.DockerService.Deploy == nil || result.DockerService.Deploy.Replicas < 2 {
+		t.Fatalf("service does not provision HA Traefik: %#v", result.DockerService)
+	}
+	if result.DockerService.HealthCheck == nil {
+		t.Fatal("missing Traefik health check")
+	}
+	if _, ok := result.Configs["config/traefik/traefik.yml"]; !ok {
+		t.Fatal("missing static Traefik config")
+	}
+	dynamic := string(result.Configs["config/traefik/dynamic/config.yml"])
+	for _, want := range []string{"shop-api-router", "Host(`shop.example.com`)", "http://api-1:8080", "healthCheck"} {
+		if !strings.Contains(dynamic, want) {
+			t.Fatalf("dynamic config missing %q:\n%s", want, dynamic)
+		}
+	}
+	if _, ok := result.Scripts["backup_alb_config.sh"]; !ok {
+		t.Fatal("missing backup script")
+	}
+	for id, stepType := range map[string]domainrunbook.StepType{
+		"render-traefik-routes":             domainrunbook.StepTypeCommand,
+		"validate-route-table":              domainrunbook.StepTypeCommand,
+		"backup-traefik-config":             domainrunbook.StepTypeCommand,
+		"cutover-dns-to-traefik":            domainrunbook.StepTypeDNSCheck,
+		"rollback-routing-source-authority": domainrunbook.StepTypeRollback,
+	} {
+		if !hasRunbookStep(result, id, stepType) {
+			t.Fatalf("missing %s runbook step: %#v", id, result.RunbookSteps)
+		}
+	}
+}
+
+func managedALBFixture() *resource.AWSResource {
+	return &resource.AWSResource{
+		ID:   "arn:aws:elasticloadbalancing:us-east-1:123456789012:loadbalancer/app/shop/50dc6c495c0c9188",
+		Type: resource.TypeALB,
+		Name: "shop",
+		Config: map[string]interface{}{
+			"name": "shop",
+			"listeners": []interface{}{
+				map[string]interface{}{
+					"port":     80,
+					"protocol": "HTTP",
+					"rules": []interface{}{
+						map[string]interface{}{
+							"host":               "shop.example.com",
+							"path":               "/api",
+							"target_group_name":  "api",
+							"health_check_path":  "/ready",
+							"target_group_port":  8080,
+							"target_group_hosts": []interface{}{"api-1", "api-2"},
+						},
+					},
+				},
+			},
+		},
+	}
+}
+
+func hasRunbookStep(result *mapper.MappingResult, id string, stepType domainrunbook.StepType) bool {
+	for _, step := range result.RunbookSteps {
+		if step.ID == id && step.Type == stepType {
+			return true
+		}
+	}
+	return false
 }
