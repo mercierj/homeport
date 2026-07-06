@@ -9,6 +9,7 @@ import (
 
 	"github.com/homeport/homeport/internal/domain/mapper"
 	"github.com/homeport/homeport/internal/domain/resource"
+	domainrunbook "github.com/homeport/homeport/internal/domain/runbook"
 	"github.com/homeport/homeport/internal/infrastructure/mapper/shared/netrunbook"
 )
 
@@ -69,20 +70,20 @@ func (m *CloudLBMapper) Map(ctx context.Context, res *resource.AWSResource) (*ma
 	}
 
 	svc.Networks = []string{"homeport"}
+	svc.Deploy = &mapper.DeployConfig{Replicas: 2}
 	svc.Restart = "unless-stopped"
 
 	// Generate Traefik configuration
 	traefikConfig := m.generateTraefikConfig(serviceName, lbScheme, sessionAffinity, res)
 	result.AddConfig("traefik.yml", []byte(traefikConfig))
+	result.AddConfig("config/cloud-lb/app-change.env", []byte(m.generateAppChangeConfig(serviceName)))
 
 	// Handle backends
 	backends := m.extractBackends(res)
 	if len(backends) > 0 {
 		result.AddWarning(fmt.Sprintf("Backend service has %d backend(s). Configure backend services separately.", len(backends)))
-		for i, backend := range backends {
-			result.AddManualStep(fmt.Sprintf("Configure backend %d: %s", i+1, backend))
-		}
 	}
+	result.AddConfig("config/cloud-lb/backend-report.yaml", []byte(m.generateBackendReport(serviceName, lbScheme, backends)))
 
 	// Handle health checks
 	if healthCheck := m.extractHealthCheck(res); healthCheck != nil {
@@ -116,15 +117,39 @@ func (m *CloudLBMapper) Map(ctx context.Context, res *resource.AWSResource) (*ma
 		result.AddConfig("dynamic-config.yml", []byte(dynamicConfig))
 	}
 
-	result.AddManualStep("Access Traefik dashboard at: http://traefik.localhost:8080")
-	result.AddManualStep("Configure SSL/TLS certificates for HTTPS support")
-	result.AddManualStep("Update backend service URLs in dynamic-config.yml")
+	result.AddScript("backup_cloud_lb.sh", []byte(m.generateBackupScript(serviceName)))
+	result.AddScript("validate_cloud_lb.sh", []byte(m.generateValidateScript(serviceName)))
 	result.AddWarning("Consider using HAProxy for more advanced load balancing features")
 	for _, step := range netrunbook.Routing(serviceName, "google_compute_backend_service") {
 		result.AddRunbookStep(step)
 	}
+	for _, step := range cloudLBRunbook(serviceName) {
+		result.AddRunbookStep(step)
+	}
 
 	return result, nil
+}
+
+func (m *CloudLBMapper) generateAppChangeConfig(serviceName string) string {
+	return fmt.Sprintf(`APP_CHANGE_MODE=generated_patch
+SOURCE_CLOUD_LB_SERVICE=%s
+TARGET_LB_ENDPOINT=http://%s:80
+TARGET_LB_DASHBOARD=http://traefik.localhost:8080
+TARGET_LB_CONFIG=traefik.yml
+`, serviceName, m.sanitizeName(serviceName))
+}
+
+func (m *CloudLBMapper) generateBackendReport(serviceName, lbScheme string, backends []string) string {
+	var b strings.Builder
+	b.WriteString("source: google_compute_backend_service\n")
+	b.WriteString("service: " + serviceName + "\n")
+	b.WriteString("target: traefik\n")
+	b.WriteString("load_balancing_policy: " + lbScheme + "\n")
+	b.WriteString("backends:\n")
+	for _, backend := range backends {
+		b.WriteString("  - " + backend + "\n")
+	}
+	return b.String()
 }
 
 // extractLoadBalancingScheme extracts the load balancing algorithm.
@@ -292,6 +317,48 @@ http:
 
 # Load balancing algorithm: %s
 `, serviceName, serviceName, serviceName, serviceName, servers, lbAlgorithm)
+}
+
+func (m *CloudLBMapper) generateBackupScript(serviceName string) string {
+	return fmt.Sprintf(`#!/bin/sh
+set -eu
+archive="${BACKUP_DIR:-./backups}/cloud-lb-%s-$(date +%%Y%%m%%d%%H%%M%%S).tgz"
+mkdir -p "$(dirname "$archive")"
+tar -czf "$archive" traefik.yml dynamic-config.yml health-check.yml config/cloud-lb
+echo "$archive"
+`, m.sanitizeName(serviceName))
+}
+
+func (m *CloudLBMapper) generateValidateScript(serviceName string) string {
+	return fmt.Sprintf(`#!/bin/sh
+set -eu
+test -s traefik.yml
+test -s config/cloud-lb/app-change.env
+test -s config/cloud-lb/backend-report.yaml
+traefik check --configFile=traefik.yml
+echo "Cloud Load Balancing service %s validated on Traefik"
+`, serviceName)
+}
+
+func cloudLBRunbook(serviceName string) []domainrunbook.Step {
+	metadata := map[string]string{"kind": "load-balancer", "source": "google_compute_backend_service", "service": serviceName}
+	return []domainrunbook.Step{
+		cloudLBStep("discover-cloud-lb-service", "Discover Cloud Load Balancing service", "Discovery", domainrunbook.StepTypeCommand, []string{"sh", "-c", fmt.Sprintf("gcloud compute backend-services describe %q --global --format=json", serviceName)}, "backend service configuration is exported", metadata),
+		cloudLBStep("provision-traefik-lb", "Provision Traefik load balancer", "Provision", domainrunbook.StepTypeCommand, []string{"sh", "-c", "test -s traefik.yml"}, "Traefik configuration is rendered", metadata),
+		cloudLBStep("migrate-cloud-lb-backends", "Migrate Cloud LB backends", "Migrate", domainrunbook.StepTypeCommand, []string{"sh", "-c", "test -s config/cloud-lb/backend-report.yaml"}, "backend report and dynamic routes are rendered", metadata),
+		cloudLBStep("validate-traefik-lb", "Validate Traefik load balancer", "Validate", domainrunbook.StepTypeCommand, []string{"sh", "validate_cloud_lb.sh"}, "Traefik configuration validates", metadata),
+		cloudLBStep("backup-cloud-lb-config", "Backup Traefik load balancer", "Backup", domainrunbook.StepTypeCommand, []string{"sh", "backup_cloud_lb.sh"}, "load balancer config archive is produced", metadata),
+		cloudLBStep("cutover-cloud-lb-endpoint", "Cut over load balancer endpoint", "Cutover", domainrunbook.StepTypeAPICall, []string{"sh", "-c", "test -s config/cloud-lb/app-change.env"}, "generated patch points traffic at Traefik", metadata),
+		cloudLBStep("rollback-cloud-lb-service", "Keep Cloud Load Balancing as rollback", "Rollback", domainrunbook.StepTypeRollback, nil, "source backend service remains available until validation passes", metadata),
+	}
+}
+
+func cloudLBStep(id, name, group string, stepType domainrunbook.StepType, command []string, success string, metadata map[string]string) domainrunbook.Step {
+	executor := "shell"
+	if stepType == domainrunbook.StepTypeRollback {
+		executor = "noop"
+	}
+	return domainrunbook.Step{ID: id, Name: name, Group: group, Type: stepType, Status: domainrunbook.StepStatusPending, Executor: executor, Command: command, SuccessCondition: success, Metadata: metadata}
 }
 
 // sanitizeName sanitizes the name for Docker.

@@ -1360,18 +1360,22 @@ services:
     service: Cloud Load Balancing
     resource_types:
       - google_compute_backend_service
+    terraform_resource_types: [google_compute_backend_service]
+    target: Traefik
+    api_compatibility_strategy: generated_patch
+    manual_steps_resolved: true
     discover: true
-    cost: false
-    provision: false
+    cost: true
+    provision: true
     migrate: true
-    api_compat: false
-    env_dns: false
-    ha: false
-    backup: false
+    api_compat: true
+    env_dns: true
+    ha: true
+    backup: true
     validate: true
-    cutover: false
-    rollback: false
-    status: mapped
+    cutover: true
+    rollback: true
+    status: full
   - provider: gcp
     service: Cloud Run
     resource_types:

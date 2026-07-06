@@ -2,11 +2,55 @@ package networking
 
 import (
 	"context"
+	"strings"
 	"testing"
 
 	"github.com/homeport/homeport/internal/domain/mapper"
 	"github.com/homeport/homeport/internal/domain/resource"
+	domainrunbook "github.com/homeport/homeport/internal/domain/runbook"
 )
+
+func TestCloudLBConformanceManagedAToZ(t *testing.T) {
+	result, err := NewCloudLBMapper().Map(context.Background(), managedCloudLBFixture())
+	if err != nil {
+		t.Fatal(err)
+	}
+	if len(result.ManualSteps) != 0 {
+		t.Fatalf("manual steps = %#v, want generated Cloud Load Balancing migration", result.ManualSteps)
+	}
+	if result.DockerService.Image != "traefik:v2.10" || result.DockerService.Deploy == nil || result.DockerService.Deploy.Replicas < 2 {
+		t.Fatalf("service does not provision HA Traefik target: %#v", result.DockerService)
+	}
+	for _, file := range []string{"traefik.yml", "dynamic-config.yml", "config/cloud-lb/app-change.env", "config/cloud-lb/backend-report.yaml"} {
+		if _, ok := result.Configs[file]; !ok {
+			t.Fatalf("missing config %s", file)
+		}
+	}
+	appEnv := string(result.Configs["config/cloud-lb/app-change.env"])
+	for _, want := range []string{"APP_CHANGE_MODE=generated_patch", "SOURCE_CLOUD_LB_SERVICE=edge-lb", "TARGET_LB_ENDPOINT=http://edge-lb:80"} {
+		if !strings.Contains(appEnv, want) {
+			t.Fatalf("app-change env missing %q:\n%s", want, appEnv)
+		}
+	}
+	for _, file := range []string{"backup_cloud_lb.sh", "validate_cloud_lb.sh"} {
+		if _, ok := result.Scripts[file]; !ok {
+			t.Fatalf("missing script %s", file)
+		}
+	}
+	for id, stepType := range map[string]domainrunbook.StepType{
+		"discover-cloud-lb-service": domainrunbook.StepTypeCommand,
+		"provision-traefik-lb":      domainrunbook.StepTypeCommand,
+		"migrate-cloud-lb-backends": domainrunbook.StepTypeCommand,
+		"validate-traefik-lb":       domainrunbook.StepTypeCommand,
+		"backup-cloud-lb-config":    domainrunbook.StepTypeCommand,
+		"cutover-cloud-lb-endpoint": domainrunbook.StepTypeAPICall,
+		"rollback-cloud-lb-service": domainrunbook.StepTypeRollback,
+	} {
+		if !hasCloudLBRunbookStep(result, id, stepType) {
+			t.Fatalf("missing %s runbook step: %#v", id, result.RunbookSteps)
+		}
+	}
+}
 
 func TestNewCloudLBMapper(t *testing.T) {
 	m := NewCloudLBMapper()
@@ -16,6 +60,32 @@ func TestNewCloudLBMapper(t *testing.T) {
 	if m.ResourceType() != resource.TypeCloudLB {
 		t.Errorf("ResourceType() = %v, want %v", m.ResourceType(), resource.TypeCloudLB)
 	}
+}
+
+func managedCloudLBFixture() *resource.AWSResource {
+	return &resource.AWSResource{
+		ID:   "projects/demo/global/backendServices/edge-lb",
+		Type: resource.TypeCloudLB,
+		Name: "edge-lb",
+		Config: map[string]interface{}{
+			"name":               "edge-lb",
+			"protocol":           "HTTP",
+			"locality_lb_policy": "ROUND_ROBIN",
+			"backend": []interface{}{
+				map[string]interface{}{"group": "http://app:8080"},
+				map[string]interface{}{"group": "http://app-2:8080"},
+			},
+		},
+	}
+}
+
+func hasCloudLBRunbookStep(result *mapper.MappingResult, id string, stepType domainrunbook.StepType) bool {
+	for _, step := range result.RunbookSteps {
+		if step.ID == id && step.Type == stepType {
+			return true
+		}
+	}
+	return false
 }
 
 func TestCloudLBMapper_ResourceType(t *testing.T) {
