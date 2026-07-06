@@ -75,6 +75,7 @@ func init() {
 	coverageCmd.Flags().BoolVar(&coverageStrict, "strict", false, "exit non-zero on coverage drift")
 	coverageCmd.AddCommand(coverageAddMissingCmd)
 	coverageCmd.AddCommand(coveragePromoteCmd)
+	coverageCmd.AddCommand(coverageAssertFullCmd)
 	rootCmd.AddCommand(coverageCmd)
 
 	coverageAddMissingCmd.Flags().StringVar(&coverageCatalog, "catalog", "docs/coverage/services.yaml", "coverage catalog path")
@@ -95,6 +96,8 @@ func init() {
 	coveragePromoteCmd.Flags().StringVar(&promoteService, "service", "", "service name")
 	coveragePromoteCmd.Flags().StringVar(&promoteStatus, "status", "", "target status: missing, guided, mapped, full, impossible")
 	coveragePromoteCmd.Flags().BoolVar(&promoteManualSteps, "manual-steps-resolved", false, "mark unresolved manual steps as resolved")
+
+	coverageAssertFullCmd.Flags().StringVar(&coverageCatalog, "catalog", "docs/coverage/services.yaml", "coverage catalog path")
 }
 
 var coverageAddMissingCmd = &cobra.Command{
@@ -155,6 +158,24 @@ var coveragePromoteCmd = &cobra.Command{
 			return err
 		}
 		return saveCoverageCatalogAndMarkdown(cmd, *catalog)
+	},
+}
+
+var coverageAssertFullCmd = &cobra.Command{
+	Use:   "assert-full",
+	Short: "Fail unless every coverage row is fully managed",
+	Args:  cobra.NoArgs,
+	RunE: func(cmd *cobra.Command, args []string) error {
+		catalog, err := appcoverage.LoadCatalog(coverageCatalog)
+		if err != nil {
+			return fmt.Errorf("load coverage catalog: %w", err)
+		}
+		summary := appcoverage.NewService(*catalog).ManagedSummary()
+		if summary.NotFull > 0 {
+			return fmt.Errorf("not 100%% managed: %d of %d services are not full", summary.NotFull, summary.Total)
+		}
+		fmt.Fprintf(cmd.OutOrStdout(), "100%% managed: %d services full\n", summary.Total)
+		return nil
 	},
 }
 

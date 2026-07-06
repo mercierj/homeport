@@ -224,6 +224,26 @@ services:
 	}
 }
 
+func TestCoverageAssertFullFailsWhenAnyRowIsNotFull(t *testing.T) {
+	resetCoverageCommandState(t)
+	dir := t.TempDir()
+	coverageCatalog = filepath.Join(dir, "services.yaml")
+	if err := os.WriteFile(coverageCatalog, []byte(`
+services:
+  - provider: aws
+    service: S3
+    resource_types: [aws_s3_bucket]
+    status: mapped
+`), 0o600); err != nil {
+		t.Fatal(err)
+	}
+
+	err := coverageAssertFullCmd.RunE(coverageAssertFullCmd, nil)
+	if err == nil || !strings.Contains(err.Error(), "not 100% managed: 1 of 1 services are not full") {
+		t.Fatalf("expected assert-full failure, got %v", err)
+	}
+}
+
 func testCoverageServices() []domaincoverage.ServiceCoverage {
 	return []domaincoverage.ServiceCoverage{
 		{

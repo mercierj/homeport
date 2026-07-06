@@ -30,6 +30,19 @@ type Service struct {
 	catalog Catalog
 }
 
+type ManagedProviderSummary struct {
+	Total   int `json:"total"`
+	Full    int `json:"full"`
+	NotFull int `json:"not_full"`
+}
+
+type ManagedSummary struct {
+	Total      int                               `json:"total"`
+	Full       int                               `json:"full"`
+	NotFull    int                               `json:"not_full"`
+	ByProvider map[string]ManagedProviderSummary `json:"by_provider"`
+}
+
 func LoadCatalog(path string) (*Catalog, error) {
 	data, err := os.ReadFile(path)
 	if err != nil {
@@ -112,6 +125,24 @@ func NewService(catalog Catalog) *Service {
 
 func (s *Service) Catalog() Catalog {
 	return s.catalog
+}
+
+func (s *Service) ManagedSummary() ManagedSummary {
+	out := ManagedSummary{ByProvider: map[string]ManagedProviderSummary{}}
+	for _, row := range s.catalog.Services {
+		out.Total++
+		provider := out.ByProvider[row.Provider]
+		provider.Total++
+		if row.Status == domaincoverage.StatusFull && domaincoverage.ComputeStatus(row) == domaincoverage.StatusFull {
+			out.Full++
+			provider.Full++
+		} else {
+			out.NotFull++
+			provider.NotFull++
+		}
+		out.ByProvider[row.Provider] = provider
+	}
+	return out
 }
 
 func (s *Service) RegisteredMapperTypes() []string {

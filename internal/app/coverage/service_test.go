@@ -68,6 +68,24 @@ services:
 	}
 }
 
+func TestManagedSummaryCountsNonFullRows(t *testing.T) {
+	catalog := Catalog{Services: []domaincoverage.ServiceCoverage{
+		{Provider: "aws", Service: "S3", Status: domaincoverage.StatusFull, ManualStepsResolved: true, Discover: true, Cost: true, Provision: true, Migrate: true, APICompat: true, EnvDNS: true, HA: true, Backup: true, Validate: true, Cutover: true, Rollback: true},
+		{Provider: "aws", Service: "Athena", Status: domaincoverage.StatusMissing, Blocker: "not modeled yet"},
+		{Provider: "gcp", Service: "Cloud Storage", Status: domaincoverage.StatusGuided, Blocker: "adapter required"},
+		{Provider: "azure", Service: "Azure VM", Status: domaincoverage.StatusMapped},
+	}}
+
+	summary := NewService(catalog).ManagedSummary()
+
+	if summary.Total != 4 || summary.Full != 1 || summary.NotFull != 3 {
+		t.Fatalf("summary = %#v, want 4 total, 1 full, 3 not full", summary)
+	}
+	if summary.ByProvider["aws"].NotFull != 1 || summary.ByProvider["gcp"].NotFull != 1 || summary.ByProvider["azure"].NotFull != 1 {
+		t.Fatalf("provider summary = %#v", summary.ByProvider)
+	}
+}
+
 func TestDefaultCatalogMatchesDocsLedger(t *testing.T) {
 	docsCatalog, err := os.ReadFile(filepath.Join("..", "..", "..", "docs", "coverage", "services.yaml"))
 	if err != nil {
