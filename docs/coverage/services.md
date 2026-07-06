@@ -21,7 +21,7 @@
 | aws | EMR | full | aws_emr_cluster |
 | aws | ElastiCache | full | aws_elasticache_cluster |
 | aws | EventBridge | full | aws_cloudwatch_event_rule |
-| aws | Glue | missing |  |
+| aws | Glue | full | aws_glue_catalog_database |
 | aws | GuardDuty | missing |  |
 | aws | IAM | mapped | aws_iam_role |
 | aws | KMS | guided | aws_kms_key |

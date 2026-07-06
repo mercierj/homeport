@@ -56,6 +56,7 @@ func (r *Registry) RegisterDefaults() {
 	r.Register(database.NewElastiCacheMapper())
 	r.Register(database.NewAthenaMapper())
 	r.Register(database.NewEMRMapper())
+	r.Register(database.NewGlueMapper())
 
 	// AWS Compute mappers
 	r.Register(compute.NewEC2Mapper())

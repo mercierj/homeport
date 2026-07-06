@@ -103,12 +103,13 @@ var CategoryMapping = map[Type]Category{
 	TypeEFSVolume: CategoryFileStorage,
 
 	// AWS Database
-	TypeRDSInstance:     CategorySQLDatabase,
-	TypeRDSCluster:      CategorySQLDatabase,
-	TypeDynamoDBTable:   CategoryNoSQLDatabase,
-	TypeElastiCache:     CategoryCache,
-	TypeAthenaWorkgroup: CategorySQLDatabase,
-	TypeEMRCluster:      CategoryCompute,
+	TypeRDSInstance:         CategorySQLDatabase,
+	TypeRDSCluster:          CategorySQLDatabase,
+	TypeDynamoDBTable:       CategoryNoSQLDatabase,
+	TypeElastiCache:         CategoryCache,
+	TypeAthenaWorkgroup:     CategorySQLDatabase,
+	TypeEMRCluster:          CategoryCompute,
+	TypeGlueCatalogDatabase: CategorySQLDatabase,
 
 	// AWS Networking
 	TypeALB:               CategoryLoadBalancer,
