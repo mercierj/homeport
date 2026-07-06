@@ -8,7 +8,7 @@
 | aws | Bedrock | full | aws_bedrock_inference_profile |
 | aws | CloudFront | full | aws_cloudfront_distribution |
 | aws | CloudWatch | full | aws_cloudwatch_metric_alarm, aws_cloudwatch_log_group, aws_cloudwatch_dashboard |
-| aws | CodeBuild | missing |  |
+| aws | CodeBuild | full | aws_codebuild_project |
 | aws | CodePipeline | missing |  |
 | aws | Cognito | guided | aws_cognito_user_pool |
 | aws | DynamoDB | mapped | aws_dynamodb_table |

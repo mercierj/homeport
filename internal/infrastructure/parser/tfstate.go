@@ -224,6 +224,8 @@ func mapTerraformTypeToResourceType(tfType string) resource.Type {
 		return resource.TypeCloudWatchLogGroup
 	case "aws_cloudwatch_dashboard":
 		return resource.TypeCloudWatchDashboard
+	case "aws_codebuild_project":
+		return resource.TypeCodeBuild
 
 	default:
 		// Return the Terraform type as-is for unknown types

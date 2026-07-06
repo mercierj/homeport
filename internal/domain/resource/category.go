@@ -45,6 +45,7 @@ const (
 	CategoryMonitoring Category = "monitoring" // CloudWatch, Cloud Monitoring, Azure Monitor
 	CategoryLogging    Category = "logging"    // CloudWatch Logs, Cloud Logging, Log Analytics
 	CategoryTracing    Category = "tracing"    // X-Ray, Cloud Trace, Application Insights
+	CategoryDevOps     Category = "devops"     // CodeBuild, CodePipeline, Azure DevOps
 
 	// Aggregate categories (for grouping related sub-categories)
 	CategoryMessaging  Category = "messaging"  // Aggregate for Queue, PubSub, Stream
@@ -70,7 +71,7 @@ func (c Category) IsValid() bool {
 		CategoryQueue, CategoryPubSub, CategoryStream,
 		CategoryLoadBalancer, CategoryCDN, CategoryDNS, CategoryAPIGateway, CategoryVPC,
 		CategoryAuth, CategorySecrets, CategoryIAM, CategoryFirewall, CategoryCertificate,
-		CategoryMonitoring, CategoryLogging, CategoryTracing,
+		CategoryMonitoring, CategoryLogging, CategoryTracing, CategoryDevOps,
 		CategoryMessaging, CategoryNetworking, CategorySecurity, CategoryIdentity:
 		return true
 	default:
@@ -92,6 +93,7 @@ var CategoryMapping = map[Type]Category{
 	TypeECSTaskDef:     CategoryContainer,
 	TypeEKSCluster:     CategoryKubernetes,
 	TypeBedrockModel:   CategoryServerless,
+	TypeCodeBuild:      CategoryDevOps,
 
 	// AWS Storage
 	TypeS3Bucket:  CategoryObjectStorage,

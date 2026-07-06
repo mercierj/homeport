@@ -11,6 +11,7 @@ import (
 	"github.com/homeport/homeport/internal/infrastructure/mapper/azure"
 	"github.com/homeport/homeport/internal/infrastructure/mapper/compute"
 	"github.com/homeport/homeport/internal/infrastructure/mapper/database"
+	"github.com/homeport/homeport/internal/infrastructure/mapper/devops"
 	"github.com/homeport/homeport/internal/infrastructure/mapper/gcp"
 	"github.com/homeport/homeport/internal/infrastructure/mapper/messaging"
 	"github.com/homeport/homeport/internal/infrastructure/mapper/monitoring"
@@ -62,6 +63,7 @@ func (r *Registry) RegisterDefaults() {
 	r.Register(compute.NewECSTaskDefMapper())
 	r.Register(compute.NewEKSMapper())
 	r.Register(compute.NewBedrockMapper())
+	r.Register(devops.NewCodeBuildMapper())
 
 	// AWS Networking mappers
 	r.Register(networking.NewALBMapper())
