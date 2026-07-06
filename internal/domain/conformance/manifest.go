@@ -1,5 +1,7 @@
 package conformance
 
+import "strings"
+
 type Check string
 
 const (
@@ -32,4 +34,20 @@ func (m Manifest) MissingChecks() []Check {
 		}
 	}
 	return missing
+}
+
+func (m Manifest) PromotionIssues() []string {
+	issues := []string{}
+	for _, check := range m.MissingChecks() {
+		issues = append(issues, "missing "+string(check))
+	}
+	target := strings.TrimSpace(m.Evidence["target"])
+	if target == "" || strings.EqualFold(target, "HomePort managed replacement") {
+		issues = append(issues, "specific target evidence is required")
+	}
+	mode := strings.TrimSpace(m.Evidence["app_change_mode"])
+	if mode == "" || mode == "adapter_or_generated_report" {
+		issues = append(issues, "specific app change evidence is required")
+	}
+	return issues
 }

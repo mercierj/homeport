@@ -103,15 +103,14 @@ func (c *Catalog) Promote(provider, service string, status domaincoverage.Status
 			if !fullChecklist(*row) || row.Blocker != "" {
 				return fmt.Errorf("cannot promote %s/%s to full until all checklist columns are true, blocker is empty, and unresolved manual steps are cleared", provider, service)
 			}
+			if strings.TrimSpace(row.Target) == "" || strings.TrimSpace(row.APICompatibilityStrategy) == "" {
+				return fmt.Errorf("cannot promote %s/%s to full until target and API compatibility strategy are set", provider, service)
+			}
 			if !row.ManualStepsResolved {
 				return fmt.Errorf("cannot promote %s/%s to full until manual steps are resolved", provider, service)
 			}
-			manifest, err := appconformance.NewService(ConformanceDir).Load(provider, row.Service)
-			if err != nil {
-				return fmt.Errorf("conformance manifest for %s/%s: %w", provider, service, err)
-			}
-			if missing := manifest.MissingChecks(); len(missing) > 0 {
-				return fmt.Errorf("conformance manifest for %s/%s missing checks: %v", provider, service, missing)
+			if err := conformancePromotionIssue(provider, row.Service); err != nil {
+				return err
 			}
 		}
 		if len(manualStepsResolved) > 0 && manualStepsResolved[0] {
@@ -154,6 +153,35 @@ func (s *Service) ManagedSummary() ManagedSummary {
 		out.ByProvider[row.Provider] = provider
 	}
 	return out
+}
+
+func (s *Service) ManagedGaps() []string {
+	gaps := []string{}
+	for _, row := range s.catalog.Services {
+		if row.Status != domaincoverage.StatusFull ||
+			domaincoverage.ComputeStatus(row) != domaincoverage.StatusFull ||
+			!row.ManualStepsResolved ||
+			strings.TrimSpace(row.Target) == "" ||
+			strings.TrimSpace(row.APICompatibilityStrategy) == "" {
+			gaps = append(gaps, row.Provider+"/"+row.Service)
+			continue
+		}
+		if err := conformancePromotionIssue(row.Provider, row.Service); err != nil {
+			gaps = append(gaps, row.Provider+"/"+row.Service)
+		}
+	}
+	return gaps
+}
+
+func conformancePromotionIssue(provider, service string) error {
+	manifest, err := appconformance.NewService(ConformanceDir).Load(provider, service)
+	if err != nil {
+		return fmt.Errorf("conformance manifest for %s/%s: %w", provider, service, err)
+	}
+	if issues := manifest.PromotionIssues(); len(issues) > 0 {
+		return fmt.Errorf("conformance manifest for %s/%s has promotion issues: %v", provider, service, issues)
+	}
+	return nil
 }
 
 func (s *Service) RegisteredMapperTypes() []string {

@@ -27,16 +27,20 @@ import (
 
 // Service handles migration analysis and generation.
 type Service struct {
-	registry     *infraMapper.Registry
-	stateStore   *StateStore
-	consolidator *consolidator.Consolidator
+	registry         *infraMapper.Registry
+	stateStore       *StateStore
+	consolidator     *consolidator.Consolidator
+	appChangeScanner interface {
+		ScanPath(string) (domainappchange.Report, error)
+	}
 }
 
 // NewService creates a new migration service.
 func NewService() *Service {
 	return &Service{
-		registry:     infraMapper.GlobalRegistry,
-		consolidator: consolidator.New(),
+		registry:         infraMapper.GlobalRegistry,
+		consolidator:     consolidator.New(),
+		appChangeScanner: appchange.NewService(),
 	}
 }
 
@@ -48,17 +52,19 @@ func NewServiceWithState(statePath string) (*Service, error) {
 	}
 
 	return &Service{
-		registry:     infraMapper.GlobalRegistry,
-		stateStore:   store,
-		consolidator: consolidator.New(),
+		registry:         infraMapper.GlobalRegistry,
+		stateStore:       store,
+		consolidator:     consolidator.New(),
+		appChangeScanner: appchange.NewService(),
 	}, nil
 }
 
 // NewServiceWithConsolidator creates a migration service with a custom consolidator.
 func NewServiceWithConsolidator(c *consolidator.Consolidator) *Service {
 	return &Service{
-		registry:     infraMapper.GlobalRegistry,
-		consolidator: c,
+		registry:         infraMapper.GlobalRegistry,
+		consolidator:     c,
+		appChangeScanner: appchange.NewService(),
 	}
 }
 
@@ -186,7 +192,11 @@ func (s *Service) Analyze(ctx context.Context, req AnalyzeRequest) (*AnalyzeResp
 		Warnings:  []string{},
 		Provider:  string(infra.Provider),
 	}
-	if report, err := appchange.NewService().ScanPath(tmpDir); err == nil {
+	if s.appChangeScanner != nil {
+		report, err := s.appChangeScanner.ScanPath(tmpDir)
+		if err != nil {
+			return nil, fmt.Errorf("scan application changes: %w", err)
+		}
 		resp.AppChangeReport = report
 	}
 

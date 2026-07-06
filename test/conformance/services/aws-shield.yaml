@@ -1,17 +1,21 @@
+---
 provider: aws
 service: Shield
 checks:
-    api_compat: go test ./test/compat
-    backup: go test ./internal/app/backup
-    cost: go test ./internal/domain/coverage ./internal/app/coverage
-    cutover: go test ./internal/app/cutover
-    discover: go test ./test/integration/aws
-    env_dns: go test ./internal/app/cutover
-    ha: go test ./internal/domain/provider
-    migrate: go test ./internal/app/datamigration
-    provision: go test ./internal/infrastructure/mapper/...
-    rollback: go test ./internal/app/backup
-    validate: go test ./internal/app/metrics
+  discover: go test ./test/integration/aws -run Shield
+  cost: go test ./internal/domain/coverage ./internal/app/coverage
+  provision: go test ./internal/infrastructure/mapper/...
+  migrate: go test ./internal/app/datamigration
+  api_compat: go test ./test/compat/...
+  env_dns: go test ./internal/app/runbook ./internal/app/cutover
+  ha: go test ./internal/domain/provider ./internal/infrastructure/generator/...
+  backup: go test ./internal/app/backup
+  validate: go test ./internal/app/runbook ./internal/app/metrics
+  cutover: go test ./internal/app/cutover
+  rollback: go test ./internal/app/cutover ./internal/app/backup
 evidence:
-    app_change_mode: adapter_or_generated_report
-    target: edge WAF and DDoS provider controls
+  target: Coraza WAF and nftables rate limiting
+  app_change_mode: replacement_runbook
+  api_compatibility_strategy: HomePort generates a replacement runbook that provisions
+    Coraza WAF and nftables rate limiting, migrates source configuration/data, validates
+    service health, cuts traffic over, and records rollback steps.

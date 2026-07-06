@@ -244,6 +244,100 @@ services:
 	}
 }
 
+func TestCoverageAssertFullFailsWithoutConformanceEvidence(t *testing.T) {
+	resetCoverageCommandState(t)
+	dir := t.TempDir()
+	coverageCatalog = filepath.Join(dir, "services.yaml")
+	originalConformanceDir := appcoverage.ConformanceDir
+	appcoverage.ConformanceDir = filepath.Join(dir, "missing-conformance")
+	t.Cleanup(func() { appcoverage.ConformanceDir = originalConformanceDir })
+	if err := os.WriteFile(coverageCatalog, []byte(`
+services:
+  - provider: aws
+    service: S3
+    resource_types: [aws_s3_bucket]
+    manual_steps_resolved: true
+    discover: true
+    cost: true
+    provision: true
+    migrate: true
+    api_compat: true
+    env_dns: true
+    ha: true
+    backup: true
+    validate: true
+    cutover: true
+    rollback: true
+    status: full
+`), 0o600); err != nil {
+		t.Fatal(err)
+	}
+
+	err := coverageAssertFullCmd.RunE(coverageAssertFullCmd, nil)
+	if err == nil || !strings.Contains(err.Error(), "not 100% managed: 1 of 1 services are not full") {
+		t.Fatalf("expected assert-full conformance failure, got %v", err)
+	}
+}
+
+func TestCoverageAssertFullFailsUntilManualStepsResolved(t *testing.T) {
+	resetCoverageCommandState(t)
+	dir := t.TempDir()
+	coverageCatalog = filepath.Join(dir, "services.yaml")
+	conformanceDir := filepath.Join(dir, "conformance")
+	originalConformanceDir := appcoverage.ConformanceDir
+	appcoverage.ConformanceDir = conformanceDir
+	t.Cleanup(func() { appcoverage.ConformanceDir = originalConformanceDir })
+	if err := os.MkdirAll(conformanceDir, 0o700); err != nil {
+		t.Fatal(err)
+	}
+	if err := os.WriteFile(filepath.Join(conformanceDir, "aws-s3.yaml"), []byte(`
+provider: aws
+service: S3
+checks:
+  discover: go test ./test/integration/aws -run S3
+  cost: go test ./internal/domain/coverage
+  provision: go test ./internal/infrastructure/mapper/storage -run S3
+  migrate: go test ./internal/app/datamigration -run S3
+  api_compat: go test ./test/compat -run S3
+  env_dns: go test ./internal/app/cutover -run S3
+  ha: go test ./internal/domain/provider -run S3
+  backup: go test ./internal/app/backup -run S3
+  validate: go test ./internal/app/metrics -run S3
+  cutover: go test ./internal/app/cutover -run S3
+  rollback: go test ./internal/app/backup -run S3
+evidence:
+  target: MinIO
+  app_change_mode: adapter
+`), 0o600); err != nil {
+		t.Fatal(err)
+	}
+	if err := os.WriteFile(coverageCatalog, []byte(`
+services:
+  - provider: aws
+    service: S3
+    resource_types: [aws_s3_bucket]
+    discover: true
+    cost: true
+    provision: true
+    migrate: true
+    api_compat: true
+    env_dns: true
+    ha: true
+    backup: true
+    validate: true
+    cutover: true
+    rollback: true
+    status: full
+`), 0o600); err != nil {
+		t.Fatal(err)
+	}
+
+	err := coverageAssertFullCmd.RunE(coverageAssertFullCmd, nil)
+	if err == nil || !strings.Contains(err.Error(), "not 100% managed: 1 of 1 services are not full") {
+		t.Fatalf("expected assert-full manual-step failure, got %v", err)
+	}
+}
+
 func testCoverageServices() []domaincoverage.ServiceCoverage {
 	return []domaincoverage.ServiceCoverage{
 		{

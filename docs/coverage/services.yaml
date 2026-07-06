@@ -1,3136 +1,3398 @@
+---
 services:
-    - provider: aws
-      service: ALB
-      resource_types:
-        - aws_lb
-      target: HomePort managed replacement
-      api_compatibility_strategy: adapter or generated app-change report
-      manual_steps_resolved: true
-      discover: true
-      cost: true
-      provision: true
-      migrate: true
-      api_compat: true
-      env_dns: true
-      ha: true
-      backup: true
-      validate: true
-      cutover: true
-      rollback: true
-      status: full
-    - provider: aws
-      service: ACM
-      resource_types:
-        - aws_acm_certificate
-      target: HomePort managed replacement
-      api_compatibility_strategy: adapter or generated app-change report
-      manual_steps_resolved: true
-      discover: true
-      cost: true
-      provision: true
-      migrate: true
-      api_compat: true
-      env_dns: true
-      ha: true
-      backup: true
-      validate: true
-      cutover: true
-      rollback: true
-      status: full
-    - provider: aws
-      service: API Gateway
-      resource_types:
-        - aws_api_gateway_rest_api
-      target: HomePort managed replacement
-      api_compatibility_strategy: adapter or generated app-change report
-      manual_steps_resolved: true
-      discover: true
-      cost: true
-      provision: true
-      migrate: true
-      api_compat: true
-      env_dns: true
-      ha: true
-      backup: true
-      validate: true
-      cutover: true
-      rollback: true
-      status: full
-    - provider: aws
-      service: AppSync
-      resource_types: []
-      target: HomePort managed replacement
-      api_compatibility_strategy: adapter or generated app-change report
-      manual_steps_resolved: true
-      discover: true
-      cost: true
-      provision: true
-      migrate: true
-      api_compat: true
-      env_dns: true
-      ha: true
-      backup: true
-      validate: true
-      cutover: true
-      rollback: true
-      status: full
-    - provider: aws
-      service: Athena
-      resource_types: []
-      target: HomePort managed replacement
-      api_compatibility_strategy: adapter or generated app-change report
-      manual_steps_resolved: true
-      discover: true
-      cost: true
-      provision: true
-      migrate: true
-      api_compat: true
-      env_dns: true
-      ha: true
-      backup: true
-      validate: true
-      cutover: true
-      rollback: true
-      status: full
-    - provider: aws
-      service: Bedrock
-      resource_types: []
-      target: HomePort managed replacement
-      api_compatibility_strategy: adapter or generated app-change report
-      manual_steps_resolved: true
-      discover: true
-      cost: true
-      provision: true
-      migrate: true
-      api_compat: true
-      env_dns: true
-      ha: true
-      backup: true
-      validate: true
-      cutover: true
-      rollback: true
-      status: full
-    - provider: aws
-      service: CloudFront
-      resource_types:
-        - aws_cloudfront_distribution
-      target: HomePort managed replacement
-      api_compatibility_strategy: adapter or generated app-change report
-      manual_steps_resolved: true
-      discover: true
-      cost: true
-      provision: true
-      migrate: true
-      api_compat: true
-      env_dns: true
-      ha: true
-      backup: true
-      validate: true
-      cutover: true
-      rollback: true
-      status: full
-    - provider: aws
-      service: CloudWatch
-      resource_types:
-        - aws_cloudwatch_metric_alarm
-        - aws_cloudwatch_log_group
-        - aws_cloudwatch_dashboard
-      target: HomePort managed replacement
-      api_compatibility_strategy: adapter or generated app-change report
-      manual_steps_resolved: true
-      discover: true
-      cost: true
-      provision: true
-      migrate: true
-      api_compat: true
-      env_dns: true
-      ha: true
-      backup: true
-      validate: true
-      cutover: true
-      rollback: true
-      status: full
-    - provider: aws
-      service: CodeBuild
-      resource_types: []
-      target: HomePort managed replacement
-      api_compatibility_strategy: adapter or generated app-change report
-      manual_steps_resolved: true
-      discover: true
-      cost: true
-      provision: true
-      migrate: true
-      api_compat: true
-      env_dns: true
-      ha: true
-      backup: true
-      validate: true
-      cutover: true
-      rollback: true
-      status: full
-    - provider: aws
-      service: CodePipeline
-      resource_types: []
-      target: HomePort managed replacement
-      api_compatibility_strategy: adapter or generated app-change report
-      manual_steps_resolved: true
-      discover: true
-      cost: true
-      provision: true
-      migrate: true
-      api_compat: true
-      env_dns: true
-      ha: true
-      backup: true
-      validate: true
-      cutover: true
-      rollback: true
-      status: full
-    - provider: aws
-      service: Cognito
-      resource_types:
-        - aws_cognito_user_pool
-      target: HomePort managed replacement
-      api_compatibility_strategy: adapter or generated app-change report
-      manual_steps_resolved: true
-      discover: true
-      cost: true
-      provision: true
-      migrate: true
-      api_compat: true
-      env_dns: true
-      ha: true
-      backup: true
-      validate: true
-      cutover: true
-      rollback: true
-      status: full
-    - provider: aws
-      service: DynamoDB
-      resource_types:
-        - aws_dynamodb_table
-      target: HomePort managed replacement
-      api_compatibility_strategy: adapter or generated app-change report
-      manual_steps_resolved: true
-      discover: true
-      cost: true
-      provision: true
-      migrate: true
-      api_compat: true
-      env_dns: true
-      ha: true
-      backup: true
-      validate: true
-      cutover: true
-      rollback: true
-      status: full
-    - provider: aws
-      service: EBS
-      resource_types:
-        - aws_ebs_volume
-      target: HomePort managed replacement
-      api_compatibility_strategy: adapter or generated app-change report
-      manual_steps_resolved: true
-      discover: true
-      cost: true
-      provision: true
-      migrate: true
-      api_compat: true
-      env_dns: true
-      ha: true
-      backup: true
-      validate: true
-      cutover: true
-      rollback: true
-      status: full
-    - provider: aws
-      service: EC2
-      resource_types:
-        - aws_instance
-      target: HomePort managed replacement
-      api_compatibility_strategy: adapter or generated app-change report
-      manual_steps_resolved: true
-      discover: true
-      cost: true
-      provision: true
-      migrate: true
-      api_compat: true
-      env_dns: true
-      ha: true
-      backup: true
-      validate: true
-      cutover: true
-      rollback: true
-      status: full
-    - provider: aws
-      service: ECR
-      resource_types: []
-      target: HomePort managed replacement
-      api_compatibility_strategy: adapter or generated app-change report
-      manual_steps_resolved: true
-      discover: true
-      cost: true
-      provision: true
-      migrate: true
-      api_compat: true
-      env_dns: true
-      ha: true
-      backup: true
-      validate: true
-      cutover: true
-      rollback: true
-      status: full
-    - provider: aws
-      service: ECS
-      resource_types:
-        - aws_ecs_service
-        - aws_ecs_task_definition
-      target: HomePort managed replacement
-      api_compatibility_strategy: adapter or generated app-change report
-      manual_steps_resolved: true
-      discover: true
-      cost: true
-      provision: true
-      migrate: true
-      api_compat: true
-      env_dns: true
-      ha: true
-      backup: true
-      validate: true
-      cutover: true
-      rollback: true
-      status: full
-    - provider: aws
-      service: EFS
-      resource_types:
-        - aws_efs_file_system
-      target: HomePort managed replacement
-      api_compatibility_strategy: adapter or generated app-change report
-      manual_steps_resolved: true
-      discover: true
-      cost: true
-      provision: true
-      migrate: true
-      api_compat: true
-      env_dns: true
-      ha: true
-      backup: true
-      validate: true
-      cutover: true
-      rollback: true
-      status: full
-    - provider: aws
-      service: EKS
-      resource_types:
-        - aws_eks_cluster
-      target: HomePort managed replacement
-      api_compatibility_strategy: adapter or generated app-change report
-      manual_steps_resolved: true
-      discover: true
-      cost: true
-      provision: true
-      migrate: true
-      api_compat: true
-      env_dns: true
-      ha: true
-      backup: true
-      validate: true
-      cutover: true
-      rollback: true
-      status: full
-    - provider: aws
-      service: EMR
-      resource_types: []
-      target: HomePort managed replacement
-      api_compatibility_strategy: adapter or generated app-change report
-      manual_steps_resolved: true
-      discover: true
-      cost: true
-      provision: true
-      migrate: true
-      api_compat: true
-      env_dns: true
-      ha: true
-      backup: true
-      validate: true
-      cutover: true
-      rollback: true
-      status: full
-    - provider: aws
-      service: ElastiCache
-      resource_types:
-        - aws_elasticache_cluster
-      target: HomePort managed replacement
-      api_compatibility_strategy: adapter or generated app-change report
-      manual_steps_resolved: true
-      discover: true
-      cost: true
-      provision: true
-      migrate: true
-      api_compat: true
-      env_dns: true
-      ha: true
-      backup: true
-      validate: true
-      cutover: true
-      rollback: true
-      status: full
-    - provider: aws
-      service: EventBridge
-      resource_types:
-        - aws_cloudwatch_event_rule
-      target: HomePort managed replacement
-      api_compatibility_strategy: adapter or generated app-change report
-      manual_steps_resolved: true
-      discover: true
-      cost: true
-      provision: true
-      migrate: true
-      api_compat: true
-      env_dns: true
-      ha: true
-      backup: true
-      validate: true
-      cutover: true
-      rollback: true
-      status: full
-    - provider: aws
-      service: Glue
-      resource_types: []
-      target: HomePort managed replacement
-      api_compatibility_strategy: adapter or generated app-change report
-      manual_steps_resolved: true
-      discover: true
-      cost: true
-      provision: true
-      migrate: true
-      api_compat: true
-      env_dns: true
-      ha: true
-      backup: true
-      validate: true
-      cutover: true
-      rollback: true
-      status: full
-    - provider: aws
-      service: GuardDuty
-      resource_types: []
-      target: HomePort managed replacement
-      api_compatibility_strategy: adapter or generated app-change report
-      manual_steps_resolved: true
-      discover: true
-      cost: true
-      provision: true
-      migrate: true
-      api_compat: true
-      env_dns: true
-      ha: true
-      backup: true
-      validate: true
-      cutover: true
-      rollback: true
-      status: full
-    - provider: aws
-      service: IAM
-      resource_types:
-        - aws_iam_role
-      target: HomePort managed replacement
-      api_compatibility_strategy: adapter or generated app-change report
-      manual_steps_resolved: true
-      discover: true
-      cost: true
-      provision: true
-      migrate: true
-      api_compat: true
-      env_dns: true
-      ha: true
-      backup: true
-      validate: true
-      cutover: true
-      rollback: true
-      status: full
-    - provider: aws
-      service: KMS
-      resource_types:
-        - aws_kms_key
-      target: HomePort managed replacement
-      api_compatibility_strategy: adapter or generated app-change report
-      manual_steps_resolved: true
-      discover: true
-      cost: true
-      provision: true
-      migrate: true
-      api_compat: true
-      env_dns: true
-      ha: true
-      backup: true
-      validate: true
-      cutover: true
-      rollback: true
-      status: full
-    - provider: aws
-      service: Kinesis
-      resource_types:
-        - aws_kinesis_stream
-      target: HomePort managed replacement
-      api_compatibility_strategy: adapter or generated app-change report
-      manual_steps_resolved: true
-      discover: true
-      cost: true
-      provision: true
-      migrate: true
-      api_compat: true
-      env_dns: true
-      ha: true
-      backup: true
-      validate: true
-      cutover: true
-      rollback: true
-      status: full
-    - provider: aws
-      service: Lambda
-      resource_types:
-        - aws_lambda_function
-      target: HomePort managed replacement
-      api_compatibility_strategy: adapter or generated app-change report
-      manual_steps_resolved: true
-      discover: true
-      cost: true
-      provision: true
-      migrate: true
-      api_compat: true
-      env_dns: true
-      ha: true
-      backup: true
-      validate: true
-      cutover: true
-      rollback: true
-      status: full
-    - provider: aws
-      service: MSK
-      resource_types: []
-      target: HomePort managed replacement
-      api_compatibility_strategy: adapter or generated app-change report
-      manual_steps_resolved: true
-      discover: true
-      cost: true
-      provision: true
-      migrate: true
-      api_compat: true
-      env_dns: true
-      ha: true
-      backup: true
-      validate: true
-      cutover: true
-      rollback: true
-      status: full
-    - provider: aws
-      service: OpenSearch
-      resource_types: []
-      target: HomePort managed replacement
-      api_compatibility_strategy: adapter or generated app-change report
-      manual_steps_resolved: true
-      discover: true
-      cost: true
-      provision: true
-      migrate: true
-      api_compat: true
-      env_dns: true
-      ha: true
-      backup: true
-      validate: true
-      cutover: true
-      rollback: true
-      status: full
-    - provider: aws
-      service: RDS
-      resource_types:
-        - aws_db_instance
-        - aws_rds_cluster
-      target: HomePort managed replacement
-      api_compatibility_strategy: adapter or generated app-change report
-      manual_steps_resolved: true
-      discover: true
-      cost: true
-      provision: true
-      migrate: true
-      api_compat: true
-      env_dns: true
-      ha: true
-      backup: true
-      validate: true
-      cutover: true
-      rollback: true
-      status: full
-    - provider: aws
-      service: Redshift
-      resource_types: []
-      target: HomePort managed replacement
-      api_compatibility_strategy: adapter or generated app-change report
-      manual_steps_resolved: true
-      discover: true
-      cost: true
-      provision: true
-      migrate: true
-      api_compat: true
-      env_dns: true
-      ha: true
-      backup: true
-      validate: true
-      cutover: true
-      rollback: true
-      status: full
-    - provider: aws
-      service: Route 53
-      resource_types:
-        - aws_route53_zone
-      target: HomePort managed replacement
-      api_compatibility_strategy: adapter or generated app-change report
-      manual_steps_resolved: true
-      discover: true
-      cost: true
-      provision: true
-      migrate: true
-      api_compat: true
-      env_dns: true
-      ha: true
-      backup: true
-      validate: true
-      cutover: true
-      rollback: true
-      status: full
-    - provider: aws
-      service: S3
-      resource_types:
-        - aws_s3_bucket
-      target: HomePort managed replacement
-      api_compatibility_strategy: adapter or generated app-change report
-      manual_steps_resolved: true
-      discover: true
-      cost: true
-      provision: true
-      migrate: true
-      api_compat: true
-      env_dns: true
-      ha: true
-      backup: true
-      validate: true
-      cutover: true
-      rollback: true
-      status: full
-    - provider: aws
-      service: SES
-      resource_types:
-        - aws_ses_domain_identity
-      target: HomePort managed replacement
-      api_compatibility_strategy: adapter or generated app-change report
-      manual_steps_resolved: true
-      discover: true
-      cost: true
-      provision: true
-      migrate: true
-      api_compat: true
-      env_dns: true
-      ha: true
-      backup: true
-      validate: true
-      cutover: true
-      rollback: true
-      status: full
-    - provider: aws
-      service: SNS
-      resource_types:
-        - aws_sns_topic
-      target: HomePort managed replacement
-      api_compatibility_strategy: adapter or generated app-change report
-      manual_steps_resolved: true
-      discover: true
-      cost: true
-      provision: true
-      migrate: true
-      api_compat: true
-      env_dns: true
-      ha: true
-      backup: true
-      validate: true
-      cutover: true
-      rollback: true
-      status: full
-    - provider: aws
-      service: SQS
-      resource_types:
-        - aws_sqs_queue
-      target: HomePort managed replacement
-      api_compatibility_strategy: adapter or generated app-change report
-      manual_steps_resolved: true
-      discover: true
-      cost: true
-      provision: true
-      migrate: true
-      api_compat: true
-      env_dns: true
-      ha: true
-      backup: true
-      validate: true
-      cutover: true
-      rollback: true
-      status: full
-    - provider: aws
-      service: SageMaker
-      resource_types: []
-      target: HomePort managed replacement
-      api_compatibility_strategy: adapter or generated app-change report
-      manual_steps_resolved: true
-      discover: true
-      cost: true
-      provision: true
-      migrate: true
-      api_compat: true
-      env_dns: true
-      ha: true
-      backup: true
-      validate: true
-      cutover: true
-      rollback: true
-      status: full
-    - provider: aws
-      service: Secrets Manager
-      resource_types:
-        - aws_secretsmanager_secret
-      target: HomePort managed replacement
-      api_compatibility_strategy: adapter or generated app-change report
-      manual_steps_resolved: true
-      discover: true
-      cost: true
-      provision: true
-      migrate: true
-      api_compat: true
-      env_dns: true
-      ha: true
-      backup: true
-      validate: true
-      cutover: true
-      rollback: true
-      status: full
-    - provider: aws
-      service: Step Functions
-      resource_types: []
-      target: HomePort managed replacement
-      api_compatibility_strategy: adapter or generated app-change report
-      manual_steps_resolved: true
-      discover: true
-      cost: true
-      provision: true
-      migrate: true
-      api_compat: true
-      env_dns: true
-      ha: true
-      backup: true
-      validate: true
-      cutover: true
-      rollback: true
-      status: full
-    - provider: aws
-      service: VPC
-      resource_types:
-        - aws_vpc
-      target: HomePort managed replacement
-      api_compatibility_strategy: adapter or generated app-change report
-      manual_steps_resolved: true
-      discover: true
-      cost: true
-      provision: true
-      migrate: true
-      api_compat: true
-      env_dns: true
-      ha: true
-      backup: true
-      validate: true
-      cutover: true
-      rollback: true
-      status: full
-    - provider: aws
-      service: WAF
-      resource_types: []
-      target: HomePort managed replacement
-      api_compatibility_strategy: adapter or generated app-change report
-      manual_steps_resolved: true
-      discover: true
-      cost: true
-      provision: true
-      migrate: true
-      api_compat: true
-      env_dns: true
-      ha: true
-      backup: true
-      validate: true
-      cutover: true
-      rollback: true
-      status: full
-    - provider: aws
-      service: X-Ray
-      resource_types: []
-      target: HomePort managed replacement
-      api_compatibility_strategy: adapter or generated app-change report
-      manual_steps_resolved: true
-      discover: true
-      cost: true
-      provision: true
-      migrate: true
-      api_compat: true
-      env_dns: true
-      ha: true
-      backup: true
-      validate: true
-      cutover: true
-      rollback: true
-      status: full
-    - provider: aws
-      service: Lake Formation
-      category: analytics/data
-      source_api: lakeformation
-      resource_types: []
-      terraform_resource_types:
-        - aws_lakeformation_data_lake_settings
-        - aws_lakeformation_permissions
-      target: Apache Ranger
-      api_compatibility_strategy: export permissions and recreate table/resource policies
-      impossibility_notes: no drop-in Lake Formation API-compatible control plane is known
-      manual_steps_resolved: true
-      discover: true
-      cost: true
-      provision: true
-      migrate: true
-      api_compat: true
-      env_dns: true
-      ha: true
-      backup: true
-      validate: true
-      cutover: true
-      rollback: true
-      status: full
-    - provider: aws
-      service: QuickSight
-      category: analytics/data
-      source_api: quicksight
-      resource_types: []
-      terraform_resource_types:
-        - aws_quicksight_data_source
-        - aws_quicksight_dashboard
-      target: Apache Superset
-      api_compatibility_strategy: export assets and rebuild dashboards against open BI targets
-      impossibility_notes: QuickSight dashboard/runtime APIs require guided replacement
-      manual_steps_resolved: true
-      discover: true
-      cost: true
-      provision: true
-      migrate: true
-      api_compat: true
-      env_dns: true
-      ha: true
-      backup: true
-      validate: true
-      cutover: true
-      rollback: true
-      status: full
-    - provider: aws
-      service: MQ
-      category: app/integration
-      source_api: mq
-      resource_types: []
-      terraform_resource_types:
-        - aws_mq_broker
-      target: RabbitMQ or ActiveMQ
-      api_compatibility_strategy: recreate brokers and migrate queues/topics with protocol-level clients
-      impossibility_notes: AWS MQ management API compatibility is not modeled
-      manual_steps_resolved: true
-      discover: true
-      cost: true
-      provision: true
-      migrate: true
-      api_compat: true
-      env_dns: true
-      ha: true
-      backup: true
-      validate: true
-      cutover: true
-      rollback: true
-      status: full
-    - provider: aws
-      service: IoT Core
-      category: app/integration
-      source_api: iot
-      resource_types: []
-      terraform_resource_types:
-        - aws_iot_thing
-        - aws_iot_topic_rule
-      target: EMQX
-      api_compatibility_strategy: export things, certificates, and topic rules into MQTT-native routing
-      impossibility_notes: IoT Core registry and rules APIs require guided replacement
-      manual_steps_resolved: true
-      discover: true
-      cost: true
-      provision: true
-      migrate: true
-      api_compat: true
-      env_dns: true
-      ha: true
-      backup: true
-      validate: true
-      cutover: true
-      rollback: true
-      status: full
-    - provider: aws
-      service: App Mesh
-      category: app/integration
-      source_api: appmesh
-      resource_types: []
-      terraform_resource_types:
-        - aws_appmesh_mesh
-        - aws_appmesh_virtual_node
-      target: Istio or Linkerd
-      api_compatibility_strategy: translate mesh topology into Kubernetes service mesh manifests
-      impossibility_notes: App Mesh control-plane API compatibility is not available
-      manual_steps_resolved: true
-      discover: true
-      cost: true
-      provision: true
-      migrate: true
-      api_compat: true
-      env_dns: true
-      ha: true
-      backup: true
-      validate: true
-      cutover: true
-      rollback: true
-      status: full
-    - provider: aws
-      service: CodeDeploy
-      category: devops
-      source_api: codedeploy
-      resource_types: []
-      terraform_resource_types:
-        - aws_codedeploy_app
-        - aws_codedeploy_deployment_group
-      target: Argo Rollouts
-      api_compatibility_strategy: convert deployment groups into rollout strategies and health checks
-      impossibility_notes: CodeDeploy lifecycle hooks need guided pipeline migration
-      manual_steps_resolved: true
-      discover: true
-      cost: true
-      provision: true
-      migrate: true
-      api_compat: true
-      env_dns: true
-      ha: true
-      backup: true
-      validate: true
-      cutover: true
-      rollback: true
-      status: full
-    - provider: aws
-      service: CloudFormation full import
-      category: devops
-      source_api: cloudformation
-      resource_types: []
-      terraform_resource_types:
-        - aws_cloudformation_stack
-      target: OpenTofu import
-      api_compatibility_strategy: import stack resources into state and generate equivalent IaC
-      impossibility_notes: full CloudFormation semantic import is not modeled
-      manual_steps_resolved: true
-      discover: true
-      cost: true
-      provision: true
-      migrate: true
-      api_compat: true
-      env_dns: true
-      ha: true
-      backup: true
-      validate: true
-      cutover: true
-      rollback: true
-      status: full
-    - provider: aws
-      service: Shield
-      category: security/governance
-      source_api: shield
-      resource_types: []
-      terraform_resource_types:
-        - aws_shield_protection
-      target: edge WAF and DDoS provider controls
-      api_compatibility_strategy: map protected resources to edge rate limits and provider-specific defenses
-      impossibility_notes: Shield Advanced API compatibility depends on external network providers
-      manual_steps_resolved: true
-      discover: true
-      cost: true
-      provision: true
-      migrate: true
-      api_compat: true
-      env_dns: true
-      ha: true
-      backup: true
-      validate: true
-      cutover: true
-      rollback: true
-      status: full
-    - provider: aws
-      service: Security Hub
-      category: security/governance
-      source_api: securityhub
-      resource_types: []
-      terraform_resource_types:
-        - aws_securityhub_account
-        - aws_securityhub_standards_subscription
-      target: DefectDojo or Wazuh
-      api_compatibility_strategy: export findings and standards into open security posture tooling
-      impossibility_notes: Security Hub finding aggregation API is not modeled
-      manual_steps_resolved: true
-      discover: true
-      cost: true
-      provision: true
-      migrate: true
-      api_compat: true
-      env_dns: true
-      ha: true
-      backup: true
-      validate: true
-      cutover: true
-      rollback: true
-      status: full
-    - provider: aws
-      service: Config
-      category: security/governance
-      source_api: config
-      resource_types: []
-      terraform_resource_types:
-        - aws_config_configuration_recorder
-        - aws_config_config_rule
-      target: Open Policy Agent
-      api_compatibility_strategy: translate managed rules into policy checks over inventory snapshots
-      impossibility_notes: AWS Config recorder API compatibility is not available
-      manual_steps_resolved: true
-      discover: true
-      cost: true
-      provision: true
-      migrate: true
-      api_compat: true
-      env_dns: true
-      ha: true
-      backup: true
-      validate: true
-      cutover: true
-      rollback: true
-      status: full
-    - provider: aws
-      service: Organizations
-      category: security/governance
-      source_api: organizations
-      resource_types: []
-      terraform_resource_types:
-        - aws_organizations_organization
-        - aws_organizations_account
-      target: OpenTofu workspaces and policy-as-code
-      api_compatibility_strategy: export account hierarchy and service control policies into landing-zone config
-      impossibility_notes: Organizations account vending APIs require guided replacement
-      manual_steps_resolved: true
-      discover: true
-      cost: true
-      provision: true
-      migrate: true
-      api_compat: true
-      env_dns: true
-      ha: true
-      backup: true
-      validate: true
-      cutover: true
-      rollback: true
-      status: full
-    - provider: aws
-      service: Control Tower
-      category: security/governance
-      source_api: controltower
-      resource_types: []
-      terraform_resource_types:
-        - aws_controltower_control
-      target: Crossplane and Open Policy Agent
-      api_compatibility_strategy: convert landing-zone controls into policy bundles and provisioning workflows
-      impossibility_notes: Control Tower orchestration API is not modeled
-      manual_steps_resolved: true
-      discover: true
-      cost: true
-      provision: true
-      migrate: true
-      api_compat: true
-      env_dns: true
-      ha: true
-      backup: true
-      validate: true
-      cutover: true
-      rollback: true
-      status: full
-    - provider: aws
-      service: Textract
-      category: ai/ml
-      source_api: textract
-      resource_types: []
-      terraform_resource_types:
-        - aws_textract_adapter
-      target: Tesseract OCR
-      api_compatibility_strategy: replace document extraction calls with OCR pipeline adapters
-      impossibility_notes: Textract model behavior cannot be guaranteed by local OCR
-      manual_steps_resolved: true
-      discover: true
-      cost: true
-      provision: true
-      migrate: true
-      api_compat: true
-      env_dns: true
-      ha: true
-      backup: true
-      validate: true
-      cutover: true
-      rollback: true
-      status: full
-    - provider: aws
-      service: Transcribe
-      category: ai/ml
-      source_api: transcribe
-      resource_types: []
-      terraform_resource_types:
-        - aws_transcribe_vocabulary
-        - aws_transcribe_language_model
-      target: Whisper
-      api_compatibility_strategy: migrate custom vocabularies and route audio jobs to open transcription
-      impossibility_notes: Transcribe job API compatibility is not modeled
-      manual_steps_resolved: true
-      discover: true
-      cost: true
-      provision: true
-      migrate: true
-      api_compat: true
-      env_dns: true
-      ha: true
-      backup: true
-      validate: true
-      cutover: true
-      rollback: true
-      status: full
-    - provider: aws
-      service: Translate
-      category: ai/ml
-      source_api: translate
-      resource_types: []
-      target: LibreTranslate
-      api_compatibility_strategy: replace translation calls with adapter-backed open translation endpoints
-      impossibility_notes: Translate API compatibility and language quality parity are not proven
-      manual_steps_resolved: true
-      discover: true
-      cost: true
-      provision: true
-      migrate: true
-      api_compat: true
-      env_dns: true
-      ha: true
-      backup: true
-      validate: true
-      cutover: true
-      rollback: true
-      status: full
-    - provider: aws
-      service: Rekognition
-      category: ai/ml
-      source_api: rekognition
-      resource_types: []
-      terraform_resource_types:
-        - aws_rekognition_collection
-        - aws_rekognition_project
-      target: OpenCV
-      api_compatibility_strategy: replace image/video analysis calls with open computer-vision pipelines
-      impossibility_notes: Rekognition model behavior cannot be replicated exactly
-      manual_steps_resolved: true
-      discover: true
-      cost: true
-      provision: true
-      migrate: true
-      api_compat: true
-      env_dns: true
-      ha: true
-      backup: true
-      validate: true
-      cutover: true
-      rollback: true
-      status: full
-    - provider: aws
-      service: Comprehend
-      category: ai/ml
-      source_api: comprehend
-      resource_types: []
-      terraform_resource_types:
-        - aws_comprehend_document_classifier
-        - aws_comprehend_entity_recognizer
-      target: spaCy
-      api_compatibility_strategy: migrate classifiers and route NLP jobs through open model adapters
-      impossibility_notes: Comprehend model and endpoint parity are not proven
-      manual_steps_resolved: true
-      discover: true
-      cost: true
-      provision: true
-      migrate: true
-      api_compat: true
-      env_dns: true
-      ha: true
-      backup: true
-      validate: true
-      cutover: true
-      rollback: true
-      status: full
-    - provider: gcp
-      service: Apigee
-      resource_types: []
-      target: HomePort managed replacement
-      api_compatibility_strategy: adapter or generated app-change report
-      manual_steps_resolved: true
-      discover: true
-      cost: true
-      provision: true
-      migrate: true
-      api_compat: true
-      env_dns: true
-      ha: true
-      backup: true
-      validate: true
-      cutover: true
-      rollback: true
-      status: full
-    - provider: gcp
-      service: App Engine
-      resource_types:
-        - google_app_engine_application
-      target: HomePort managed replacement
-      api_compatibility_strategy: adapter or generated app-change report
-      manual_steps_resolved: true
-      discover: true
-      cost: true
-      provision: true
-      migrate: true
-      api_compat: true
-      env_dns: true
-      ha: true
-      backup: true
-      validate: true
-      cutover: true
-      rollback: true
-      status: full
-    - provider: gcp
-      service: Artifact Registry
-      resource_types: []
-      target: HomePort managed replacement
-      api_compatibility_strategy: adapter or generated app-change report
-      manual_steps_resolved: true
-      discover: true
-      cost: true
-      provision: true
-      migrate: true
-      api_compat: true
-      env_dns: true
-      ha: true
-      backup: true
-      validate: true
-      cutover: true
-      rollback: true
-      status: full
-    - provider: gcp
-      service: BigQuery
-      resource_types: []
-      target: HomePort managed replacement
-      api_compatibility_strategy: adapter or generated app-change report
-      manual_steps_resolved: true
-      discover: true
-      cost: true
-      provision: true
-      migrate: true
-      api_compat: true
-      env_dns: true
-      ha: true
-      backup: true
-      validate: true
-      cutover: true
-      rollback: true
-      status: full
-    - provider: gcp
-      service: Bigtable
-      resource_types:
-        - google_bigtable_instance
-      target: HomePort managed replacement
-      api_compatibility_strategy: adapter or generated app-change report
-      manual_steps_resolved: true
-      discover: true
-      cost: true
-      provision: true
-      migrate: true
-      api_compat: true
-      env_dns: true
-      ha: true
-      backup: true
-      validate: true
-      cutover: true
-      rollback: true
-      status: full
-    - provider: gcp
-      service: Cloud Armor
-      resource_types:
-        - google_compute_security_policy
-      target: HomePort managed replacement
-      api_compatibility_strategy: adapter or generated app-change report
-      manual_steps_resolved: true
-      discover: true
-      cost: true
-      provision: true
-      migrate: true
-      api_compat: true
-      env_dns: true
-      ha: true
-      backup: true
-      validate: true
-      cutover: true
-      rollback: true
-      status: full
-    - provider: gcp
-      service: Cloud Build
-      resource_types: []
-      target: HomePort managed replacement
-      api_compatibility_strategy: adapter or generated app-change report
-      manual_steps_resolved: true
-      discover: true
-      cost: true
-      provision: true
-      migrate: true
-      api_compat: true
-      env_dns: true
-      ha: true
-      backup: true
-      validate: true
-      cutover: true
-      rollback: true
-      status: full
-    - provider: gcp
-      service: Cloud CDN
-      resource_types:
-        - google_compute_backend_bucket
-      target: HomePort managed replacement
-      api_compatibility_strategy: adapter or generated app-change report
-      manual_steps_resolved: true
-      discover: true
-      cost: true
-      provision: true
-      migrate: true
-      api_compat: true
-      env_dns: true
-      ha: true
-      backup: true
-      validate: true
-      cutover: true
-      rollback: true
-      status: full
-    - provider: gcp
-      service: Cloud DNS
-      resource_types:
-        - google_dns_managed_zone
-      target: HomePort managed replacement
-      api_compatibility_strategy: adapter or generated app-change report
-      manual_steps_resolved: true
-      discover: true
-      cost: true
-      provision: true
-      migrate: true
-      api_compat: true
-      env_dns: true
-      ha: true
-      backup: true
-      validate: true
-      cutover: true
-      rollback: true
-      status: full
-    - provider: gcp
-      service: Cloud Functions
-      resource_types:
-        - google_cloudfunctions_function
-      target: HomePort managed replacement
-      api_compatibility_strategy: adapter or generated app-change report
-      manual_steps_resolved: true
-      discover: true
-      cost: true
-      provision: true
-      migrate: true
-      api_compat: true
-      env_dns: true
-      ha: true
-      backup: true
-      validate: true
-      cutover: true
-      rollback: true
-      status: full
-    - provider: gcp
-      service: Cloud Load Balancing
-      resource_types:
-        - google_compute_backend_service
-      target: HomePort managed replacement
-      api_compatibility_strategy: adapter or generated app-change report
-      manual_steps_resolved: true
-      discover: true
-      cost: true
-      provision: true
-      migrate: true
-      api_compat: true
-      env_dns: true
-      ha: true
-      backup: true
-      validate: true
-      cutover: true
-      rollback: true
-      status: full
-    - provider: gcp
-      service: Cloud Run
-      resource_types:
-        - google_cloud_run_service
-      target: HomePort managed replacement
-      api_compatibility_strategy: adapter or generated app-change report
-      manual_steps_resolved: true
-      discover: true
-      cost: true
-      provision: true
-      migrate: true
-      api_compat: true
-      env_dns: true
-      ha: true
-      backup: true
-      validate: true
-      cutover: true
-      rollback: true
-      status: full
-    - provider: gcp
-      service: Cloud Scheduler
-      resource_types:
-        - google_cloud_scheduler_job
-      target: HomePort managed replacement
-      api_compatibility_strategy: adapter or generated app-change report
-      manual_steps_resolved: true
-      discover: true
-      cost: true
-      provision: true
-      migrate: true
-      api_compat: true
-      env_dns: true
-      ha: true
-      backup: true
-      validate: true
-      cutover: true
-      rollback: true
-      status: full
-    - provider: gcp
-      service: Cloud SQL
-      resource_types:
-        - google_sql_database_instance
-      target: HomePort managed replacement
-      api_compatibility_strategy: adapter or generated app-change report
-      manual_steps_resolved: true
-      discover: true
-      cost: true
-      provision: true
-      migrate: true
-      api_compat: true
-      env_dns: true
-      ha: true
-      backup: true
-      validate: true
-      cutover: true
-      rollback: true
-      status: full
-    - provider: gcp
-      service: Cloud Storage
-      resource_types:
-        - google_storage_bucket
-      target: HomePort managed replacement
-      api_compatibility_strategy: adapter or generated app-change report
-      manual_steps_resolved: true
-      discover: true
-      cost: true
-      provision: true
-      migrate: true
-      api_compat: true
-      env_dns: true
-      ha: true
-      backup: true
-      validate: true
-      cutover: true
-      rollback: true
-      status: full
-    - provider: gcp
-      service: Cloud Tasks
-      resource_types:
-        - google_cloud_tasks_queue
-      target: HomePort managed replacement
-      api_compatibility_strategy: adapter or generated app-change report
-      manual_steps_resolved: true
-      discover: true
-      cost: true
-      provision: true
-      migrate: true
-      api_compat: true
-      env_dns: true
-      ha: true
-      backup: true
-      validate: true
-      cutover: true
-      rollback: true
-      status: full
-    - provider: gcp
-      service: Compute Engine
-      resource_types:
-        - google_compute_instance
-      target: HomePort managed replacement
-      api_compatibility_strategy: adapter or generated app-change report
-      manual_steps_resolved: true
-      discover: true
-      cost: true
-      provision: true
-      migrate: true
-      api_compat: true
-      env_dns: true
-      ha: true
-      backup: true
-      validate: true
-      cutover: true
-      rollback: true
-      status: full
-    - provider: gcp
-      service: Composer
-      resource_types: []
-      target: HomePort managed replacement
-      api_compatibility_strategy: adapter or generated app-change report
-      manual_steps_resolved: true
-      discover: true
-      cost: true
-      provision: true
-      migrate: true
-      api_compat: true
-      env_dns: true
-      ha: true
-      backup: true
-      validate: true
-      cutover: true
-      rollback: true
-      status: full
-    - provider: gcp
-      service: Dataflow
-      resource_types: []
-      target: HomePort managed replacement
-      api_compatibility_strategy: adapter or generated app-change report
-      manual_steps_resolved: true
-      discover: true
-      cost: true
-      provision: true
-      migrate: true
-      api_compat: true
-      env_dns: true
-      ha: true
-      backup: true
-      validate: true
-      cutover: true
-      rollback: true
-      status: full
-    - provider: gcp
-      service: Dataproc
-      resource_types: []
-      target: HomePort managed replacement
-      api_compatibility_strategy: adapter or generated app-change report
-      manual_steps_resolved: true
-      discover: true
-      cost: true
-      provision: true
-      migrate: true
-      api_compat: true
-      env_dns: true
-      ha: true
-      backup: true
-      validate: true
-      cutover: true
-      rollback: true
-      status: full
-    - provider: gcp
-      service: Eventarc
-      resource_types: []
-      target: HomePort managed replacement
-      api_compatibility_strategy: adapter or generated app-change report
-      manual_steps_resolved: true
-      discover: true
-      cost: true
-      provision: true
-      migrate: true
-      api_compat: true
-      env_dns: true
-      ha: true
-      backup: true
-      validate: true
-      cutover: true
-      rollback: true
-      status: full
-    - provider: gcp
-      service: Filestore
-      resource_types:
-        - google_filestore_instance
-      target: HomePort managed replacement
-      api_compatibility_strategy: adapter or generated app-change report
-      manual_steps_resolved: true
-      discover: true
-      cost: true
-      provision: true
-      migrate: true
-      api_compat: true
-      env_dns: true
-      ha: true
-      backup: true
-      validate: true
-      cutover: true
-      rollback: true
-      status: full
-    - provider: gcp
-      service: Firestore
-      resource_types:
-        - google_firestore_database
-      target: HomePort managed replacement
-      api_compatibility_strategy: adapter or generated app-change report
-      manual_steps_resolved: true
-      discover: true
-      cost: true
-      provision: true
-      migrate: true
-      api_compat: true
-      env_dns: true
-      ha: true
-      backup: true
-      validate: true
-      cutover: true
-      rollback: true
-      status: full
-    - provider: gcp
-      service: GKE
-      resource_types:
-        - google_container_cluster
-      target: HomePort managed replacement
-      api_compatibility_strategy: adapter or generated app-change report
-      manual_steps_resolved: true
-      discover: true
-      cost: true
-      provision: true
-      migrate: true
-      api_compat: true
-      env_dns: true
-      ha: true
-      backup: true
-      validate: true
-      cutover: true
-      rollback: true
-      status: full
-    - provider: gcp
-      service: IAM
-      resource_types:
-        - google_project_iam_member
-      target: HomePort managed replacement
-      api_compatibility_strategy: adapter or generated app-change report
-      manual_steps_resolved: true
-      discover: true
-      cost: true
-      provision: true
-      migrate: true
-      api_compat: true
-      env_dns: true
-      ha: true
-      backup: true
-      validate: true
-      cutover: true
-      rollback: true
-      status: full
-    - provider: gcp
-      service: Identity Platform
-      resource_types:
-        - google_identity_platform_config
-      target: HomePort managed replacement
-      api_compatibility_strategy: adapter or generated app-change report
-      manual_steps_resolved: true
-      discover: true
-      cost: true
-      provision: true
-      migrate: true
-      api_compat: true
-      env_dns: true
-      ha: true
-      backup: true
-      validate: true
-      cutover: true
-      rollback: true
-      status: full
-    - provider: gcp
-      service: Logging
-      resource_types: []
-      target: HomePort managed replacement
-      api_compatibility_strategy: adapter or generated app-change report
-      manual_steps_resolved: true
-      discover: true
-      cost: true
-      provision: true
-      migrate: true
-      api_compat: true
-      env_dns: true
-      ha: true
-      backup: true
-      validate: true
-      cutover: true
-      rollback: true
-      status: full
-    - provider: gcp
-      service: Memorystore
-      resource_types:
-        - google_redis_instance
-      target: HomePort managed replacement
-      api_compatibility_strategy: adapter or generated app-change report
-      manual_steps_resolved: true
-      discover: true
-      cost: true
-      provision: true
-      migrate: true
-      api_compat: true
-      env_dns: true
-      ha: true
-      backup: true
-      validate: true
-      cutover: true
-      rollback: true
-      status: full
-    - provider: gcp
-      service: Monitoring
-      resource_types: []
-      target: HomePort managed replacement
-      api_compatibility_strategy: adapter or generated app-change report
-      manual_steps_resolved: true
-      discover: true
-      cost: true
-      provision: true
-      migrate: true
-      api_compat: true
-      env_dns: true
-      ha: true
-      backup: true
-      validate: true
-      cutover: true
-      rollback: true
-      status: full
-    - provider: gcp
-      service: Persistent Disk
-      resource_types:
-        - google_compute_disk
-      target: HomePort managed replacement
-      api_compatibility_strategy: adapter or generated app-change report
-      manual_steps_resolved: true
-      discover: true
-      cost: true
-      provision: true
-      migrate: true
-      api_compat: true
-      env_dns: true
-      ha: true
-      backup: true
-      validate: true
-      cutover: true
-      rollback: true
-      status: full
-    - provider: gcp
-      service: Pub/Sub
-      resource_types:
-        - google_pubsub_topic
-        - google_pubsub_subscription
-      target: HomePort managed replacement
-      api_compatibility_strategy: adapter or generated app-change report
-      manual_steps_resolved: true
-      discover: true
-      cost: true
-      provision: true
-      migrate: true
-      api_compat: true
-      env_dns: true
-      ha: true
-      backup: true
-      validate: true
-      cutover: true
-      rollback: true
-      status: full
-    - provider: gcp
-      service: Secret Manager
-      resource_types:
-        - google_secret_manager_secret
-      target: HomePort managed replacement
-      api_compatibility_strategy: adapter or generated app-change report
-      manual_steps_resolved: true
-      discover: true
-      cost: true
-      provision: true
-      migrate: true
-      api_compat: true
-      env_dns: true
-      ha: true
-      backup: true
-      validate: true
-      cutover: true
-      rollback: true
-      status: full
-    - provider: gcp
-      service: Spanner
-      resource_types:
-        - google_spanner_instance
-      target: HomePort managed replacement
-      api_compatibility_strategy: adapter or generated app-change report
-      manual_steps_resolved: true
-      discover: true
-      cost: true
-      provision: true
-      migrate: true
-      api_compat: true
-      env_dns: true
-      ha: true
-      backup: true
-      validate: true
-      cutover: true
-      rollback: true
-      status: full
-    - provider: gcp
-      service: Trace
-      resource_types: []
-      target: HomePort managed replacement
-      api_compatibility_strategy: adapter or generated app-change report
-      manual_steps_resolved: true
-      discover: true
-      cost: true
-      provision: true
-      migrate: true
-      api_compat: true
-      env_dns: true
-      ha: true
-      backup: true
-      validate: true
-      cutover: true
-      rollback: true
-      status: full
-    - provider: gcp
-      service: VPC
-      resource_types:
-        - google_compute_network
-      target: HomePort managed replacement
-      api_compatibility_strategy: adapter or generated app-change report
-      manual_steps_resolved: true
-      discover: true
-      cost: true
-      provision: true
-      migrate: true
-      api_compat: true
-      env_dns: true
-      ha: true
-      backup: true
-      validate: true
-      cutover: true
-      rollback: true
-      status: full
-    - provider: gcp
-      service: Vertex AI
-      resource_types: []
-      target: HomePort managed replacement
-      api_compatibility_strategy: adapter or generated app-change report
-      manual_steps_resolved: true
-      discover: true
-      cost: true
-      provision: true
-      migrate: true
-      api_compat: true
-      env_dns: true
-      ha: true
-      backup: true
-      validate: true
-      cutover: true
-      rollback: true
-      status: full
-    - provider: gcp
-      service: Workflows
-      resource_types: []
-      target: HomePort managed replacement
-      api_compatibility_strategy: adapter or generated app-change report
-      manual_steps_resolved: true
-      discover: true
-      cost: true
-      provision: true
-      migrate: true
-      api_compat: true
-      env_dns: true
-      ha: true
-      backup: true
-      validate: true
-      cutover: true
-      rollback: true
-      status: full
-    - provider: gcp
-      service: Dataplex
-      category: analytics/data
-      source_api: dataplex
-      resource_types: []
-      terraform_resource_types:
-        - google_dataplex_lake
-        - google_dataplex_zone
-      target: Apache Atlas
-      api_compatibility_strategy: export lakes, zones, and metadata into an open governance catalog
-      impossibility_notes: Dataplex API-compatible governance plane is not modeled
-      manual_steps_resolved: true
-      discover: true
-      cost: true
-      provision: true
-      migrate: true
-      api_compat: true
-      env_dns: true
-      ha: true
-      backup: true
-      validate: true
-      cutover: true
-      rollback: true
-      status: full
-    - provider: gcp
-      service: Looker
-      category: analytics/data
-      source_api: looker
-      resource_types: []
-      terraform_resource_types:
-        - google_looker_instance
-      target: Apache Superset
-      api_compatibility_strategy: export dashboards and semantic models into open BI assets
-      impossibility_notes: LookML/runtime parity requires guided migration
-      manual_steps_resolved: true
-      discover: true
-      cost: true
-      provision: true
-      migrate: true
-      api_compat: true
-      env_dns: true
-      ha: true
-      backup: true
-      validate: true
-      cutover: true
-      rollback: true
-      status: full
-    - provider: gcp
-      service: Cloud Deploy
-      category: devops
-      source_api: clouddeploy
-      resource_types: []
-      terraform_resource_types:
-        - google_clouddeploy_delivery_pipeline
-        - google_clouddeploy_target
-      target: Argo CD
-      api_compatibility_strategy: convert delivery pipelines and targets into GitOps deployment flows
-      impossibility_notes: Cloud Deploy release API compatibility is not modeled
-      manual_steps_resolved: true
-      discover: true
-      cost: true
-      provision: true
-      migrate: true
-      api_compat: true
-      env_dns: true
-      ha: true
-      backup: true
-      validate: true
-      cutover: true
-      rollback: true
-      status: full
-    - provider: gcp
-      service: Error Reporting
-      category: observability
-      source_api: clouderrorreporting
-      resource_types: []
-      target: Sentry
-      api_compatibility_strategy: route application errors into open error tracking
-      impossibility_notes: Error Reporting grouping semantics are provider-specific
-      manual_steps_resolved: true
-      discover: true
-      cost: true
-      provision: true
-      migrate: true
-      api_compat: true
-      env_dns: true
-      ha: true
-      backup: true
-      validate: true
-      cutover: true
-      rollback: true
-      status: full
-    - provider: gcp
-      service: Profiler
-      category: observability
-      source_api: cloudprofiler
-      resource_types: []
-      target: Pyroscope
-      api_compatibility_strategy: replace profiling agents and route profiles to open storage
-      impossibility_notes: Cloud Profiler API compatibility is not modeled
-      manual_steps_resolved: true
-      discover: true
-      cost: true
-      provision: true
-      migrate: true
-      api_compat: true
-      env_dns: true
-      ha: true
-      backup: true
-      validate: true
-      cutover: true
-      rollback: true
-      status: full
-    - provider: gcp
-      service: TPU
-      category: ai/ml
-      source_api: tpu
-      resource_types: []
-      terraform_resource_types:
-        - google_tpu_node
-        - google_tpu_v2_vm
-      target: Kubernetes GPU/accelerator scheduling
-      api_compatibility_strategy: map TPU workloads to portable accelerator jobs where possible
-      impossibility_notes: TPU hardware semantics cannot be reproduced by software migration
-      manual_steps_resolved: true
-      discover: true
-      cost: true
-      provision: true
-      migrate: true
-      api_compat: true
-      env_dns: true
-      ha: true
-      backup: true
-      validate: true
-      cutover: true
-      rollback: true
-      status: full
-    - provider: gcp
-      service: Document AI
-      category: ai/ml
-      source_api: documentai
-      resource_types: []
-      terraform_resource_types:
-        - google_document_ai_processor
-      target: Tesseract OCR
-      api_compatibility_strategy: replace document processors with open OCR/NLP pipelines
-      impossibility_notes: Document AI processor output parity is not guaranteed
-      manual_steps_resolved: true
-      discover: true
-      cost: true
-      provision: true
-      migrate: true
-      api_compat: true
-      env_dns: true
-      ha: true
-      backup: true
-      validate: true
-      cutover: true
-      rollback: true
-      status: full
-    - provider: gcp
-      service: Vision AI
-      category: ai/ml
-      source_api: visionai
-      resource_types: []
-      target: OpenCV
-      api_compatibility_strategy: replace vision analysis calls with open computer-vision pipelines
-      impossibility_notes: Vision model behavior cannot be replicated exactly
-      manual_steps_resolved: true
-      discover: true
-      cost: true
-      provision: true
-      migrate: true
-      api_compat: true
-      env_dns: true
-      ha: true
-      backup: true
-      validate: true
-      cutover: true
-      rollback: true
-      status: full
-    - provider: gcp
-      service: Speech-to-Text
-      category: ai/ml
-      source_api: speech
-      resource_types: []
-      terraform_resource_types:
-        - google_speech_custom_class
-        - google_speech_phrase_set
-      target: Whisper
-      api_compatibility_strategy: migrate phrase hints and route recognition jobs to open transcription
-      impossibility_notes: Speech-to-Text API and recognition parity are not proven
-      manual_steps_resolved: true
-      discover: true
-      cost: true
-      provision: true
-      migrate: true
-      api_compat: true
-      env_dns: true
-      ha: true
-      backup: true
-      validate: true
-      cutover: true
-      rollback: true
-      status: full
-    - provider: gcp
-      service: Translation
-      category: ai/ml
-      source_api: translate
-      resource_types: []
-      target: LibreTranslate
-      api_compatibility_strategy: replace translation calls with adapter-backed open translation endpoints
-      impossibility_notes: Translation API compatibility and language quality parity are not proven
-      manual_steps_resolved: true
-      discover: true
-      cost: true
-      provision: true
-      migrate: true
-      api_compat: true
-      env_dns: true
-      ha: true
-      backup: true
-      validate: true
-      cutover: true
-      rollback: true
-      status: full
-    - provider: azure
-      service: AI Search
-      resource_types: []
-      target: HomePort managed replacement
-      api_compatibility_strategy: adapter or generated app-change report
-      manual_steps_resolved: true
-      discover: true
-      cost: true
-      provision: true
-      migrate: true
-      api_compat: true
-      env_dns: true
-      ha: true
-      backup: true
-      validate: true
-      cutover: true
-      rollback: true
-      status: full
-    - provider: azure
-      service: AKS
-      resource_types:
-        - azurerm_kubernetes_cluster
-      target: HomePort managed replacement
-      api_compatibility_strategy: adapter or generated app-change report
-      manual_steps_resolved: true
-      discover: true
-      cost: true
-      provision: true
-      migrate: true
-      api_compat: true
-      env_dns: true
-      ha: true
-      backup: true
-      validate: true
-      cutover: true
-      rollback: true
-      status: full
-    - provider: azure
-      service: API Management
-      resource_types: []
-      target: HomePort managed replacement
-      api_compatibility_strategy: adapter or generated app-change report
-      manual_steps_resolved: true
-      discover: true
-      cost: true
-      provision: true
-      migrate: true
-      api_compat: true
-      env_dns: true
-      ha: true
-      backup: true
-      validate: true
-      cutover: true
-      rollback: true
-      status: full
-    - provider: azure
-      service: App Gateway
-      resource_types:
-        - azurerm_application_gateway
-      target: HomePort managed replacement
-      api_compatibility_strategy: adapter or generated app-change report
-      manual_steps_resolved: true
-      discover: true
-      cost: true
-      provision: true
-      migrate: true
-      api_compat: true
-      env_dns: true
-      ha: true
-      backup: true
-      validate: true
-      cutover: true
-      rollback: true
-      status: full
-    - provider: azure
-      service: App Insights
-      resource_types: []
-      target: HomePort managed replacement
-      api_compatibility_strategy: adapter or generated app-change report
-      manual_steps_resolved: true
-      discover: true
-      cost: true
-      provision: true
-      migrate: true
-      api_compat: true
-      env_dns: true
-      ha: true
-      backup: true
-      validate: true
-      cutover: true
-      rollback: true
-      status: full
-    - provider: azure
-      service: App Service
-      resource_types:
-        - azurerm_app_service
-      target: HomePort managed replacement
-      api_compatibility_strategy: adapter or generated app-change report
-      manual_steps_resolved: true
-      discover: true
-      cost: true
-      provision: true
-      migrate: true
-      api_compat: true
-      env_dns: true
-      ha: true
-      backup: true
-      validate: true
-      cutover: true
-      rollback: true
-      status: full
-    - provider: azure
-      service: Azure AD B2C
-      resource_types:
-        - azurerm_aadb2c_directory
-      target: HomePort managed replacement
-      api_compatibility_strategy: adapter or generated app-change report
-      manual_steps_resolved: true
-      discover: true
-      cost: true
-      provision: true
-      migrate: true
-      api_compat: true
-      env_dns: true
-      ha: true
-      backup: true
-      validate: true
-      cutover: true
-      rollback: true
-      status: full
-    - provider: azure
-      service: Azure Cache
-      resource_types:
-        - azurerm_redis_cache
-      target: HomePort managed replacement
-      api_compatibility_strategy: adapter or generated app-change report
-      manual_steps_resolved: true
-      discover: true
-      cost: true
-      provision: true
-      migrate: true
-      api_compat: true
-      env_dns: true
-      ha: true
-      backup: true
-      validate: true
-      cutover: true
-      rollback: true
-      status: full
-    - provider: azure
-      service: Azure CDN
-      resource_types:
-        - azurerm_cdn_profile
-      target: HomePort managed replacement
-      api_compatibility_strategy: adapter or generated app-change report
-      manual_steps_resolved: true
-      discover: true
-      cost: true
-      provision: true
-      migrate: true
-      api_compat: true
-      env_dns: true
-      ha: true
-      backup: true
-      validate: true
-      cutover: true
-      rollback: true
-      status: full
-    - provider: azure
-      service: Azure DNS
-      resource_types:
-        - azurerm_dns_zone
-      target: HomePort managed replacement
-      api_compatibility_strategy: adapter or generated app-change report
-      manual_steps_resolved: true
-      discover: true
-      cost: true
-      provision: true
-      migrate: true
-      api_compat: true
-      env_dns: true
-      ha: true
-      backup: true
-      validate: true
-      cutover: true
-      rollback: true
-      status: full
-    - provider: azure
-      service: Azure Firewall
-      resource_types:
-        - azurerm_firewall
-      target: HomePort managed replacement
-      api_compatibility_strategy: adapter or generated app-change report
-      manual_steps_resolved: true
-      discover: true
-      cost: true
-      provision: true
-      migrate: true
-      api_compat: true
-      env_dns: true
-      ha: true
-      backup: true
-      validate: true
-      cutover: true
-      rollback: true
-      status: full
-    - provider: azure
-      service: Azure Functions
-      resource_types:
-        - azurerm_function_app
-      target: HomePort managed replacement
-      api_compatibility_strategy: adapter or generated app-change report
-      manual_steps_resolved: true
-      discover: true
-      cost: true
-      provision: true
-      migrate: true
-      api_compat: true
-      env_dns: true
-      ha: true
-      backup: true
-      validate: true
-      cutover: true
-      rollback: true
-      status: full
-    - provider: azure
-      service: Azure Load Balancer
-      resource_types:
-        - azurerm_lb
-      target: HomePort managed replacement
-      api_compatibility_strategy: adapter or generated app-change report
-      manual_steps_resolved: true
-      discover: true
-      cost: true
-      provision: true
-      migrate: true
-      api_compat: true
-      env_dns: true
-      ha: true
-      backup: true
-      validate: true
-      cutover: true
-      rollback: true
-      status: full
-    - provider: azure
-      service: Azure SQL
-      resource_types:
-        - azurerm_mssql_database
-      target: HomePort managed replacement
-      api_compatibility_strategy: adapter or generated app-change report
-      manual_steps_resolved: true
-      discover: true
-      cost: true
-      provision: true
-      migrate: true
-      api_compat: true
-      env_dns: true
-      ha: true
-      backup: true
-      validate: true
-      cutover: true
-      rollback: true
-      status: full
-    - provider: azure
-      service: Azure Storage
-      resource_types:
-        - azurerm_storage_container
-        - azurerm_storage_account
-        - azurerm_storage_share
-      target: HomePort managed replacement
-      api_compatibility_strategy: adapter or generated app-change report
-      manual_steps_resolved: true
-      discover: true
-      cost: true
-      provision: true
-      migrate: true
-      api_compat: true
-      env_dns: true
-      ha: true
-      backup: true
-      validate: true
-      cutover: true
-      rollback: true
-      status: full
-    - provider: azure
-      service: Azure VNet
-      resource_types:
-        - azurerm_virtual_network
-      target: HomePort managed replacement
-      api_compatibility_strategy: adapter or generated app-change report
-      manual_steps_resolved: true
-      discover: true
-      cost: true
-      provision: true
-      migrate: true
-      api_compat: true
-      env_dns: true
-      ha: true
-      backup: true
-      validate: true
-      cutover: true
-      rollback: true
-      status: full
-    - provider: azure
-      service: Azure VM
-      resource_types:
-        - azurerm_linux_virtual_machine
-        - azurerm_windows_virtual_machine
-      target: HomePort managed replacement
-      api_compatibility_strategy: adapter or generated app-change report
-      manual_steps_resolved: true
-      discover: true
-      cost: true
-      provision: true
-      migrate: true
-      api_compat: true
-      env_dns: true
-      ha: true
-      backup: true
-      validate: true
-      cutover: true
-      rollback: true
-      status: full
-    - provider: azure
-      service: Container Apps
-      resource_types: []
-      target: HomePort managed replacement
-      api_compatibility_strategy: adapter or generated app-change report
-      manual_steps_resolved: true
-      discover: true
-      cost: true
-      provision: true
-      migrate: true
-      api_compat: true
-      env_dns: true
-      ha: true
-      backup: true
-      validate: true
-      cutover: true
-      rollback: true
-      status: full
-    - provider: azure
-      service: Container Instances
-      resource_types:
-        - azurerm_container_group
-      target: HomePort managed replacement
-      api_compatibility_strategy: adapter or generated app-change report
-      manual_steps_resolved: true
-      discover: true
-      cost: true
-      provision: true
-      migrate: true
-      api_compat: true
-      env_dns: true
-      ha: true
-      backup: true
-      validate: true
-      cutover: true
-      rollback: true
-      status: full
-    - provider: azure
-      service: Container Registry
-      resource_types: []
-      target: HomePort managed replacement
-      api_compatibility_strategy: adapter or generated app-change report
-      manual_steps_resolved: true
-      discover: true
-      cost: true
-      provision: true
-      migrate: true
-      api_compat: true
-      env_dns: true
-      ha: true
-      backup: true
-      validate: true
-      cutover: true
-      rollback: true
-      status: full
-    - provider: azure
-      service: Cosmos DB
-      resource_types:
-        - azurerm_cosmosdb_account
-      target: HomePort managed replacement
-      api_compatibility_strategy: adapter or generated app-change report
-      manual_steps_resolved: true
-      discover: true
-      cost: true
-      provision: true
-      migrate: true
-      api_compat: true
-      env_dns: true
-      ha: true
-      backup: true
-      validate: true
-      cutover: true
-      rollback: true
-      status: full
-    - provider: azure
-      service: Data Factory
-      resource_types: []
-      target: HomePort managed replacement
-      api_compatibility_strategy: adapter or generated app-change report
-      manual_steps_resolved: true
-      discover: true
-      cost: true
-      provision: true
-      migrate: true
-      api_compat: true
-      env_dns: true
-      ha: true
-      backup: true
-      validate: true
-      cutover: true
-      rollback: true
-      status: full
-    - provider: azure
-      service: Databricks
-      resource_types: []
-      target: HomePort managed replacement
-      api_compatibility_strategy: adapter or generated app-change report
-      manual_steps_resolved: true
-      discover: true
-      cost: true
-      provision: true
-      migrate: true
-      api_compat: true
-      env_dns: true
-      ha: true
-      backup: true
-      validate: true
-      cutover: true
-      rollback: true
-      status: full
-    - provider: azure
-      service: Event Grid
-      resource_types:
-        - azurerm_eventgrid_topic
-      target: HomePort managed replacement
-      api_compatibility_strategy: adapter or generated app-change report
-      manual_steps_resolved: true
-      discover: true
-      cost: true
-      provision: true
-      migrate: true
-      api_compat: true
-      env_dns: true
-      ha: true
-      backup: true
-      validate: true
-      cutover: true
-      rollback: true
-      status: full
-    - provider: azure
-      service: Event Hubs
-      resource_types:
-        - azurerm_eventhub
-      target: HomePort managed replacement
-      api_compatibility_strategy: adapter or generated app-change report
-      manual_steps_resolved: true
-      discover: true
-      cost: true
-      provision: true
-      migrate: true
-      api_compat: true
-      env_dns: true
-      ha: true
-      backup: true
-      validate: true
-      cutover: true
-      rollback: true
-      status: full
-    - provider: azure
-      service: Foundry/OpenAI
-      resource_types: []
-      target: HomePort managed replacement
-      api_compatibility_strategy: adapter or generated app-change report
-      manual_steps_resolved: true
-      discover: true
-      cost: true
-      provision: true
-      migrate: true
-      api_compat: true
-      env_dns: true
-      ha: true
-      backup: true
-      validate: true
-      cutover: true
-      rollback: true
-      status: full
-    - provider: azure
-      service: Front Door
-      resource_types:
-        - azurerm_frontdoor
-      target: HomePort managed replacement
-      api_compatibility_strategy: adapter or generated app-change report
-      manual_steps_resolved: true
-      discover: true
-      cost: true
-      provision: true
-      migrate: true
-      api_compat: true
-      env_dns: true
-      ha: true
-      backup: true
-      validate: true
-      cutover: true
-      rollback: true
-      status: full
-    - provider: azure
-      service: IoT Hub
-      resource_types: []
-      target: HomePort managed replacement
-      api_compatibility_strategy: adapter or generated app-change report
-      manual_steps_resolved: true
-      discover: true
-      cost: true
-      provision: true
-      migrate: true
-      api_compat: true
-      env_dns: true
-      ha: true
-      backup: true
-      validate: true
-      cutover: true
-      rollback: true
-      status: full
-    - provider: azure
-      service: Key Vault
-      resource_types:
-        - azurerm_key_vault
-      target: HomePort managed replacement
-      api_compatibility_strategy: adapter or generated app-change report
-      manual_steps_resolved: true
-      discover: true
-      cost: true
-      provision: true
-      migrate: true
-      api_compat: true
-      env_dns: true
-      ha: true
-      backup: true
-      validate: true
-      cutover: true
-      rollback: true
-      status: full
-    - provider: azure
-      service: Log Analytics
-      resource_types: []
-      target: HomePort managed replacement
-      api_compatibility_strategy: adapter or generated app-change report
-      manual_steps_resolved: true
-      discover: true
-      cost: true
-      provision: true
-      migrate: true
-      api_compat: true
-      env_dns: true
-      ha: true
-      backup: true
-      validate: true
-      cutover: true
-      rollback: true
-      status: full
-    - provider: azure
-      service: Logic Apps
-      resource_types:
-        - azurerm_logic_app_workflow
-      target: HomePort managed replacement
-      api_compatibility_strategy: adapter or generated app-change report
-      manual_steps_resolved: true
-      discover: true
-      cost: true
-      provision: true
-      migrate: true
-      api_compat: true
-      env_dns: true
-      ha: true
-      backup: true
-      validate: true
-      cutover: true
-      rollback: true
-      status: full
-    - provider: azure
-      service: Managed Disk
-      resource_types:
-        - azurerm_managed_disk
-      target: HomePort managed replacement
-      api_compatibility_strategy: adapter or generated app-change report
-      manual_steps_resolved: true
-      discover: true
-      cost: true
-      provision: true
-      migrate: true
-      api_compat: true
-      env_dns: true
-      ha: true
-      backup: true
-      validate: true
-      cutover: true
-      rollback: true
-      status: full
-    - provider: azure
-      service: Monitor
-      resource_types: []
-      target: HomePort managed replacement
-      api_compatibility_strategy: adapter or generated app-change report
-      manual_steps_resolved: true
-      discover: true
-      cost: true
-      provision: true
-      migrate: true
-      api_compat: true
-      env_dns: true
-      ha: true
-      backup: true
-      validate: true
-      cutover: true
-      rollback: true
-      status: full
-    - provider: azure
-      service: MySQL
-      resource_types:
-        - azurerm_mysql_flexible_server
-      target: HomePort managed replacement
-      api_compatibility_strategy: adapter or generated app-change report
-      manual_steps_resolved: true
-      discover: true
-      cost: true
-      provision: true
-      migrate: true
-      api_compat: true
-      env_dns: true
-      ha: true
-      backup: true
-      validate: true
-      cutover: true
-      rollback: true
-      status: full
-    - provider: azure
-      service: PostgreSQL
-      resource_types:
-        - azurerm_postgresql_flexible_server
-      target: HomePort managed replacement
-      api_compatibility_strategy: adapter or generated app-change report
-      manual_steps_resolved: true
-      discover: true
-      cost: true
-      provision: true
-      migrate: true
-      api_compat: true
-      env_dns: true
-      ha: true
-      backup: true
-      validate: true
-      cutover: true
-      rollback: true
-      status: full
-    - provider: azure
-      service: Service Bus
-      resource_types:
-        - azurerm_servicebus_namespace
-        - azurerm_servicebus_queue
-      target: HomePort managed replacement
-      api_compatibility_strategy: adapter or generated app-change report
-      manual_steps_resolved: true
-      discover: true
-      cost: true
-      provision: true
-      migrate: true
-      api_compat: true
-      env_dns: true
-      ha: true
-      backup: true
-      validate: true
-      cutover: true
-      rollback: true
-      status: full
-    - provider: azure
-      service: SignalR
-      resource_types: []
-      target: HomePort managed replacement
-      api_compatibility_strategy: adapter or generated app-change report
-      manual_steps_resolved: true
-      discover: true
-      cost: true
-      provision: true
-      migrate: true
-      api_compat: true
-      env_dns: true
-      ha: true
-      backup: true
-      validate: true
-      cutover: true
-      rollback: true
-      status: full
-    - provider: azure
-      service: Synapse
-      resource_types: []
-      target: HomePort managed replacement
-      api_compatibility_strategy: adapter or generated app-change report
-      manual_steps_resolved: true
-      discover: true
-      cost: true
-      provision: true
-      migrate: true
-      api_compat: true
-      env_dns: true
-      ha: true
-      backup: true
-      validate: true
-      cutover: true
-      rollback: true
-      status: full
-    - provider: azure
-      service: VM Scale Sets
-      resource_types: []
-      target: HomePort managed replacement
-      api_compatibility_strategy: adapter or generated app-change report
-      manual_steps_resolved: true
-      discover: true
-      cost: true
-      provision: true
-      migrate: true
-      api_compat: true
-      env_dns: true
-      ha: true
-      backup: true
-      validate: true
-      cutover: true
-      rollback: true
-      status: full
-    - provider: azure
-      service: Data Lake
-      category: analytics/data
-      source_api: storage
-      resource_types: []
-      terraform_resource_types:
-        - azurerm_storage_data_lake_gen2_filesystem
-      target: MinIO and lakeFS
-      api_compatibility_strategy: migrate ADLS Gen2 namespaces into S3-compatible object storage with catalog metadata
-      impossibility_notes: hierarchical namespace and ACL parity require guided validation
-      manual_steps_resolved: true
-      discover: true
-      cost: true
-      provision: true
-      migrate: true
-      api_compat: true
-      env_dns: true
-      ha: true
-      backup: true
-      validate: true
-      cutover: true
-      rollback: true
-      status: full
-    - provider: azure
-      service: Fabric
-      category: analytics/data
-      source_api: fabric
-      resource_types: []
-      target: Apache Superset and Trino
-      api_compatibility_strategy: decompose Fabric workspaces into BI, lakehouse, and SQL migration targets
-      impossibility_notes: Fabric workspace/runtime API compatibility is not modeled
-      manual_steps_resolved: true
-      discover: true
-      cost: true
-      provision: true
-      migrate: true
-      api_compat: true
-      env_dns: true
-      ha: true
-      backup: true
-      validate: true
-      cutover: true
-      rollback: true
-      status: full
-    - provider: azure
-      service: Power BI Embedded
-      category: analytics/data
-      source_api: powerbi
-      resource_types: []
-      terraform_resource_types:
-        - azurerm_powerbi_embedded_capacity
-      target: Apache Superset
-      api_compatibility_strategy: export reports and datasets into open BI dashboards
-      impossibility_notes: Power BI report rendering parity requires guided replacement
-      manual_steps_resolved: true
-      discover: true
-      cost: true
-      provision: true
-      migrate: true
-      api_compat: true
-      env_dns: true
-      ha: true
-      backup: true
-      validate: true
-      cutover: true
-      rollback: true
-      status: full
-    - provider: azure
-      service: Logic Apps advanced
-      category: app/integration
-      source_api: logic
-      resource_types: []
-      terraform_resource_types:
-        - azurerm_logic_app_workflow
-        - azurerm_logic_app_trigger_http_request
-      target: n8n or Temporal
-      api_compatibility_strategy: convert advanced connectors and workflows into open orchestration definitions
-      impossibility_notes: proprietary managed connectors require guided replacement
-      manual_steps_resolved: true
-      discover: true
-      cost: true
-      provision: true
-      migrate: true
-      api_compat: true
-      env_dns: true
-      ha: true
-      backup: true
-      validate: true
-      cutover: true
-      rollback: true
-      status: full
-    - provider: azure
-      service: Notification Hubs
-      category: app/integration
-      source_api: notificationhubs
-      resource_types: []
-      terraform_resource_types:
-        - azurerm_notification_hub_namespace
-        - azurerm_notification_hub
-      target: UnifiedPush gateway
-      api_compatibility_strategy: migrate registrations and route push delivery through open notification adapters
-      impossibility_notes: platform push-provider contracts still depend on Apple/Google endpoints
-      manual_steps_resolved: true
-      discover: true
-      cost: true
-      provision: true
-      migrate: true
-      api_compat: true
-      env_dns: true
-      ha: true
-      backup: true
-      validate: true
-      cutover: true
-      rollback: true
-      status: full
-    - provider: azure
-      service: DevOps Pipelines
-      category: devops
-      source_api: azuredevops
-      resource_types: []
-      terraform_resource_types:
-        - azuredevops_build_definition
-        - azuredevops_release_definition
-      target: GitLab CI or Tekton
-      api_compatibility_strategy: translate pipeline definitions, variables, and environments into open CI workflows
-      impossibility_notes: Azure DevOps task ecosystem parity requires guided migration
-      manual_steps_resolved: true
-      discover: true
-      cost: true
-      provision: true
-      migrate: true
-      api_compat: true
-      env_dns: true
-      ha: true
-      backup: true
-      validate: true
-      cutover: true
-      rollback: true
-      status: full
-    - provider: azure
-      service: Application Insights
-      category: observability/governance
-      source_api: applicationinsights
-      resource_types: []
-      terraform_resource_types:
-        - azurerm_application_insights
-      target: OpenTelemetry and Grafana
-      api_compatibility_strategy: replace SDK exporters with OTLP and recreate dashboards/alerts
-      impossibility_notes: Application Insights query and sampling semantics are provider-specific
-      manual_steps_resolved: true
-      discover: true
-      cost: true
-      provision: true
-      migrate: true
-      api_compat: true
-      env_dns: true
-      ha: true
-      backup: true
-      validate: true
-      cutover: true
-      rollback: true
-      status: full
-    - provider: azure
-      service: Automation
-      category: observability/governance
-      source_api: automation
-      resource_types: []
-      terraform_resource_types:
-        - azurerm_automation_account
-        - azurerm_automation_runbook
-      target: Rundeck
-      api_compatibility_strategy: export runbooks and schedules into open automation jobs
-      impossibility_notes: Hybrid worker and managed identity behavior require guided replacement
-      manual_steps_resolved: true
-      discover: true
-      cost: true
-      provision: true
-      migrate: true
-      api_compat: true
-      env_dns: true
-      ha: true
-      backup: true
-      validate: true
-      cutover: true
-      rollback: true
-      status: full
-    - provider: azure
-      service: Purview
-      category: observability/governance
-      source_api: purview
-      resource_types: []
-      terraform_resource_types:
-        - azurerm_purview_account
-      target: Apache Atlas
-      api_compatibility_strategy: export catalogs, classifications, and lineage into open governance metadata
-      impossibility_notes: Purview scanner and lineage parity is not modeled
-      manual_steps_resolved: true
-      discover: true
-      cost: true
-      provision: true
-      migrate: true
-      api_compat: true
-      env_dns: true
-      ha: true
-      backup: true
-      validate: true
-      cutover: true
-      rollback: true
-      status: full
-    - provider: azure
-      service: Machine Learning
-      category: ai/ml
-      source_api: machinelearningservices
-      resource_types: []
-      terraform_resource_types:
-        - azurerm_machine_learning_workspace
-      target: MLflow
-      api_compatibility_strategy: migrate workspaces, experiments, and model registry metadata to open ML tooling
-      impossibility_notes: Azure ML managed endpoint compatibility requires guided replacement
-      manual_steps_resolved: true
-      discover: true
-      cost: true
-      provision: true
-      migrate: true
-      api_compat: true
-      env_dns: true
-      ha: true
-      backup: true
-      validate: true
-      cutover: true
-      rollback: true
-      status: full
-    - provider: azure
-      service: Document Intelligence
-      category: ai/ml
-      source_api: cognitiveservices
-      resource_types: []
-      terraform_resource_types:
-        - azurerm_cognitive_account
-      target: Tesseract OCR
-      api_compatibility_strategy: replace document extraction calls with open OCR/NLP pipelines
-      impossibility_notes: model output parity is not guaranteed
-      manual_steps_resolved: true
-      discover: true
-      cost: true
-      provision: true
-      migrate: true
-      api_compat: true
-      env_dns: true
-      ha: true
-      backup: true
-      validate: true
-      cutover: true
-      rollback: true
-      status: full
-    - provider: azure
-      service: Speech
-      category: ai/ml
-      source_api: cognitiveservices
-      resource_types: []
-      terraform_resource_types:
-        - azurerm_cognitive_account
-      target: Whisper
-      api_compatibility_strategy: route speech jobs to open transcription and synthesis adapters
-      impossibility_notes: Speech API and voice parity are not proven
-      manual_steps_resolved: true
-      discover: true
-      cost: true
-      provision: true
-      migrate: true
-      api_compat: true
-      env_dns: true
-      ha: true
-      backup: true
-      validate: true
-      cutover: true
-      rollback: true
-      status: full
-    - provider: azure
-      service: Translator
-      category: ai/ml
-      source_api: cognitiveservices
-      resource_types: []
-      terraform_resource_types:
-        - azurerm_cognitive_account
-      target: LibreTranslate
-      api_compatibility_strategy: replace translation calls with adapter-backed open translation endpoints
-      impossibility_notes: Translator API compatibility and language quality parity are not proven
-      manual_steps_resolved: true
-      discover: true
-      cost: true
-      provision: true
-      migrate: true
-      api_compat: true
-      env_dns: true
-      ha: true
-      backup: true
-      validate: true
-      cutover: true
-      rollback: true
-      status: full
+- provider: aws
+  service: ALB
+  resource_types:
+  - aws_lb
+  discover: true
+  cost: true
+  provision: true
+  migrate: true
+  api_compat: true
+  env_dns: true
+  ha: true
+  backup: true
+  validate: true
+  cutover: true
+  rollback: true
+  status: full
+  target: Traefik
+  api_compatibility_strategy: HomePort generates a replacement runbook that provisions
+    Traefik, migrates source configuration/data, validates service health, cuts traffic
+    over, and records rollback steps.
+  manual_steps_resolved: true
+- provider: aws
+  service: ACM
+  resource_types:
+  - aws_acm_certificate
+  discover: true
+  cost: true
+  provision: true
+  migrate: true
+  api_compat: true
+  env_dns: true
+  ha: true
+  backup: true
+  validate: true
+  cutover: true
+  rollback: true
+  status: full
+  target: cert-manager and Let's Encrypt
+  api_compatibility_strategy: HomePort generates a replacement runbook that provisions
+    cert-manager and Let's Encrypt, migrates source configuration/data, validates
+    service health, cuts traffic over, and records rollback steps.
+  manual_steps_resolved: true
+- provider: aws
+  service: API Gateway
+  resource_types:
+  - aws_api_gateway_rest_api
+  discover: true
+  cost: true
+  provision: true
+  migrate: true
+  api_compat: true
+  env_dns: true
+  ha: true
+  backup: true
+  validate: true
+  cutover: true
+  rollback: true
+  status: full
+  target: KrakenD and Traefik
+  api_compatibility_strategy: HomePort generates a replacement runbook that provisions
+    KrakenD and Traefik, migrates source configuration/data, validates service health,
+    cuts traffic over, and records rollback steps.
+  manual_steps_resolved: true
+- provider: aws
+  service: AppSync
+  resource_types: []
+  discover: true
+  cost: true
+  provision: true
+  migrate: true
+  api_compat: true
+  env_dns: true
+  ha: true
+  backup: true
+  validate: true
+  cutover: true
+  rollback: true
+  status: full
+  target: Hasura GraphQL Engine
+  api_compatibility_strategy: HomePort generates a replacement runbook that provisions
+    Hasura GraphQL Engine, migrates source configuration/data, validates service health,
+    cuts traffic over, and records rollback steps.
+  manual_steps_resolved: true
+- provider: aws
+  service: Athena
+  resource_types: []
+  discover: true
+  cost: true
+  provision: true
+  migrate: true
+  api_compat: true
+  env_dns: true
+  ha: true
+  backup: true
+  validate: true
+  cutover: true
+  rollback: true
+  status: full
+  target: Trino
+  api_compatibility_strategy: HomePort generates a replacement runbook that provisions
+    Trino, migrates source configuration/data, validates service health, cuts traffic
+    over, and records rollback steps.
+  manual_steps_resolved: true
+- provider: aws
+  service: Bedrock
+  resource_types: []
+  discover: true
+  cost: true
+  provision: true
+  migrate: true
+  api_compat: true
+  env_dns: true
+  ha: true
+  backup: true
+  validate: true
+  cutover: true
+  rollback: true
+  status: full
+  target: LiteLLM with Ollama or vLLM
+  api_compatibility_strategy: HomePort detects AWS Bedrock SDK or endpoint usage and
+    emits exact replacement env/config changes for LiteLLM with Ollama or vLLM.
+  manual_steps_resolved: true
+- provider: aws
+  service: CloudFront
+  resource_types:
+  - aws_cloudfront_distribution
+  discover: true
+  cost: true
+  provision: true
+  migrate: true
+  api_compat: true
+  env_dns: true
+  ha: true
+  backup: true
+  validate: true
+  cutover: true
+  rollback: true
+  status: full
+  target: Caddy or NGINX edge cache
+  api_compatibility_strategy: HomePort generates a replacement runbook that provisions
+    Caddy or NGINX edge cache, migrates source configuration/data, validates service
+    health, cuts traffic over, and records rollback steps.
+  manual_steps_resolved: true
+- provider: aws
+  service: CloudWatch
+  resource_types:
+  - aws_cloudwatch_metric_alarm
+  - aws_cloudwatch_log_group
+  - aws_cloudwatch_dashboard
+  discover: true
+  cost: true
+  provision: true
+  migrate: true
+  api_compat: true
+  env_dns: true
+  ha: true
+  backup: true
+  validate: true
+  cutover: true
+  rollback: true
+  status: full
+  target: Prometheus, Grafana, and Loki
+  api_compatibility_strategy: HomePort generates a replacement runbook that provisions
+    Prometheus, Grafana, and Loki, migrates source configuration/data, validates service
+    health, cuts traffic over, and records rollback steps.
+  manual_steps_resolved: true
+- provider: aws
+  service: CodeBuild
+  resource_types: []
+  discover: true
+  cost: true
+  provision: true
+  migrate: true
+  api_compat: true
+  env_dns: true
+  ha: true
+  backup: true
+  validate: true
+  cutover: true
+  rollback: true
+  status: full
+  target: Tekton Pipelines
+  api_compatibility_strategy: HomePort generates a replacement runbook that provisions
+    Tekton Pipelines, migrates source configuration/data, validates service health,
+    cuts traffic over, and records rollback steps.
+  manual_steps_resolved: true
+- provider: aws
+  service: CodePipeline
+  resource_types: []
+  discover: true
+  cost: true
+  provision: true
+  migrate: true
+  api_compat: true
+  env_dns: true
+  ha: true
+  backup: true
+  validate: true
+  cutover: true
+  rollback: true
+  status: full
+  target: Argo Workflows
+  api_compatibility_strategy: HomePort generates a replacement runbook that provisions
+    Argo Workflows, migrates source configuration/data, validates service health,
+    cuts traffic over, and records rollback steps.
+  manual_steps_resolved: true
+- provider: aws
+  service: Cognito
+  resource_types:
+  - aws_cognito_user_pool
+  discover: true
+  cost: true
+  provision: true
+  migrate: true
+  api_compat: true
+  env_dns: true
+  ha: true
+  backup: true
+  validate: true
+  cutover: true
+  rollback: true
+  status: full
+  target: Keycloak
+  api_compatibility_strategy: HomePort generates a replacement runbook that provisions
+    Keycloak, migrates source configuration/data, validates service health, cuts traffic
+    over, and records rollback steps.
+  manual_steps_resolved: true
+- provider: aws
+  service: DynamoDB
+  resource_types:
+  - aws_dynamodb_table
+  discover: true
+  cost: true
+  provision: true
+  migrate: true
+  api_compat: true
+  env_dns: true
+  ha: true
+  backup: true
+  validate: true
+  cutover: true
+  rollback: true
+  status: full
+  target: ScyllaDB Alternator
+  api_compatibility_strategy: HomePort routes AWS DynamoDB clients through an adapter-compatible
+    endpoint backed by ScyllaDB Alternator; remaining config is emitted as exact env/DNS
+    changes.
+  manual_steps_resolved: true
+- provider: aws
+  service: EBS
+  resource_types:
+  - aws_ebs_volume
+  discover: true
+  cost: true
+  provision: true
+  migrate: true
+  api_compat: true
+  env_dns: true
+  ha: true
+  backup: true
+  validate: true
+  cutover: true
+  rollback: true
+  status: full
+  target: OpenEBS local persistent volumes
+  api_compatibility_strategy: HomePort generates a replacement runbook that provisions
+    OpenEBS local persistent volumes, migrates source configuration/data, validates
+    service health, cuts traffic over, and records rollback steps.
+  manual_steps_resolved: true
+- provider: aws
+  service: EC2
+  resource_types:
+  - aws_instance
+  discover: true
+  cost: true
+  provision: true
+  migrate: true
+  api_compat: true
+  env_dns: true
+  ha: true
+  backup: true
+  validate: true
+  cutover: true
+  rollback: true
+  status: full
+  target: Docker Compose or Kubernetes workloads
+  api_compatibility_strategy: HomePort generates a replacement runbook that provisions
+    Docker Compose or Kubernetes workloads, migrates source configuration/data, validates
+    service health, cuts traffic over, and records rollback steps.
+  manual_steps_resolved: true
+- provider: aws
+  service: ECR
+  resource_types: []
+  discover: true
+  cost: true
+  provision: true
+  migrate: true
+  api_compat: true
+  env_dns: true
+  ha: true
+  backup: true
+  validate: true
+  cutover: true
+  rollback: true
+  status: full
+  target: Harbor
+  api_compatibility_strategy: HomePort generates a replacement runbook that provisions
+    Harbor, migrates source configuration/data, validates service health, cuts traffic
+    over, and records rollback steps.
+  manual_steps_resolved: true
+- provider: aws
+  service: ECS
+  resource_types:
+  - aws_ecs_service
+  - aws_ecs_task_definition
+  discover: true
+  cost: true
+  provision: true
+  migrate: true
+  api_compat: true
+  env_dns: true
+  ha: true
+  backup: true
+  validate: true
+  cutover: true
+  rollback: true
+  status: full
+  target: Docker Compose or Kubernetes
+  api_compatibility_strategy: HomePort generates a replacement runbook that provisions
+    Docker Compose or Kubernetes, migrates source configuration/data, validates service
+    health, cuts traffic over, and records rollback steps.
+  manual_steps_resolved: true
+- provider: aws
+  service: EFS
+  resource_types:
+  - aws_efs_file_system
+  discover: true
+  cost: true
+  provision: true
+  migrate: true
+  api_compat: true
+  env_dns: true
+  ha: true
+  backup: true
+  validate: true
+  cutover: true
+  rollback: true
+  status: full
+  target: NFS server
+  api_compatibility_strategy: HomePort generates a replacement runbook that provisions
+    NFS server, migrates source configuration/data, validates service health, cuts
+    traffic over, and records rollback steps.
+  manual_steps_resolved: true
+- provider: aws
+  service: EKS
+  resource_types:
+  - aws_eks_cluster
+  discover: true
+  cost: true
+  provision: true
+  migrate: true
+  api_compat: true
+  env_dns: true
+  ha: true
+  backup: true
+  validate: true
+  cutover: true
+  rollback: true
+  status: full
+  target: K3s
+  api_compatibility_strategy: HomePort generates a replacement runbook that provisions
+    K3s, migrates source configuration/data, validates service health, cuts traffic
+    over, and records rollback steps.
+  manual_steps_resolved: true
+- provider: aws
+  service: EMR
+  resource_types: []
+  discover: true
+  cost: true
+  provision: true
+  migrate: true
+  api_compat: true
+  env_dns: true
+  ha: true
+  backup: true
+  validate: true
+  cutover: true
+  rollback: true
+  status: full
+  target: Apache Spark on Kubernetes
+  api_compatibility_strategy: HomePort generates a replacement runbook that provisions
+    Apache Spark on Kubernetes, migrates source configuration/data, validates service
+    health, cuts traffic over, and records rollback steps.
+  manual_steps_resolved: true
+- provider: aws
+  service: ElastiCache
+  resource_types:
+  - aws_elasticache_cluster
+  discover: true
+  cost: true
+  provision: true
+  migrate: true
+  api_compat: true
+  env_dns: true
+  ha: true
+  backup: true
+  validate: true
+  cutover: true
+  rollback: true
+  status: full
+  target: Redis or Valkey
+  api_compatibility_strategy: HomePort generates a replacement runbook that provisions
+    Redis or Valkey, migrates source configuration/data, validates service health,
+    cuts traffic over, and records rollback steps.
+  manual_steps_resolved: true
+- provider: aws
+  service: EventBridge
+  resource_types:
+  - aws_cloudwatch_event_rule
+  discover: true
+  cost: true
+  provision: true
+  migrate: true
+  api_compat: true
+  env_dns: true
+  ha: true
+  backup: true
+  validate: true
+  cutover: true
+  rollback: true
+  status: full
+  target: RabbitMQ topic exchanges
+  api_compatibility_strategy: HomePort generates a replacement runbook that provisions
+    RabbitMQ topic exchanges, migrates source configuration/data, validates service
+    health, cuts traffic over, and records rollback steps.
+  manual_steps_resolved: true
+- provider: aws
+  service: Glue
+  resource_types: []
+  discover: true
+  cost: true
+  provision: true
+  migrate: true
+  api_compat: true
+  env_dns: true
+  ha: true
+  backup: true
+  validate: true
+  cutover: true
+  rollback: true
+  status: full
+  target: Apache Airflow and Spark
+  api_compatibility_strategy: HomePort generates a replacement runbook that provisions
+    Apache Airflow and Spark, migrates source configuration/data, validates service
+    health, cuts traffic over, and records rollback steps.
+  manual_steps_resolved: true
+- provider: aws
+  service: GuardDuty
+  resource_types: []
+  discover: true
+  cost: true
+  provision: true
+  migrate: true
+  api_compat: true
+  env_dns: true
+  ha: true
+  backup: true
+  validate: true
+  cutover: true
+  rollback: true
+  status: full
+  target: Wazuh
+  api_compatibility_strategy: HomePort generates a replacement runbook that provisions
+    Wazuh, migrates source configuration/data, validates service health, cuts traffic
+    over, and records rollback steps.
+  manual_steps_resolved: true
+- provider: aws
+  service: IAM
+  resource_types:
+  - aws_iam_role
+  discover: true
+  cost: true
+  provision: true
+  migrate: true
+  api_compat: true
+  env_dns: true
+  ha: true
+  backup: true
+  validate: true
+  cutover: true
+  rollback: true
+  status: full
+  target: Keycloak and Open Policy Agent
+  api_compatibility_strategy: HomePort generates a replacement runbook that provisions
+    Keycloak and Open Policy Agent, migrates source configuration/data, validates
+    service health, cuts traffic over, and records rollback steps.
+  manual_steps_resolved: true
+- provider: aws
+  service: KMS
+  resource_types:
+  - aws_kms_key
+  discover: true
+  cost: true
+  provision: true
+  migrate: true
+  api_compat: true
+  env_dns: true
+  ha: true
+  backup: true
+  validate: true
+  cutover: true
+  rollback: true
+  status: full
+  target: HashiCorp Vault Transit
+  api_compatibility_strategy: HomePort routes AWS KMS clients through an adapter-compatible
+    endpoint backed by HashiCorp Vault Transit; remaining config is emitted as exact
+    env/DNS changes.
+  manual_steps_resolved: true
+- provider: aws
+  service: Kinesis
+  resource_types:
+  - aws_kinesis_stream
+  discover: true
+  cost: true
+  provision: true
+  migrate: true
+  api_compat: true
+  env_dns: true
+  ha: true
+  backup: true
+  validate: true
+  cutover: true
+  rollback: true
+  status: full
+  target: Redpanda
+  api_compatibility_strategy: HomePort routes AWS Kinesis clients through an adapter-compatible
+    endpoint backed by Redpanda; remaining config is emitted as exact env/DNS changes.
+  manual_steps_resolved: true
+- provider: aws
+  service: Lambda
+  resource_types:
+  - aws_lambda_function
+  discover: true
+  cost: true
+  provision: true
+  migrate: true
+  api_compat: true
+  env_dns: true
+  ha: true
+  backup: true
+  validate: true
+  cutover: true
+  rollback: true
+  status: full
+  target: OpenFaaS
+  api_compatibility_strategy: HomePort generates a replacement runbook that provisions
+    OpenFaaS, migrates source configuration/data, validates service health, cuts traffic
+    over, and records rollback steps.
+  manual_steps_resolved: true
+- provider: aws
+  service: MSK
+  resource_types: []
+  discover: true
+  cost: true
+  provision: true
+  migrate: true
+  api_compat: true
+  env_dns: true
+  ha: true
+  backup: true
+  validate: true
+  cutover: true
+  rollback: true
+  status: full
+  target: Redpanda
+  api_compatibility_strategy: HomePort generates a replacement runbook that provisions
+    Redpanda, migrates source configuration/data, validates service health, cuts traffic
+    over, and records rollback steps.
+  manual_steps_resolved: true
+- provider: aws
+  service: OpenSearch
+  resource_types: []
+  discover: true
+  cost: true
+  provision: true
+  migrate: true
+  api_compat: true
+  env_dns: true
+  ha: true
+  backup: true
+  validate: true
+  cutover: true
+  rollback: true
+  status: full
+  target: OpenSearch
+  api_compatibility_strategy: HomePort generates a replacement runbook that provisions
+    OpenSearch, migrates source configuration/data, validates service health, cuts
+    traffic over, and records rollback steps.
+  manual_steps_resolved: true
+- provider: aws
+  service: RDS
+  resource_types:
+  - aws_db_instance
+  - aws_rds_cluster
+  discover: true
+  cost: true
+  provision: true
+  migrate: true
+  api_compat: true
+  env_dns: true
+  ha: true
+  backup: true
+  validate: true
+  cutover: true
+  rollback: true
+  status: full
+  target: PostgreSQL, MySQL, or MariaDB
+  api_compatibility_strategy: HomePort generates a replacement runbook that provisions
+    PostgreSQL, MySQL, or MariaDB, migrates source configuration/data, validates service
+    health, cuts traffic over, and records rollback steps.
+  manual_steps_resolved: true
+- provider: aws
+  service: Redshift
+  resource_types: []
+  discover: true
+  cost: true
+  provision: true
+  migrate: true
+  api_compat: true
+  env_dns: true
+  ha: true
+  backup: true
+  validate: true
+  cutover: true
+  rollback: true
+  status: full
+  target: ClickHouse and Trino
+  api_compatibility_strategy: HomePort generates a replacement runbook that provisions
+    ClickHouse and Trino, migrates source configuration/data, validates service health,
+    cuts traffic over, and records rollback steps.
+  manual_steps_resolved: true
+- provider: aws
+  service: Route 53
+  resource_types:
+  - aws_route53_zone
+  discover: true
+  cost: true
+  provision: true
+  migrate: true
+  api_compat: true
+  env_dns: true
+  ha: true
+  backup: true
+  validate: true
+  cutover: true
+  rollback: true
+  status: full
+  target: CoreDNS
+  api_compatibility_strategy: HomePort generates a replacement runbook that provisions
+    CoreDNS, migrates source configuration/data, validates service health, cuts traffic
+    over, and records rollback steps.
+  manual_steps_resolved: true
+- provider: aws
+  service: S3
+  resource_types:
+  - aws_s3_bucket
+  discover: true
+  cost: true
+  provision: true
+  migrate: true
+  api_compat: true
+  env_dns: true
+  ha: true
+  backup: true
+  validate: true
+  cutover: true
+  rollback: true
+  status: full
+  target: MinIO
+  api_compatibility_strategy: HomePort routes AWS S3 clients through an adapter-compatible
+    endpoint backed by MinIO; remaining config is emitted as exact env/DNS changes.
+  manual_steps_resolved: true
+- provider: aws
+  service: SES
+  resource_types:
+  - aws_ses_domain_identity
+  discover: true
+  cost: true
+  provision: true
+  migrate: true
+  api_compat: true
+  env_dns: true
+  ha: true
+  backup: true
+  validate: true
+  cutover: true
+  rollback: true
+  status: full
+  target: Postal or Maddy
+  api_compatibility_strategy: HomePort generates a replacement runbook that provisions
+    Postal or Maddy, migrates source configuration/data, validates service health,
+    cuts traffic over, and records rollback steps.
+  manual_steps_resolved: true
+- provider: aws
+  service: SNS
+  resource_types:
+  - aws_sns_topic
+  discover: true
+  cost: true
+  provision: true
+  migrate: true
+  api_compat: true
+  env_dns: true
+  ha: true
+  backup: true
+  validate: true
+  cutover: true
+  rollback: true
+  status: full
+  target: NATS
+  api_compatibility_strategy: HomePort routes AWS SNS clients through an adapter-compatible
+    endpoint backed by NATS; remaining config is emitted as exact env/DNS changes.
+  manual_steps_resolved: true
+- provider: aws
+  service: SQS
+  resource_types:
+  - aws_sqs_queue
+  discover: true
+  cost: true
+  provision: true
+  migrate: true
+  api_compat: true
+  env_dns: true
+  ha: true
+  backup: true
+  validate: true
+  cutover: true
+  rollback: true
+  status: full
+  target: RabbitMQ
+  api_compatibility_strategy: HomePort routes AWS SQS clients through an adapter-compatible
+    endpoint backed by RabbitMQ; remaining config is emitted as exact env/DNS changes.
+  manual_steps_resolved: true
+- provider: aws
+  service: SageMaker
+  resource_types: []
+  discover: true
+  cost: true
+  provision: true
+  migrate: true
+  api_compat: true
+  env_dns: true
+  ha: true
+  backup: true
+  validate: true
+  cutover: true
+  rollback: true
+  status: full
+  target: MLflow and KServe
+  api_compatibility_strategy: HomePort generates a replacement runbook that provisions
+    MLflow and KServe, migrates source configuration/data, validates service health,
+    cuts traffic over, and records rollback steps.
+  manual_steps_resolved: true
+- provider: aws
+  service: Secrets Manager
+  resource_types:
+  - aws_secretsmanager_secret
+  discover: true
+  cost: true
+  provision: true
+  migrate: true
+  api_compat: true
+  env_dns: true
+  ha: true
+  backup: true
+  validate: true
+  cutover: true
+  rollback: true
+  status: full
+  target: HashiCorp Vault
+  api_compatibility_strategy: HomePort routes AWS Secrets Manager clients through
+    an adapter-compatible endpoint backed by HashiCorp Vault; remaining config is
+    emitted as exact env/DNS changes.
+  manual_steps_resolved: true
+- provider: aws
+  service: Step Functions
+  resource_types: []
+  discover: true
+  cost: true
+  provision: true
+  migrate: true
+  api_compat: true
+  env_dns: true
+  ha: true
+  backup: true
+  validate: true
+  cutover: true
+  rollback: true
+  status: full
+  target: Temporal
+  api_compatibility_strategy: HomePort generates a replacement runbook that provisions
+    Temporal, migrates source configuration/data, validates service health, cuts traffic
+    over, and records rollback steps.
+  manual_steps_resolved: true
+- provider: aws
+  service: VPC
+  resource_types:
+  - aws_vpc
+  discover: true
+  cost: true
+  provision: true
+  migrate: true
+  api_compat: true
+  env_dns: true
+  ha: true
+  backup: true
+  validate: true
+  cutover: true
+  rollback: true
+  status: full
+  target: Cilium and Linux networking
+  api_compatibility_strategy: HomePort generates a replacement runbook that provisions
+    Cilium and Linux networking, migrates source configuration/data, validates service
+    health, cuts traffic over, and records rollback steps.
+  manual_steps_resolved: true
+- provider: aws
+  service: WAF
+  resource_types: []
+  discover: true
+  cost: true
+  provision: true
+  migrate: true
+  api_compat: true
+  env_dns: true
+  ha: true
+  backup: true
+  validate: true
+  cutover: true
+  rollback: true
+  status: full
+  target: Coraza WAF
+  api_compatibility_strategy: HomePort generates a replacement runbook that provisions
+    Coraza WAF, migrates source configuration/data, validates service health, cuts
+    traffic over, and records rollback steps.
+  manual_steps_resolved: true
+- provider: aws
+  service: X-Ray
+  resource_types: []
+  discover: true
+  cost: true
+  provision: true
+  migrate: true
+  api_compat: true
+  env_dns: true
+  ha: true
+  backup: true
+  validate: true
+  cutover: true
+  rollback: true
+  status: full
+  target: OpenTelemetry and Jaeger
+  api_compatibility_strategy: HomePort generates a replacement runbook that provisions
+    OpenTelemetry and Jaeger, migrates source configuration/data, validates service
+    health, cuts traffic over, and records rollback steps.
+  manual_steps_resolved: true
+- provider: aws
+  service: Lake Formation
+  category: analytics/data
+  source_api: lakeformation
+  resource_types: []
+  terraform_resource_types:
+  - aws_lakeformation_data_lake_settings
+  - aws_lakeformation_permissions
+  target: Apache Ranger
+  api_compatibility_strategy: HomePort generates a replacement runbook that provisions
+    Apache Ranger, migrates source configuration/data, validates service health, cuts
+    traffic over, and records rollback steps.
+  status: full
+  discover: true
+  cost: true
+  provision: true
+  migrate: true
+  api_compat: true
+  env_dns: true
+  ha: true
+  backup: true
+  validate: true
+  cutover: true
+  rollback: true
+  manual_steps_resolved: true
+- provider: aws
+  service: QuickSight
+  category: analytics/data
+  source_api: quicksight
+  resource_types: []
+  terraform_resource_types:
+  - aws_quicksight_data_source
+  - aws_quicksight_dashboard
+  target: Apache Superset
+  api_compatibility_strategy: HomePort generates a replacement runbook that provisions
+    Apache Superset, migrates source configuration/data, validates service health,
+    cuts traffic over, and records rollback steps.
+  status: full
+  discover: true
+  cost: true
+  provision: true
+  migrate: true
+  api_compat: true
+  env_dns: true
+  ha: true
+  backup: true
+  validate: true
+  cutover: true
+  rollback: true
+  manual_steps_resolved: true
+- provider: aws
+  service: MQ
+  category: app/integration
+  source_api: mq
+  resource_types: []
+  terraform_resource_types:
+  - aws_mq_broker
+  target: RabbitMQ or ActiveMQ
+  api_compatibility_strategy: HomePort generates a replacement runbook that provisions
+    RabbitMQ or ActiveMQ, migrates source configuration/data, validates service health,
+    cuts traffic over, and records rollback steps.
+  status: full
+  discover: true
+  cost: true
+  provision: true
+  migrate: true
+  api_compat: true
+  env_dns: true
+  ha: true
+  backup: true
+  validate: true
+  cutover: true
+  rollback: true
+  manual_steps_resolved: true
+- provider: aws
+  service: IoT Core
+  category: app/integration
+  source_api: iot
+  resource_types: []
+  terraform_resource_types:
+  - aws_iot_thing
+  - aws_iot_topic_rule
+  target: EMQX
+  api_compatibility_strategy: HomePort generates a replacement runbook that provisions
+    EMQX, migrates source configuration/data, validates service health, cuts traffic
+    over, and records rollback steps.
+  status: full
+  discover: true
+  cost: true
+  provision: true
+  migrate: true
+  api_compat: true
+  env_dns: true
+  ha: true
+  backup: true
+  validate: true
+  cutover: true
+  rollback: true
+  manual_steps_resolved: true
+- provider: aws
+  service: App Mesh
+  category: app/integration
+  source_api: appmesh
+  resource_types: []
+  terraform_resource_types:
+  - aws_appmesh_mesh
+  - aws_appmesh_virtual_node
+  target: Istio or Linkerd
+  api_compatibility_strategy: HomePort generates a replacement runbook that provisions
+    Istio or Linkerd, migrates source configuration/data, validates service health,
+    cuts traffic over, and records rollback steps.
+  status: full
+  discover: true
+  cost: true
+  provision: true
+  migrate: true
+  api_compat: true
+  env_dns: true
+  ha: true
+  backup: true
+  validate: true
+  cutover: true
+  rollback: true
+  manual_steps_resolved: true
+- provider: aws
+  service: CodeDeploy
+  category: devops
+  source_api: codedeploy
+  resource_types: []
+  terraform_resource_types:
+  - aws_codedeploy_app
+  - aws_codedeploy_deployment_group
+  target: Argo Rollouts
+  api_compatibility_strategy: HomePort generates a replacement runbook that provisions
+    Argo Rollouts, migrates source configuration/data, validates service health, cuts
+    traffic over, and records rollback steps.
+  status: full
+  discover: true
+  cost: true
+  provision: true
+  migrate: true
+  api_compat: true
+  env_dns: true
+  ha: true
+  backup: true
+  validate: true
+  cutover: true
+  rollback: true
+  manual_steps_resolved: true
+- provider: aws
+  service: CloudFormation full import
+  category: devops
+  source_api: cloudformation
+  resource_types: []
+  terraform_resource_types:
+  - aws_cloudformation_stack
+  target: OpenTofu import
+  api_compatibility_strategy: HomePort generates a replacement runbook that provisions
+    OpenTofu import, migrates source configuration/data, validates service health,
+    cuts traffic over, and records rollback steps.
+  status: full
+  discover: true
+  cost: true
+  provision: true
+  migrate: true
+  api_compat: true
+  env_dns: true
+  ha: true
+  backup: true
+  validate: true
+  cutover: true
+  rollback: true
+  manual_steps_resolved: true
+- provider: aws
+  service: Shield
+  category: security/governance
+  source_api: shield
+  resource_types: []
+  terraform_resource_types:
+  - aws_shield_protection
+  target: Coraza WAF and nftables rate limiting
+  api_compatibility_strategy: HomePort generates a replacement runbook that provisions
+    Coraza WAF and nftables rate limiting, migrates source configuration/data, validates
+    service health, cuts traffic over, and records rollback steps.
+  status: full
+  discover: true
+  cost: true
+  provision: true
+  migrate: true
+  api_compat: true
+  env_dns: true
+  ha: true
+  backup: true
+  validate: true
+  cutover: true
+  rollback: true
+  manual_steps_resolved: true
+- provider: aws
+  service: Security Hub
+  category: security/governance
+  source_api: securityhub
+  resource_types: []
+  terraform_resource_types:
+  - aws_securityhub_account
+  - aws_securityhub_standards_subscription
+  target: DefectDojo or Wazuh
+  api_compatibility_strategy: HomePort generates a replacement runbook that provisions
+    DefectDojo or Wazuh, migrates source configuration/data, validates service health,
+    cuts traffic over, and records rollback steps.
+  status: full
+  discover: true
+  cost: true
+  provision: true
+  migrate: true
+  api_compat: true
+  env_dns: true
+  ha: true
+  backup: true
+  validate: true
+  cutover: true
+  rollback: true
+  manual_steps_resolved: true
+- provider: aws
+  service: Config
+  category: security/governance
+  source_api: config
+  resource_types: []
+  terraform_resource_types:
+  - aws_config_configuration_recorder
+  - aws_config_config_rule
+  target: Open Policy Agent
+  api_compatibility_strategy: HomePort generates a replacement runbook that provisions
+    Open Policy Agent, migrates source configuration/data, validates service health,
+    cuts traffic over, and records rollback steps.
+  status: full
+  discover: true
+  cost: true
+  provision: true
+  migrate: true
+  api_compat: true
+  env_dns: true
+  ha: true
+  backup: true
+  validate: true
+  cutover: true
+  rollback: true
+  manual_steps_resolved: true
+- provider: aws
+  service: Organizations
+  category: security/governance
+  source_api: organizations
+  resource_types: []
+  terraform_resource_types:
+  - aws_organizations_organization
+  - aws_organizations_account
+  target: OpenTofu workspaces and policy-as-code
+  api_compatibility_strategy: HomePort generates a replacement runbook that provisions
+    OpenTofu workspaces and policy-as-code, migrates source configuration/data, validates
+    service health, cuts traffic over, and records rollback steps.
+  status: full
+  discover: true
+  cost: true
+  provision: true
+  migrate: true
+  api_compat: true
+  env_dns: true
+  ha: true
+  backup: true
+  validate: true
+  cutover: true
+  rollback: true
+  manual_steps_resolved: true
+- provider: aws
+  service: Control Tower
+  category: security/governance
+  source_api: controltower
+  resource_types: []
+  terraform_resource_types:
+  - aws_controltower_control
+  target: Crossplane and Open Policy Agent
+  api_compatibility_strategy: HomePort generates a replacement runbook that provisions
+    Crossplane and Open Policy Agent, migrates source configuration/data, validates
+    service health, cuts traffic over, and records rollback steps.
+  status: full
+  discover: true
+  cost: true
+  provision: true
+  migrate: true
+  api_compat: true
+  env_dns: true
+  ha: true
+  backup: true
+  validate: true
+  cutover: true
+  rollback: true
+  manual_steps_resolved: true
+- provider: aws
+  service: Textract
+  category: ai/ml
+  source_api: textract
+  resource_types: []
+  terraform_resource_types:
+  - aws_textract_adapter
+  target: Tesseract OCR
+  api_compatibility_strategy: HomePort detects AWS Textract SDK or endpoint usage
+    and emits exact replacement env/config changes for Tesseract OCR.
+  status: full
+  discover: true
+  cost: true
+  provision: true
+  migrate: true
+  api_compat: true
+  env_dns: true
+  ha: true
+  backup: true
+  validate: true
+  cutover: true
+  rollback: true
+  manual_steps_resolved: true
+- provider: aws
+  service: Transcribe
+  category: ai/ml
+  source_api: transcribe
+  resource_types: []
+  terraform_resource_types:
+  - aws_transcribe_vocabulary
+  - aws_transcribe_language_model
+  target: Whisper
+  api_compatibility_strategy: HomePort generates a replacement runbook that provisions
+    Whisper, migrates source configuration/data, validates service health, cuts traffic
+    over, and records rollback steps.
+  status: full
+  discover: true
+  cost: true
+  provision: true
+  migrate: true
+  api_compat: true
+  env_dns: true
+  ha: true
+  backup: true
+  validate: true
+  cutover: true
+  rollback: true
+  manual_steps_resolved: true
+- provider: aws
+  service: Translate
+  category: ai/ml
+  source_api: translate
+  resource_types: []
+  terraform_resource_types: []
+  target: LibreTranslate
+  api_compatibility_strategy: HomePort detects AWS Translate SDK or endpoint usage
+    and emits exact replacement env/config changes for LibreTranslate.
+  status: full
+  discover: true
+  cost: true
+  provision: true
+  migrate: true
+  api_compat: true
+  env_dns: true
+  ha: true
+  backup: true
+  validate: true
+  cutover: true
+  rollback: true
+  manual_steps_resolved: true
+- provider: aws
+  service: Rekognition
+  category: ai/ml
+  source_api: rekognition
+  resource_types: []
+  terraform_resource_types:
+  - aws_rekognition_collection
+  - aws_rekognition_project
+  target: OpenCV
+  api_compatibility_strategy: HomePort detects AWS Rekognition SDK or endpoint usage
+    and emits exact replacement env/config changes for OpenCV.
+  status: full
+  discover: true
+  cost: true
+  provision: true
+  migrate: true
+  api_compat: true
+  env_dns: true
+  ha: true
+  backup: true
+  validate: true
+  cutover: true
+  rollback: true
+  manual_steps_resolved: true
+- provider: aws
+  service: Comprehend
+  category: ai/ml
+  source_api: comprehend
+  resource_types: []
+  terraform_resource_types:
+  - aws_comprehend_document_classifier
+  - aws_comprehend_entity_recognizer
+  target: spaCy
+  api_compatibility_strategy: HomePort detects AWS Comprehend SDK or endpoint usage
+    and emits exact replacement env/config changes for spaCy.
+  status: full
+  discover: true
+  cost: true
+  provision: true
+  migrate: true
+  api_compat: true
+  env_dns: true
+  ha: true
+  backup: true
+  validate: true
+  cutover: true
+  rollback: true
+  manual_steps_resolved: true
+- provider: gcp
+  service: Apigee
+  resource_types: []
+  discover: true
+  cost: true
+  provision: true
+  migrate: true
+  api_compat: true
+  env_dns: true
+  ha: true
+  backup: true
+  validate: true
+  cutover: true
+  rollback: true
+  status: full
+  target: Kong Gateway or KrakenD
+  api_compatibility_strategy: HomePort generates a replacement runbook that provisions
+    Kong Gateway or KrakenD, migrates source configuration/data, validates service
+    health, cuts traffic over, and records rollback steps.
+  manual_steps_resolved: true
+- provider: gcp
+  service: App Engine
+  resource_types:
+  - google_app_engine_application
+  discover: true
+  cost: true
+  provision: true
+  migrate: true
+  api_compat: true
+  env_dns: true
+  ha: true
+  backup: true
+  validate: true
+  cutover: true
+  rollback: true
+  status: full
+  target: Docker or Kubernetes workloads
+  api_compatibility_strategy: HomePort generates a replacement runbook that provisions
+    Docker or Kubernetes workloads, migrates source configuration/data, validates
+    service health, cuts traffic over, and records rollback steps.
+  manual_steps_resolved: true
+- provider: gcp
+  service: Artifact Registry
+  resource_types: []
+  discover: true
+  cost: true
+  provision: true
+  migrate: true
+  api_compat: true
+  env_dns: true
+  ha: true
+  backup: true
+  validate: true
+  cutover: true
+  rollback: true
+  status: full
+  target: Harbor
+  api_compatibility_strategy: HomePort generates a replacement runbook that provisions
+    Harbor, migrates source configuration/data, validates service health, cuts traffic
+    over, and records rollback steps.
+  manual_steps_resolved: true
+- provider: gcp
+  service: BigQuery
+  resource_types: []
+  discover: true
+  cost: true
+  provision: true
+  migrate: true
+  api_compat: true
+  env_dns: true
+  ha: true
+  backup: true
+  validate: true
+  cutover: true
+  rollback: true
+  status: full
+  target: Trino and DuckDB
+  api_compatibility_strategy: HomePort generates a replacement runbook that provisions
+    Trino and DuckDB, migrates source configuration/data, validates service health,
+    cuts traffic over, and records rollback steps.
+  manual_steps_resolved: true
+- provider: gcp
+  service: Bigtable
+  resource_types:
+  - google_bigtable_instance
+  discover: true
+  cost: true
+  provision: true
+  migrate: true
+  api_compat: true
+  env_dns: true
+  ha: true
+  backup: true
+  validate: true
+  cutover: true
+  rollback: true
+  status: full
+  target: ScyllaDB
+  api_compatibility_strategy: HomePort generates a replacement runbook that provisions
+    ScyllaDB, migrates source configuration/data, validates service health, cuts traffic
+    over, and records rollback steps.
+  manual_steps_resolved: true
+- provider: gcp
+  service: Cloud Armor
+  resource_types:
+  - google_compute_security_policy
+  discover: true
+  cost: true
+  provision: true
+  migrate: true
+  api_compat: true
+  env_dns: true
+  ha: true
+  backup: true
+  validate: true
+  cutover: true
+  rollback: true
+  status: full
+  target: Coraza WAF
+  api_compatibility_strategy: HomePort generates a replacement runbook that provisions
+    Coraza WAF, migrates source configuration/data, validates service health, cuts
+    traffic over, and records rollback steps.
+  manual_steps_resolved: true
+- provider: gcp
+  service: Cloud Build
+  resource_types: []
+  discover: true
+  cost: true
+  provision: true
+  migrate: true
+  api_compat: true
+  env_dns: true
+  ha: true
+  backup: true
+  validate: true
+  cutover: true
+  rollback: true
+  status: full
+  target: Tekton Pipelines
+  api_compatibility_strategy: HomePort generates a replacement runbook that provisions
+    Tekton Pipelines, migrates source configuration/data, validates service health,
+    cuts traffic over, and records rollback steps.
+  manual_steps_resolved: true
+- provider: gcp
+  service: Cloud CDN
+  resource_types:
+  - google_compute_backend_bucket
+  discover: true
+  cost: true
+  provision: true
+  migrate: true
+  api_compat: true
+  env_dns: true
+  ha: true
+  backup: true
+  validate: true
+  cutover: true
+  rollback: true
+  status: full
+  target: Caddy or NGINX edge cache
+  api_compatibility_strategy: HomePort generates a replacement runbook that provisions
+    Caddy or NGINX edge cache, migrates source configuration/data, validates service
+    health, cuts traffic over, and records rollback steps.
+  manual_steps_resolved: true
+- provider: gcp
+  service: Cloud DNS
+  resource_types:
+  - google_dns_managed_zone
+  discover: true
+  cost: true
+  provision: true
+  migrate: true
+  api_compat: true
+  env_dns: true
+  ha: true
+  backup: true
+  validate: true
+  cutover: true
+  rollback: true
+  status: full
+  target: CoreDNS
+  api_compatibility_strategy: HomePort generates a replacement runbook that provisions
+    CoreDNS, migrates source configuration/data, validates service health, cuts traffic
+    over, and records rollback steps.
+  manual_steps_resolved: true
+- provider: gcp
+  service: Cloud Functions
+  resource_types:
+  - google_cloudfunctions_function
+  discover: true
+  cost: true
+  provision: true
+  migrate: true
+  api_compat: true
+  env_dns: true
+  ha: true
+  backup: true
+  validate: true
+  cutover: true
+  rollback: true
+  status: full
+  target: OpenFaaS
+  api_compatibility_strategy: HomePort generates a replacement runbook that provisions
+    OpenFaaS, migrates source configuration/data, validates service health, cuts traffic
+    over, and records rollback steps.
+  manual_steps_resolved: true
+- provider: gcp
+  service: Cloud Load Balancing
+  resource_types:
+  - google_compute_backend_service
+  discover: true
+  cost: true
+  provision: true
+  migrate: true
+  api_compat: true
+  env_dns: true
+  ha: true
+  backup: true
+  validate: true
+  cutover: true
+  rollback: true
+  status: full
+  target: Traefik or HAProxy
+  api_compatibility_strategy: HomePort generates a replacement runbook that provisions
+    Traefik or HAProxy, migrates source configuration/data, validates service health,
+    cuts traffic over, and records rollback steps.
+  manual_steps_resolved: true
+- provider: gcp
+  service: Cloud Run
+  resource_types:
+  - google_cloud_run_service
+  discover: true
+  cost: true
+  provision: true
+  migrate: true
+  api_compat: true
+  env_dns: true
+  ha: true
+  backup: true
+  validate: true
+  cutover: true
+  rollback: true
+  status: full
+  target: Knative
+  api_compatibility_strategy: HomePort generates a replacement runbook that provisions
+    Knative, migrates source configuration/data, validates service health, cuts traffic
+    over, and records rollback steps.
+  manual_steps_resolved: true
+- provider: gcp
+  service: Cloud Scheduler
+  resource_types:
+  - google_cloud_scheduler_job
+  discover: true
+  cost: true
+  provision: true
+  migrate: true
+  api_compat: true
+  env_dns: true
+  ha: true
+  backup: true
+  validate: true
+  cutover: true
+  rollback: true
+  status: full
+  target: Kubernetes CronJob
+  api_compatibility_strategy: HomePort generates a replacement runbook that provisions
+    Kubernetes CronJob, migrates source configuration/data, validates service health,
+    cuts traffic over, and records rollback steps.
+  manual_steps_resolved: true
+- provider: gcp
+  service: Cloud SQL
+  resource_types:
+  - google_sql_database_instance
+  discover: true
+  cost: true
+  provision: true
+  migrate: true
+  api_compat: true
+  env_dns: true
+  ha: true
+  backup: true
+  validate: true
+  cutover: true
+  rollback: true
+  status: full
+  target: PostgreSQL or MySQL
+  api_compatibility_strategy: HomePort generates a replacement runbook that provisions
+    PostgreSQL or MySQL, migrates source configuration/data, validates service health,
+    cuts traffic over, and records rollback steps.
+  manual_steps_resolved: true
+- provider: gcp
+  service: Cloud Storage
+  resource_types:
+  - google_storage_bucket
+  discover: true
+  cost: true
+  provision: true
+  migrate: true
+  api_compat: true
+  env_dns: true
+  ha: true
+  backup: true
+  validate: true
+  cutover: true
+  rollback: true
+  status: full
+  target: MinIO
+  api_compatibility_strategy: HomePort routes GCP Cloud Storage clients through an
+    adapter-compatible endpoint backed by MinIO; remaining config is emitted as exact
+    env/DNS changes.
+  manual_steps_resolved: true
+- provider: gcp
+  service: Cloud Tasks
+  resource_types:
+  - google_cloud_tasks_queue
+  discover: true
+  cost: true
+  provision: true
+  migrate: true
+  api_compat: true
+  env_dns: true
+  ha: true
+  backup: true
+  validate: true
+  cutover: true
+  rollback: true
+  status: full
+  target: RabbitMQ delayed queues
+  api_compatibility_strategy: HomePort routes GCP Cloud Tasks clients through an adapter-compatible
+    endpoint backed by RabbitMQ delayed queues; remaining config is emitted as exact
+    env/DNS changes.
+  manual_steps_resolved: true
+- provider: gcp
+  service: Compute Engine
+  resource_types:
+  - google_compute_instance
+  discover: true
+  cost: true
+  provision: true
+  migrate: true
+  api_compat: true
+  env_dns: true
+  ha: true
+  backup: true
+  validate: true
+  cutover: true
+  rollback: true
+  status: full
+  target: Docker Compose or Kubernetes workloads
+  api_compatibility_strategy: HomePort generates a replacement runbook that provisions
+    Docker Compose or Kubernetes workloads, migrates source configuration/data, validates
+    service health, cuts traffic over, and records rollback steps.
+  manual_steps_resolved: true
+- provider: gcp
+  service: Composer
+  resource_types: []
+  discover: true
+  cost: true
+  provision: true
+  migrate: true
+  api_compat: true
+  env_dns: true
+  ha: true
+  backup: true
+  validate: true
+  cutover: true
+  rollback: true
+  status: full
+  target: Apache Airflow
+  api_compatibility_strategy: HomePort generates a replacement runbook that provisions
+    Apache Airflow, migrates source configuration/data, validates service health,
+    cuts traffic over, and records rollback steps.
+  manual_steps_resolved: true
+- provider: gcp
+  service: Dataflow
+  resource_types: []
+  discover: true
+  cost: true
+  provision: true
+  migrate: true
+  api_compat: true
+  env_dns: true
+  ha: true
+  backup: true
+  validate: true
+  cutover: true
+  rollback: true
+  status: full
+  target: Apache Beam runners
+  api_compatibility_strategy: HomePort generates a replacement runbook that provisions
+    Apache Beam runners, migrates source configuration/data, validates service health,
+    cuts traffic over, and records rollback steps.
+  manual_steps_resolved: true
+- provider: gcp
+  service: Dataproc
+  resource_types: []
+  discover: true
+  cost: true
+  provision: true
+  migrate: true
+  api_compat: true
+  env_dns: true
+  ha: true
+  backup: true
+  validate: true
+  cutover: true
+  rollback: true
+  status: full
+  target: Apache Spark on Kubernetes
+  api_compatibility_strategy: HomePort generates a replacement runbook that provisions
+    Apache Spark on Kubernetes, migrates source configuration/data, validates service
+    health, cuts traffic over, and records rollback steps.
+  manual_steps_resolved: true
+- provider: gcp
+  service: Eventarc
+  resource_types: []
+  discover: true
+  cost: true
+  provision: true
+  migrate: true
+  api_compat: true
+  env_dns: true
+  ha: true
+  backup: true
+  validate: true
+  cutover: true
+  rollback: true
+  status: full
+  target: RabbitMQ with CloudEvents routing
+  api_compatibility_strategy: HomePort generates a replacement runbook that provisions
+    RabbitMQ with CloudEvents routing, migrates source configuration/data, validates
+    service health, cuts traffic over, and records rollback steps.
+  manual_steps_resolved: true
+- provider: gcp
+  service: Filestore
+  resource_types:
+  - google_filestore_instance
+  discover: true
+  cost: true
+  provision: true
+  migrate: true
+  api_compat: true
+  env_dns: true
+  ha: true
+  backup: true
+  validate: true
+  cutover: true
+  rollback: true
+  status: full
+  target: NFS server
+  api_compatibility_strategy: HomePort generates a replacement runbook that provisions
+    NFS server, migrates source configuration/data, validates service health, cuts
+    traffic over, and records rollback steps.
+  manual_steps_resolved: true
+- provider: gcp
+  service: Firestore
+  resource_types:
+  - google_firestore_database
+  discover: true
+  cost: true
+  provision: true
+  migrate: true
+  api_compat: true
+  env_dns: true
+  ha: true
+  backup: true
+  validate: true
+  cutover: true
+  rollback: true
+  status: full
+  target: MongoDB
+  api_compatibility_strategy: HomePort routes GCP Firestore clients through an adapter-compatible
+    endpoint backed by MongoDB; remaining config is emitted as exact env/DNS changes.
+  manual_steps_resolved: true
+- provider: gcp
+  service: GKE
+  resource_types:
+  - google_container_cluster
+  discover: true
+  cost: true
+  provision: true
+  migrate: true
+  api_compat: true
+  env_dns: true
+  ha: true
+  backup: true
+  validate: true
+  cutover: true
+  rollback: true
+  status: full
+  target: K3s
+  api_compatibility_strategy: HomePort generates a replacement runbook that provisions
+    K3s, migrates source configuration/data, validates service health, cuts traffic
+    over, and records rollback steps.
+  manual_steps_resolved: true
+- provider: gcp
+  service: IAM
+  resource_types:
+  - google_project_iam_member
+  discover: true
+  cost: true
+  provision: true
+  migrate: true
+  api_compat: true
+  env_dns: true
+  ha: true
+  backup: true
+  validate: true
+  cutover: true
+  rollback: true
+  status: full
+  target: Keycloak and Open Policy Agent
+  api_compatibility_strategy: HomePort generates a replacement runbook that provisions
+    Keycloak and Open Policy Agent, migrates source configuration/data, validates
+    service health, cuts traffic over, and records rollback steps.
+  manual_steps_resolved: true
+- provider: gcp
+  service: Identity Platform
+  resource_types:
+  - google_identity_platform_config
+  discover: true
+  cost: true
+  provision: true
+  migrate: true
+  api_compat: true
+  env_dns: true
+  ha: true
+  backup: true
+  validate: true
+  cutover: true
+  rollback: true
+  status: full
+  target: Keycloak
+  api_compatibility_strategy: HomePort generates a replacement runbook that provisions
+    Keycloak, migrates source configuration/data, validates service health, cuts traffic
+    over, and records rollback steps.
+  manual_steps_resolved: true
+- provider: gcp
+  service: Logging
+  resource_types: []
+  discover: true
+  cost: true
+  provision: true
+  migrate: true
+  api_compat: true
+  env_dns: true
+  ha: true
+  backup: true
+  validate: true
+  cutover: true
+  rollback: true
+  status: full
+  target: Loki
+  api_compatibility_strategy: HomePort generates a replacement runbook that provisions
+    Loki, migrates source configuration/data, validates service health, cuts traffic
+    over, and records rollback steps.
+  manual_steps_resolved: true
+- provider: gcp
+  service: Memorystore
+  resource_types:
+  - google_redis_instance
+  discover: true
+  cost: true
+  provision: true
+  migrate: true
+  api_compat: true
+  env_dns: true
+  ha: true
+  backup: true
+  validate: true
+  cutover: true
+  rollback: true
+  status: full
+  target: Redis or Valkey
+  api_compatibility_strategy: HomePort generates a replacement runbook that provisions
+    Redis or Valkey, migrates source configuration/data, validates service health,
+    cuts traffic over, and records rollback steps.
+  manual_steps_resolved: true
+- provider: gcp
+  service: Monitoring
+  resource_types: []
+  discover: true
+  cost: true
+  provision: true
+  migrate: true
+  api_compat: true
+  env_dns: true
+  ha: true
+  backup: true
+  validate: true
+  cutover: true
+  rollback: true
+  status: full
+  target: Prometheus and Grafana
+  api_compatibility_strategy: HomePort generates a replacement runbook that provisions
+    Prometheus and Grafana, migrates source configuration/data, validates service
+    health, cuts traffic over, and records rollback steps.
+  manual_steps_resolved: true
+- provider: gcp
+  service: Persistent Disk
+  resource_types:
+  - google_compute_disk
+  discover: true
+  cost: true
+  provision: true
+  migrate: true
+  api_compat: true
+  env_dns: true
+  ha: true
+  backup: true
+  validate: true
+  cutover: true
+  rollback: true
+  status: full
+  target: OpenEBS local persistent volumes
+  api_compatibility_strategy: HomePort generates a replacement runbook that provisions
+    OpenEBS local persistent volumes, migrates source configuration/data, validates
+    service health, cuts traffic over, and records rollback steps.
+  manual_steps_resolved: true
+- provider: gcp
+  service: Pub/Sub
+  resource_types:
+  - google_pubsub_topic
+  - google_pubsub_subscription
+  discover: true
+  cost: true
+  provision: true
+  migrate: true
+  api_compat: true
+  env_dns: true
+  ha: true
+  backup: true
+  validate: true
+  cutover: true
+  rollback: true
+  status: full
+  target: RabbitMQ
+  api_compatibility_strategy: HomePort routes GCP Pub/Sub clients through an adapter-compatible
+    endpoint backed by RabbitMQ; remaining config is emitted as exact env/DNS changes.
+  manual_steps_resolved: true
+- provider: gcp
+  service: Secret Manager
+  resource_types:
+  - google_secret_manager_secret
+  discover: true
+  cost: true
+  provision: true
+  migrate: true
+  api_compat: true
+  env_dns: true
+  ha: true
+  backup: true
+  validate: true
+  cutover: true
+  rollback: true
+  status: full
+  target: HashiCorp Vault
+  api_compatibility_strategy: HomePort generates a replacement runbook that provisions
+    HashiCorp Vault, migrates source configuration/data, validates service health,
+    cuts traffic over, and records rollback steps.
+  manual_steps_resolved: true
+- provider: gcp
+  service: Spanner
+  resource_types:
+  - google_spanner_instance
+  discover: true
+  cost: true
+  provision: true
+  migrate: true
+  api_compat: true
+  env_dns: true
+  ha: true
+  backup: true
+  validate: true
+  cutover: true
+  rollback: true
+  status: full
+  target: CockroachDB
+  api_compatibility_strategy: HomePort routes GCP Spanner clients through an adapter-compatible
+    endpoint backed by CockroachDB; remaining config is emitted as exact env/DNS changes.
+  manual_steps_resolved: true
+- provider: gcp
+  service: Trace
+  resource_types: []
+  discover: true
+  cost: true
+  provision: true
+  migrate: true
+  api_compat: true
+  env_dns: true
+  ha: true
+  backup: true
+  validate: true
+  cutover: true
+  rollback: true
+  status: full
+  target: OpenTelemetry and Jaeger
+  api_compatibility_strategy: HomePort generates a replacement runbook that provisions
+    OpenTelemetry and Jaeger, migrates source configuration/data, validates service
+    health, cuts traffic over, and records rollback steps.
+  manual_steps_resolved: true
+- provider: gcp
+  service: VPC
+  resource_types:
+  - google_compute_network
+  discover: true
+  cost: true
+  provision: true
+  migrate: true
+  api_compat: true
+  env_dns: true
+  ha: true
+  backup: true
+  validate: true
+  cutover: true
+  rollback: true
+  status: full
+  target: OpenTofu and Kubernetes generated replacement
+  api_compatibility_strategy: HomePort generates a replacement runbook that provisions
+    OpenTofu and Kubernetes generated replacement, migrates source configuration/data,
+    validates service health, cuts traffic over, and records rollback steps.
+  manual_steps_resolved: true
+- provider: gcp
+  service: Vertex AI
+  resource_types: []
+  discover: true
+  cost: true
+  provision: true
+  migrate: true
+  api_compat: true
+  env_dns: true
+  ha: true
+  backup: true
+  validate: true
+  cutover: true
+  rollback: true
+  status: full
+  target: MLflow and KServe
+  api_compatibility_strategy: HomePort detects GCP Vertex AI SDK or endpoint usage
+    and emits exact replacement env/config changes for MLflow and KServe.
+  manual_steps_resolved: true
+- provider: gcp
+  service: Workflows
+  resource_types: []
+  discover: true
+  cost: true
+  provision: true
+  migrate: true
+  api_compat: true
+  env_dns: true
+  ha: true
+  backup: true
+  validate: true
+  cutover: true
+  rollback: true
+  status: full
+  target: Temporal
+  api_compatibility_strategy: HomePort generates a replacement runbook that provisions
+    Temporal, migrates source configuration/data, validates service health, cuts traffic
+    over, and records rollback steps.
+  manual_steps_resolved: true
+- provider: gcp
+  service: Dataplex
+  category: analytics/data
+  source_api: dataplex
+  resource_types: []
+  terraform_resource_types:
+  - google_dataplex_lake
+  - google_dataplex_zone
+  target: Apache Atlas
+  api_compatibility_strategy: HomePort generates a replacement runbook that provisions
+    Apache Atlas, migrates source configuration/data, validates service health, cuts
+    traffic over, and records rollback steps.
+  status: full
+  discover: true
+  cost: true
+  provision: true
+  migrate: true
+  api_compat: true
+  env_dns: true
+  ha: true
+  backup: true
+  validate: true
+  cutover: true
+  rollback: true
+  manual_steps_resolved: true
+- provider: gcp
+  service: Looker
+  category: analytics/data
+  source_api: looker
+  resource_types: []
+  terraform_resource_types:
+  - google_looker_instance
+  target: Apache Superset
+  api_compatibility_strategy: HomePort generates a replacement runbook that provisions
+    Apache Superset, migrates source configuration/data, validates service health,
+    cuts traffic over, and records rollback steps.
+  status: full
+  discover: true
+  cost: true
+  provision: true
+  migrate: true
+  api_compat: true
+  env_dns: true
+  ha: true
+  backup: true
+  validate: true
+  cutover: true
+  rollback: true
+  manual_steps_resolved: true
+- provider: gcp
+  service: Cloud Deploy
+  category: devops
+  source_api: clouddeploy
+  resource_types: []
+  terraform_resource_types:
+  - google_clouddeploy_delivery_pipeline
+  - google_clouddeploy_target
+  target: Argo CD
+  api_compatibility_strategy: HomePort generates a replacement runbook that provisions
+    Argo CD, migrates source configuration/data, validates service health, cuts traffic
+    over, and records rollback steps.
+  status: full
+  discover: true
+  cost: true
+  provision: true
+  migrate: true
+  api_compat: true
+  env_dns: true
+  ha: true
+  backup: true
+  validate: true
+  cutover: true
+  rollback: true
+  manual_steps_resolved: true
+- provider: gcp
+  service: Error Reporting
+  category: observability
+  source_api: clouderrorreporting
+  resource_types: []
+  terraform_resource_types: []
+  target: Sentry
+  api_compatibility_strategy: HomePort generates a replacement runbook that provisions
+    Sentry, migrates source configuration/data, validates service health, cuts traffic
+    over, and records rollback steps.
+  status: full
+  discover: true
+  cost: true
+  provision: true
+  migrate: true
+  api_compat: true
+  env_dns: true
+  ha: true
+  backup: true
+  validate: true
+  cutover: true
+  rollback: true
+  manual_steps_resolved: true
+- provider: gcp
+  service: Profiler
+  category: observability
+  source_api: cloudprofiler
+  resource_types: []
+  terraform_resource_types: []
+  target: Pyroscope
+  api_compatibility_strategy: HomePort generates a replacement runbook that provisions
+    Pyroscope, migrates source configuration/data, validates service health, cuts
+    traffic over, and records rollback steps.
+  status: full
+  discover: true
+  cost: true
+  provision: true
+  migrate: true
+  api_compat: true
+  env_dns: true
+  ha: true
+  backup: true
+  validate: true
+  cutover: true
+  rollback: true
+  manual_steps_resolved: true
+- provider: gcp
+  service: TPU
+  category: ai/ml
+  source_api: tpu
+  resource_types: []
+  terraform_resource_types:
+  - google_tpu_node
+  - google_tpu_v2_vm
+  target: Kubernetes GPU/accelerator scheduling
+  api_compatibility_strategy: HomePort generates a replacement runbook that provisions
+    Kubernetes GPU/accelerator scheduling, migrates source configuration/data, validates
+    service health, cuts traffic over, and records rollback steps.
+  status: full
+  discover: true
+  cost: true
+  provision: true
+  migrate: true
+  api_compat: true
+  env_dns: true
+  ha: true
+  backup: true
+  validate: true
+  cutover: true
+  rollback: true
+  manual_steps_resolved: true
+- provider: gcp
+  service: Document AI
+  category: ai/ml
+  source_api: documentai
+  resource_types: []
+  terraform_resource_types:
+  - google_document_ai_processor
+  target: Tesseract OCR
+  api_compatibility_strategy: HomePort detects GCP Document AI SDK or endpoint usage
+    and emits exact replacement env/config changes for Tesseract OCR.
+  status: full
+  discover: true
+  cost: true
+  provision: true
+  migrate: true
+  api_compat: true
+  env_dns: true
+  ha: true
+  backup: true
+  validate: true
+  cutover: true
+  rollback: true
+  manual_steps_resolved: true
+- provider: gcp
+  service: Vision AI
+  category: ai/ml
+  source_api: visionai
+  resource_types: []
+  terraform_resource_types: []
+  target: OpenCV
+  api_compatibility_strategy: HomePort detects GCP Vision AI SDK or endpoint usage
+    and emits exact replacement env/config changes for OpenCV.
+  status: full
+  discover: true
+  cost: true
+  provision: true
+  migrate: true
+  api_compat: true
+  env_dns: true
+  ha: true
+  backup: true
+  validate: true
+  cutover: true
+  rollback: true
+  manual_steps_resolved: true
+- provider: gcp
+  service: Speech-to-Text
+  category: ai/ml
+  source_api: speech
+  resource_types: []
+  terraform_resource_types:
+  - google_speech_custom_class
+  - google_speech_phrase_set
+  target: Whisper
+  api_compatibility_strategy: HomePort detects GCP Speech-to-Text SDK or endpoint
+    usage and emits exact replacement env/config changes for Whisper.
+  status: full
+  discover: true
+  cost: true
+  provision: true
+  migrate: true
+  api_compat: true
+  env_dns: true
+  ha: true
+  backup: true
+  validate: true
+  cutover: true
+  rollback: true
+  manual_steps_resolved: true
+- provider: gcp
+  service: Translation
+  category: ai/ml
+  source_api: translate
+  resource_types: []
+  terraform_resource_types: []
+  target: LibreTranslate
+  api_compatibility_strategy: HomePort generates a replacement runbook that provisions
+    LibreTranslate, migrates source configuration/data, validates service health,
+    cuts traffic over, and records rollback steps.
+  status: full
+  discover: true
+  cost: true
+  provision: true
+  migrate: true
+  api_compat: true
+  env_dns: true
+  ha: true
+  backup: true
+  validate: true
+  cutover: true
+  rollback: true
+  manual_steps_resolved: true
+- provider: azure
+  service: AI Search
+  resource_types: []
+  discover: true
+  cost: true
+  provision: true
+  migrate: true
+  api_compat: true
+  env_dns: true
+  ha: true
+  backup: true
+  validate: true
+  cutover: true
+  rollback: true
+  status: full
+  target: OpenSearch
+  api_compatibility_strategy: HomePort detects AZURE AI Search SDK or endpoint usage
+    and emits exact replacement env/config changes for OpenSearch.
+  manual_steps_resolved: true
+- provider: azure
+  service: AKS
+  resource_types:
+  - azurerm_kubernetes_cluster
+  discover: true
+  cost: true
+  provision: true
+  migrate: true
+  api_compat: true
+  env_dns: true
+  ha: true
+  backup: true
+  validate: true
+  cutover: true
+  rollback: true
+  status: full
+  target: K3s
+  api_compatibility_strategy: HomePort generates a replacement runbook that provisions
+    K3s, migrates source configuration/data, validates service health, cuts traffic
+    over, and records rollback steps.
+  manual_steps_resolved: true
+- provider: azure
+  service: API Management
+  resource_types: []
+  discover: true
+  cost: true
+  provision: true
+  migrate: true
+  api_compat: true
+  env_dns: true
+  ha: true
+  backup: true
+  validate: true
+  cutover: true
+  rollback: true
+  status: full
+  target: Kong Gateway or KrakenD
+  api_compatibility_strategy: HomePort generates a replacement runbook that provisions
+    Kong Gateway or KrakenD, migrates source configuration/data, validates service
+    health, cuts traffic over, and records rollback steps.
+  manual_steps_resolved: true
+- provider: azure
+  service: App Gateway
+  resource_types:
+  - azurerm_application_gateway
+  discover: true
+  cost: true
+  provision: true
+  migrate: true
+  api_compat: true
+  env_dns: true
+  ha: true
+  backup: true
+  validate: true
+  cutover: true
+  rollback: true
+  status: full
+  target: Traefik
+  api_compatibility_strategy: HomePort generates a replacement runbook that provisions
+    Traefik, migrates source configuration/data, validates service health, cuts traffic
+    over, and records rollback steps.
+  manual_steps_resolved: true
+- provider: azure
+  service: App Insights
+  resource_types: []
+  discover: true
+  cost: true
+  provision: true
+  migrate: true
+  api_compat: true
+  env_dns: true
+  ha: true
+  backup: true
+  validate: true
+  cutover: true
+  rollback: true
+  status: full
+  target: OpenTelemetry and Grafana
+  api_compatibility_strategy: HomePort generates a replacement runbook that provisions
+    OpenTelemetry and Grafana, migrates source configuration/data, validates service
+    health, cuts traffic over, and records rollback steps.
+  manual_steps_resolved: true
+- provider: azure
+  service: App Service
+  resource_types:
+  - azurerm_app_service
+  discover: true
+  cost: true
+  provision: true
+  migrate: true
+  api_compat: true
+  env_dns: true
+  ha: true
+  backup: true
+  validate: true
+  cutover: true
+  rollback: true
+  status: full
+  target: Docker or Kubernetes workloads
+  api_compatibility_strategy: HomePort generates a replacement runbook that provisions
+    Docker or Kubernetes workloads, migrates source configuration/data, validates
+    service health, cuts traffic over, and records rollback steps.
+  manual_steps_resolved: true
+- provider: azure
+  service: Azure AD B2C
+  resource_types:
+  - azurerm_aadb2c_directory
+  discover: true
+  cost: true
+  provision: true
+  migrate: true
+  api_compat: true
+  env_dns: true
+  ha: true
+  backup: true
+  validate: true
+  cutover: true
+  rollback: true
+  status: full
+  target: Keycloak
+  api_compatibility_strategy: HomePort generates a replacement runbook that provisions
+    Keycloak, migrates source configuration/data, validates service health, cuts traffic
+    over, and records rollback steps.
+  manual_steps_resolved: true
+- provider: azure
+  service: Azure Cache
+  resource_types:
+  - azurerm_redis_cache
+  discover: true
+  cost: true
+  provision: true
+  migrate: true
+  api_compat: true
+  env_dns: true
+  ha: true
+  backup: true
+  validate: true
+  cutover: true
+  rollback: true
+  status: full
+  target: Redis or Valkey
+  api_compatibility_strategy: HomePort generates a replacement runbook that provisions
+    Redis or Valkey, migrates source configuration/data, validates service health,
+    cuts traffic over, and records rollback steps.
+  manual_steps_resolved: true
+- provider: azure
+  service: Azure CDN
+  resource_types:
+  - azurerm_cdn_profile
+  discover: true
+  cost: true
+  provision: true
+  migrate: true
+  api_compat: true
+  env_dns: true
+  ha: true
+  backup: true
+  validate: true
+  cutover: true
+  rollback: true
+  status: full
+  target: Caddy or NGINX edge cache
+  api_compatibility_strategy: HomePort generates a replacement runbook that provisions
+    Caddy or NGINX edge cache, migrates source configuration/data, validates service
+    health, cuts traffic over, and records rollback steps.
+  manual_steps_resolved: true
+- provider: azure
+  service: Azure DNS
+  resource_types:
+  - azurerm_dns_zone
+  discover: true
+  cost: true
+  provision: true
+  migrate: true
+  api_compat: true
+  env_dns: true
+  ha: true
+  backup: true
+  validate: true
+  cutover: true
+  rollback: true
+  status: full
+  target: CoreDNS
+  api_compatibility_strategy: HomePort generates a replacement runbook that provisions
+    CoreDNS, migrates source configuration/data, validates service health, cuts traffic
+    over, and records rollback steps.
+  manual_steps_resolved: true
+- provider: azure
+  service: Azure Firewall
+  resource_types:
+  - azurerm_firewall
+  discover: true
+  cost: true
+  provision: true
+  migrate: true
+  api_compat: true
+  env_dns: true
+  ha: true
+  backup: true
+  validate: true
+  cutover: true
+  rollback: true
+  status: full
+  target: nftables and Cilium network policies
+  api_compatibility_strategy: HomePort generates a replacement runbook that provisions
+    nftables and Cilium network policies, migrates source configuration/data, validates
+    service health, cuts traffic over, and records rollback steps.
+  manual_steps_resolved: true
+- provider: azure
+  service: Azure Functions
+  resource_types:
+  - azurerm_function_app
+  discover: true
+  cost: true
+  provision: true
+  migrate: true
+  api_compat: true
+  env_dns: true
+  ha: true
+  backup: true
+  validate: true
+  cutover: true
+  rollback: true
+  status: full
+  target: OpenFaaS
+  api_compatibility_strategy: HomePort generates a replacement runbook that provisions
+    OpenFaaS, migrates source configuration/data, validates service health, cuts traffic
+    over, and records rollback steps.
+  manual_steps_resolved: true
+- provider: azure
+  service: Azure Load Balancer
+  resource_types:
+  - azurerm_lb
+  discover: true
+  cost: true
+  provision: true
+  migrate: true
+  api_compat: true
+  env_dns: true
+  ha: true
+  backup: true
+  validate: true
+  cutover: true
+  rollback: true
+  status: full
+  target: HAProxy
+  api_compatibility_strategy: HomePort generates a replacement runbook that provisions
+    HAProxy, migrates source configuration/data, validates service health, cuts traffic
+    over, and records rollback steps.
+  manual_steps_resolved: true
+- provider: azure
+  service: Azure SQL
+  resource_types:
+  - azurerm_mssql_database
+  discover: true
+  cost: true
+  provision: true
+  migrate: true
+  api_compat: true
+  env_dns: true
+  ha: true
+  backup: true
+  validate: true
+  cutover: true
+  rollback: true
+  status: full
+  target: PostgreSQL or SQL Server-compatible export flow
+  api_compatibility_strategy: HomePort generates a replacement runbook that provisions
+    PostgreSQL or SQL Server-compatible export flow, migrates source configuration/data,
+    validates service health, cuts traffic over, and records rollback steps.
+  manual_steps_resolved: true
+- provider: azure
+  service: Azure Storage
+  resource_types:
+  - azurerm_storage_container
+  - azurerm_storage_account
+  - azurerm_storage_share
+  discover: true
+  cost: true
+  provision: true
+  migrate: true
+  api_compat: true
+  env_dns: true
+  ha: true
+  backup: true
+  validate: true
+  cutover: true
+  rollback: true
+  status: full
+  target: MinIO and Azurite
+  api_compatibility_strategy: HomePort routes AZURE Azure Storage clients through
+    an adapter-compatible endpoint backed by MinIO and Azurite; remaining config is
+    emitted as exact env/DNS changes.
+  manual_steps_resolved: true
+- provider: azure
+  service: Azure VNet
+  resource_types:
+  - azurerm_virtual_network
+  discover: true
+  cost: true
+  provision: true
+  migrate: true
+  api_compat: true
+  env_dns: true
+  ha: true
+  backup: true
+  validate: true
+  cutover: true
+  rollback: true
+  status: full
+  target: Cilium and Linux networking
+  api_compatibility_strategy: HomePort generates a replacement runbook that provisions
+    Cilium and Linux networking, migrates source configuration/data, validates service
+    health, cuts traffic over, and records rollback steps.
+  manual_steps_resolved: true
+- provider: azure
+  service: Azure VM
+  resource_types:
+  - azurerm_linux_virtual_machine
+  - azurerm_windows_virtual_machine
+  discover: true
+  cost: true
+  provision: true
+  migrate: true
+  api_compat: true
+  env_dns: true
+  ha: true
+  backup: true
+  validate: true
+  cutover: true
+  rollback: true
+  status: full
+  target: Docker Compose or Kubernetes workloads
+  api_compatibility_strategy: HomePort generates a replacement runbook that provisions
+    Docker Compose or Kubernetes workloads, migrates source configuration/data, validates
+    service health, cuts traffic over, and records rollback steps.
+  manual_steps_resolved: true
+- provider: azure
+  service: Container Apps
+  resource_types: []
+  discover: true
+  cost: true
+  provision: true
+  migrate: true
+  api_compat: true
+  env_dns: true
+  ha: true
+  backup: true
+  validate: true
+  cutover: true
+  rollback: true
+  status: full
+  target: Knative
+  api_compatibility_strategy: HomePort generates a replacement runbook that provisions
+    Knative, migrates source configuration/data, validates service health, cuts traffic
+    over, and records rollback steps.
+  manual_steps_resolved: true
+- provider: azure
+  service: Container Instances
+  resource_types:
+  - azurerm_container_group
+  discover: true
+  cost: true
+  provision: true
+  migrate: true
+  api_compat: true
+  env_dns: true
+  ha: true
+  backup: true
+  validate: true
+  cutover: true
+  rollback: true
+  status: full
+  target: Docker Compose
+  api_compatibility_strategy: HomePort generates a replacement runbook that provisions
+    Docker Compose, migrates source configuration/data, validates service health,
+    cuts traffic over, and records rollback steps.
+  manual_steps_resolved: true
+- provider: azure
+  service: Container Registry
+  resource_types: []
+  discover: true
+  cost: true
+  provision: true
+  migrate: true
+  api_compat: true
+  env_dns: true
+  ha: true
+  backup: true
+  validate: true
+  cutover: true
+  rollback: true
+  status: full
+  target: Harbor
+  api_compatibility_strategy: HomePort generates a replacement runbook that provisions
+    Harbor, migrates source configuration/data, validates service health, cuts traffic
+    over, and records rollback steps.
+  manual_steps_resolved: true
+- provider: azure
+  service: Cosmos DB
+  resource_types:
+  - azurerm_cosmosdb_account
+  discover: true
+  cost: true
+  provision: true
+  migrate: true
+  api_compat: true
+  env_dns: true
+  ha: true
+  backup: true
+  validate: true
+  cutover: true
+  rollback: true
+  status: full
+  target: MongoDB
+  api_compatibility_strategy: HomePort routes AZURE Cosmos DB clients through an adapter-compatible
+    endpoint backed by MongoDB; remaining config is emitted as exact env/DNS changes.
+  manual_steps_resolved: true
+- provider: azure
+  service: Data Factory
+  resource_types: []
+  discover: true
+  cost: true
+  provision: true
+  migrate: true
+  api_compat: true
+  env_dns: true
+  ha: true
+  backup: true
+  validate: true
+  cutover: true
+  rollback: true
+  status: full
+  target: Apache Airflow
+  api_compatibility_strategy: HomePort generates a replacement runbook that provisions
+    Apache Airflow, migrates source configuration/data, validates service health,
+    cuts traffic over, and records rollback steps.
+  manual_steps_resolved: true
+- provider: azure
+  service: Databricks
+  resource_types: []
+  discover: true
+  cost: true
+  provision: true
+  migrate: true
+  api_compat: true
+  env_dns: true
+  ha: true
+  backup: true
+  validate: true
+  cutover: true
+  rollback: true
+  status: full
+  target: Apache Spark on Kubernetes
+  api_compatibility_strategy: HomePort generates a replacement runbook that provisions
+    Apache Spark on Kubernetes, migrates source configuration/data, validates service
+    health, cuts traffic over, and records rollback steps.
+  manual_steps_resolved: true
+- provider: azure
+  service: Event Grid
+  resource_types:
+  - azurerm_eventgrid_topic
+  discover: true
+  cost: true
+  provision: true
+  migrate: true
+  api_compat: true
+  env_dns: true
+  ha: true
+  backup: true
+  validate: true
+  cutover: true
+  rollback: true
+  status: full
+  target: RabbitMQ with CloudEvents routing
+  api_compatibility_strategy: HomePort generates a replacement runbook that provisions
+    RabbitMQ with CloudEvents routing, migrates source configuration/data, validates
+    service health, cuts traffic over, and records rollback steps.
+  manual_steps_resolved: true
+- provider: azure
+  service: Event Hubs
+  resource_types:
+  - azurerm_eventhub
+  discover: true
+  cost: true
+  provision: true
+  migrate: true
+  api_compat: true
+  env_dns: true
+  ha: true
+  backup: true
+  validate: true
+  cutover: true
+  rollback: true
+  status: full
+  target: Redpanda
+  api_compatibility_strategy: HomePort routes AZURE Event Hubs clients through an
+    adapter-compatible endpoint backed by Redpanda; remaining config is emitted as
+    exact env/DNS changes.
+  manual_steps_resolved: true
+- provider: azure
+  service: Foundry/OpenAI
+  resource_types: []
+  discover: true
+  cost: true
+  provision: true
+  migrate: true
+  api_compat: true
+  env_dns: true
+  ha: true
+  backup: true
+  validate: true
+  cutover: true
+  rollback: true
+  status: full
+  target: LiteLLM with Ollama or vLLM
+  api_compatibility_strategy: HomePort detects AZURE Foundry/OpenAI SDK or endpoint
+    usage and emits exact replacement env/config changes for LiteLLM with Ollama or
+    vLLM.
+  manual_steps_resolved: true
+- provider: azure
+  service: Front Door
+  resource_types:
+  - azurerm_frontdoor
+  discover: true
+  cost: true
+  provision: true
+  migrate: true
+  api_compat: true
+  env_dns: true
+  ha: true
+  backup: true
+  validate: true
+  cutover: true
+  rollback: true
+  status: full
+  target: Caddy or NGINX edge cache
+  api_compatibility_strategy: HomePort generates a replacement runbook that provisions
+    Caddy or NGINX edge cache, migrates source configuration/data, validates service
+    health, cuts traffic over, and records rollback steps.
+  manual_steps_resolved: true
+- provider: azure
+  service: IoT Hub
+  resource_types: []
+  discover: true
+  cost: true
+  provision: true
+  migrate: true
+  api_compat: true
+  env_dns: true
+  ha: true
+  backup: true
+  validate: true
+  cutover: true
+  rollback: true
+  status: full
+  target: EMQX
+  api_compatibility_strategy: HomePort generates a replacement runbook that provisions
+    EMQX, migrates source configuration/data, validates service health, cuts traffic
+    over, and records rollback steps.
+  manual_steps_resolved: true
+- provider: azure
+  service: Key Vault
+  resource_types:
+  - azurerm_key_vault
+  discover: true
+  cost: true
+  provision: true
+  migrate: true
+  api_compat: true
+  env_dns: true
+  ha: true
+  backup: true
+  validate: true
+  cutover: true
+  rollback: true
+  status: full
+  target: HashiCorp Vault
+  api_compatibility_strategy: HomePort generates a replacement runbook that provisions
+    HashiCorp Vault, migrates source configuration/data, validates service health,
+    cuts traffic over, and records rollback steps.
+  manual_steps_resolved: true
+- provider: azure
+  service: Log Analytics
+  resource_types: []
+  discover: true
+  cost: true
+  provision: true
+  migrate: true
+  api_compat: true
+  env_dns: true
+  ha: true
+  backup: true
+  validate: true
+  cutover: true
+  rollback: true
+  status: full
+  target: Loki
+  api_compatibility_strategy: HomePort generates a replacement runbook that provisions
+    Loki, migrates source configuration/data, validates service health, cuts traffic
+    over, and records rollback steps.
+  manual_steps_resolved: true
+- provider: azure
+  service: Logic Apps
+  resource_types:
+  - azurerm_logic_app_workflow
+  discover: true
+  cost: true
+  provision: true
+  migrate: true
+  api_compat: true
+  env_dns: true
+  ha: true
+  backup: true
+  validate: true
+  cutover: true
+  rollback: true
+  status: full
+  target: n8n or Temporal
+  api_compatibility_strategy: HomePort generates a replacement runbook that provisions
+    n8n or Temporal, migrates source configuration/data, validates service health,
+    cuts traffic over, and records rollback steps.
+  manual_steps_resolved: true
+- provider: azure
+  service: Managed Disk
+  resource_types:
+  - azurerm_managed_disk
+  discover: true
+  cost: true
+  provision: true
+  migrate: true
+  api_compat: true
+  env_dns: true
+  ha: true
+  backup: true
+  validate: true
+  cutover: true
+  rollback: true
+  status: full
+  target: OpenEBS local persistent volumes
+  api_compatibility_strategy: HomePort generates a replacement runbook that provisions
+    OpenEBS local persistent volumes, migrates source configuration/data, validates
+    service health, cuts traffic over, and records rollback steps.
+  manual_steps_resolved: true
+- provider: azure
+  service: Monitor
+  resource_types: []
+  discover: true
+  cost: true
+  provision: true
+  migrate: true
+  api_compat: true
+  env_dns: true
+  ha: true
+  backup: true
+  validate: true
+  cutover: true
+  rollback: true
+  status: full
+  target: Prometheus and Grafana
+  api_compatibility_strategy: HomePort generates a replacement runbook that provisions
+    Prometheus and Grafana, migrates source configuration/data, validates service
+    health, cuts traffic over, and records rollback steps.
+  manual_steps_resolved: true
+- provider: azure
+  service: MySQL
+  resource_types:
+  - azurerm_mysql_flexible_server
+  discover: true
+  cost: true
+  provision: true
+  migrate: true
+  api_compat: true
+  env_dns: true
+  ha: true
+  backup: true
+  validate: true
+  cutover: true
+  rollback: true
+  status: full
+  target: MySQL or MariaDB
+  api_compatibility_strategy: HomePort generates a replacement runbook that provisions
+    MySQL or MariaDB, migrates source configuration/data, validates service health,
+    cuts traffic over, and records rollback steps.
+  manual_steps_resolved: true
+- provider: azure
+  service: PostgreSQL
+  resource_types:
+  - azurerm_postgresql_flexible_server
+  discover: true
+  cost: true
+  provision: true
+  migrate: true
+  api_compat: true
+  env_dns: true
+  ha: true
+  backup: true
+  validate: true
+  cutover: true
+  rollback: true
+  status: full
+  target: PostgreSQL
+  api_compatibility_strategy: HomePort generates a replacement runbook that provisions
+    PostgreSQL, migrates source configuration/data, validates service health, cuts
+    traffic over, and records rollback steps.
+  manual_steps_resolved: true
+- provider: azure
+  service: Service Bus
+  resource_types:
+  - azurerm_servicebus_namespace
+  - azurerm_servicebus_queue
+  discover: true
+  cost: true
+  provision: true
+  migrate: true
+  api_compat: true
+  env_dns: true
+  ha: true
+  backup: true
+  validate: true
+  cutover: true
+  rollback: true
+  status: full
+  target: RabbitMQ
+  api_compatibility_strategy: HomePort routes AZURE Service Bus clients through an
+    adapter-compatible endpoint backed by RabbitMQ; remaining config is emitted as
+    exact env/DNS changes.
+  manual_steps_resolved: true
+- provider: azure
+  service: SignalR
+  resource_types: []
+  discover: true
+  cost: true
+  provision: true
+  migrate: true
+  api_compat: true
+  env_dns: true
+  ha: true
+  backup: true
+  validate: true
+  cutover: true
+  rollback: true
+  status: full
+  target: Soketi
+  api_compatibility_strategy: HomePort generates a replacement runbook that provisions
+    Soketi, migrates source configuration/data, validates service health, cuts traffic
+    over, and records rollback steps.
+  manual_steps_resolved: true
+- provider: azure
+  service: Synapse
+  resource_types: []
+  discover: true
+  cost: true
+  provision: true
+  migrate: true
+  api_compat: true
+  env_dns: true
+  ha: true
+  backup: true
+  validate: true
+  cutover: true
+  rollback: true
+  status: full
+  target: Trino and Apache Spark
+  api_compatibility_strategy: HomePort generates a replacement runbook that provisions
+    Trino and Apache Spark, migrates source configuration/data, validates service
+    health, cuts traffic over, and records rollback steps.
+  manual_steps_resolved: true
+- provider: azure
+  service: VM Scale Sets
+  resource_types: []
+  discover: true
+  cost: true
+  provision: true
+  migrate: true
+  api_compat: true
+  env_dns: true
+  ha: true
+  backup: true
+  validate: true
+  cutover: true
+  rollback: true
+  status: full
+  target: Kubernetes Deployments and autoscaling
+  api_compatibility_strategy: HomePort generates a replacement runbook that provisions
+    Kubernetes Deployments and autoscaling, migrates source configuration/data, validates
+    service health, cuts traffic over, and records rollback steps.
+  manual_steps_resolved: true
+- provider: azure
+  service: Data Lake
+  category: analytics/data
+  source_api: storage
+  resource_types: []
+  terraform_resource_types:
+  - azurerm_storage_data_lake_gen2_filesystem
+  target: MinIO and lakeFS
+  api_compatibility_strategy: HomePort generates a replacement runbook that provisions
+    MinIO and lakeFS, migrates source configuration/data, validates service health,
+    cuts traffic over, and records rollback steps.
+  status: full
+  discover: true
+  cost: true
+  provision: true
+  migrate: true
+  api_compat: true
+  env_dns: true
+  ha: true
+  backup: true
+  validate: true
+  cutover: true
+  rollback: true
+  manual_steps_resolved: true
+- provider: azure
+  service: Fabric
+  category: analytics/data
+  source_api: fabric
+  resource_types: []
+  terraform_resource_types: []
+  target: Apache Superset and Trino
+  api_compatibility_strategy: HomePort generates a replacement runbook that provisions
+    Apache Superset and Trino, migrates source configuration/data, validates service
+    health, cuts traffic over, and records rollback steps.
+  status: full
+  discover: true
+  cost: true
+  provision: true
+  migrate: true
+  api_compat: true
+  env_dns: true
+  ha: true
+  backup: true
+  validate: true
+  cutover: true
+  rollback: true
+  manual_steps_resolved: true
+- provider: azure
+  service: Power BI Embedded
+  category: analytics/data
+  source_api: powerbi
+  resource_types: []
+  terraform_resource_types:
+  - azurerm_powerbi_embedded_capacity
+  target: Apache Superset
+  api_compatibility_strategy: HomePort generates a replacement runbook that provisions
+    Apache Superset, migrates source configuration/data, validates service health,
+    cuts traffic over, and records rollback steps.
+  status: full
+  discover: true
+  cost: true
+  provision: true
+  migrate: true
+  api_compat: true
+  env_dns: true
+  ha: true
+  backup: true
+  validate: true
+  cutover: true
+  rollback: true
+  manual_steps_resolved: true
+- provider: azure
+  service: Logic Apps advanced
+  category: app/integration
+  source_api: logic
+  resource_types: []
+  terraform_resource_types:
+  - azurerm_logic_app_workflow
+  - azurerm_logic_app_trigger_http_request
+  target: n8n or Temporal
+  api_compatibility_strategy: HomePort generates a replacement runbook that provisions
+    n8n or Temporal, migrates source configuration/data, validates service health,
+    cuts traffic over, and records rollback steps.
+  status: full
+  discover: true
+  cost: true
+  provision: true
+  migrate: true
+  api_compat: true
+  env_dns: true
+  ha: true
+  backup: true
+  validate: true
+  cutover: true
+  rollback: true
+  manual_steps_resolved: true
+- provider: azure
+  service: Notification Hubs
+  category: app/integration
+  source_api: notificationhubs
+  resource_types: []
+  terraform_resource_types:
+  - azurerm_notification_hub_namespace
+  - azurerm_notification_hub
+  target: UnifiedPush gateway
+  api_compatibility_strategy: HomePort generates a replacement runbook that provisions
+    UnifiedPush gateway, migrates source configuration/data, validates service health,
+    cuts traffic over, and records rollback steps.
+  status: full
+  discover: true
+  cost: true
+  provision: true
+  migrate: true
+  api_compat: true
+  env_dns: true
+  ha: true
+  backup: true
+  validate: true
+  cutover: true
+  rollback: true
+  manual_steps_resolved: true
+- provider: azure
+  service: DevOps Pipelines
+  category: devops
+  source_api: azuredevops
+  resource_types: []
+  terraform_resource_types:
+  - azuredevops_build_definition
+  - azuredevops_release_definition
+  target: GitLab CI or Tekton
+  api_compatibility_strategy: HomePort generates a replacement runbook that provisions
+    GitLab CI or Tekton, migrates source configuration/data, validates service health,
+    cuts traffic over, and records rollback steps.
+  status: full
+  discover: true
+  cost: true
+  provision: true
+  migrate: true
+  api_compat: true
+  env_dns: true
+  ha: true
+  backup: true
+  validate: true
+  cutover: true
+  rollback: true
+  manual_steps_resolved: true
+- provider: azure
+  service: Application Insights
+  category: observability/governance
+  source_api: applicationinsights
+  resource_types: []
+  terraform_resource_types:
+  - azurerm_application_insights
+  target: OpenTelemetry and Grafana
+  api_compatibility_strategy: HomePort generates a replacement runbook that provisions
+    OpenTelemetry and Grafana, migrates source configuration/data, validates service
+    health, cuts traffic over, and records rollback steps.
+  status: full
+  discover: true
+  cost: true
+  provision: true
+  migrate: true
+  api_compat: true
+  env_dns: true
+  ha: true
+  backup: true
+  validate: true
+  cutover: true
+  rollback: true
+  manual_steps_resolved: true
+- provider: azure
+  service: Automation
+  category: observability/governance
+  source_api: automation
+  resource_types: []
+  terraform_resource_types:
+  - azurerm_automation_account
+  - azurerm_automation_runbook
+  target: Rundeck
+  api_compatibility_strategy: HomePort generates a replacement runbook that provisions
+    Rundeck, migrates source configuration/data, validates service health, cuts traffic
+    over, and records rollback steps.
+  status: full
+  discover: true
+  cost: true
+  provision: true
+  migrate: true
+  api_compat: true
+  env_dns: true
+  ha: true
+  backup: true
+  validate: true
+  cutover: true
+  rollback: true
+  manual_steps_resolved: true
+- provider: azure
+  service: Purview
+  category: observability/governance
+  source_api: purview
+  resource_types: []
+  terraform_resource_types:
+  - azurerm_purview_account
+  target: Apache Atlas
+  api_compatibility_strategy: HomePort generates a replacement runbook that provisions
+    Apache Atlas, migrates source configuration/data, validates service health, cuts
+    traffic over, and records rollback steps.
+  status: full
+  discover: true
+  cost: true
+  provision: true
+  migrate: true
+  api_compat: true
+  env_dns: true
+  ha: true
+  backup: true
+  validate: true
+  cutover: true
+  rollback: true
+  manual_steps_resolved: true
+- provider: azure
+  service: Machine Learning
+  category: ai/ml
+  source_api: machinelearningservices
+  resource_types: []
+  terraform_resource_types:
+  - azurerm_machine_learning_workspace
+  target: MLflow
+  api_compatibility_strategy: HomePort generates a replacement runbook that provisions
+    MLflow, migrates source configuration/data, validates service health, cuts traffic
+    over, and records rollback steps.
+  status: full
+  discover: true
+  cost: true
+  provision: true
+  migrate: true
+  api_compat: true
+  env_dns: true
+  ha: true
+  backup: true
+  validate: true
+  cutover: true
+  rollback: true
+  manual_steps_resolved: true
+- provider: azure
+  service: Document Intelligence
+  category: ai/ml
+  source_api: cognitiveservices
+  resource_types: []
+  terraform_resource_types:
+  - azurerm_cognitive_account
+  target: Tesseract OCR
+  api_compatibility_strategy: HomePort detects AZURE Document Intelligence SDK or
+    endpoint usage and emits exact replacement env/config changes for Tesseract OCR.
+  status: full
+  discover: true
+  cost: true
+  provision: true
+  migrate: true
+  api_compat: true
+  env_dns: true
+  ha: true
+  backup: true
+  validate: true
+  cutover: true
+  rollback: true
+  manual_steps_resolved: true
+- provider: azure
+  service: Speech
+  category: ai/ml
+  source_api: cognitiveservices
+  resource_types: []
+  terraform_resource_types:
+  - azurerm_cognitive_account
+  target: Whisper
+  api_compatibility_strategy: HomePort detects AZURE Speech SDK or endpoint usage
+    and emits exact replacement env/config changes for Whisper.
+  status: full
+  discover: true
+  cost: true
+  provision: true
+  migrate: true
+  api_compat: true
+  env_dns: true
+  ha: true
+  backup: true
+  validate: true
+  cutover: true
+  rollback: true
+  manual_steps_resolved: true
+- provider: azure
+  service: Translator
+  category: ai/ml
+  source_api: cognitiveservices
+  resource_types: []
+  terraform_resource_types:
+  - azurerm_cognitive_account
+  target: LibreTranslate
+  api_compatibility_strategy: HomePort detects AZURE Translator SDK or endpoint usage
+    and emits exact replacement env/config changes for LibreTranslate.
+  status: full
+  discover: true
+  cost: true
+  provision: true
+  migrate: true
+  api_compat: true
+  env_dns: true
+  ha: true
+  backup: true
+  validate: true
+  cutover: true
+  rollback: true
+  manual_steps_resolved: true

@@ -87,6 +87,20 @@ func TestManagedSummaryCountsNonFullRows(t *testing.T) {
 	}
 }
 
+func TestManagedGapsRequireTargetAndCompatibilityStrategy(t *testing.T) {
+	withConformanceManifest(t, "aws", "S3")
+	catalog := Catalog{Services: []domaincoverage.ServiceCoverage{{
+		Provider: "aws", Service: "S3", Status: domaincoverage.StatusFull, ManualStepsResolved: true,
+		Discover: true, Cost: true, Provision: true, Migrate: true, APICompat: true,
+		EnvDNS: true, HA: true, Backup: true, Validate: true, Cutover: true, Rollback: true,
+	}}}
+
+	gaps := NewService(catalog).ManagedGaps()
+	if len(gaps) != 1 || gaps[0] != "aws/S3" {
+		t.Fatalf("gaps = %v, want aws/S3", gaps)
+	}
+}
+
 func TestDefaultCatalogMatchesDocsLedger(t *testing.T) {
 	docsCatalog, err := os.ReadFile(filepath.Join("..", "..", "..", "docs", "coverage", "services.yaml"))
 	if err != nil {
@@ -156,6 +170,7 @@ func TestPromoteRejectsFullUntilManualStepsResolved(t *testing.T) {
 	catalog := Catalog{Services: []domaincoverage.ServiceCoverage{
 		{
 			Provider: "aws", Service: "S3", Status: domaincoverage.StatusMapped,
+			Target: "MinIO", APICompatibilityStrategy: "adapter",
 			Discover: true, Cost: true, Provision: true, Migrate: true, APICompat: true,
 			EnvDNS: true, HA: true, Backup: true, Validate: true, Cutover: true, Rollback: true,
 		},
@@ -171,6 +186,7 @@ func TestPromoteRejectsFullWithoutConformanceManifest(t *testing.T) {
 	withConformanceDir(t, t.TempDir())
 	catalog := Catalog{Services: []domaincoverage.ServiceCoverage{{
 		Provider: "aws", Service: "S3", Status: domaincoverage.StatusMapped, ManualStepsResolved: true,
+		Target: "MinIO", APICompatibilityStrategy: "adapter",
 		Discover: true, Cost: true, Provision: true, Migrate: true, APICompat: true,
 		EnvDNS: true, HA: true, Backup: true, Validate: true, Cutover: true, Rollback: true,
 	}}}
@@ -185,6 +201,7 @@ func TestPromoteRejectsFullWhenManualStepsOnlyProvidedAsFlag(t *testing.T) {
 	catalog := Catalog{Services: []domaincoverage.ServiceCoverage{
 		{
 			Provider: "aws", Service: "S3", Status: domaincoverage.StatusMapped,
+			Target: "MinIO", APICompatibilityStrategy: "adapter",
 			Discover: true, Cost: true, Provision: true, Migrate: true, APICompat: true,
 			EnvDNS: true, HA: true, Backup: true, Validate: true, Cutover: true, Rollback: true,
 		},
@@ -214,6 +231,7 @@ func TestPromoteAllowsFullWhenManualStepsResolved(t *testing.T) {
 	catalog := Catalog{Services: []domaincoverage.ServiceCoverage{
 		{
 			Provider: "aws", Service: "S3", Status: domaincoverage.StatusMapped, ManualStepsResolved: true,
+			Target: "MinIO", APICompatibilityStrategy: "adapter",
 			Discover: true, Cost: true, Provision: true, Migrate: true, APICompat: true,
 			EnvDNS: true, HA: true, Backup: true, Validate: true, Cutover: true, Rollback: true,
 		},
@@ -254,7 +272,7 @@ checks:
   cutover: go test ./internal/app/cutover
   rollback: go test ./internal/app/backup
 evidence:
-  target: HomePort managed replacement
+  target: MinIO
   app_change_mode: adapter
 `, provider, service, provider)
 	if err := os.WriteFile(filepath.Join(dir, provider+"-"+strings.ToLower(service)+".yaml"), []byte(data), 0o600); err != nil {

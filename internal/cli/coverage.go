@@ -170,9 +170,11 @@ var coverageAssertFullCmd = &cobra.Command{
 		if err != nil {
 			return fmt.Errorf("load coverage catalog: %w", err)
 		}
-		summary := appcoverage.NewService(*catalog).ManagedSummary()
-		if summary.NotFull > 0 {
-			return fmt.Errorf("not 100%% managed: %d of %d services are not full", summary.NotFull, summary.Total)
+		service := appcoverage.NewService(*catalog)
+		summary := service.ManagedSummary()
+		gaps := service.ManagedGaps()
+		if len(gaps) > 0 {
+			return fmt.Errorf("not 100%% managed: %d of %d services are not full", len(gaps), summary.Total)
 		}
 		fmt.Fprintf(cmd.OutOrStdout(), "100%% managed: %d services full\n", summary.Total)
 		return nil
