@@ -60,13 +60,14 @@ var ResourceMapping = map[resource.Type]StackType{
 	resource.TypeVPC:               StackTypePassthrough, // VPC stays individual
 	resource.TypeAppMeshMesh:       StackTypePassthrough, // Service mesh topology stays explicit
 
-	// AWS Security (5 types)
+	// AWS Security (6 types)
 	resource.TypeCognitoPool:       StackTypeAuth,        // Auth consolidates
 	resource.TypeSecretsManager:    StackTypeSecrets,     // Secrets consolidate
 	resource.TypeIAMRole:           StackTypePassthrough, // IAM doesn't map to self-hosted
 	resource.TypeACMCertificate:    StackTypePassthrough, // Certificates handled separately
 	resource.TypeGuardDutyDetector: StackTypePassthrough, // Security detections stay explicit
 	resource.TypeWAFWebACL:         StackTypePassthrough, // WAF policies stay explicit edge controls
+	resource.TypeShieldProtection:  StackTypePassthrough, // DDoS protections stay explicit edge controls
 
 	// AWS Messaging
 	resource.TypeSQSQueue:    StackTypeMessaging, // Queue consolidates

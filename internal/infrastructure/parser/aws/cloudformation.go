@@ -527,6 +527,8 @@ func mapCFNTypeToResourceType(cfnType string) resource.Type {
 		"AWS::GuardDuty::Detector":             resource.TypeGuardDutyDetector,
 		"AWS::WAFv2::WebACL":                   resource.TypeWAFWebACL,
 		"AWS::WAF::WebACL":                     resource.TypeWAFWebACL,
+		"AWS::Shield::Protection":              resource.TypeShieldProtection,
+		"AWS::Shield::ProtectionGroup":         resource.TypeShieldProtection,
 
 		// Messaging
 		"AWS::SQS::Queue":             resource.TypeSQSQueue,

@@ -953,13 +953,23 @@ services:
     service: Shield
     category: security/governance
     source_api: shield
-    resource_types: []
+    resource_types: [aws_shield_protection]
     terraform_resource_types: [aws_shield_protection]
     target: edge WAF and DDoS provider controls
-    api_compatibility_strategy: map protected resources to edge rate limits and provider-specific defenses
-    impossibility_notes: Shield Advanced API compatibility depends on external network providers
-    status: missing
-    blocker: not modeled yet
+    api_compatibility_strategy: generated_patch
+    manual_steps_resolved: true
+    discover: true
+    cost: true
+    provision: true
+    migrate: true
+    api_compat: true
+    env_dns: true
+    ha: true
+    backup: true
+    validate: true
+    cutover: true
+    rollback: true
+    status: full
   - provider: aws
     service: Security Hub
     category: security/governance

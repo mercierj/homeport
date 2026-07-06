@@ -135,6 +135,7 @@ var CategoryMapping = map[Type]Category{
 	TypeACMCertificate:    CategoryCertificate,
 	TypeGuardDutyDetector: CategorySecurity,
 	TypeWAFWebACL:         CategoryFirewall,
+	TypeShieldProtection:  CategoryFirewall,
 
 	// AWS Messaging
 	TypeSQSQueue:    CategoryQueue,

@@ -49,7 +49,7 @@
 | aws | App Mesh | full | aws_appmesh_mesh |
 | aws | CodeDeploy | full | aws_codedeploy_app |
 | aws | CloudFormation full import | full | aws_cloudformation_stack |
-| aws | Shield | missing | aws_shield_protection |
+| aws | Shield | full | aws_shield_protection |
 | aws | Security Hub | missing | aws_securityhub_account, aws_securityhub_standards_subscription |
 | aws | Config | missing | aws_config_configuration_recorder, aws_config_config_rule |
 | aws | Organizations | missing | aws_organizations_organization, aws_organizations_account |
