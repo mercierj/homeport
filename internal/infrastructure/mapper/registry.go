@@ -89,6 +89,7 @@ func (r *Registry) RegisterDefaults() {
 	r.Register(messaging.NewSNSMapper())
 	r.Register(messaging.NewEventBridgeMapper())
 	r.Register(messaging.NewKinesisMapper())
+	r.Register(messaging.NewMSKMapper())
 	r.Register(messaging.NewSESMapper())
 
 	// AWS Security mappers (additional)

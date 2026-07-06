@@ -340,11 +340,13 @@ func mapAWSTerraformType(tfType string) resource.Type {
 		"aws_guardduty_detector":    resource.TypeGuardDutyDetector,
 
 		// Messaging
-		"aws_sqs_queue":             resource.TypeSQSQueue,
-		"aws_sns_topic":             resource.TypeSNSTopic,
-		"aws_cloudwatch_event_rule": resource.TypeEventBridge,
-		"aws_cloudwatch_event_bus":  resource.TypeEventBridge,
-		"aws_kinesis_stream":        resource.TypeKinesis,
+		"aws_sqs_queue":              resource.TypeSQSQueue,
+		"aws_sns_topic":              resource.TypeSNSTopic,
+		"aws_cloudwatch_event_rule":  resource.TypeEventBridge,
+		"aws_cloudwatch_event_bus":   resource.TypeEventBridge,
+		"aws_kinesis_stream":         resource.TypeKinesis,
+		"aws_msk_cluster":            resource.TypeMSKCluster,
+		"aws_msk_serverless_cluster": resource.TypeMSKCluster,
 
 		// Monitoring
 		"aws_cloudwatch_metric_alarm": resource.TypeCloudWatchMetricAlarm,

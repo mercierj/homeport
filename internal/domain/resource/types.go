@@ -55,6 +55,7 @@ const (
 	TypeSNSTopic    Type = "aws_sns_topic"
 	TypeEventBridge Type = "aws_cloudwatch_event_rule"
 	TypeKinesis     Type = "aws_kinesis_stream"
+	TypeMSKCluster  Type = "aws_msk_cluster"
 	TypeSESIdentity Type = "aws_ses_domain_identity"
 
 	// AWS Security (additional)

@@ -8,52 +8,62 @@ import (
 )
 
 // ═══════════════════════════════════════════════════════════════════════════════
-// ResourceMapping - Complete mapping of all 84 resource types to stack types
+// ResourceMapping - Complete mapping of all 94 resource types to stack types
 // ═══════════════════════════════════════════════════════════════════════════════
 
 // ResourceMapping maps every resource.Type constant to its corresponding StackType.
-// This provides 100% coverage of all 84 resource types (30 AWS + 25 GCP + 29 Azure).
+// This provides 100% coverage of all 94 resource types (40 AWS + 25 GCP + 29 Azure).
 var ResourceMapping = map[resource.Type]StackType{
 	// ─────────────────────────────────────────────────────
-	// AWS Resource Types (30 types)
+	// AWS Resource Types (40 types)
 	// ─────────────────────────────────────────────────────
 
-	// AWS Compute (5 types) - Passthrough except serverless
+	// AWS Compute and devops
 	resource.TypeEC2Instance:    StackTypePassthrough, // VMs stay individual
 	resource.TypeLambdaFunction: StackTypeCompute,     // Serverless consolidates
 	resource.TypeECSService:     StackTypePassthrough, // Container orchestration stays individual
 	resource.TypeECSTaskDef:     StackTypePassthrough, // Container definitions stay individual
 	resource.TypeEKSCluster:     StackTypePassthrough, // Kubernetes stays individual
+	resource.TypeBedrockModel:   StackTypePassthrough, // Inference profiles stay individual
+	resource.TypeCodeBuild:      StackTypePassthrough, // Build projects stay individual
+	resource.TypeCodePipeline:   StackTypePassthrough, // Pipelines remain workflow definitions
+	resource.TypeECRRepository:  StackTypePassthrough, // Registries remain individual infrastructure
 
 	// AWS Storage (3 types)
-	resource.TypeS3Bucket:  StackTypeStorage, // Object storage consolidates
+	resource.TypeS3Bucket:  StackTypeStorage,     // Object storage consolidates
 	resource.TypeEBSVolume: StackTypePassthrough, // Block storage stays with VMs
-	resource.TypeEFSVolume: StackTypeStorage, // File storage consolidates
+	resource.TypeEFSVolume: StackTypeStorage,     // File storage consolidates
 
-	// AWS Database (4 types)
-	resource.TypeRDSInstance:   StackTypeDatabase, // SQL databases consolidate
-	resource.TypeRDSCluster:    StackTypeDatabase, // Aurora clusters consolidate
-	resource.TypeDynamoDBTable: StackTypeDatabase, // NoSQL consolidates
-	resource.TypeElastiCache:   StackTypeCache,    // Cache consolidates
+	// AWS Database and analytics
+	resource.TypeRDSInstance:         StackTypeDatabase,    // SQL databases consolidate
+	resource.TypeRDSCluster:          StackTypeDatabase,    // Aurora clusters consolidate
+	resource.TypeDynamoDBTable:       StackTypeDatabase,    // NoSQL consolidates
+	resource.TypeElastiCache:         StackTypeCache,       // Cache consolidates
+	resource.TypeAthenaWorkgroup:     StackTypeDatabase,    // Query workgroups consolidate with data query engines
+	resource.TypeEMRCluster:          StackTypePassthrough, // Spark clusters stay individual
+	resource.TypeGlueCatalogDatabase: StackTypeDatabase,    // Catalog databases consolidate with metadata stores
 
-	// AWS Networking (5 types) - All passthrough
-	resource.TypeALB:         StackTypePassthrough, // Load balancers stay individual
-	resource.TypeAPIGateway:  StackTypePassthrough, // API gateways stay individual
-	resource.TypeRoute53Zone: StackTypePassthrough, // DNS stays individual
-	resource.TypeCloudFront:  StackTypePassthrough, // CDN stays individual
-	resource.TypeVPC:         StackTypePassthrough, // VPC stays individual
+	// AWS Networking (6 types) - All passthrough
+	resource.TypeALB:               StackTypePassthrough, // Load balancers stay individual
+	resource.TypeAPIGateway:        StackTypePassthrough, // API gateways stay individual
+	resource.TypeAppSyncGraphQLAPI: StackTypePassthrough, // GraphQL APIs stay individual
+	resource.TypeRoute53Zone:       StackTypePassthrough, // DNS stays individual
+	resource.TypeCloudFront:        StackTypePassthrough, // CDN stays individual
+	resource.TypeVPC:               StackTypePassthrough, // VPC stays individual
 
-	// AWS Security (4 types)
-	resource.TypeCognitoPool:    StackTypeAuth,        // Auth consolidates
-	resource.TypeSecretsManager: StackTypeSecrets,     // Secrets consolidate
-	resource.TypeIAMRole:        StackTypePassthrough, // IAM doesn't map to self-hosted
-	resource.TypeACMCertificate: StackTypePassthrough, // Certificates handled separately
+	// AWS Security (5 types)
+	resource.TypeCognitoPool:       StackTypeAuth,        // Auth consolidates
+	resource.TypeSecretsManager:    StackTypeSecrets,     // Secrets consolidate
+	resource.TypeIAMRole:           StackTypePassthrough, // IAM doesn't map to self-hosted
+	resource.TypeACMCertificate:    StackTypePassthrough, // Certificates handled separately
+	resource.TypeGuardDutyDetector: StackTypePassthrough, // Security detections stay explicit
 
-	// AWS Messaging (5 types)
+	// AWS Messaging (6 types)
 	resource.TypeSQSQueue:    StackTypeMessaging, // Queue consolidates
 	resource.TypeSNSTopic:    StackTypeMessaging, // PubSub consolidates
 	resource.TypeEventBridge: StackTypeMessaging, // Event routing consolidates
 	resource.TypeKinesis:     StackTypeMessaging, // Stream consolidates
+	resource.TypeMSKCluster:  StackTypeMessaging, // Kafka stream consolidates
 	resource.TypeSESIdentity: StackTypeMessaging, // Email service consolidates
 
 	// AWS Security additional (1 type)
@@ -131,16 +141,16 @@ var ResourceMapping = map[resource.Type]StackType{
 	resource.TypeAzureCache:    StackTypeCache,    // Cache consolidates
 
 	// Azure Networking (6 types) - All passthrough
-	resource.TypeAzureLB:       StackTypePassthrough, // Load balancers stay individual
-	resource.TypeAppGateway:    StackTypePassthrough, // Application gateways stay individual
-	resource.TypeAzureDNS:      StackTypePassthrough, // DNS stays individual
-	resource.TypeAzureCDN:      StackTypePassthrough, // CDN stays individual
-	resource.TypeFrontDoor:     StackTypePassthrough, // Front Door stays individual
-	resource.TypeAzureVNet:     StackTypePassthrough, // VNet stays individual
+	resource.TypeAzureLB:    StackTypePassthrough, // Load balancers stay individual
+	resource.TypeAppGateway: StackTypePassthrough, // Application gateways stay individual
+	resource.TypeAzureDNS:   StackTypePassthrough, // DNS stays individual
+	resource.TypeAzureCDN:   StackTypePassthrough, // CDN stays individual
+	resource.TypeFrontDoor:  StackTypePassthrough, // Front Door stays individual
+	resource.TypeAzureVNet:  StackTypePassthrough, // VNet stays individual
 
 	// Azure Security (3 types)
-	resource.TypeAzureADB2C:   StackTypeAuth,        // Auth consolidates
-	resource.TypeKeyVault:     StackTypeSecrets,     // Secrets consolidate
+	resource.TypeAzureADB2C:    StackTypeAuth,        // Auth consolidates
+	resource.TypeKeyVault:      StackTypeSecrets,     // Secrets consolidate
 	resource.TypeAzureFirewall: StackTypePassthrough, // Firewall stays individual
 
 	// Azure Messaging (5 types)

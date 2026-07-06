@@ -131,6 +131,7 @@ var CategoryMapping = map[Type]Category{
 	TypeSNSTopic:    CategoryPubSub,
 	TypeEventBridge: CategoryPubSub,
 	TypeKinesis:     CategoryStream,
+	TypeMSKCluster:  CategoryStream,
 	TypeSESIdentity: CategoryPubSub, // Email service (SES)
 
 	// AWS Security (additional)

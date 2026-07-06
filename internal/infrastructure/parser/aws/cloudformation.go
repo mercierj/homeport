@@ -517,10 +517,12 @@ func mapCFNTypeToResourceType(cfnType string) resource.Type {
 		"AWS::GuardDuty::Detector":             resource.TypeGuardDutyDetector,
 
 		// Messaging
-		"AWS::SQS::Queue":      resource.TypeSQSQueue,
-		"AWS::SNS::Topic":      resource.TypeSNSTopic,
-		"AWS::Events::Rule":    resource.TypeEventBridge,
-		"AWS::Kinesis::Stream": resource.TypeKinesis,
+		"AWS::SQS::Queue":             resource.TypeSQSQueue,
+		"AWS::SNS::Topic":             resource.TypeSNSTopic,
+		"AWS::Events::Rule":           resource.TypeEventBridge,
+		"AWS::Kinesis::Stream":        resource.TypeKinesis,
+		"AWS::MSK::Cluster":           resource.TypeMSKCluster,
+		"AWS::MSK::ServerlessCluster": resource.TypeMSKCluster,
 
 		// Monitoring
 		"AWS::CloudWatch::Alarm":     resource.TypeCloudWatchMetricAlarm,

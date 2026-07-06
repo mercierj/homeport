@@ -27,7 +27,7 @@
 | aws | KMS | full | aws_kms_key |
 | aws | Kinesis | full | aws_kinesis_stream |
 | aws | Lambda | full | aws_lambda_function |
-| aws | MSK | missing |  |
+| aws | MSK | full | aws_msk_cluster |
 | aws | OpenSearch | missing |  |
 | aws | RDS | mapped | aws_db_instance, aws_rds_cluster |
 | aws | Redshift | missing |  |
