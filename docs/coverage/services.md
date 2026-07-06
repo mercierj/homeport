@@ -34,7 +34,7 @@
 | aws | Route 53 | full | aws_route53_zone |
 | aws | S3 | full | aws_s3_bucket |
 | aws | SES | full | aws_ses_domain_identity |
-| aws | SNS | mapped | aws_sns_topic |
+| aws | SNS | full | aws_sns_topic |
 | aws | SQS | mapped | aws_sqs_queue |
 | aws | SageMaker | missing |  |
 | aws | Secrets Manager | mapped | aws_secretsmanager_secret |

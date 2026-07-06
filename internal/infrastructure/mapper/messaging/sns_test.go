@@ -2,11 +2,55 @@ package messaging
 
 import (
 	"context"
+	"strings"
 	"testing"
 
 	"github.com/homeport/homeport/internal/domain/mapper"
 	"github.com/homeport/homeport/internal/domain/resource"
+	domainrunbook "github.com/homeport/homeport/internal/domain/runbook"
 )
+
+func TestSNSConformanceManagedAToZ(t *testing.T) {
+	result, err := NewSNSMapper().Map(context.Background(), managedSNSFixture())
+	if err != nil {
+		t.Fatal(err)
+	}
+	if len(result.ManualSteps) != 0 {
+		t.Fatalf("manual steps = %#v, want generated SNS migration", result.ManualSteps)
+	}
+	if result.DockerService.Image != "nats:2.10-alpine" || result.DockerService.Deploy == nil || result.DockerService.Deploy.Replicas < 3 {
+		t.Fatalf("service does not provision HA NATS target: %#v", result.DockerService)
+	}
+	for _, file := range []string{"config/nats/nats.conf", "config/nats/subjects.json", "config/nats/subscriptions.json", "config/nats/jetstream.json", "config/nats/app-change.env"} {
+		if _, ok := result.Configs[file]; !ok {
+			t.Fatalf("missing config %s", file)
+		}
+	}
+	appEnv := string(result.Configs["config/nats/app-change.env"])
+	for _, want := range []string{"APP_CHANGE_MODE=adapter", "SOURCE_TOPIC=orders.fifo", "AWS_ENDPOINT_URL_SNS=http://homeport:8080/api/v1/compat/aws/sns", "HOMEPORT_COMPAT_BACKEND=nats"} {
+		if !strings.Contains(appEnv, want) {
+			t.Fatalf("app-change env missing %q:\n%s", want, appEnv)
+		}
+	}
+	for _, file := range []string{"setup_nats.sh", "export_sns_topic.sh", "migrate_sns_bindings.sh", "validate_sns_adapter.sh", "backup_sns_config.sh", "cutover_sns_adapter.sh"} {
+		if _, ok := result.Scripts[file]; !ok {
+			t.Fatalf("missing script %s", file)
+		}
+	}
+	for id, stepType := range map[string]domainrunbook.StepType{
+		"export-sns-topic":     domainrunbook.StepTypeCommand,
+		"provision-nats-topic": domainrunbook.StepTypeCommand,
+		"migrate-sns-bindings": domainrunbook.StepTypeCommand,
+		"validate-sns-adapter": domainrunbook.StepTypeCommand,
+		"backup-sns-config":    domainrunbook.StepTypeCommand,
+		"cutover-sns-clients":  domainrunbook.StepTypeAPICall,
+		"rollback-sns-source":  domainrunbook.StepTypeRollback,
+	} {
+		if !hasSNSRunbookStep(result, id, stepType) {
+			t.Fatalf("missing %s runbook step: %#v", id, result.RunbookSteps)
+		}
+	}
+}
 
 func TestNewSNSMapper(t *testing.T) {
 	m := NewSNSMapper()
@@ -16,6 +60,34 @@ func TestNewSNSMapper(t *testing.T) {
 	if m.ResourceType() != resource.TypeSNSTopic {
 		t.Errorf("ResourceType() = %v, want %v", m.ResourceType(), resource.TypeSNSTopic)
 	}
+}
+
+func managedSNSFixture() *resource.AWSResource {
+	return &resource.AWSResource{
+		ID:     "arn:aws:sns:eu-west-1:123456789012:orders.fifo",
+		Type:   resource.TypeSNSTopic,
+		Name:   "orders.fifo",
+		ARN:    "arn:aws:sns:eu-west-1:123456789012:orders.fifo",
+		Region: "eu-west-1",
+		Config: map[string]interface{}{
+			"name":                        "orders.fifo",
+			"fifo_topic":                  true,
+			"content_based_deduplication": true,
+			"subscriptions": []interface{}{
+				map[string]interface{}{"protocol": "https", "endpoint": "https://example.test/hook"},
+				map[string]interface{}{"protocol": "sqs", "endpoint": "arn:aws:sqs:eu-west-1:123456789012:orders"},
+			},
+		},
+	}
+}
+
+func hasSNSRunbookStep(result *mapper.MappingResult, id string, stepType domainrunbook.StepType) bool {
+	for _, step := range result.RunbookSteps {
+		if step.ID == id && step.Type == stepType {
+			return true
+		}
+	}
+	return false
 }
 
 func TestSNSMapper_ResourceType(t *testing.T) {
@@ -246,8 +318,8 @@ func TestSNSMapper_isFIFOTopic(t *testing.T) {
 		{"my-topic", false},
 		{"my-topic.fifo", true},
 		{"fifo", false},
-		{".fifo", false},        // needs more than 5 chars (at least 1 char before .fifo)
-		{"a.fifo", true},        // minimum valid FIFO topic name
+		{".fifo", false}, // needs more than 5 chars (at least 1 char before .fifo)
+		{"a.fifo", true}, // minimum valid FIFO topic name
 		{"topic-name-with-fifo-in-middle", false},
 	}
 
