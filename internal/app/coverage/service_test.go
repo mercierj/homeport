@@ -133,6 +133,66 @@ func TestPromoteRejectsFullUntilChecklistComplete(t *testing.T) {
 	}
 }
 
+func TestPromoteRejectsFullUntilManualStepsResolved(t *testing.T) {
+	catalog := Catalog{Services: []domaincoverage.ServiceCoverage{
+		{
+			Provider: "aws", Service: "S3", Status: domaincoverage.StatusMapped,
+			Discover: true, Cost: true, Provision: true, Migrate: true, APICompat: true,
+			EnvDNS: true, HA: true, Backup: true, Validate: true, Cutover: true, Rollback: true,
+		},
+	}}
+
+	err := catalog.Promote("aws", "S3", domaincoverage.StatusFull)
+	if err == nil || !strings.Contains(err.Error(), "manual steps") {
+		t.Fatalf("expected manual-step guard, got %v", err)
+	}
+}
+
+func TestPromoteRejectsFullWhenManualStepsOnlyProvidedAsFlag(t *testing.T) {
+	catalog := Catalog{Services: []domaincoverage.ServiceCoverage{
+		{
+			Provider: "aws", Service: "S3", Status: domaincoverage.StatusMapped,
+			Discover: true, Cost: true, Provision: true, Migrate: true, APICompat: true,
+			EnvDNS: true, HA: true, Backup: true, Validate: true, Cutover: true, Rollback: true,
+		},
+	}}
+
+	err := catalog.Promote("aws", "S3", domaincoverage.StatusFull, true)
+	if err == nil || !strings.Contains(err.Error(), "manual steps") {
+		t.Fatalf("expected persisted manual-step guard, got %v", err)
+	}
+}
+
+func TestPromoteRecordsManualStepsResolved(t *testing.T) {
+	catalog := Catalog{Services: []domaincoverage.ServiceCoverage{
+		{Provider: "aws", Service: "S3", Status: domaincoverage.StatusMapped},
+	}}
+
+	if err := catalog.Promote("aws", "S3", domaincoverage.StatusMapped, true); err != nil {
+		t.Fatal(err)
+	}
+	if !catalog.Services[0].ManualStepsResolved {
+		t.Fatal("ManualStepsResolved = false, want true")
+	}
+}
+
+func TestPromoteAllowsFullWhenManualStepsResolved(t *testing.T) {
+	catalog := Catalog{Services: []domaincoverage.ServiceCoverage{
+		{
+			Provider: "aws", Service: "S3", Status: domaincoverage.StatusMapped, ManualStepsResolved: true,
+			Discover: true, Cost: true, Provision: true, Migrate: true, APICompat: true,
+			EnvDNS: true, HA: true, Backup: true, Validate: true, Cutover: true, Rollback: true,
+		},
+	}}
+
+	if err := catalog.Promote("aws", "S3", domaincoverage.StatusFull); err != nil {
+		t.Fatal(err)
+	}
+	if got := catalog.Services[0].Status; got != domaincoverage.StatusFull {
+		t.Fatalf("status = %q, want full", got)
+	}
+}
+
 func TestPromoteUpdatesStatusWhenAllowed(t *testing.T) {
 	catalog := Catalog{Services: []domaincoverage.ServiceCoverage{
 		{

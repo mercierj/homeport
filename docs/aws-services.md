@@ -8,31 +8,33 @@ AgnosTech analyzes your AWS infrastructure (via Terraform state or HCL files) an
 
 ## Service Mapping Summary
 
+For current coverage status, see the authoritative [HomePort service coverage ledger](coverage/services.md).
+
 | Category | AWS Service | Self-Hosted | Mapper File | Parity |
 |----------|-------------|-------------|-------------|--------|
-| **Compute** | EC2 | Docker | `compute/ec2.go` | Full |
-| | Lambda | Docker/Cron | `compute/lambda.go` | Full |
-| | ECS | Docker Compose | `compute/ecs.go` | Full |
+| **Compute** | EC2 | Docker | `compute/ec2.go` | Mapped |
+| | Lambda | Docker/Cron | `compute/lambda.go` | Mapped |
+| | ECS | Docker Compose | `compute/ecs.go` | Mapped |
 | | EKS | Kubernetes | `compute/eks.go` | Partial |
-| **Storage** | S3 | MinIO | `storage/s3.go` | Full |
-| | EBS | Docker Volumes | `storage/ebs.go` | Full |
-| | EFS | NFS | `storage/efs.go` | Full |
-| **Database** | RDS PostgreSQL | PostgreSQL | `database/rds.go` | Full |
-| | RDS MySQL | MySQL | `database/rds.go` | Full |
-| | RDS Cluster | PostgreSQL/MySQL | `database/rds_cluster.go` | Full |
-| | DynamoDB | ScyllaDB | `database/dynamodb.go` | Full |
-| | ElastiCache Redis | Redis | `database/elasticache.go` | Full |
-| | ElastiCache Memcached | Memcached | `database/elasticache.go` | Full |
-| **Networking** | ALB/NLB | Traefik | `networking/alb.go` | Full |
-| | API Gateway | Traefik | `networking/apigateway.go` | Full |
-| | CloudFront | Nginx/Traefik | `networking/cloudfront.go` | Full |
+| **Storage** | S3 | MinIO | `storage/s3.go` | Mapped |
+| | EBS | Docker Volumes | `storage/ebs.go` | Mapped |
+| | EFS | NFS | `storage/efs.go` | Mapped |
+| **Database** | RDS PostgreSQL | PostgreSQL | `database/rds.go` | Mapped |
+| | RDS MySQL | MySQL | `database/rds.go` | Mapped |
+| | RDS Cluster | PostgreSQL/MySQL | `database/rds_cluster.go` | Mapped |
+| | DynamoDB | ScyllaDB | `database/dynamodb.go` | Mapped |
+| | ElastiCache Redis | Redis | `database/elasticache.go` | Mapped |
+| | ElastiCache Memcached | Memcached | `database/elasticache.go` | Mapped |
+| **Networking** | ALB/NLB | Traefik | `networking/alb.go` | Mapped |
+| | API Gateway | Traefik | `networking/apigateway.go` | Mapped |
+| | CloudFront | Nginx/Traefik | `networking/cloudfront.go` | Mapped |
 | | Route53 | PowerDNS | `networking/route53.go` | Partial |
-| | VPC | Docker Networks | `networking/vpc.go` | Full |
-| **Security** | Cognito | Keycloak | `security/cognito.go` | Full |
+| | VPC | Docker Networks | `networking/vpc.go` | Mapped |
+| **Security** | Cognito | Keycloak | `security/cognito.go` | Mapped |
 | | IAM | Config/Policies | `security/iam.go` | Partial |
-| | ACM | Let's Encrypt | `security/acm.go` | Full |
-| **Messaging** | SQS | RabbitMQ | `messaging/sqs.go` | Full |
-| | SNS | RabbitMQ | `messaging/sns.go` | Full |
+| | ACM | Let's Encrypt | `security/acm.go` | Mapped |
+| **Messaging** | SQS | RabbitMQ | `messaging/sqs.go` | Mapped |
+| | SNS | RabbitMQ | `messaging/sns.go` | Mapped |
 | | EventBridge | Custom Handler | `messaging/eventbridge.go` | Partial |
 | | Kinesis | Kafka/Redis | `messaging/kinesis.go` | Partial |
 

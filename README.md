@@ -159,24 +159,26 @@ homeport validate ./my-stack --strict
 
 ## Supported Services
 
+The authoritative coverage ledger is in [docs/coverage/services.md](docs/coverage/services.md).
+
 ### AWS Services
 
 | Service | Self-Hosted | Status |
 |---------|-------------|--------|
-| EC2 | Docker Containers | Full |
-| Lambda | OpenFaaS / Docker | Full |
-| ECS/EKS | Docker / K8s | Full |
-| S3 | MinIO | Full |
-| RDS (PostgreSQL/MySQL) | PostgreSQL/MySQL | Full |
-| DynamoDB | ScyllaDB | Full |
-| ElastiCache | Redis/Memcached | Full |
-| ALB/NLB | Traefik | Full |
-| API Gateway | Traefik + Middleware | Full |
-| Cognito | Keycloak | Full |
-| SQS/SNS | RabbitMQ | Full |
-| CloudWatch | Prometheus + Grafana | Full |
-| Secrets Manager | Vault / .env | Full |
-| Route53 | PowerDNS | Full |
+| EC2 | Docker Containers | Mapped |
+| Lambda | OpenFaaS / Docker | Mapped |
+| ECS/EKS | Docker / K8s | Mapped |
+| S3 | MinIO | Mapped |
+| RDS (PostgreSQL/MySQL) | PostgreSQL/MySQL | Mapped |
+| DynamoDB | ScyllaDB | Mapped |
+| ElastiCache | Redis/Memcached | Mapped |
+| ALB/NLB | Traefik | Mapped |
+| API Gateway | Traefik + Middleware | Mapped |
+| Cognito | Keycloak | Mapped |
+| SQS/SNS | RabbitMQ | Mapped |
+| CloudWatch | Prometheus + Grafana | Mapped |
+| Secrets Manager | Vault / .env | Mapped |
+| Route53 | PowerDNS | Mapped |
 
 [Full AWS Service Reference](docs/aws-services.md)
 
@@ -184,16 +186,16 @@ homeport validate ./my-stack --strict
 
 | Service | Self-Hosted | Status |
 |---------|-------------|--------|
-| Compute Engine | Docker | Full |
-| Cloud Run | Docker | Full |
-| Cloud Functions | Docker | Full |
-| GKE | Kubernetes | Full |
-| Cloud Storage | MinIO | Full |
-| Cloud SQL | PostgreSQL/MySQL | Full |
-| Firestore | MongoDB | Full |
-| Memorystore | Redis | Full |
-| Pub/Sub | RabbitMQ | Full |
-| Cloud DNS | PowerDNS | Full |
+| Compute Engine | Docker | Mapped |
+| Cloud Run | Docker | Mapped |
+| Cloud Functions | Docker | Mapped |
+| GKE | Kubernetes | Mapped |
+| Cloud Storage | MinIO | Mapped |
+| Cloud SQL | PostgreSQL/MySQL | Mapped |
+| Firestore | MongoDB | Mapped |
+| Memorystore | Redis | Mapped |
+| Pub/Sub | RabbitMQ | Mapped |
+| Cloud DNS | PowerDNS | Mapped |
 
 [Full GCP Service Reference](docs/gcp-services.md)
 
@@ -201,16 +203,16 @@ homeport validate ./my-stack --strict
 
 | Service | Self-Hosted | Status |
 |---------|-------------|--------|
-| Virtual Machines | Docker | Full |
-| Azure Functions | Docker | Full |
-| AKS | Kubernetes | Full |
-| Blob Storage | MinIO | Full |
-| Azure SQL | MSSQL/PostgreSQL | Full |
-| CosmosDB | MongoDB/ScyllaDB | Full |
-| Azure Cache | Redis | Full |
-| Service Bus | RabbitMQ | Full |
-| Azure DNS | PowerDNS | Full |
-| Key Vault | Vault / .env | Full |
+| Virtual Machines | Docker | Mapped |
+| Azure Functions | Docker | Mapped |
+| AKS | Kubernetes | Mapped |
+| Blob Storage | MinIO | Mapped |
+| Azure SQL | MSSQL/PostgreSQL | Mapped |
+| CosmosDB | MongoDB/ScyllaDB | Mapped |
+| Azure Cache | Redis | Mapped |
+| Service Bus | RabbitMQ | Mapped |
+| Azure DNS | PowerDNS | Mapped |
+| Key Vault | Vault / .env | Mapped |
 
 [Full Azure Service Reference](docs/azure-services.md)
 

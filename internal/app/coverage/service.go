@@ -76,14 +76,22 @@ func (c *Catalog) AddMissing(row domaincoverage.ServiceCoverage) error {
 	return nil
 }
 
-func (c *Catalog) Promote(provider, service string, status domaincoverage.Status) error {
+func (c *Catalog) Promote(provider, service string, status domaincoverage.Status, manualStepsResolved ...bool) error {
 	for i := range c.Services {
 		row := &c.Services[i]
 		if row.Provider != provider || !strings.EqualFold(row.Service, service) {
 			continue
 		}
-		if status == domaincoverage.StatusFull && (!fullChecklist(*row) || row.Blocker != "") {
-			return fmt.Errorf("cannot promote %s/%s to full until all checklist columns are true, blocker is empty, and unresolved manual steps are cleared", provider, service)
+		if status == domaincoverage.StatusFull {
+			if !fullChecklist(*row) || row.Blocker != "" {
+				return fmt.Errorf("cannot promote %s/%s to full until all checklist columns are true, blocker is empty, and unresolved manual steps are cleared", provider, service)
+			}
+			if !row.ManualStepsResolved {
+				return fmt.Errorf("cannot promote %s/%s to full until manual steps are resolved", provider, service)
+			}
+		}
+		if len(manualStepsResolved) > 0 && manualStepsResolved[0] {
+			row.ManualStepsResolved = true
 		}
 		row.Status = status
 		if status != domaincoverage.StatusMissing {

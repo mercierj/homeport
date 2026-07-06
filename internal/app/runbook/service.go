@@ -43,7 +43,7 @@ func NewService(outputDir string) *Service {
 	s.RegisterExecutor("dns", func(context.Context, domainrunbook.Step) domainrunbook.StepResult {
 		return domainrunbook.StepResult{Status: domainrunbook.StepStatusBlocked, Error: "waiting for DNS verification"}
 	})
-	s.RegisterExecutor("shell", shellExecutor)
+	s.RegisterExecutor("shell", s.shellExecutor)
 	_ = s.load()
 	return s
 }
@@ -85,11 +85,12 @@ func FromMappingResult(result *mapper.MappingResult) (*domainrunbook.Runbook, er
 	return book, book.Validate()
 }
 
-func shellExecutor(ctx context.Context, step domainrunbook.Step) domainrunbook.StepResult {
+func (s *Service) shellExecutor(ctx context.Context, step domainrunbook.Step) domainrunbook.StepResult {
 	if len(step.Command) == 0 {
 		return domainrunbook.StepResult{Status: domainrunbook.StepStatusFailed, Error: "command is required"}
 	}
 	cmd := exec.CommandContext(ctx, step.Command[0], step.Command[1:]...)
+	cmd.Dir = s.outputDir
 	out, err := cmd.CombinedOutput()
 	if err != nil {
 		return domainrunbook.StepResult{Status: domainrunbook.StepStatusFailed, Output: string(out), Error: err.Error()}

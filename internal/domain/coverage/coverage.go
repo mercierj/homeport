@@ -20,6 +20,7 @@ type ServiceCoverage struct {
 	Target                   string   `json:"target,omitempty" yaml:"target,omitempty"`
 	APICompatibilityStrategy string   `json:"api_compatibility_strategy,omitempty" yaml:"api_compatibility_strategy,omitempty"`
 	ImpossibilityNotes       string   `json:"impossibility_notes,omitempty" yaml:"impossibility_notes,omitempty"`
+	ManualStepsResolved      bool     `json:"manual_steps_resolved,omitempty" yaml:"manual_steps_resolved,omitempty"`
 	Discover                 bool     `json:"discover" yaml:"discover"`
 	Cost                     bool     `json:"cost" yaml:"cost"`
 	Provision                bool     `json:"provision" yaml:"provision"`

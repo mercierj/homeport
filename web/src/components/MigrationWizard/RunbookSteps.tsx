@@ -52,11 +52,11 @@ export function RunbookSteps({ runbookId, onRequiredPassedChange }: RunbookSteps
   const [error, setError] = useState<string | null>(null);
 
   const requiredPassed = useMemo(() => {
-    if (!runbook) return true;
+    if (!runbook) return !runbookId;
     return runbook.steps.every((step) =>
       step.optional || step.status === 'passed' || step.status === 'skipped'
     );
-  }, [runbook]);
+  }, [runbook, runbookId]);
 
   useEffect(() => {
     onRequiredPassedChange?.(requiredPassed);

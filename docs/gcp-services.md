@@ -8,26 +8,28 @@ AgnosTech analyzes your GCP infrastructure (via Terraform state or HCL files) an
 
 ## Service Mapping Summary
 
+For current coverage status, see the authoritative [HomePort service coverage ledger](coverage/services.md).
+
 | Category | GCP Service | Self-Hosted | Mapper File | Parity |
 |----------|-------------|-------------|-------------|--------|
-| **Compute** | Compute Engine (GCE) | Docker | `gcp/compute/gce.go` | Full |
-| | Cloud Run | Docker | `gcp/compute/cloudrun.go` | Full |
-| | Cloud Functions | Docker | `gcp/compute/cloudfunction.go` | Full |
+| **Compute** | Compute Engine (GCE) | Docker | `gcp/compute/gce.go` | Mapped |
+| | Cloud Run | Docker | `gcp/compute/cloudrun.go` | Mapped |
+| | Cloud Functions | Docker | `gcp/compute/cloudfunction.go` | Mapped |
 | | GKE | Kubernetes | `gcp/compute/gke.go` | Partial |
-| **Storage** | Cloud Storage (GCS) | MinIO | `gcp/storage/gcs.go` | Full |
-| | Persistent Disk | Docker Volumes | `gcp/storage/persistent_disk.go` | Full |
-| | Filestore | NFS | `gcp/storage/filestore.go` | Full |
-| **Database** | Cloud SQL | PostgreSQL/MySQL | `gcp/database/cloudsql.go` | Full |
-| | Firestore | MongoDB | `gcp/database/firestore.go` | Full |
+| **Storage** | Cloud Storage (GCS) | MinIO | `gcp/storage/gcs.go` | Mapped |
+| | Persistent Disk | Docker Volumes | `gcp/storage/persistent_disk.go` | Mapped |
+| | Filestore | NFS | `gcp/storage/filestore.go` | Mapped |
+| **Database** | Cloud SQL | PostgreSQL/MySQL | `gcp/database/cloudsql.go` | Mapped |
+| | Firestore | MongoDB | `gcp/database/firestore.go` | Mapped |
 | | Bigtable | HBase | `gcp/database/bigtable.go` | Partial |
-| | Memorystore | Redis | `gcp/database/memorystore.go` | Full |
+| | Memorystore | Redis | `gcp/database/memorystore.go` | Mapped |
 | | Spanner | CockroachDB | `gcp/database/spanner.go` | Partial |
-| **Networking** | Cloud Load Balancing | Traefik | `gcp/networking/cloudlb.go` | Full |
-| | Cloud DNS | PowerDNS | `gcp/networking/clouddns.go` | Full |
-| | Cloud CDN | Nginx/Traefik | `gcp/networking/cloudcdn.go` | Full |
-| **Messaging** | Pub/Sub | RabbitMQ | `gcp/messaging/pubsub.go` | Full |
-| | Cloud Tasks | Task Queue | `gcp/messaging/cloudtasks.go` | Full |
-| **Security** | Identity Platform | Keycloak | `gcp/security/identity_platform.go` | Full |
+| **Networking** | Cloud Load Balancing | Traefik | `gcp/networking/cloudlb.go` | Mapped |
+| | Cloud DNS | PowerDNS | `gcp/networking/clouddns.go` | Mapped |
+| | Cloud CDN | Nginx/Traefik | `gcp/networking/cloudcdn.go` | Mapped |
+| **Messaging** | Pub/Sub | RabbitMQ | `gcp/messaging/pubsub.go` | Mapped |
+| | Cloud Tasks | Task Queue | `gcp/messaging/cloudtasks.go` | Mapped |
+| **Security** | Identity Platform | Keycloak | `gcp/security/identity_platform.go` | Mapped |
 
 ---
 

@@ -8,33 +8,35 @@ AgnosTech analyzes your Azure infrastructure (via Terraform state or HCL files) 
 
 ## Service Mapping Summary
 
+For current coverage status, see the authoritative [HomePort service coverage ledger](coverage/services.md).
+
 | Category | Azure Service | Self-Hosted | Mapper File | Parity |
 |----------|---------------|-------------|-------------|--------|
-| **Compute** | Virtual Machines | Docker | `azure/compute/vm.go` | Full |
-| | Azure Functions | Docker | `azure/compute/function.go` | Full |
+| **Compute** | Virtual Machines | Docker | `azure/compute/vm.go` | Mapped |
+| | Azure Functions | Docker | `azure/compute/function.go` | Mapped |
 | | AKS | Kubernetes | `azure/compute/aks.go` | Partial |
-| **Storage** | Blob Storage | MinIO | `azure/storage/blob.go` | Full |
-| | Storage Account | MinIO | `azure/storage/storage_account.go` | Full |
-| | Managed Disk | Docker Volumes | `azure/storage/managed_disk.go` | Full |
-| | Azure Files | NFS/SMB | `azure/storage/files.go` | Full |
-| **Database** | Azure SQL | MSSQL/PostgreSQL | `azure/database/azuresql.go` | Full |
-| | PostgreSQL Flexible | PostgreSQL | `azure/database/postgres.go` | Full |
-| | MySQL Flexible | MySQL | `azure/database/mysql.go` | Full |
-| | CosmosDB | MongoDB/ScyllaDB | `azure/database/cosmosdb.go` | Full |
-| | Azure Cache for Redis | Redis | `azure/database/cache.go` | Full |
-| **Networking** | Load Balancer | Traefik | `azure/networking/lb.go` | Full |
-| | Application Gateway | Traefik | `azure/networking/appgateway.go` | Full |
-| | Azure DNS | PowerDNS | `azure/networking/dns.go` | Full |
-| | Azure CDN | Nginx/Traefik | `azure/networking/cdn.go` | Full |
-| | Front Door | Traefik | `azure/networking/frontdoor.go` | Full |
-| | Virtual Network | Docker Networks | `azure/networking/vnet.go` | Full |
-| **Messaging** | Service Bus | RabbitMQ | `azure/messaging/servicebus.go` | Full |
-| | Service Bus Queue | RabbitMQ | `azure/messaging/servicebus_queue.go` | Full |
-| | Event Hub | Kafka | `azure/messaging/eventhub.go` | Full |
+| **Storage** | Blob Storage | MinIO | `azure/storage/blob.go` | Mapped |
+| | Storage Account | MinIO | `azure/storage/storage_account.go` | Mapped |
+| | Managed Disk | Docker Volumes | `azure/storage/managed_disk.go` | Mapped |
+| | Azure Files | NFS/SMB | `azure/storage/files.go` | Mapped |
+| **Database** | Azure SQL | MSSQL/PostgreSQL | `azure/database/azuresql.go` | Mapped |
+| | PostgreSQL Flexible | PostgreSQL | `azure/database/postgres.go` | Mapped |
+| | MySQL Flexible | MySQL | `azure/database/mysql.go` | Mapped |
+| | CosmosDB | MongoDB/ScyllaDB | `azure/database/cosmosdb.go` | Mapped |
+| | Azure Cache for Redis | Redis | `azure/database/cache.go` | Mapped |
+| **Networking** | Load Balancer | Traefik | `azure/networking/lb.go` | Mapped |
+| | Application Gateway | Traefik | `azure/networking/appgateway.go` | Mapped |
+| | Azure DNS | PowerDNS | `azure/networking/dns.go` | Mapped |
+| | Azure CDN | Nginx/Traefik | `azure/networking/cdn.go` | Mapped |
+| | Front Door | Traefik | `azure/networking/frontdoor.go` | Mapped |
+| | Virtual Network | Docker Networks | `azure/networking/vnet.go` | Mapped |
+| **Messaging** | Service Bus | RabbitMQ | `azure/messaging/servicebus.go` | Mapped |
+| | Service Bus Queue | RabbitMQ | `azure/messaging/servicebus_queue.go` | Mapped |
+| | Event Hub | Kafka | `azure/messaging/eventhub.go` | Mapped |
 | | Event Grid | Event Router | `azure/messaging/eventgrid.go` | Partial |
 | | Logic Apps | n8n/Node-RED | `azure/messaging/logicapp.go` | Partial |
-| **Security** | Azure AD B2C | Keycloak | `azure/security/adb2c.go` | Full |
-| | Key Vault | Vault | `azure/security/keyvault.go` | Full |
+| **Security** | Azure AD B2C | Keycloak | `azure/security/adb2c.go` | Mapped |
+| | Key Vault | Vault | `azure/security/keyvault.go` | Mapped |
 | | Azure Firewall | iptables/UFW | `azure/security/firewall.go` | Partial |
 
 ---

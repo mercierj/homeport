@@ -2,6 +2,9 @@ package runbook
 
 import (
 	"context"
+	"os"
+	"path/filepath"
+	"strings"
 	"testing"
 
 	"github.com/homeport/homeport/internal/domain/mapper"
@@ -124,6 +127,41 @@ func TestRunNextResumesAfterFailedStep(t *testing.T) {
 		if step.Status != domainrunbook.StepStatusPassed {
 			t.Fatalf("step %s status = %q, want passed", step.ID, step.Status)
 		}
+	}
+}
+
+func TestShellExecutorRunsInsideOutputDir(t *testing.T) {
+	dir := t.TempDir()
+	if err := os.WriteFile(filepath.Join(dir, "mark.sh"), []byte("printf ok > marker.txt\n"), 0o755); err != nil {
+		t.Fatal(err)
+	}
+	service := NewService(dir)
+	book := &domainrunbook.Runbook{
+		ID:   "cwd",
+		Name: "CWD test",
+		Steps: []domainrunbook.Step{{
+			ID:               "script",
+			Name:             "Script",
+			Type:             domainrunbook.StepTypeCommand,
+			Status:           domainrunbook.StepStatusPending,
+			Executor:         "shell",
+			SuccessCondition: "marker written",
+			Command:          []string{"sh", "mark.sh"},
+		}},
+	}
+	if err := service.Save(book); err != nil {
+		t.Fatalf("Save() error = %v", err)
+	}
+
+	if _, err := service.RunNext(context.Background(), "cwd"); err != nil {
+		t.Fatalf("RunNext() error = %v", err)
+	}
+	data, err := os.ReadFile(filepath.Join(dir, "marker.txt"))
+	if err != nil {
+		t.Fatal(err)
+	}
+	if strings.TrimSpace(string(data)) != "ok" {
+		t.Fatalf("marker = %q, want ok", data)
 	}
 }
 

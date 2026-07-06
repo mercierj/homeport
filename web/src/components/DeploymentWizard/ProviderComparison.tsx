@@ -16,7 +16,7 @@ interface ProviderComparisonProps {
   mappingResults: unknown;
   estimatedStorageGB?: number;
   estimatedEgressGB?: number;
-  onSelect: (provider: Provider) => void;
+  onSelect: (provider: Provider, baseCost: number) => void;
   onBack: () => void;
 }
 
@@ -47,7 +47,8 @@ export function ProviderComparison({
 
   const handleConfirm = () => {
     if (selectedProvider) {
-      onSelect(selectedProvider);
+      const estimate = supportedEstimates?.find((e) => e.provider === selectedProvider);
+      onSelect(selectedProvider, estimate?.total_monthly ?? 0);
     }
   };
 

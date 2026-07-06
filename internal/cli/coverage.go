@@ -31,6 +31,7 @@ var (
 	promoteProvider       string
 	promoteService        string
 	promoteStatus         string
+	promoteManualSteps    bool
 	coverageChecklistDir  string
 )
 
@@ -93,6 +94,7 @@ func init() {
 	coveragePromoteCmd.Flags().StringVar(&promoteProvider, "provider", "", "provider: aws, gcp, azure")
 	coveragePromoteCmd.Flags().StringVar(&promoteService, "service", "", "service name")
 	coveragePromoteCmd.Flags().StringVar(&promoteStatus, "status", "", "target status: missing, guided, mapped, full, impossible")
+	coveragePromoteCmd.Flags().BoolVar(&promoteManualSteps, "manual-steps-resolved", false, "mark unresolved manual steps as resolved")
 }
 
 var coverageAddMissingCmd = &cobra.Command{
@@ -142,7 +144,7 @@ var coveragePromoteCmd = &cobra.Command{
 		if err != nil {
 			return err
 		}
-		if err := catalog.Promote(promoteProvider, promoteService, status); err != nil {
+		if err := catalog.Promote(promoteProvider, promoteService, status, promoteManualSteps); err != nil {
 			return err
 		}
 		checklist := conformanceChecklistPath(coverageCatalog, coverageChecklistDir, promoteProvider, promoteService)

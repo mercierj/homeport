@@ -10,6 +10,7 @@ interface ProviderConfigFormProps {
   baseCost: number;
   onBack: () => void;
   onDeploy: () => void;
+  deployLabel?: string;
 }
 
 export function ProviderConfigForm({
@@ -17,6 +18,7 @@ export function ProviderConfigForm({
   baseCost,
   onBack,
   onDeploy,
+  deployLabel,
 }: ProviderConfigFormProps) {
   const { cloudConfig, updateCloudConfig } = useDeploymentStore();
 
@@ -166,7 +168,7 @@ export function ProviderConfigForm({
           disabled={!cloudConfig.region}
           className={buttonVariants({ variant: 'freedom', size: 'default' })}
         >
-          Deploy to {provider.charAt(0).toUpperCase() + provider.slice(1)}
+          {deployLabel ?? `Deploy to ${provider.charAt(0).toUpperCase() + provider.slice(1)}`}
         </button>
       </div>
     </div>

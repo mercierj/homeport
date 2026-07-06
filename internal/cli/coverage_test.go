@@ -245,6 +245,7 @@ func resetCoverageCommandState(t *testing.T) {
 		addStrategy, addImpossible      string
 		promoteProvider, promoteService string
 		promoteStatus                   string
+		promoteManualSteps              bool
 	}{
 		coverageCatalog, coverageMarkdown, coverageChecklistDir,
 		addMissingProvider, addMissingService,
@@ -253,6 +254,7 @@ func resetCoverageCommandState(t *testing.T) {
 		addMissingAPIStrategy, addMissingImpossible,
 		promoteProvider, promoteService,
 		promoteStatus,
+		promoteManualSteps,
 	}
 	t.Cleanup(func() {
 		coverageCatalog = original.catalog
@@ -269,5 +271,6 @@ func resetCoverageCommandState(t *testing.T) {
 		promoteProvider = original.promoteProvider
 		promoteService = original.promoteService
 		promoteStatus = original.promoteStatus
+		promoteManualSteps = original.promoteManualSteps
 	})
 }

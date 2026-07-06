@@ -1,4 +1,4 @@
-.PHONY: help build install clean test run deps version acceptance
+.PHONY: help build build-cli build-with-web install clean test run deps version acceptance
 
 # Build variables
 BINARY_NAME=homeport
@@ -19,7 +19,9 @@ deps: ## Download dependencies
 	@go mod tidy
 	@echo "Dependencies installed successfully"
 
-build: deps ## Build the CLI binary
+build: deps build-cli ## Build the CLI binary
+
+build-cli:
 	@echo "Building $(BINARY_NAME)..."
 	@mkdir -p bin
 	@go build $(LDFLAGS) -o bin/$(BINARY_NAME) ./cmd/homeport
@@ -39,6 +41,7 @@ clean: ## Clean build artifacts
 
 test: ## Run tests
 	@echo "Running tests..."
+	@sh scripts/test-makefile-build-order.sh
 	@go test -v ./...
 
 run: build ## Build and run the CLI with --help
@@ -87,6 +90,7 @@ web-install: ## Install web dependencies
 web-build: web-install ## Build web frontend
 	cd $(WEB_DIR) && npm run build
 	mkdir -p internal/api/static
+	rm -rf internal/api/static/*
 	cp -r $(WEB_DIR)/dist/* internal/api/static/
 
 web-dev: ## Run web frontend in dev mode
@@ -96,7 +100,9 @@ web-clean: ## Clean web build artifacts
 	rm -rf $(WEB_DIR)/node_modules $(WEB_DIR)/dist
 	rm -rf internal/api/static
 
-build-with-web: web-build build ## Build with embedded web frontend
+build-with-web: deps ## Build with embedded web frontend
+	@$(MAKE) web-build
+	@$(MAKE) build-cli
 
 acceptance: test web-build ## Run full A-to-Z readiness checks
 	cd $(WEB_DIR) && npm run test:e2e -- --reporter=line
