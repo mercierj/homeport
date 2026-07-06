@@ -1,6 +1,7 @@
 package coverage
 
 import (
+	"context"
 	_ "embed"
 	"fmt"
 	"os"
@@ -19,6 +20,7 @@ import (
 var defaultCatalogData []byte
 
 var ConformanceDir = filepath.Join("test", "conformance", "services")
+var ConformanceWorkDir = ""
 
 type Catalog struct {
 	Services []domaincoverage.ServiceCoverage `yaml:"services" json:"services"`
@@ -199,14 +201,35 @@ func mappedResourceTypes(row domaincoverage.ServiceCoverage, mapperSet map[strin
 }
 
 func conformancePromotionIssue(provider, service string) error {
-	manifest, err := appconformance.NewService(ConformanceDir).Load(provider, service)
+	conformanceService := appconformance.NewService(ConformanceDir)
+	manifest, err := conformanceService.Load(provider, service)
 	if err != nil {
 		return fmt.Errorf("conformance manifest for %s/%s: %w", provider, service, err)
 	}
-	if issues := manifest.PromotionIssues(); len(issues) > 0 {
-		return fmt.Errorf("conformance manifest for %s/%s has promotion issues: %v", provider, service, issues)
+	if err := conformanceService.Run(context.Background(), manifest, conformanceWorkDir()); err != nil {
+		return fmt.Errorf("conformance manifest for %s/%s failed: %w", provider, service, err)
 	}
 	return nil
+}
+
+func conformanceWorkDir() string {
+	if ConformanceWorkDir != "" {
+		return ConformanceWorkDir
+	}
+	wd, err := os.Getwd()
+	if err != nil {
+		return "."
+	}
+	for {
+		if _, err := os.Stat(filepath.Join(wd, "go.mod")); err == nil {
+			return wd
+		}
+		parent := filepath.Dir(wd)
+		if parent == wd {
+			return "."
+		}
+		wd = parent
+	}
 }
 
 func (s *Service) RegisteredMapperTypes() []string {

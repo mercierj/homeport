@@ -131,6 +131,21 @@ func TestManagedGapsRejectUnknownResourceTypes(t *testing.T) {
 	}
 }
 
+func TestManagedGapsRejectConformanceCommandsThatRunNoTests(t *testing.T) {
+	withConformanceManifestCommand(t, "aws", "S3", "go test ./internal/app/conformance -run DefinitelyMissingHomePortConformanceTest")
+	catalog := Catalog{Services: []domaincoverage.ServiceCoverage{{
+		Provider: "aws", Service: "S3", ResourceTypes: []string{"aws_s3_bucket"}, Status: domaincoverage.StatusFull, ManualStepsResolved: true,
+		Target: "MinIO", APICompatibilityStrategy: "adapter",
+		Discover: true, Cost: true, Provision: true, Migrate: true, APICompat: true,
+		EnvDNS: true, HA: true, Backup: true, Validate: true, Cutover: true, Rollback: true,
+	}}}
+
+	gaps := NewService(catalog).ManagedGaps()
+	if len(gaps) != 1 || gaps[0] != "aws/S3" {
+		t.Fatalf("gaps = %v, want aws/S3", gaps)
+	}
+}
+
 func TestDefaultCatalogMatchesDocsLedger(t *testing.T) {
 	docsCatalog, err := os.ReadFile(filepath.Join("..", "..", "..", "docs", "coverage", "services.yaml"))
 	if err != nil {
@@ -284,27 +299,32 @@ func withConformanceDir(t *testing.T, dir string) {
 
 func withConformanceManifest(t *testing.T, provider, service string) {
 	t.Helper()
+	withConformanceManifestCommand(t, provider, service, "go test ./internal/app/conformance -run TestLoadReturnsManifest")
+}
+
+func withConformanceManifestCommand(t *testing.T, provider, service, command string) {
+	t.Helper()
 	dir := t.TempDir()
 	withConformanceDir(t, dir)
 	data := fmt.Sprintf(`
 provider: %s
 service: %s
 checks:
-  discover: go test ./test/integration/%s
-  cost: go test ./internal/domain/coverage
-  provision: go test ./internal/infrastructure/mapper/storage -run S3
-  migrate: go test ./internal/app/datamigration
-  api_compat: go test ./test/compat
-  env_dns: go test ./internal/app/cutover
-  ha: go test ./internal/domain/provider
-  backup: go test ./internal/app/backup
-  validate: go test ./internal/app/metrics
-  cutover: go test ./internal/app/cutover
-  rollback: go test ./internal/app/backup
+  discover: %s
+  cost: %s
+  provision: %s
+  migrate: %s
+  api_compat: %s
+  env_dns: %s
+  ha: %s
+  backup: %s
+  validate: %s
+  cutover: %s
+  rollback: %s
 evidence:
   target: MinIO
   app_change_mode: adapter
-`, provider, service, provider)
+`, provider, service, command, command, command, command, command, command, command, command, command, command, command)
 	if err := os.WriteFile(filepath.Join(dir, provider+"-"+strings.ToLower(service)+".yaml"), []byte(data), 0o600); err != nil {
 		t.Fatal(err)
 	}

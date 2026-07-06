@@ -18,6 +18,10 @@ const (
 	CheckRollback  Check = "rollback"
 )
 
+func RequiredChecks() []Check {
+	return []Check{CheckDiscover, CheckCost, CheckProvision, CheckMigrate, CheckAPICompat, CheckEnvDNS, CheckHA, CheckBackup, CheckValidate, CheckCutover, CheckRollback}
+}
+
 type Manifest struct {
 	Provider string            `yaml:"provider" json:"provider"`
 	Service  string            `yaml:"service" json:"service"`
@@ -26,9 +30,8 @@ type Manifest struct {
 }
 
 func (m Manifest) MissingChecks() []Check {
-	required := []Check{CheckDiscover, CheckCost, CheckProvision, CheckMigrate, CheckAPICompat, CheckEnvDNS, CheckHA, CheckBackup, CheckValidate, CheckCutover, CheckRollback}
 	missing := []Check{}
-	for _, check := range required {
+	for _, check := range RequiredChecks() {
 		if m.Checks[check] == "" {
 			missing = append(missing, check)
 		}

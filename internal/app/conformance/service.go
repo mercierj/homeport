@@ -1,9 +1,12 @@
 package conformance
 
 import (
+	"context"
 	"fmt"
 	"os"
+	"os/exec"
 	"path/filepath"
+	"strings"
 
 	domain "github.com/homeport/homeport/internal/domain/conformance"
 	"gopkg.in/yaml.v3"
@@ -29,6 +32,35 @@ func (s *Service) Load(provider, service string) (domain.Manifest, error) {
 		return domain.Manifest{}, fmt.Errorf("manifest identity mismatch: got %s/%s", manifest.Provider, manifest.Service)
 	}
 	return manifest, nil
+}
+
+func (s *Service) Run(ctx context.Context, manifest domain.Manifest, workDir string) error {
+	if issues := manifest.PromotionIssues(); len(issues) > 0 {
+		return fmt.Errorf("promotion issues: %v", issues)
+	}
+	if workDir == "" {
+		workDir = "."
+	}
+	for _, check := range domain.RequiredChecks() {
+		command := manifest.Checks[check]
+		cmd := exec.CommandContext(ctx, "sh", "-c", command)
+		cmd.Dir = workDir
+		out, err := cmd.CombinedOutput()
+		output := string(out)
+		if err != nil {
+			return fmt.Errorf("%s check failed: %w\n%s", check, err, strings.TrimSpace(output))
+		}
+		if ranNoTests(output) {
+			return fmt.Errorf("%s check ran no tests: %s", check, command)
+		}
+	}
+	return nil
+}
+
+func ranNoTests(output string) bool {
+	return strings.Contains(output, "testing: warning: no tests to run") ||
+		strings.Contains(output, "[no tests to run]") ||
+		strings.Contains(output, "[no test files]")
 }
 
 func slug(value string) string {
