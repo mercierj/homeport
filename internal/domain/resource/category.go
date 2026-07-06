@@ -111,6 +111,7 @@ var CategoryMapping = map[Type]Category{
 	TypeEMRCluster:          CategoryCompute,
 	TypeGlueCatalogDatabase: CategorySQLDatabase,
 	TypeOpenSearchDomain:    CategoryNoSQLDatabase,
+	TypeRedshiftCluster:     CategorySQLDatabase,
 
 	// AWS Networking
 	TypeALB:               CategoryLoadBalancer,

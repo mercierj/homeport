@@ -35,6 +35,7 @@ const (
 	TypeEMRCluster          Type = "aws_emr_cluster"
 	TypeGlueCatalogDatabase Type = "aws_glue_catalog_database"
 	TypeOpenSearchDomain    Type = "aws_opensearch_domain"
+	TypeRedshiftCluster     Type = "aws_redshift_cluster"
 
 	// AWS Networking
 	TypeALB               Type = "aws_lb"

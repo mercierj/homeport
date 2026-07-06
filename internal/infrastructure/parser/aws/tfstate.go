@@ -322,6 +322,7 @@ func mapAWSTerraformType(tfType string) resource.Type {
 		"aws_glue_catalog_database":         resource.TypeGlueCatalogDatabase,
 		"aws_opensearch_domain":             resource.TypeOpenSearchDomain,
 		"aws_elasticsearch_domain":          resource.TypeOpenSearchDomain,
+		"aws_redshift_cluster":              resource.TypeRedshiftCluster,
 
 		// Networking
 		"aws_lb":                      resource.TypeALB,

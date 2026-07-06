@@ -499,6 +499,7 @@ func mapCFNTypeToResourceType(cfnType string) resource.Type {
 		"AWS::Glue::Database":                resource.TypeGlueCatalogDatabase,
 		"AWS::OpenSearchService::Domain":     resource.TypeOpenSearchDomain,
 		"AWS::Elasticsearch::Domain":         resource.TypeOpenSearchDomain,
+		"AWS::Redshift::Cluster":             resource.TypeRedshiftCluster,
 
 		// Networking
 		"AWS::ElasticLoadBalancingV2::LoadBalancer": resource.TypeALB,

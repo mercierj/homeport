@@ -30,7 +30,7 @@
 | aws | MSK | full | aws_msk_cluster |
 | aws | OpenSearch | full | aws_opensearch_domain |
 | aws | RDS | full | aws_db_instance, aws_rds_cluster |
-| aws | Redshift | missing |  |
+| aws | Redshift | full | aws_redshift_cluster |
 | aws | Route 53 | mapped | aws_route53_zone |
 | aws | S3 | mapped | aws_s3_bucket |
 | aws | SES | guided | aws_ses_domain_identity |
