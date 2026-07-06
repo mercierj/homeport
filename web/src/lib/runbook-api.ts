@@ -36,6 +36,7 @@ export interface RunbookStep {
   optional?: boolean;
   executor?: string;
   success_condition?: string;
+  metadata?: Record<string, string>;
   result?: RunbookStepResult;
 }
 

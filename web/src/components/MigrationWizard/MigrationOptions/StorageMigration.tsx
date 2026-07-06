@@ -588,7 +588,7 @@ export function StorageMigration({ resources = [] }: StorageMigrationProps) {
       <div className="text-center py-8 text-muted-foreground">
         <HardDrive className="w-12 h-12 mx-auto mb-3 opacity-50" />
         <p className="font-medium">No storage resources discovered</p>
-        <p className="text-sm mt-1">S3 buckets, EBS volumes, or EFS file systems will appear here when detected.</p>
+        <p className="text-sm mt-1">Object buckets, block disks, or file shares will appear here when detected.</p>
       </div>
     );
   }
@@ -598,8 +598,8 @@ export function StorageMigration({ resources = [] }: StorageMigrationProps) {
       {/* S3 to MinIO Section - only show if S3 resources discovered */}
       {hasS3 && (
       <ServiceMigrationCard
-        title="Amazon S3 → MinIO"
-        description="Migrate S3 buckets to self-hosted MinIO"
+        title="Object Storage → MinIO"
+        description="Migrate S3, GCS, and Azure Blob buckets to MinIO"
         icon={HardDrive}
         enabled={storage.enabled}
         onToggle={handleS3Toggle}
@@ -686,8 +686,8 @@ export function StorageMigration({ resources = [] }: StorageMigrationProps) {
       {/* EBS to Docker Volumes Section - only show if EBS resources discovered */}
       {hasEBS && (
       <ServiceMigrationCard
-        title="Amazon EBS → Docker Volumes"
-        description="Migrate EBS snapshots to local volumes"
+        title="Block Storage → Docker Volumes"
+        description="Migrate EBS, Persistent Disk, and Managed Disk snapshots to local volumes"
         icon={HardDrive}
         enabled={storage.ebs.enabled}
         onToggle={handleEbsToggle}
@@ -754,8 +754,8 @@ export function StorageMigration({ resources = [] }: StorageMigrationProps) {
       {/* EFS to NFS/Local Section - only show if EFS resources discovered */}
       {hasEFS && (
       <ServiceMigrationCard
-        title="Amazon EFS → NFS/Local"
-        description="Migrate EFS file systems"
+        title="File Storage → NFS/SMB"
+        description="Migrate EFS, Filestore, and Azure Files shares"
         icon={FolderOpen}
         enabled={storage.efs.enabled}
         onToggle={handleEfsToggle}

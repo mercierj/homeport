@@ -8,6 +8,7 @@ import (
 
 	"github.com/homeport/homeport/internal/domain/mapper"
 	"github.com/homeport/homeport/internal/domain/resource"
+	"github.com/homeport/homeport/internal/infrastructure/mapper/shared/storagerunbook"
 )
 
 // PersistentDiskMapper converts GCP Persistent Disks to Docker volumes.
@@ -77,6 +78,9 @@ func (m *PersistentDiskMapper) Map(ctx context.Context, res *resource.AWSResourc
 	// Generate script to create and manage the volume
 	setupScript := m.generateSetupScript(volumeName, diskSize, diskType)
 	result.AddScript("setup_volume.sh", []byte(setupScript))
+	for _, step := range storagerunbook.BlockStorage(volumeName, "gcp", res.GetConfigString("snapshot")) {
+		result.AddRunbookStep(step)
+	}
 
 	// Handle disk snapshots
 	if snapshots := m.getSnapshots(res); len(snapshots) > 0 {

@@ -11,6 +11,7 @@ import (
 	"github.com/homeport/homeport/internal/domain/mapper"
 	"github.com/homeport/homeport/internal/domain/policy"
 	"github.com/homeport/homeport/internal/domain/resource"
+	"github.com/homeport/homeport/internal/infrastructure/mapper/shared/storagerunbook"
 )
 
 // S3Mapper converts AWS S3 buckets to MinIO.
@@ -61,16 +62,19 @@ func (m *S3Mapper) Map(ctx context.Context, res *resource.AWSResource) (*mapper.
 		Retries:  3,
 	}
 	svc.Labels = map[string]string{
-		"homeport.source": "aws_s3_bucket",
-		"homeport.bucket": bucketName,
-		"traefik.enable":   "true",
-		"traefik.http.routers.minio.rule":                      "Host(`minio.localhost`)",
+		"homeport.source":                 "aws_s3_bucket",
+		"homeport.bucket":                 bucketName,
+		"traefik.enable":                  "true",
+		"traefik.http.routers.minio.rule": "Host(`minio.localhost`)",
 		"traefik.http.services.minio.loadbalancer.server.port": "9001",
 	}
 
 	// Generate MinIO client (mc) setup script
 	mcScript := m.generateMCScript(res, bucketName)
 	result.AddScript("setup_minio.sh", []byte(mcScript))
+	for _, step := range storagerunbook.ObjectStorage(bucketName, "s3:"+bucketName) {
+		result.AddRunbookStep(step)
+	}
 
 	// Handle versioning
 	if res.GetConfigBool("versioning.enabled") || m.hasVersioningBlock(res) {

@@ -8,6 +8,7 @@ import (
 
 	"github.com/homeport/homeport/internal/domain/mapper"
 	"github.com/homeport/homeport/internal/domain/resource"
+	"github.com/homeport/homeport/internal/infrastructure/mapper/shared/storagerunbook"
 )
 
 // BlobMapper converts Azure Blob Storage containers to MinIO.
@@ -60,16 +61,19 @@ func (m *BlobMapper) Map(ctx context.Context, res *resource.AWSResource) (*mappe
 		Retries:  3,
 	}
 	svc.Labels = map[string]string{
-		"homeport.source":    "azurerm_storage_container",
-		"homeport.container": containerName,
-		"traefik.enable":      "true",
-		"traefik.http.routers.minio.rule":                      "Host(`minio.localhost`)",
+		"homeport.source":                 "azurerm_storage_container",
+		"homeport.container":              containerName,
+		"traefik.enable":                  "true",
+		"traefik.http.routers.minio.rule": "Host(`minio.localhost`)",
 		"traefik.http.services.minio.loadbalancer.server.port": "9001",
 	}
 
 	// Generate MinIO client (mc) setup script
 	mcScript := m.generateMCScript(res, containerName)
 	result.AddScript("setup_minio.sh", []byte(mcScript))
+	for _, step := range storagerunbook.ObjectStorage(containerName, "azureblob:"+containerName) {
+		result.AddRunbookStep(step)
+	}
 
 	// Handle container access level (public/private)
 	accessType := res.GetConfigString("container_access_type")

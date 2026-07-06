@@ -56,7 +56,7 @@
 | gcp | Cloud Run | mapped | google_cloud_run_service |
 | gcp | Cloud Scheduler | mapped | google_cloud_scheduler_job |
 | gcp | Cloud SQL | mapped | google_sql_database_instance |
-| gcp | Cloud Storage | mapped | google_storage_bucket |
+| gcp | Cloud Storage | guided | google_storage_bucket |
 | gcp | Cloud Tasks | mapped | google_cloud_tasks_queue |
 | gcp | Compute Engine | mapped | google_compute_instance |
 | gcp | Composer | missing |  |
@@ -93,7 +93,7 @@
 | azure | Azure Functions | mapped | azurerm_function_app |
 | azure | Azure Load Balancer | mapped | azurerm_lb |
 | azure | Azure SQL | mapped | azurerm_mssql_database |
-| azure | Azure Storage | mapped | azurerm_storage_container, azurerm_storage_account, azurerm_storage_share |
+| azure | Azure Storage | guided | azurerm_storage_container, azurerm_storage_account, azurerm_storage_share |
 | azure | Azure VNet | mapped | azurerm_virtual_network |
 | azure | Azure VM | mapped | azurerm_linux_virtual_machine, azurerm_windows_virtual_machine |
 | azure | Container Apps | missing |  |

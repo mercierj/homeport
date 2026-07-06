@@ -5,6 +5,7 @@ import (
 
 	"github.com/homeport/homeport/internal/domain/policy"
 	"github.com/homeport/homeport/internal/domain/resource"
+	domainrunbook "github.com/homeport/homeport/internal/domain/runbook"
 )
 
 // MappingResult represents the outcome of mapping a cloud resource to self-hosted equivalents.
@@ -33,6 +34,9 @@ type MappingResult struct {
 
 	// ManualSteps contains steps that require manual intervention
 	ManualSteps []string
+
+	// RunbookSteps contains executable migration steps emitted by mappers.
+	RunbookSteps []domainrunbook.Step
 
 	// Policies contains IAM and resource policies extracted from the source
 	Policies []*policy.Policy
@@ -257,6 +261,7 @@ func NewMappingResult(serviceName string) *MappingResult {
 		Networks:           make([]string, 0),
 		Warnings:           make([]string, 0),
 		ManualSteps:        make([]string, 0),
+		RunbookSteps:       make([]domainrunbook.Step, 0),
 		Policies:           make([]*policy.Policy, 0),
 	}
 }
@@ -281,6 +286,11 @@ func (r *MappingResult) AddWarning(warning string) {
 // AddManualStep adds a manual step to the result.
 func (r *MappingResult) AddManualStep(step string) {
 	r.ManualSteps = append(r.ManualSteps, step)
+}
+
+// AddRunbookStep adds an executable migration step to the result.
+func (r *MappingResult) AddRunbookStep(step domainrunbook.Step) {
+	r.RunbookSteps = append(r.RunbookSteps, step)
 }
 
 // AddConfig adds a configuration file to the result.

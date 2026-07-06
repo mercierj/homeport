@@ -7,6 +7,7 @@ import (
 
 	"github.com/homeport/homeport/internal/domain/mapper"
 	"github.com/homeport/homeport/internal/domain/resource"
+	"github.com/homeport/homeport/internal/infrastructure/mapper/shared/storagerunbook"
 )
 
 // EBSMapper converts AWS EBS volumes to Docker volumes.
@@ -57,11 +58,11 @@ func (m *EBSMapper) Map(ctx context.Context, res *resource.AWSResource) (*mapper
 		fmt.Sprintf("%s:/data", volumeName),
 	}
 	svc.Labels = map[string]string{
-		"homeport.source":           "aws_ebs_volume",
-		"homeport.volume":           volumeName,
-		"homeport.volume.size":      fmt.Sprintf("%dGB", size),
-		"homeport.volume.type":      volumeType,
-		"homeport.type":             "volume-helper",
+		"homeport.source":      "aws_ebs_volume",
+		"homeport.volume":      volumeName,
+		"homeport.volume.size": fmt.Sprintf("%dGB", size),
+		"homeport.volume.type": volumeType,
+		"homeport.type":        "volume-helper",
 	}
 
 	// Add volume definition to result
@@ -82,6 +83,9 @@ func (m *EBSMapper) Map(ctx context.Context, res *resource.AWSResource) (*mapper
 	// Generate volume setup script
 	volumeScript := m.generateVolumeSetupScript(volumeName, size, volumeType, iops, throughput, encrypted)
 	result.AddScript("setup_volume.sh", []byte(volumeScript))
+	for _, step := range storagerunbook.BlockStorage(volumeName, "aws", res.GetConfigString("snapshot_id")) {
+		result.AddRunbookStep(step)
+	}
 
 	// Add warnings and manual steps based on configuration
 	result.AddWarning(fmt.Sprintf("EBS Volume Type: %s - Docker volumes don't have performance tiers. Consider using different storage drivers for performance characteristics.", volumeType))

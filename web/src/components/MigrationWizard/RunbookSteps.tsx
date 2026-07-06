@@ -20,7 +20,17 @@ import {
   type RunbookStepStatus,
 } from '@/lib/runbook-api';
 
-const GROUPS = ['Credentials', 'Provision', 'Sync', 'Validate', 'Cutover', 'Rollback'];
+const GROUPS = [
+  'Credentials',
+  'Object Storage',
+  'Block Storage',
+  'File Storage',
+  'Provision',
+  'Sync',
+  'Validate',
+  'Cutover',
+  'Rollback',
+];
 
 const STATUS_ICON: Record<RunbookStepStatus, typeof Circle> = {
   pending: Circle,
@@ -175,6 +185,12 @@ export function RunbookSteps({ runbookId, onRequiredPassedChange }: RunbookSteps
             const Icon = STATUS_ICON[step.status] || Circle;
             const isRunning = step.status === 'running' || loadingStepId === step.id;
             const canRun = step.status === 'pending' || step.status === 'failed';
+            const counters = [
+              { label: 'Progress', value: step.metadata?.progress },
+              { label: 'Transferred', value: step.metadata?.transferred_bytes },
+              { label: 'Skipped', value: step.metadata?.skipped_files },
+              { label: 'Failed', value: step.metadata?.failed_files },
+            ].filter((item) => item.value);
 
             return (
               <div
@@ -203,6 +219,13 @@ export function RunbookSteps({ runbookId, onRequiredPassedChange }: RunbookSteps
                       {step.type.replace('_', ' ')} · {step.status}
                       {step.optional ? ' · optional' : ''}
                     </p>
+                    {counters.length > 0 && (
+                      <div className="mt-1 flex flex-wrap gap-x-3 gap-y-1 text-xs text-muted-foreground">
+                        {counters.map(({ label, value }) => (
+                          <span key={label}>{label}: {value}</span>
+                        ))}
+                      </div>
+                    )}
                   </div>
                 </div>
                 <button
@@ -211,7 +234,7 @@ export function RunbookSteps({ runbookId, onRequiredPassedChange }: RunbookSteps
                   className={cn(buttonVariants({ variant: 'ghost', size: 'sm' }), 'gap-2 flex-shrink-0')}
                 >
                   {isRunning ? <Loader2 className="w-4 h-4 animate-spin" /> : <Play className="w-4 h-4" />}
-                  Run
+                  {step.status === 'failed' ? 'Retry' : 'Run'}
                 </button>
               </div>
             );

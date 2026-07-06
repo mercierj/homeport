@@ -8,6 +8,7 @@ import (
 
 	"github.com/homeport/homeport/internal/domain/mapper"
 	"github.com/homeport/homeport/internal/domain/resource"
+	"github.com/homeport/homeport/internal/infrastructure/mapper/shared/storagerunbook"
 )
 
 // ManagedDiskMapper converts Azure Managed Disks to Docker volumes.
@@ -70,11 +71,11 @@ func (m *ManagedDiskMapper) Map(ctx context.Context, res *resource.AWSResource) 
 		Name:   volumeName,
 		Driver: "local",
 		Labels: map[string]string{
-			"homeport.source":              "azurerm_managed_disk",
-			"homeport.disk_name":           diskName,
-			"homeport.disk_size_gb":        fmt.Sprintf("%d", diskSizeGB),
+			"homeport.source":               "azurerm_managed_disk",
+			"homeport.disk_name":            diskName,
+			"homeport.disk_size_gb":         fmt.Sprintf("%d", diskSizeGB),
 			"homeport.storage_account_type": storageAccountType,
-			"homeport.create_option":       createOption,
+			"homeport.create_option":        createOption,
 		},
 	}
 
@@ -153,6 +154,9 @@ func (m *ManagedDiskMapper) Map(ctx context.Context, res *resource.AWSResource) 
 	// Generate mount script
 	mountScript := m.generateMountScript(diskName, volumeName)
 	result.AddScript(fmt.Sprintf("mount_%s.sh", diskName), []byte(mountScript))
+	for _, step := range storagerunbook.BlockStorage(volumeName, "azure", res.GetConfigString("source_snapshot_id")) {
+		result.AddRunbookStep(step)
+	}
 
 	result.AddManualStep(fmt.Sprintf("Volume '%s' created. Attach to VM services using: volumes: - %s:/mnt/disk", volumeName, volumeName))
 	result.AddManualStep(fmt.Sprintf("Disk size: %d GB. Docker volumes grow dynamically - no size limit enforced.", diskSizeGB))

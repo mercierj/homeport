@@ -919,7 +919,8 @@ services:
     validate: false
     cutover: false
     rollback: false
-    status: mapped
+    status: guided
+    blocker: MinIO S3 endpoint is generated, but native GCS SDK compatibility needs an adapter or application SDK switch
   - provider: gcp
     service: Cloud Tasks
     resource_types:
@@ -1517,7 +1518,8 @@ services:
     validate: false
     cutover: false
     rollback: false
-    status: mapped
+    status: guided
+    blocker: MinIO/Azurite targets are generated, but native Azure Storage SDK compatibility needs adapter validation or application SDK switch
   - provider: azure
     service: Azure VNet
     resource_types:

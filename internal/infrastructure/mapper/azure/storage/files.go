@@ -9,6 +9,7 @@ import (
 
 	"github.com/homeport/homeport/internal/domain/mapper"
 	"github.com/homeport/homeport/internal/domain/resource"
+	"github.com/homeport/homeport/internal/infrastructure/mapper/shared/storagerunbook"
 )
 
 // FilesMapper converts Azure Files shares to Samba/CIFS file shares.
@@ -122,6 +123,13 @@ func (m *FilesMapper) Map(ctx context.Context, res *resource.AWSResource) (*mapp
 	// Generate Samba configuration
 	sambaConfig := m.generateSambaConfig(shareName, quotaGB)
 	result.AddScript(fmt.Sprintf("setup_%s.sh", shareName), []byte(sambaConfig))
+	protocol := "smb"
+	if strings.EqualFold(enabledProtocol, "NFS") {
+		protocol = "nfs"
+	}
+	for _, step := range storagerunbook.FileStorage(shareName, protocol) {
+		result.AddRunbookStep(step)
+	}
 
 	result.AddManualStep(fmt.Sprintf("Mount share on Linux: mount -t cifs //localhost/%s /mnt/share -o username=azureuser,password=azurepass", shareName))
 	result.AddManualStep(fmt.Sprintf("Mount share on Windows: net use Z: \\\\localhost\\%s /user:azureuser azurepass", shareName))

@@ -9,6 +9,7 @@ import (
 
 	"github.com/homeport/homeport/internal/domain/mapper"
 	"github.com/homeport/homeport/internal/domain/resource"
+	"github.com/homeport/homeport/internal/infrastructure/mapper/shared/storagerunbook"
 )
 
 // FilestoreMapper converts GCP Filestore instances to NFS server containers.
@@ -101,6 +102,9 @@ func (m *FilestoreMapper) Map(ctx context.Context, res *resource.AWSResource) (*
 	// Generate NFS client mount instructions
 	mountScript := m.generateMountScript(serviceName, fileShareName, instanceName)
 	result.AddScript("mount_nfs.sh", []byte(mountScript))
+	for _, step := range storagerunbook.FileStorage(fileShareName, "nfs") {
+		result.AddRunbookStep(step)
+	}
 
 	// Generate NFS exports configuration
 	exportsConfig := m.generateExportsConfig(fileShareName)

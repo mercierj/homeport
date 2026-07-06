@@ -8,6 +8,7 @@ import (
 
 	"github.com/homeport/homeport/internal/domain/mapper"
 	"github.com/homeport/homeport/internal/domain/resource"
+	"github.com/homeport/homeport/internal/infrastructure/mapper/shared/storagerunbook"
 )
 
 // EFSMapper converts AWS EFS file systems to NFS servers.
@@ -50,9 +51,9 @@ func (m *EFSMapper) Map(ctx context.Context, res *resource.AWSResource) (*mapper
 	}
 	svc.CapAdd = []string{"SYS_ADMIN"} // NFS server requires privileged capabilities
 	svc.Labels = map[string]string{
-		"homeport.source":      "aws_efs_file_system",
-		"homeport.filesystem":  fileSystemName,
-		"homeport.type":        "nfs-server",
+		"homeport.source":     "aws_efs_file_system",
+		"homeport.filesystem": fileSystemName,
+		"homeport.type":       "nfs-server",
 	}
 
 	// Add health check
@@ -92,6 +93,9 @@ func (m *EFSMapper) Map(ctx context.Context, res *resource.AWSResource) (*mapper
 	// Generate NFS setup script
 	nfsScript := m.generateNFSSetupScript(fileSystemName, res)
 	result.AddScript("setup_nfs.sh", []byte(nfsScript))
+	for _, step := range storagerunbook.FileStorage(fileSystemName, "nfs") {
+		result.AddRunbookStep(step)
+	}
 
 	// Add manual steps for NFS client mounting
 	result.AddManualStep(fmt.Sprintf("To mount this NFS share on clients, use: sudo mount -t nfs localhost:/data /mnt/%s", fileSystemName))

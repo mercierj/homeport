@@ -6,6 +6,7 @@ import (
 
 	"github.com/homeport/homeport/internal/domain/mapper"
 	"github.com/homeport/homeport/internal/domain/resource"
+	domainrunbook "github.com/homeport/homeport/internal/domain/runbook"
 )
 
 func TestNewS3Mapper(t *testing.T) {
@@ -178,5 +179,43 @@ func TestS3Mapper_Map(t *testing.T) {
 				tt.check(t, result)
 			}
 		})
+	}
+}
+
+func TestS3MapperAddsObjectStorageRunbook(t *testing.T) {
+	result, err := NewS3Mapper().Map(context.Background(), &resource.AWSResource{
+		ID:   "assets",
+		Type: resource.TypeS3Bucket,
+		Name: "assets",
+		Config: map[string]interface{}{
+			"bucket": "assets",
+		},
+	})
+	if err != nil {
+		t.Fatalf("Map() error = %v", err)
+	}
+
+	var foundProvision, foundSync, foundVerify bool
+	for _, step := range result.RunbookSteps {
+		if step.Metadata["kind"] != "object-storage" {
+			continue
+		}
+		switch step.ID {
+		case "provision-minio-bucket":
+			foundProvision = true
+			if step.Type != domainrunbook.StepTypeCommand || step.Executor != "shell" {
+				t.Fatalf("provision step = %#v", step)
+			}
+			if step.Metadata["AWS_ENDPOINT_URL_S3"] != "http://minio:9000" {
+				t.Fatalf("AWS endpoint metadata = %q", step.Metadata["AWS_ENDPOINT_URL_S3"])
+			}
+		case "sync-objects-to-minio":
+			foundSync = true
+		case "verify-object-migration":
+			foundVerify = true
+		}
+	}
+	if !foundProvision || !foundSync || !foundVerify {
+		t.Fatalf("object-storage steps provision=%v sync=%v verify=%v", foundProvision, foundSync, foundVerify)
 	}
 }

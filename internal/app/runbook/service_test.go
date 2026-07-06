@@ -43,6 +43,36 @@ func TestFromMappingResultBlocksApplicationCodeWithoutAdapter(t *testing.T) {
 	}
 }
 
+func TestFromMappingResultUsesStructuredRunbookSteps(t *testing.T) {
+	result := mapper.NewMappingResult("minio")
+	result.AddManualStep("legacy manual text should not appear")
+	result.AddRunbookStep(domainrunbook.Step{
+		ID:               "provision-minio-bucket",
+		Name:             "Provision MinIO bucket",
+		Group:            "Object Storage",
+		Type:             domainrunbook.StepTypeCommand,
+		Status:           domainrunbook.StepStatusPending,
+		Executor:         "shell",
+		SuccessCondition: "bucket exists",
+		Command:          []string{"sh", "setup_minio.sh"},
+		Metadata:         map[string]string{"kind": "object-storage"},
+	})
+
+	book, err := FromMappingResult(result)
+	if err != nil {
+		t.Fatalf("FromMappingResult() error = %v", err)
+	}
+	if len(book.Steps) != 1 {
+		t.Fatalf("len(Steps) = %d, want 1", len(book.Steps))
+	}
+	if HasUnresolvedManualText(book) {
+		t.Fatal("HasUnresolvedManualText() = true, want false")
+	}
+	if got := book.Steps[0].Metadata["kind"]; got != "object-storage" {
+		t.Fatalf("step kind = %q, want object-storage", got)
+	}
+}
+
 func TestRunNextResumesAfterFailedStep(t *testing.T) {
 	service := NewService(t.TempDir())
 	service.RegisterExecutor("fail-once", func(context.Context, domainrunbook.Step) domainrunbook.StepResult {
