@@ -14,6 +14,7 @@ import { cn } from '@/lib/utils';
 import { buttonVariants } from '@/lib/button-variants';
 import { useWizardStore } from '@/stores/wizard';
 import {
+  previewCutover,
   startCutover,
   subscribeToCutover,
   cancelCutover,
@@ -22,6 +23,7 @@ import {
   type HealthCheckRequest,
   type DNSChangeRequest,
   type CutoverEvent,
+  type CutoverPreviewInput,
 } from '@/lib/cutover-api';
 import { RunbookSteps } from '../RunbookSteps';
 
@@ -43,11 +45,25 @@ interface HealthCheck {
   error?: string;
 }
 
+export function buildCutoverPreviewRequest(
+  bundleId: string | null,
+  domain: string,
+  targetIP: string
+): CutoverPreviewInput {
+  return {
+    bundle_id: (bundleId || '').trim(),
+    domain: domain.trim(),
+    target_ip: targetIP.trim(),
+  };
+}
+
 export function CutoverStep() {
-  const { bundleId, setError, nextStep } = useWizardStore();
+  const { bundleId, domain, setError, nextStep } = useWizardStore();
 
   const [dnsChanges, setDNSChanges] = useState<DNSChange[]>([]);
   const [healthChecks, setHealthChecks] = useState<HealthCheck[]>([]);
+  const [targetIP, setTargetIP] = useState('');
+  const [previewWarnings, setPreviewWarnings] = useState<string[]>([]);
   const [isCuttingOver, setIsCuttingOver] = useState(false);
   const [cutoverComplete, setCutoverComplete] = useState(false);
   const [cutoverError, setCutoverError] = useState<string | null>(null);
@@ -55,16 +71,51 @@ export function CutoverStep() {
   const [cutoverId, setCutoverId] = useState<string | null>(null);
   const [isDryRun, setIsDryRun] = useState(true);
   const [logs, setLogs] = useState<string[]>([]);
-  const [runbookReady, setRunbookReady] = useState(true);
+  const [runbookReady, setRunbookReady] = useState(false);
   const unsubscribeRef = useRef<(() => void) | null>(null);
 
-  // Build DNS changes and health checks
-  // Currently returns empty - cutover config would come from bundle or user input
-  const buildFromManifest = (): { changes: DNSChange[]; checks: HealthCheck[] } => {
-    // Cutover configuration is not in the bundle yet
-    // Users can skip this step or we could add manual DNS entry
-    return { changes: [], checks: [] };
-  };
+  useEffect(() => {
+    let cancelled = false;
+
+    void previewCutover(buildCutoverPreviewRequest(bundleId, domain, targetIP))
+      .then((preview) => {
+        if (cancelled) return;
+        setPreviewWarnings(preview.warnings ?? []);
+        setDNSChanges((preview.dns_changes ?? []).map((change) => ({
+          id: change.id,
+          domain: change.domain,
+          recordType: change.record_type,
+          oldValue: change.old_value,
+          newValue: change.new_value,
+          status: 'pending',
+        })));
+        setHealthChecks([
+          ...(preview.pre_checks ?? []).map((check) => ({
+            id: check.id,
+            name: check.name,
+            endpoint: check.endpoint,
+            type: 'pre' as const,
+            status: 'pending' as const,
+          })),
+          ...(preview.post_checks ?? []).map((check) => ({
+            id: check.id,
+            name: check.name,
+            endpoint: check.endpoint,
+            type: 'post' as const,
+            status: 'pending' as const,
+          })),
+        ]);
+      })
+      .catch((error) => {
+        if (!cancelled) {
+          setPreviewWarnings([error instanceof Error ? error.message : 'Failed to preview cutover']);
+        }
+      });
+
+    return () => {
+      cancelled = true;
+    };
+  }, [bundleId, domain, targetIP]);
 
   // Cleanup SSE subscription on unmount
   useEffect(() => {
@@ -170,9 +221,8 @@ export function CutoverStep() {
     setError(null);
     setCutoverError(null);
 
-    const { changes, checks } = dnsChanges.length > 0
-      ? { changes: dnsChanges, checks: healthChecks }
-      : buildFromManifest();
+    const changes = dnsChanges;
+    const checks = healthChecks;
 
     if (changes.length === 0) {
       // No DNS changes, skip cutover
@@ -301,9 +351,8 @@ export function CutoverStep() {
     setCurrentPhase('pre_check');
     setLogs([]);
     setCutoverId(null);
-    const { changes, checks } = buildFromManifest();
-    setDNSChanges(changes);
-    setHealthChecks(checks);
+    setDNSChanges([]);
+    setHealthChecks([]);
   };
 
   // Calculate progress
@@ -314,6 +363,8 @@ export function CutoverStep() {
   const allPostChecksPassed = postChecks.every((c) => c.status === 'passed');
 
   const hasDataToCutover = dnsChanges.length > 0;
+  const needsTargetIP = domain.trim() !== '' && targetIP.trim() === '';
+  const actionDisabled = !runbookReady || needsTargetIP;
 
   return (
     <div className="space-y-6">
@@ -326,6 +377,32 @@ export function CutoverStep() {
             : 'No DNS changes required for this migration.'}
         </p>
       </div>
+
+      <div className="rounded-lg border p-4 space-y-2">
+        <label className="text-sm font-medium" htmlFor="cutover-target-ip">
+          Target IP
+        </label>
+        <input
+          id="cutover-target-ip"
+          value={targetIP}
+          onChange={(event) => setTargetIP(event.target.value)}
+          className="input w-full"
+          placeholder="203.0.113.10"
+        />
+      </div>
+
+      {previewWarnings.length > 0 && (
+        <div className="bg-warning/10 border border-warning/30 rounded-lg p-4">
+          <div className="flex items-start gap-3">
+            <AlertCircle className="w-5 h-5 text-warning flex-shrink-0" />
+            <div className="space-y-1">
+              {previewWarnings.map((warning) => (
+                <p key={warning} className="text-sm text-muted-foreground">{warning}</p>
+              ))}
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* Dry run toggle */}
       {!isCuttingOver && !cutoverComplete && hasDataToCutover && (
@@ -577,6 +654,7 @@ export function CutoverStep() {
             </button>
             <button
               onClick={handleStartCutover}
+              disabled={actionDisabled}
               className={cn(buttonVariants({ variant: 'primary' }), 'gap-2')}
             >
               <Play className="w-4 h-4" />
@@ -624,7 +702,7 @@ export function CutoverStep() {
             </div>
             <button
               onClick={nextStep}
-              disabled={!runbookReady}
+              disabled={actionDisabled}
               className={buttonVariants({ variant: 'primary' })}
             >
               Complete Migration

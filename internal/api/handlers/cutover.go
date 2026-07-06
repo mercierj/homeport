@@ -8,8 +8,8 @@ import (
 	"time"
 
 	"github.com/go-chi/chi/v5"
-	domaincutover "github.com/homeport/homeport/internal/domain/cutover"
 	appcutover "github.com/homeport/homeport/internal/app/cutover"
+	domaincutover "github.com/homeport/homeport/internal/domain/cutover"
 )
 
 // CutoverHandler handles cutover-related HTTP requests.
@@ -27,6 +27,7 @@ func NewCutoverHandler() *CutoverHandler {
 // RegisterRoutes registers cutover routes.
 func (h *CutoverHandler) RegisterRoutes(r chi.Router) {
 	r.Route("/cutover", func(r chi.Router) {
+		r.Post("/preview", h.PreviewCutover)
 		r.Post("/validate", h.ValidatePlan)
 		r.Post("/start", h.StartCutover)
 		r.Route("/{cutoverId}", func(r chi.Router) {
@@ -38,15 +39,24 @@ func (h *CutoverHandler) RegisterRoutes(r chi.Router) {
 	})
 }
 
+func (h *CutoverHandler) PreviewCutover(w http.ResponseWriter, r *http.Request) {
+	var input appcutover.PreviewInput
+	if err := json.NewDecoder(r.Body).Decode(&input); err != nil {
+		respondError(w, r, http.StatusBadRequest, "Invalid request body")
+		return
+	}
+	respondJSON(w, r, http.StatusOK, appcutover.BuildPreview(input))
+}
+
 // HealthCheckRequest represents a health check in the request.
 type HealthCheckRequest struct {
-	ID          string `json:"id"`
-	Name        string `json:"name"`
-	Type        string `json:"type"` // "http", "tcp"
-	Endpoint    string `json:"endpoint"`
-	Timeout     int    `json:"timeout_seconds,omitempty"`
-	ExpectCode  int    `json:"expect_code,omitempty"`
-	ExpectBody  string `json:"expect_body,omitempty"`
+	ID         string `json:"id"`
+	Name       string `json:"name"`
+	Type       string `json:"type"` // "http", "tcp"
+	Endpoint   string `json:"endpoint"`
+	Timeout    int    `json:"timeout_seconds,omitempty"`
+	ExpectCode int    `json:"expect_code,omitempty"`
+	ExpectBody string `json:"expect_body,omitempty"`
 }
 
 // DNSChangeRequest represents a DNS change in the request.

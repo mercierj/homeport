@@ -69,6 +69,28 @@ export interface CutoverEvent {
   message?: string;
 }
 
+export interface CutoverPreviewInput {
+  bundle_id: string;
+  domain: string;
+  target_ip: string;
+  service_paths?: Record<string, string>;
+  health_base_url?: string;
+}
+
+export interface CutoverPreview {
+  pre_checks: HealthCheckRequest[];
+  dns_changes: DNSChangeRequest[];
+  post_checks: HealthCheckRequest[];
+  warnings: string[];
+}
+
+export async function previewCutover(input: CutoverPreviewInput): Promise<CutoverPreview> {
+  return fetchAPI<CutoverPreview>('/cutover/preview', {
+    method: 'POST',
+    body: JSON.stringify(input),
+  });
+}
+
 // Validate a cutover plan
 export async function validateCutoverPlan(
   request: CreateCutoverRequest
