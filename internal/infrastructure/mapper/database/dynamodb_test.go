@@ -2,10 +2,12 @@ package database
 
 import (
 	"context"
+	"strings"
 	"testing"
 
 	"github.com/homeport/homeport/internal/domain/mapper"
 	"github.com/homeport/homeport/internal/domain/resource"
+	domainrunbook "github.com/homeport/homeport/internal/domain/runbook"
 )
 
 func TestNewDynamoDBMapper(t *testing.T) {
@@ -16,6 +18,69 @@ func TestNewDynamoDBMapper(t *testing.T) {
 	if m.ResourceType() != resource.TypeDynamoDBTable {
 		t.Errorf("ResourceType() = %v, want %v", m.ResourceType(), resource.TypeDynamoDBTable)
 	}
+}
+
+func TestDynamoDBConformanceManagedAToZ(t *testing.T) {
+	result, err := NewDynamoDBMapper().Map(context.Background(), managedDynamoDBFixture())
+	if err != nil {
+		t.Fatal(err)
+	}
+	if len(result.ManualSteps) != 0 {
+		t.Fatalf("manual steps = %#v, want generated Alternator migration", result.ManualSteps)
+	}
+	if result.DockerService.Image != "scylladb/scylla:5.4" || result.DockerService.Deploy == nil || result.DockerService.Deploy.Replicas < 2 {
+		t.Fatalf("service does not provision HA Scylla Alternator: %#v", result.DockerService)
+	}
+	for _, file := range []string{"config/scylladb/scylla.yaml", "config/scylladb/cdc.yaml", "config/dynamodb/app-change.env"} {
+		if _, ok := result.Configs[file]; !ok {
+			t.Fatalf("missing config %s", file)
+		}
+	}
+	appEnv := string(result.Configs["config/dynamodb/app-change.env"])
+	if !strings.Contains(appEnv, "AWS_ENDPOINT_URL_DYNAMODB=http://scylladb:8000") {
+		t.Fatalf("app-change env missing Alternator endpoint:\n%s", appEnv)
+	}
+	for _, file := range []string{"create_table.cql", "migrate_dynamodb.sh", "backup_dynamodb_alternator.sh", "validate_dynamodb_alternator.sh"} {
+		if _, ok := result.Scripts[file]; !ok {
+			t.Fatalf("missing script %s", file)
+		}
+	}
+	for id, stepType := range map[string]domainrunbook.StepType{
+		"provision-scylla-alternator":        domainrunbook.StepTypeCommand,
+		"migrate-dynamodb-table":             domainrunbook.StepTypeCommand,
+		"validate-dynamodb-sdk":              domainrunbook.StepTypeCommand,
+		"backup-dynamodb-alternator":         domainrunbook.StepTypeCommand,
+		"cutover-dynamodb-endpoint":          domainrunbook.StepTypeAPICall,
+		"rollback-dynamodb-source-authority": domainrunbook.StepTypeRollback,
+	} {
+		if !hasDynamoDBRunbookStep(result, id, stepType) {
+			t.Fatalf("missing %s runbook step: %#v", id, result.RunbookSteps)
+		}
+	}
+}
+
+func managedDynamoDBFixture() *resource.AWSResource {
+	return &resource.AWSResource{
+		ID:   "arn:aws:dynamodb:us-east-1:123456789012:table/orders",
+		Type: resource.TypeDynamoDBTable,
+		Name: "orders",
+		Config: map[string]interface{}{
+			"name":           "orders",
+			"hash_key":       "pk",
+			"range_key":      "sk",
+			"billing_mode":   "PAY_PER_REQUEST",
+			"stream_enabled": true,
+		},
+	}
+}
+
+func hasDynamoDBRunbookStep(result *mapper.MappingResult, id string, stepType domainrunbook.StepType) bool {
+	for _, step := range result.RunbookSteps {
+		if step.ID == id && step.Type == stepType {
+			return true
+		}
+	}
+	return false
 }
 
 func TestDynamoDBMapper_ResourceType(t *testing.T) {

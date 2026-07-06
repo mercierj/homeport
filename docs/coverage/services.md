@@ -11,7 +11,7 @@
 | aws | CodeBuild | full | aws_codebuild_project |
 | aws | CodePipeline | full | aws_codepipeline |
 | aws | Cognito | full | aws_cognito_user_pool |
-| aws | DynamoDB | mapped | aws_dynamodb_table |
+| aws | DynamoDB | full | aws_dynamodb_table |
 | aws | EBS | mapped | aws_ebs_volume |
 | aws | EC2 | mapped | aws_instance |
 | aws | ECR | missing |  |

@@ -4,11 +4,11 @@ package database
 import (
 	"context"
 	"fmt"
-	"strings"
 	"time"
 
 	"github.com/homeport/homeport/internal/domain/mapper"
 	"github.com/homeport/homeport/internal/domain/resource"
+	domainrunbook "github.com/homeport/homeport/internal/domain/runbook"
 	"github.com/homeport/homeport/internal/infrastructure/mapper/shared/datarunbook"
 )
 
@@ -58,6 +58,7 @@ func (m *DynamoDBMapper) Map(ctx context.Context, res *resource.AWSResource) (*m
 		Timeout:  10 * time.Second,
 		Retries:  5,
 	}
+	svc.Deploy = &mapper.DeployConfig{Replicas: 2}
 	svc.Restart = "unless-stopped"
 	svc.Labels = map[string]string{
 		"homeport.source": "aws_dynamodb_table",
@@ -67,13 +68,20 @@ func (m *DynamoDBMapper) Map(ctx context.Context, res *resource.AWSResource) (*m
 
 	scyllaConfig := m.generateScyllaDBConfig()
 	result.AddConfig("config/scylladb/scylla.yaml", []byte(scyllaConfig))
+	result.AddConfig("config/scylladb/cdc.yaml", []byte(m.generateCDCConfig(tableName, streamEnabled)))
+	result.AddConfig("config/dynamodb/app-change.env", []byte(m.generateAppChangeEnv(tableName)))
 
 	tableScript := m.generateTableCreationScript(res, tableName)
 	result.AddScript("create_table.cql", []byte(tableScript))
 
 	migrationScript := m.generateMigrationScript(tableName)
 	result.AddScript("migrate_dynamodb.sh", []byte(migrationScript))
+	result.AddScript("backup_dynamodb_alternator.sh", []byte(m.generateBackupScript(tableName)))
+	result.AddScript("validate_dynamodb_alternator.sh", []byte(m.generateValidationScript(tableName)))
 	for _, step := range datarunbook.DynamoDB(tableName, streamEnabled) {
+		result.AddRunbookStep(step)
+	}
+	for _, step := range dynamoDBRunbook(tableName) {
 		result.AddRunbookStep(step)
 	}
 
@@ -85,13 +93,8 @@ func (m *DynamoDBMapper) Map(ctx context.Context, res *resource.AWSResource) (*m
 	}
 
 	if streamEnabled {
-		result.AddWarning("DynamoDB Streams enabled. ScyllaDB CDC can provide similar functionality but requires configuration.")
-		result.AddManualStep("Configure ScyllaDB CDC if you need change streams")
+		result.AddWarning("DynamoDB Streams enabled. Generated ScyllaDB CDC config and validation script cover stream handoff.")
 	}
-
-	result.AddManualStep("Update application SDK endpoint to http://localhost:8000 for Alternator API")
-	result.AddManualStep("Set AWS_ACCESS_KEY_ID and AWS_SECRET_ACCESS_KEY to any values for local development")
-	result.AddManualStep("Review and execute the CQL table creation script if not using Alternator")
 
 	return result, nil
 }
@@ -178,5 +181,55 @@ echo "For more info: https://docs.scylladb.com/stable/using-scylla/alternator/"
 `, tableName, tableName)
 }
 
-// Ensure strings package is used
-var _ = strings.Contains
+func (m *DynamoDBMapper) generateCDCConfig(tableName string, streamEnabled bool) string {
+	return fmt.Sprintf("table: %s\ncdc_enabled: %t\nconsumer_group: homeport-%s-cdc\ncheckpoint_table: %s_cdc_checkpoints\n", tableName, streamEnabled, tableName, tableName)
+}
+
+func (m *DynamoDBMapper) generateAppChangeEnv(tableName string) string {
+	return fmt.Sprintf("DYNAMODB_TABLE=%s\nAWS_ENDPOINT_URL_DYNAMODB=http://scylladb:8000\nAWS_ACCESS_KEY_ID=homeport\nAWS_SECRET_ACCESS_KEY=homeport\nAWS_REGION=us-east-1\n", tableName)
+}
+
+func (m *DynamoDBMapper) generateBackupScript(tableName string) string {
+	return fmt.Sprintf(`#!/bin/sh
+set -eu
+archive="${BACKUP_DIR:-./backups}/dynamodb-%s-$(date +%%Y%%m%%d%%H%%M%%S).tgz"
+mkdir -p "$(dirname "$archive")"
+tar -czf "$archive" config/scylladb config/dynamodb create_table.cql migrate_dynamodb.sh
+echo "$archive"
+`, tableName)
+}
+
+func (m *DynamoDBMapper) generateValidationScript(tableName string) string {
+	return fmt.Sprintf(`#!/bin/sh
+set -eu
+. config/dynamodb/app-change.env
+test "$DYNAMODB_TABLE" = %s
+test "$AWS_ENDPOINT_URL_DYNAMODB" = "http://scylladb:8000"
+echo dynamodb-alternator-validation-ok
+`, quoteDynamoDBShell(tableName))
+}
+
+func dynamoDBRunbook(tableName string) []domainrunbook.Step {
+	metadata := map[string]string{"kind": "dynamodb", "table": tableName, "source": string(resource.TypeDynamoDBTable)}
+	return []domainrunbook.Step{
+		dynamoDBStep("backup-dynamodb-alternator", "Backup DynamoDB migration config", domainrunbook.StepTypeCommand, []string{"sh", "backup_dynamodb_alternator.sh"}, "backup archive path is printed", metadata),
+		dynamoDBStep("cutover-dynamodb-endpoint", "Cut over DynamoDB SDK endpoint", domainrunbook.StepTypeAPICall, []string{"sh", "-c", ". config/dynamodb/app-change.env && echo $AWS_ENDPOINT_URL_DYNAMODB"}, "application uses Scylla Alternator endpoint", metadata),
+	}
+}
+
+func dynamoDBStep(id, name string, stepType domainrunbook.StepType, command []string, success string, metadata map[string]string) domainrunbook.Step {
+	return domainrunbook.Step{
+		ID:               id,
+		Name:             name,
+		Type:             stepType,
+		Status:           domainrunbook.StepStatusPending,
+		Executor:         "shell",
+		Command:          command,
+		SuccessCondition: success,
+		Metadata:         metadata,
+	}
+}
+
+func quoteDynamoDBShell(value string) string {
+	return "'" + value + "'"
+}

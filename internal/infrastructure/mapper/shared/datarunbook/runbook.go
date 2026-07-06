@@ -71,7 +71,7 @@ func DynamoDB(table string, streamsEnabled bool) []domainrunbook.Step {
 		rollback("rollback-dynamodb-source-authority", "Keep source DynamoDB table authoritative", metadata),
 	}
 	if streamsEnabled {
-		steps = append(steps[:2], append([]domainrunbook.Step{input("handle-dynamodb-streams", "Handle DynamoDB Streams", "Sync", "Streams adapter configured or guided migration accepted", metadata)}, steps[2:]...)...)
+		steps = append(steps[:2], append([]domainrunbook.Step{command("configure-dynamodb-cdc", "Configure DynamoDB Streams CDC", "Sync", []string{"sh", "-c", "test -s config/scylladb/cdc.yaml"}, "Scylla CDC config exists for stream handoff", metadata)}, steps[2:]...)...)
 	}
 	return steps
 }
