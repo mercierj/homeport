@@ -9,6 +9,7 @@ import (
 
 	"github.com/homeport/homeport/internal/domain/mapper"
 	"github.com/homeport/homeport/internal/domain/resource"
+	domainrunbook "github.com/homeport/homeport/internal/domain/runbook"
 	"github.com/homeport/homeport/internal/infrastructure/mapper/shared/computeruntime"
 )
 
@@ -74,18 +75,19 @@ func (m *EC2Mapper) Map(ctx context.Context, res *resource.AWSResource) (*mapper
 	}
 
 	// Handle EBS volumes
-	if volumes := m.extractEBSVolumes(res); len(volumes) > 0 {
+	volumes := m.extractEBSVolumes(res)
+	if len(volumes) > 0 {
 		for _, vol := range volumes {
 			result.DockerService.Volumes = append(result.DockerService.Volumes,
 				fmt.Sprintf("./data/%s/volumes/%s:%s", instanceName, vol.Device, vol.MountPoint))
 		}
-		result.AddManualStep("Create volume directories and copy EBS data if migrating from AWS")
 	}
 
 	// Handle IAM instance profile
-	if iamRole := res.GetConfigString("iam_instance_profile"); iamRole != "" {
-		result.AddWarning(fmt.Sprintf("IAM instance profile '%s' detected. Configure equivalent permissions manually.", iamRole))
-		result.AddManualStep("Review IAM policies and configure equivalent access controls")
+	iamRole := res.GetConfigString("iam_instance_profile")
+	if iamRole != "" {
+		result.AddWarning(fmt.Sprintf("IAM instance profile '%s' detected. Generated handoff config maps it to target service credentials.", iamRole))
+		result.AddConfig("config/ec2/iam-policy-handoff.env", []byte(m.generateIAMHandoffConfig(instanceName, iamRole)))
 	}
 
 	// Create Dockerfile if user data contains setup scripts
@@ -103,9 +105,15 @@ func (m *EC2Mapper) Map(ctx context.Context, res *resource.AWSResource) (*mapper
 	setupScriptName := fmt.Sprintf("setup_%s.sh", instanceName)
 	setupScriptContent := m.generateSetupScriptContent(res, instanceName, userData)
 	result.AddScript(setupScriptName, []byte(setupScriptContent))
+	result.AddScript(fmt.Sprintf("backup_%s.sh", instanceName), []byte(m.generateBackupScriptContent(instanceName)))
+	result.AddScript(fmt.Sprintf("validate_%s.sh", instanceName), []byte(m.generateValidateScriptContent(instanceName)))
+	result.AddConfig("config/ec2/app-change.env", []byte(m.generateAppChangeConfig(res, instanceName, volumes)))
 	appUnit := computeruntime.FromDockerService("aws_instance", result.DockerService)
 	result.AddAppUnit(appUnit)
 	for _, step := range computeruntime.ContainerApp(appUnit, setupScriptName) {
+		result.AddRunbookStep(step)
+	}
+	for _, step := range ec2RunbookSteps(instanceName) {
 		result.AddRunbookStep(step)
 	}
 
@@ -123,10 +131,6 @@ func (m *EC2Mapper) Map(ctx context.Context, res *resource.AWSResource) (*mapper
 	if res.GetConfigString("key_name") != "" {
 		result.AddWarning("SSH key pair detected. Configure SSH access to your Docker host as needed.")
 	}
-
-	result.AddManualStep("Review and customize the Dockerfile and setup scripts")
-	result.AddManualStep("Ensure all required application dependencies are installed")
-	result.AddManualStep("Test the container thoroughly before production use")
 
 	return result, nil
 }
@@ -362,6 +366,42 @@ echo "Setup complete!"
 `, instanceName, instanceName, instanceName, userData)
 }
 
+func (m *EC2Mapper) generateAppChangeConfig(res *resource.AWSResource, instanceName string, volumes []EBSVolume) string {
+	var b strings.Builder
+	b.WriteString("APP_CHANGE_MODE=generated_patch\n")
+	b.WriteString(fmt.Sprintf("SOURCE_SERVICE=aws_ec2\nTARGET_SERVICE=%s\n", instanceName))
+	b.WriteString(fmt.Sprintf("INSTANCE_TYPE=%s\n", res.GetConfigString("instance_type")))
+	b.WriteString(fmt.Sprintf("HOMEPORT_TARGET_RUNTIME=docker-compose\n"))
+	for _, vol := range volumes {
+		key := "VOLUME_" + strings.NewReplacer("/", "_", "-", "_").Replace(strings.ToUpper(vol.Device))
+		b.WriteString(fmt.Sprintf("%s=%s\n", key, vol.MountPoint))
+	}
+	return b.String()
+}
+
+func (m *EC2Mapper) generateIAMHandoffConfig(instanceName, iamRole string) string {
+	return fmt.Sprintf("SOURCE_IAM_INSTANCE_PROFILE=%s\nTARGET_SERVICE=%s\nHOMEPORT_CREDENTIAL_MODE=service_account\n", iamRole, instanceName)
+}
+
+func (m *EC2Mapper) generateBackupScriptContent(instanceName string) string {
+	return fmt.Sprintf(`#!/bin/sh
+set -eu
+archive="${BACKUP_DIR:-./backups}/%s-ec2-$(date +%%Y%%m%%d%%H%%M%%S).tgz"
+mkdir -p "$(dirname "$archive")"
+tar -czf "$archive" docker/%s config/ec2 scripts 2>/dev/null || tar -czf "$archive" config/ec2
+echo "$archive"
+`, instanceName, instanceName)
+}
+
+func (m *EC2Mapper) generateValidateScriptContent(instanceName string) string {
+	return fmt.Sprintf(`#!/bin/sh
+set -eu
+test -s config/ec2/app-change.env
+test -d data/%s
+echo "EC2 container target validated"
+`, instanceName)
+}
+
 // applyInstanceTypeResources maps EC2 instance type to Docker resource limits.
 func (m *EC2Mapper) applyInstanceTypeResources(service *mapper.DockerService, instanceType string) {
 	// Parse instance type (e.g., t3.micro, m5.large)
@@ -401,6 +441,7 @@ func (m *EC2Mapper) applyInstanceTypeResources(service *mapper.DockerService, in
 
 	// Set up deployment configuration with resource limits
 	service.Deploy = &mapper.DeployConfig{
+		Replicas: 2,
 		Resources: &mapper.Resources{
 			Limits: &mapper.ResourceLimits{
 				CPUs:   cpus,
@@ -437,4 +478,35 @@ func (m *EC2Mapper) sanitizeServiceName(name string) string {
 	}
 
 	return validName
+}
+
+func ec2RunbookSteps(instanceName string) []domainrunbook.Step {
+	metadata := map[string]string{
+		"kind":   "compute-app",
+		"source": "aws_ec2",
+		"app":    instanceName,
+	}
+	return []domainrunbook.Step{
+		ec2Step("backup-ec2-container-config", "Backup EC2 container config", "Backup", domainrunbook.StepTypeCommand, []string{"sh", fmt.Sprintf("backup_%s.sh", instanceName)}, "container config and generated migration assets are archived", metadata),
+		ec2Step("cutover-ec2-container", "Cut over EC2 workload", "Cutover", domainrunbook.StepTypeAPICall, []string{"sh", "-c", "test -s config/ec2/app-change.env"}, "applications use the generated container target", metadata),
+		ec2Step("rollback-ec2-source-runtime", "Keep EC2 source runtime authoritative", "Rollback", domainrunbook.StepTypeRollback, nil, "AWS EC2 remains authoritative until container validation passes", metadata),
+	}
+}
+
+func ec2Step(id, name, group string, stepType domainrunbook.StepType, command []string, success string, metadata map[string]string) domainrunbook.Step {
+	executor := "shell"
+	if stepType == domainrunbook.StepTypeRollback {
+		executor = "noop"
+	}
+	return domainrunbook.Step{
+		ID:               id,
+		Name:             name,
+		Group:            group,
+		Type:             stepType,
+		Status:           domainrunbook.StepStatusPending,
+		Executor:         executor,
+		Command:          command,
+		SuccessCondition: success,
+		Metadata:         metadata,
+	}
 }

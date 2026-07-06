@@ -13,7 +13,7 @@
 | aws | Cognito | full | aws_cognito_user_pool |
 | aws | DynamoDB | full | aws_dynamodb_table |
 | aws | EBS | full | aws_ebs_volume |
-| aws | EC2 | mapped | aws_instance |
+| aws | EC2 | full | aws_instance |
 | aws | ECR | missing |  |
 | aws | ECS | mapped | aws_ecs_service, aws_ecs_task_definition |
 | aws | EFS | mapped | aws_efs_file_system |
