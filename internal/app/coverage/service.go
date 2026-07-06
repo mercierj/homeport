@@ -106,6 +106,9 @@ func (c *Catalog) Promote(provider, service string, status domaincoverage.Status
 			if strings.TrimSpace(row.Target) == "" || strings.TrimSpace(row.APICompatibilityStrategy) == "" {
 				return fmt.Errorf("cannot promote %s/%s to full until target and API compatibility strategy are set", provider, service)
 			}
+			if !mappedResourceTypes(*row, registeredMapperSet()) {
+				return fmt.Errorf("cannot promote %s/%s to full until registered resource mappers are present", provider, service)
+			}
 			if !row.ManualStepsResolved {
 				return fmt.Errorf("cannot promote %s/%s to full until manual steps are resolved", provider, service)
 			}
@@ -157,12 +160,14 @@ func (s *Service) ManagedSummary() ManagedSummary {
 
 func (s *Service) ManagedGaps() []string {
 	gaps := []string{}
+	mapperSet := registeredMapperSet()
 	for _, row := range s.catalog.Services {
 		if row.Status != domaincoverage.StatusFull ||
 			domaincoverage.ComputeStatus(row) != domaincoverage.StatusFull ||
 			!row.ManualStepsResolved ||
 			strings.TrimSpace(row.Target) == "" ||
-			strings.TrimSpace(row.APICompatibilityStrategy) == "" {
+			strings.TrimSpace(row.APICompatibilityStrategy) == "" ||
+			!mappedResourceTypes(row, mapperSet) {
 			gaps = append(gaps, row.Provider+"/"+row.Service)
 			continue
 		}
@@ -171,6 +176,26 @@ func (s *Service) ManagedGaps() []string {
 		}
 	}
 	return gaps
+}
+
+func registeredMapperSet() map[string]bool {
+	mapperSet := map[string]bool{}
+	for _, resourceType := range mapperregistry.NewRegistry().SupportedTypes() {
+		mapperSet[string(resourceType)] = true
+	}
+	return mapperSet
+}
+
+func mappedResourceTypes(row domaincoverage.ServiceCoverage, mapperSet map[string]bool) bool {
+	if len(row.ResourceTypes) == 0 {
+		return false
+	}
+	for _, resourceType := range row.ResourceTypes {
+		if !mapperSet[resourceType] {
+			return false
+		}
+	}
+	return true
 }
 
 func conformancePromotionIssue(provider, service string) error {

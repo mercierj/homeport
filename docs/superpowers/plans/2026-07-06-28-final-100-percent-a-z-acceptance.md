@@ -2,7 +2,7 @@
 
 > **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
 
-**Goal:** Make the final “100% managed A-to-Z migration” claim pass only when every coverage row is full and the centralized wizard exposes automated support, adapters, or exact app-change instructions.
+**Goal:** Define the final managed A-to-Z readiness gate. Do not publish a product claim until every coverage row is backed by real per-service evidence and the centralized wizard exposes automated support, adapters, or exact app-change instructions.
 
 **Architecture:** Add one final acceptance target that combines coverage full-gate, backend tests, frontend build, wizard E2E, provider conformance, and documentation checks. Update README language only after the gate passes.
 
@@ -96,17 +96,7 @@ rg -n "100% managed|fully managed|all services|tous les services|single clear A-
 
 Expected: every claim is either guarded by the acceptance target or refers to a passing `acceptance-100-managed` result.
 
-- [ ] Update README only after `make acceptance-100-managed` passes with this text:
-
-```markdown
-### 100% managed A-to-Z migration
-
-HomePort supports the centralized `/migrate` A-to-Z workflow for every service listed in `docs/coverage/services.md`.
-
-This claim is gated by `make acceptance-100-managed`.
-
-The gate requires every service coverage row to be `full`, every blocker to be cleared, every application compatibility issue to be handled by an adapter or exact generated change report, and the centralized wizard E2E checks to pass.
-```
+- [ ] Update README only after `make acceptance-100-managed` passes with real per-service evidence. Until then, do not add managed A-to-Z product wording.
 
 ## Task 4: Final verification and commit
 

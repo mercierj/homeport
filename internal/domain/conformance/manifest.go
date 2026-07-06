@@ -41,6 +41,11 @@ func (m Manifest) PromotionIssues() []string {
 	for _, check := range m.MissingChecks() {
 		issues = append(issues, "missing "+string(check))
 	}
+	for check, command := range m.Checks {
+		if strings.Contains(command, "/...") {
+			issues = append(issues, "generic "+string(check)+" check is not service evidence")
+		}
+	}
 	target := strings.TrimSpace(m.Evidence["target"])
 	if target == "" || strings.EqualFold(target, "HomePort managed replacement") {
 		issues = append(issues, "specific target evidence is required")

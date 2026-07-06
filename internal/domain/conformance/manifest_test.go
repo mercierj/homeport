@@ -20,6 +20,16 @@ func TestPromotionIssuesRejectPlaceholderEvidence(t *testing.T) {
 	}
 }
 
+func TestPromotionIssuesRejectGenericPackageChecks(t *testing.T) {
+	manifest := completeManifest()
+	manifest.Checks[CheckProvision] = "go test ./internal/infrastructure/mapper/..."
+	manifest.Checks[CheckAPICompat] = "go test ./test/compat/..."
+
+	if issues := manifest.PromotionIssues(); len(issues) == 0 {
+		t.Fatal("generic package checks should not satisfy promotion")
+	}
+}
+
 func TestPromotionIssuesAcceptSpecificEvidence(t *testing.T) {
 	manifest := completeManifest()
 

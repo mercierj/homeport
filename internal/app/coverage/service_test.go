@@ -71,7 +71,7 @@ services:
 
 func TestManagedSummaryCountsNonFullRows(t *testing.T) {
 	catalog := Catalog{Services: []domaincoverage.ServiceCoverage{
-		{Provider: "aws", Service: "S3", Status: domaincoverage.StatusFull, ManualStepsResolved: true, Discover: true, Cost: true, Provision: true, Migrate: true, APICompat: true, EnvDNS: true, HA: true, Backup: true, Validate: true, Cutover: true, Rollback: true},
+		{Provider: "aws", Service: "S3", ResourceTypes: []string{"aws_s3_bucket"}, Target: "MinIO", APICompatibilityStrategy: "adapter", Status: domaincoverage.StatusFull, ManualStepsResolved: true, Discover: true, Cost: true, Provision: true, Migrate: true, APICompat: true, EnvDNS: true, HA: true, Backup: true, Validate: true, Cutover: true, Rollback: true},
 		{Provider: "aws", Service: "Athena", Status: domaincoverage.StatusMissing, Blocker: "not modeled yet"},
 		{Provider: "gcp", Service: "Cloud Storage", Status: domaincoverage.StatusGuided, Blocker: "adapter required"},
 		{Provider: "azure", Service: "Azure VM", Status: domaincoverage.StatusMapped},
@@ -98,6 +98,36 @@ func TestManagedGapsRequireTargetAndCompatibilityStrategy(t *testing.T) {
 	gaps := NewService(catalog).ManagedGaps()
 	if len(gaps) != 1 || gaps[0] != "aws/S3" {
 		t.Fatalf("gaps = %v, want aws/S3", gaps)
+	}
+}
+
+func TestManagedGapsRequireRegisteredResourceTypes(t *testing.T) {
+	withConformanceManifest(t, "aws", "S3")
+	catalog := Catalog{Services: []domaincoverage.ServiceCoverage{{
+		Provider: "aws", Service: "S3", Status: domaincoverage.StatusFull, ManualStepsResolved: true,
+		Target: "MinIO", APICompatibilityStrategy: "adapter",
+		Discover: true, Cost: true, Provision: true, Migrate: true, APICompat: true,
+		EnvDNS: true, HA: true, Backup: true, Validate: true, Cutover: true, Rollback: true,
+	}}}
+
+	gaps := NewService(catalog).ManagedGaps()
+	if len(gaps) != 1 || gaps[0] != "aws/S3" {
+		t.Fatalf("gaps = %v, want aws/S3", gaps)
+	}
+}
+
+func TestManagedGapsRejectUnknownResourceTypes(t *testing.T) {
+	withConformanceManifest(t, "aws", "Fake")
+	catalog := Catalog{Services: []domaincoverage.ServiceCoverage{{
+		Provider: "aws", Service: "Fake", ResourceTypes: []string{"aws_fake_resource"}, Status: domaincoverage.StatusFull, ManualStepsResolved: true,
+		Target: "Fake", APICompatibilityStrategy: "adapter",
+		Discover: true, Cost: true, Provision: true, Migrate: true, APICompat: true,
+		EnvDNS: true, HA: true, Backup: true, Validate: true, Cutover: true, Rollback: true,
+	}}}
+
+	gaps := NewService(catalog).ManagedGaps()
+	if len(gaps) != 1 || gaps[0] != "aws/Fake" {
+		t.Fatalf("gaps = %v, want aws/Fake", gaps)
 	}
 }
 
@@ -169,7 +199,7 @@ func TestPromoteRejectsFullUntilChecklistComplete(t *testing.T) {
 func TestPromoteRejectsFullUntilManualStepsResolved(t *testing.T) {
 	catalog := Catalog{Services: []domaincoverage.ServiceCoverage{
 		{
-			Provider: "aws", Service: "S3", Status: domaincoverage.StatusMapped,
+			Provider: "aws", Service: "S3", ResourceTypes: []string{"aws_s3_bucket"}, Status: domaincoverage.StatusMapped,
 			Target: "MinIO", APICompatibilityStrategy: "adapter",
 			Discover: true, Cost: true, Provision: true, Migrate: true, APICompat: true,
 			EnvDNS: true, HA: true, Backup: true, Validate: true, Cutover: true, Rollback: true,
@@ -185,7 +215,7 @@ func TestPromoteRejectsFullUntilManualStepsResolved(t *testing.T) {
 func TestPromoteRejectsFullWithoutConformanceManifest(t *testing.T) {
 	withConformanceDir(t, t.TempDir())
 	catalog := Catalog{Services: []domaincoverage.ServiceCoverage{{
-		Provider: "aws", Service: "S3", Status: domaincoverage.StatusMapped, ManualStepsResolved: true,
+		Provider: "aws", Service: "S3", ResourceTypes: []string{"aws_s3_bucket"}, Status: domaincoverage.StatusMapped, ManualStepsResolved: true,
 		Target: "MinIO", APICompatibilityStrategy: "adapter",
 		Discover: true, Cost: true, Provision: true, Migrate: true, APICompat: true,
 		EnvDNS: true, HA: true, Backup: true, Validate: true, Cutover: true, Rollback: true,
@@ -200,7 +230,7 @@ func TestPromoteRejectsFullWithoutConformanceManifest(t *testing.T) {
 func TestPromoteRejectsFullWhenManualStepsOnlyProvidedAsFlag(t *testing.T) {
 	catalog := Catalog{Services: []domaincoverage.ServiceCoverage{
 		{
-			Provider: "aws", Service: "S3", Status: domaincoverage.StatusMapped,
+			Provider: "aws", Service: "S3", ResourceTypes: []string{"aws_s3_bucket"}, Status: domaincoverage.StatusMapped,
 			Target: "MinIO", APICompatibilityStrategy: "adapter",
 			Discover: true, Cost: true, Provision: true, Migrate: true, APICompat: true,
 			EnvDNS: true, HA: true, Backup: true, Validate: true, Cutover: true, Rollback: true,
@@ -230,7 +260,7 @@ func TestPromoteAllowsFullWhenManualStepsResolved(t *testing.T) {
 	withConformanceManifest(t, "aws", "S3")
 	catalog := Catalog{Services: []domaincoverage.ServiceCoverage{
 		{
-			Provider: "aws", Service: "S3", Status: domaincoverage.StatusMapped, ManualStepsResolved: true,
+			Provider: "aws", Service: "S3", ResourceTypes: []string{"aws_s3_bucket"}, Status: domaincoverage.StatusMapped, ManualStepsResolved: true,
 			Target: "MinIO", APICompatibilityStrategy: "adapter",
 			Discover: true, Cost: true, Provision: true, Migrate: true, APICompat: true,
 			EnvDNS: true, HA: true, Backup: true, Validate: true, Cutover: true, Rollback: true,
@@ -262,7 +292,7 @@ service: %s
 checks:
   discover: go test ./test/integration/%s
   cost: go test ./internal/domain/coverage
-  provision: go test ./internal/infrastructure/mapper/...
+  provision: go test ./internal/infrastructure/mapper/storage -run S3
   migrate: go test ./internal/app/datamigration
   api_compat: go test ./test/compat
   env_dns: go test ./internal/app/cutover
