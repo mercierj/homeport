@@ -218,6 +218,12 @@ func mapTerraformTypeToResourceType(tfType string) resource.Type {
 		return resource.TypeSNSTopic
 	case "aws_cloudwatch_event_rule", "aws_cloudwatch_event_bus":
 		return resource.TypeEventBridge
+	case "aws_cloudwatch_metric_alarm":
+		return resource.TypeCloudWatchMetricAlarm
+	case "aws_cloudwatch_log_group":
+		return resource.TypeCloudWatchLogGroup
+	case "aws_cloudwatch_dashboard":
+		return resource.TypeCloudWatchDashboard
 
 	default:
 		// Return the Terraform type as-is for unknown types

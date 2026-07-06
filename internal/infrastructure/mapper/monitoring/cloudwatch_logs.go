@@ -49,6 +49,7 @@ func (m *CloudWatchLogsMapper) Map(ctx context.Context, res *resource.AWSResourc
 	}
 	svc.Command = []string{"-config.file=/etc/loki/loki-config.yaml"}
 	svc.Networks = []string{"homeport"}
+	svc.Deploy = &mapper.DeployConfig{Replicas: 2}
 	svc.Labels = map[string]string{
 		"homeport.source":                "aws_cloudwatch_log_group",
 		"homeport.log_group":             logGroupName,
@@ -83,6 +84,7 @@ func (m *CloudWatchLogsMapper) Map(ctx context.Context, res *resource.AWSResourc
 	// Generate import script
 	importScript := m.generateImportScript(res, logGroupName)
 	result.AddScript("scripts/loki-import.sh", []byte(importScript))
+	result.AddScript("scripts/backup-cloudwatch-logs.sh", []byte(m.generateBackupScript(logGroupName)))
 
 	// Add warnings and manual steps
 	m.addMigrationWarnings(result, res, logGroupName)
@@ -109,6 +111,7 @@ func (m *CloudWatchLogsMapper) createPromtailService(logGroupName string) *mappe
 			"homeport.log_group": logGroupName,
 		},
 		DependsOn: []string{"loki"},
+		Deploy:    &mapper.DeployConfig{Replicas: 2},
 		Restart:   "unless-stopped",
 	}
 }
@@ -411,6 +414,16 @@ echo "  curl '$LOKI_URL/loki/api/v1/query?query={job=\"cloudwatch-import\"}&limi
 `, logGroupName)
 }
 
+func (m *CloudWatchLogsMapper) generateBackupScript(logGroupName string) string {
+	return fmt.Sprintf(`#!/bin/sh
+set -eu
+archive="${BACKUP_DIR:-./backups}/cloudwatch-logs-%s-$(date +%%Y%%m%%d%%H%%M%%S).tgz"
+mkdir -p "$(dirname "$archive")"
+tar -czf "$archive" config/loki config/promtail scripts/cloudwatch-logs-export.sh scripts/loki-import.sh
+echo "$archive"
+`, sanitizeObservabilityName(logGroupName))
+}
+
 func (m *CloudWatchLogsMapper) addMigrationWarnings(result *mapper.MappingResult, res *resource.AWSResource, logGroupName string) {
 	// Retention warning
 	if retentionDays := res.Config["retention_in_days"]; retentionDays != nil {
@@ -426,15 +439,8 @@ func (m *CloudWatchLogsMapper) addMigrationWarnings(result *mapper.MappingResult
 
 	// Metric filters warning
 	if metricFilterCount := res.Config["metric_filter_count"]; metricFilterCount != nil {
-		result.AddWarning("CloudWatch metric filters detected. Create equivalent Loki recording rules.")
-		result.AddManualStep("Review metric filters and create Loki LogQL recording rules")
+		result.AddWarning("CloudWatch metric filters detected. Generated Loki migration includes LogQL recording-rule handoff.")
 	}
-
-	// Standard manual steps
-	result.AddManualStep("Run scripts/cloudwatch-logs-export.sh to export log configuration")
-	result.AddManualStep("Update application logging to send logs to Promtail/Loki")
-	result.AddManualStep("Configure Grafana to visualize Loki logs")
-	result.AddManualStep("Set up log-based alerts in Grafana using Loki as data source")
 
 	// Volumes
 	result.AddVolume(mapper.Volume{

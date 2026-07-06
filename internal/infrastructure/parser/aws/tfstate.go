@@ -340,6 +340,11 @@ func mapAWSTerraformType(tfType string) resource.Type {
 		"aws_cloudwatch_event_rule": resource.TypeEventBridge,
 		"aws_cloudwatch_event_bus":  resource.TypeEventBridge,
 		"aws_kinesis_stream":        resource.TypeKinesis,
+
+		// Monitoring
+		"aws_cloudwatch_metric_alarm": resource.TypeCloudWatchMetricAlarm,
+		"aws_cloudwatch_log_group":    resource.TypeCloudWatchLogGroup,
+		"aws_cloudwatch_dashboard":    resource.TypeCloudWatchDashboard,
 	}
 
 	if resType, ok := mapping[tfType]; ok {

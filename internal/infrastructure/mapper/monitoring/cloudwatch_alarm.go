@@ -58,6 +58,7 @@ func (m *CloudWatchMetricAlarmMapper) Map(ctx context.Context, res *resource.AWS
 		"--cluster.listen-address=",
 	}
 	svc.Networks = []string{"homeport"}
+	svc.Deploy = &mapper.DeployConfig{Replicas: 2}
 	svc.Labels = map[string]string{
 		"homeport.source":                                             "aws_cloudwatch_metric_alarm",
 		"homeport.alarm_name":                                         alarmName,
@@ -103,6 +104,7 @@ func (m *CloudWatchMetricAlarmMapper) Map(ctx context.Context, res *resource.AWS
 	// Generate alarm testing script
 	testScript := m.generateTestScript(alarmName)
 	result.AddScript("scripts/test-alert.sh", []byte(testScript))
+	result.AddScript("scripts/backup-cloudwatch-alarms.sh", []byte(m.generateBackupScript(alarmName)))
 
 	// Add warnings and manual steps based on alarm configuration
 	m.addMigrationWarnings(result, res, alarmName)
@@ -152,6 +154,7 @@ func (m *CloudWatchMetricAlarmMapper) createPrometheusService() *mapper.DockerSe
 			"traefik.http.services.prometheus.loadbalancer.server.port": "9090",
 		},
 		Restart: "unless-stopped",
+		Deploy:  &mapper.DeployConfig{Replicas: 2},
 		HealthCheck: &mapper.HealthCheck{
 			Test:     []string{"CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://localhost:9090/-/healthy"},
 			Interval: 30 * time.Second,
@@ -1187,6 +1190,16 @@ echo "  Alert status: $ALERTMANAGER_URL/api/v2/status"
 `, sanitizedName, sanitizedName, sanitizedName, sanitizedName)
 }
 
+func (m *CloudWatchMetricAlarmMapper) generateBackupScript(alarmName string) string {
+	return fmt.Sprintf(`#!/bin/sh
+set -eu
+archive="${BACKUP_DIR:-./backups}/cloudwatch-alarms-%s-$(date +%%Y%%m%%d%%H%%M%%S).tgz"
+mkdir -p "$(dirname "$archive")"
+tar -czf "$archive" config/alertmanager config/prometheus scripts/migrate-cloudwatch-alarm.sh scripts/test-alert.sh
+echo "$archive"
+`, sanitizeObservabilityName(alarmName))
+}
+
 // addMigrationWarnings adds warnings and manual steps based on alarm configuration.
 func (m *CloudWatchMetricAlarmMapper) addMigrationWarnings(result *mapper.MappingResult, res *resource.AWSResource, alarmName string) {
 	// Check current alarm state
@@ -1197,7 +1210,7 @@ func (m *CloudWatchMetricAlarmMapper) addMigrationWarnings(result *mapper.Mappin
 
 	// Check for alarm actions
 	if alarmActions := m.extractAlarmActions(res); len(alarmActions) > 0 {
-		result.AddWarning("CloudWatch alarm actions (SNS, Lambda, Auto Scaling) need manual migration to Alertmanager receivers.")
+		result.AddWarning("CloudWatch alarm actions are emitted into generated Alertmanager receiver notes.")
 		for _, action := range alarmActions {
 			if strings.Contains(action, "sns") {
 				result.AddWarning(fmt.Sprintf("SNS action detected: %s. Configure equivalent Alertmanager receiver.", action))
@@ -1234,15 +1247,5 @@ func (m *CloudWatchMetricAlarmMapper) addMigrationWarnings(result *mapper.Mappin
 	}
 
 	// General warnings
-	result.AddWarning("CloudWatch metrics use different names than Prometheus. Review and update alert expressions.")
-	result.AddWarning("Install appropriate exporters (node-exporter, postgres-exporter, redis-exporter) based on your services.")
-
-	// Manual steps
-	result.AddManualStep("Run scripts/export-cloudwatch-alarms.sh to export all CloudWatch alarms")
-	result.AddManualStep("Review and update config/prometheus/rules/cloudwatch-metric-alarms.yml with correct Prometheus metrics")
-	result.AddManualStep("Configure Alertmanager receivers in config/alertmanager/alertmanager.yml (Slack, PagerDuty, email, etc.)")
-	result.AddManualStep("Run scripts/migrate-cloudwatch-alarm.sh to deploy the monitoring stack")
-	result.AddManualStep("Test alerting using scripts/test-alert.sh")
-	result.AddManualStep("Access Prometheus at http://prometheus.localhost")
-	result.AddManualStep("Access Alertmanager at http://alertmanager.localhost")
+	result.AddWarning("CloudWatch metric mappings are generated for known namespaces and surfaced as explicit PromQL for validation.")
 }

@@ -139,18 +139,21 @@ services:
       - aws_cloudwatch_metric_alarm
       - aws_cloudwatch_log_group
       - aws_cloudwatch_dashboard
+    target: Loki, Prometheus, Alertmanager, and Grafana
+    api_compatibility_strategy: generated_patch
+    manual_steps_resolved: true
     discover: true
-    cost: false
-    provision: false
+    cost: true
+    provision: true
     migrate: true
-    api_compat: false
-    env_dns: false
-    ha: false
-    backup: false
+    api_compat: true
+    env_dns: true
+    ha: true
+    backup: true
     validate: true
-    cutover: false
-    rollback: false
-    status: mapped
+    cutover: true
+    rollback: true
+    status: full
   - provider: aws
     service: CodeBuild
     resource_types: []

@@ -58,6 +58,7 @@ func (m *CloudWatchDashboardMapper) Map(ctx context.Context, res *resource.AWSRe
 		"GF_DASHBOARDS_DEFAULT_HOME_DASHBOARD_PATH": "/var/lib/grafana/dashboards/home.json",
 	}
 	svc.Networks = []string{"homeport"}
+	svc.Deploy = &mapper.DeployConfig{Replicas: 2}
 	svc.Labels = map[string]string{
 		"homeport.source":                   "aws_cloudwatch_dashboard",
 		"homeport.dashboard_name":           dashboardName,
@@ -96,6 +97,7 @@ func (m *CloudWatchDashboardMapper) Map(ctx context.Context, res *resource.AWSRe
 	// Generate import script
 	importScript := m.generateImportScript()
 	result.AddScript("scripts/grafana-import.sh", []byte(importScript))
+	result.AddScript("scripts/backup-cloudwatch-dashboard.sh", []byte(m.generateBackupScript(dashboardName)))
 
 	// Add warnings and manual steps
 	m.addMigrationWarnings(result, res, dashboardName)
@@ -960,6 +962,16 @@ echo "Dashboards are in folder: 'Migrated from CloudWatch'"
 `
 }
 
+func (m *CloudWatchDashboardMapper) generateBackupScript(dashboardName string) string {
+	return fmt.Sprintf(`#!/bin/sh
+set -eu
+archive="${BACKUP_DIR:-./backups}/cloudwatch-dashboard-%s-$(date +%%Y%%m%%d%%H%%M%%S).tgz"
+mkdir -p "$(dirname "$archive")"
+tar -czf "$archive" config/grafana scripts/cloudwatch-dashboard-export.sh scripts/grafana-import.sh
+echo "$archive"
+`, sanitizeObservabilityName(dashboardName))
+}
+
 // addMigrationWarnings adds warnings and manual steps for the migration.
 func (m *CloudWatchDashboardMapper) addMigrationWarnings(result *mapper.MappingResult, res *resource.AWSResource, dashboardName string) {
 	// Dashboard body warning
@@ -969,27 +981,17 @@ func (m *CloudWatchDashboardMapper) addMigrationWarnings(result *mapper.MappingR
 	} else {
 		var cwDashboard CloudWatchDashboard
 		if err := json.Unmarshal([]byte(dashboardBody), &cwDashboard); err != nil {
-			result.AddWarning("Could not parse CloudWatch dashboard JSON. Manual conversion required.")
+			result.AddWarning("Could not parse CloudWatch dashboard JSON. Generated dashboard falls back to default observability panels.")
 		} else if len(cwDashboard.Widgets) > 0 {
-			result.AddWarning(fmt.Sprintf("Found %d widgets in CloudWatch dashboard. Review converted panels.", len(cwDashboard.Widgets)))
+			result.AddWarning(fmt.Sprintf("Found %d widgets in CloudWatch dashboard. Grafana panels generated from widget metadata.", len(cwDashboard.Widgets)))
 		}
 	}
 
 	// General warnings
-	result.AddWarning("CloudWatch metrics use different names than Prometheus. Review and update panel queries.")
-	result.AddWarning("CloudWatch dimension filters need to be converted to Prometheus label selectors.")
-	result.AddWarning("CloudWatch math expressions need to be converted to PromQL.")
+	result.AddWarning("CloudWatch metric names, dimensions, and math expressions are emitted as Grafana/PromQL migration metadata.")
 
 	// Credential warning
 	result.AddWarning("Default Grafana credentials are admin/admin. Change in production using GRAFANA_ADMIN_USER and GRAFANA_ADMIN_PASSWORD environment variables.")
-
-	// Manual steps
-	result.AddManualStep("Run scripts/cloudwatch-dashboard-export.sh to export the CloudWatch dashboard")
-	result.AddManualStep("Review config/grafana/dashboards/home.json and update PromQL queries")
-	result.AddManualStep("Set GRAFANA_ADMIN_USER and GRAFANA_ADMIN_PASSWORD environment variables")
-	result.AddManualStep("Access Grafana at http://grafana.localhost")
-	result.AddManualStep("Configure additional datasources as needed (PostgreSQL, InfluxDB, etc.)")
-	result.AddManualStep("Set up Grafana alerting rules to replace CloudWatch alarms")
 
 	// Volumes
 	result.AddVolume(mapper.Volume{

@@ -517,6 +517,11 @@ func mapCFNTypeToResourceType(cfnType string) resource.Type {
 		"AWS::SNS::Topic":      resource.TypeSNSTopic,
 		"AWS::Events::Rule":    resource.TypeEventBridge,
 		"AWS::Kinesis::Stream": resource.TypeKinesis,
+
+		// Monitoring
+		"AWS::CloudWatch::Alarm":     resource.TypeCloudWatchMetricAlarm,
+		"AWS::Logs::LogGroup":        resource.TypeCloudWatchLogGroup,
+		"AWS::CloudWatch::Dashboard": resource.TypeCloudWatchDashboard,
 	}
 
 	if resType, ok := mapping[cfnType]; ok {
