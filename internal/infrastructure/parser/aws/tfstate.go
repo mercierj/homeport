@@ -354,6 +354,8 @@ func mapAWSTerraformType(tfType string) resource.Type {
 		"aws_shield_protection_group":            resource.TypeShieldProtection,
 		"aws_securityhub_account":                resource.TypeSecurityHubAccount,
 		"aws_securityhub_standards_subscription": resource.TypeSecurityHubAccount,
+		"aws_config_config_rule":                 resource.TypeAWSConfigRule,
+		"aws_config_configuration_recorder":      resource.TypeAWSConfigRule,
 
 		// Messaging
 		"aws_sqs_queue":              resource.TypeSQSQueue,

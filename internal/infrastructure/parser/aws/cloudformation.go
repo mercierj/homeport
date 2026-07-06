@@ -531,6 +531,8 @@ func mapCFNTypeToResourceType(cfnType string) resource.Type {
 		"AWS::Shield::ProtectionGroup":         resource.TypeShieldProtection,
 		"AWS::SecurityHub::Hub":                resource.TypeSecurityHubAccount,
 		"AWS::SecurityHub::Standard":           resource.TypeSecurityHubAccount,
+		"AWS::Config::ConfigRule":              resource.TypeAWSConfigRule,
+		"AWS::Config::ConfigurationRecorder":   resource.TypeAWSConfigRule,
 
 		// Messaging
 		"AWS::SQS::Queue":             resource.TypeSQSQueue,

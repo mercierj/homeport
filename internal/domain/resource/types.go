@@ -61,6 +61,7 @@ const (
 	TypeWAFWebACL          Type = "aws_wafv2_web_acl"
 	TypeShieldProtection   Type = "aws_shield_protection"
 	TypeSecurityHubAccount Type = "aws_securityhub_account"
+	TypeAWSConfigRule      Type = "aws_config_config_rule"
 
 	// AWS Messaging
 	TypeSQSQueue    Type = "aws_sqs_queue"

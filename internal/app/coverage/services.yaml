@@ -995,13 +995,23 @@ services:
     service: Config
     category: security/governance
     source_api: config
-    resource_types: []
+    resource_types: [aws_config_config_rule]
     terraform_resource_types: [aws_config_configuration_recorder, aws_config_config_rule]
     target: Open Policy Agent
-    api_compatibility_strategy: translate managed rules into policy checks over inventory snapshots
-    impossibility_notes: AWS Config recorder API compatibility is not available
-    status: missing
-    blocker: not modeled yet
+    api_compatibility_strategy: generated_patch
+    manual_steps_resolved: true
+    discover: true
+    cost: true
+    provision: true
+    migrate: true
+    api_compat: true
+    env_dns: true
+    ha: true
+    backup: true
+    validate: true
+    cutover: true
+    rollback: true
+    status: full
   - provider: aws
     service: Organizations
     category: security/governance

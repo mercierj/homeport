@@ -51,7 +51,7 @@
 | aws | CloudFormation full import | full | aws_cloudformation_stack |
 | aws | Shield | full | aws_shield_protection |
 | aws | Security Hub | full | aws_securityhub_account |
-| aws | Config | missing | aws_config_configuration_recorder, aws_config_config_rule |
+| aws | Config | full | aws_config_config_rule |
 | aws | Organizations | missing | aws_organizations_organization, aws_organizations_account |
 | aws | Control Tower | missing | aws_controltower_control |
 | aws | Textract | missing | aws_textract_adapter |

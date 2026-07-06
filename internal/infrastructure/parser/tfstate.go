@@ -224,6 +224,8 @@ func mapTerraformTypeToResourceType(tfType string) resource.Type {
 		return resource.TypeShieldProtection
 	case "aws_securityhub_account", "aws_securityhub_standards_subscription":
 		return resource.TypeSecurityHubAccount
+	case "aws_config_config_rule", "aws_config_configuration_recorder":
+		return resource.TypeAWSConfigRule
 
 	// Messaging
 	case "aws_sqs_queue":
