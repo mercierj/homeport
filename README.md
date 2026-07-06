@@ -76,6 +76,20 @@ make acceptance
 
 The wizard is considered ready only when Go tests, the production web build, and the Playwright A-to-Z smoke test pass.
 
+### Centralized A-to-Z migration UX
+
+The supported migration journey is `/migrate`.
+
+`/migrate` is responsible for:
+- analyzing a source or uploading a `.hprt` bundle,
+- resolving required secrets,
+- choosing local Docker, remote SSH, or EU cloud provider deployment,
+- exporting Docker or Terraform artifacts when manual deployment is preferred,
+- running sync and cutover checks,
+- showing the final migration completion state.
+
+`/deploy` is a legacy URL and redirects to `/migrate`; it must not present a second deployment wizard.
+
 ## Quick Start
 
 ```bash

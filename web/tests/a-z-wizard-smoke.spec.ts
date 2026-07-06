@@ -26,6 +26,7 @@ test('migration wizard exposes the A-to-Z path without dead-end buttons', async 
   await expect(page.getByText('Deploy', { exact: true }).first()).toBeVisible();
   await expect(page.getByText('Sync', { exact: true }).first()).toBeVisible();
   await expect(page.getByText('Cutover', { exact: true }).first()).toBeVisible();
+  await expect(page.getByText('Done', { exact: true }).first()).toBeVisible();
 });
 
 test('bundle entry keeps the upload step after session creation', async ({ page }) => {
