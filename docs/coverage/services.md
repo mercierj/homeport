@@ -54,7 +54,7 @@
 | aws | Config | full | aws_config_config_rule |
 | aws | Organizations | full | aws_organizations_organization |
 | aws | Control Tower | full | aws_controltower_control |
-| aws | Textract | missing | aws_textract_adapter |
+| aws | Textract | full | aws_textract_adapter |
 | aws | Transcribe | missing | aws_transcribe_vocabulary, aws_transcribe_language_model |
 | aws | Translate | missing |  |
 | aws | Rekognition | missing | aws_rekognition_collection, aws_rekognition_project |

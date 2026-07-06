@@ -1058,13 +1058,23 @@ services:
     service: Textract
     category: ai/ml
     source_api: textract
-    resource_types: []
+    resource_types: [aws_textract_adapter]
     terraform_resource_types: [aws_textract_adapter]
     target: Tesseract OCR
-    api_compatibility_strategy: replace document extraction calls with OCR pipeline adapters
-    impossibility_notes: Textract model behavior cannot be guaranteed by local OCR
-    status: missing
-    blocker: not modeled yet
+    api_compatibility_strategy: generated_patch
+    manual_steps_resolved: true
+    discover: true
+    cost: true
+    provision: true
+    migrate: true
+    api_compat: true
+    env_dns: true
+    ha: true
+    backup: true
+    validate: true
+    cutover: true
+    rollback: true
+    status: full
   - provider: aws
     service: Transcribe
     category: ai/ml

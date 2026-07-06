@@ -303,6 +303,7 @@ func mapAWSTerraformType(tfType string) resource.Type {
 		"aws_bedrock_inference_profile":            resource.TypeBedrockModel,
 		"aws_bedrock_provisioned_model_throughput": resource.TypeBedrockModel,
 		"aws_sagemaker_endpoint":                   resource.TypeSageMakerEndpoint,
+		"aws_textract_adapter":                     resource.TypeTextractAdapter,
 		"aws_ecr_repository":                       resource.TypeECRRepository,
 		"aws_ecrpublic_repository":                 resource.TypeECRRepository,
 

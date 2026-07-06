@@ -174,6 +174,8 @@ func mapTerraformTypeToResourceType(tfType string) resource.Type {
 		return resource.TypeBedrockModel
 	case "aws_sagemaker_endpoint":
 		return resource.TypeSageMakerEndpoint
+	case "aws_textract_adapter":
+		return resource.TypeTextractAdapter
 
 	// Storage
 	case "aws_s3_bucket":

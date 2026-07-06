@@ -18,6 +18,7 @@ const (
 	TypeEKSCluster                Type = "aws_eks_cluster"
 	TypeBedrockModel              Type = "aws_bedrock_inference_profile"
 	TypeSageMakerEndpoint         Type = "aws_sagemaker_endpoint"
+	TypeTextractAdapter           Type = "aws_textract_adapter"
 	TypeCodeBuild                 Type = "aws_codebuild_project"
 	TypeCodePipeline              Type = "aws_codepipeline"
 	TypeCodeDeployApp             Type = "aws_codedeploy_app"

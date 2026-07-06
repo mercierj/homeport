@@ -26,6 +26,7 @@ var ResourceMapping = map[resource.Type]StackType{
 	resource.TypeEKSCluster:                StackTypePassthrough, // Kubernetes stays individual
 	resource.TypeBedrockModel:              StackTypePassthrough, // Inference profiles stay individual
 	resource.TypeSageMakerEndpoint:         StackTypePassthrough, // ML inference endpoints stay individual
+	resource.TypeTextractAdapter:           StackTypePassthrough, // OCR adapters stay explicit document pipelines
 	resource.TypeCodeBuild:                 StackTypePassthrough, // Build projects stay individual
 	resource.TypeCodePipeline:              StackTypePassthrough, // Pipelines remain workflow definitions
 	resource.TypeCodeDeployApp:             StackTypePassthrough, // Deploy strategies remain rollout definitions

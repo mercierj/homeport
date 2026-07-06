@@ -94,6 +94,7 @@ var CategoryMapping = map[Type]Category{
 	TypeEKSCluster:                CategoryKubernetes,
 	TypeBedrockModel:              CategoryServerless,
 	TypeSageMakerEndpoint:         CategoryCompute,
+	TypeTextractAdapter:           CategoryCompute,
 	TypeCodeBuild:                 CategoryDevOps,
 	TypeCodePipeline:              CategoryDevOps,
 	TypeCodeDeployApp:             CategoryDevOps,
