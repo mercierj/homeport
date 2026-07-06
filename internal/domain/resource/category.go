@@ -146,6 +146,7 @@ var CategoryMapping = map[Type]Category{
 	TypeCloudWatchMetricAlarm: CategoryMonitoring,
 	TypeCloudWatchLogGroup:    CategoryLogging,
 	TypeCloudWatchDashboard:   CategoryMonitoring,
+	TypeXRaySamplingRule:      CategoryTracing,
 
 	// ─────────────────────────────────────────────────────
 	// GCP Resource Mappings (Complete)

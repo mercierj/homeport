@@ -70,6 +70,7 @@ const (
 	TypeCloudWatchMetricAlarm Type = "aws_cloudwatch_metric_alarm"
 	TypeCloudWatchLogGroup    Type = "aws_cloudwatch_log_group"
 	TypeCloudWatchDashboard   Type = "aws_cloudwatch_dashboard"
+	TypeXRaySamplingRule      Type = "aws_xray_sampling_rule"
 
 	// ─────────────────────────────────────────────────────
 	// GCP Resource Types

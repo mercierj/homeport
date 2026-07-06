@@ -41,7 +41,7 @@
 | aws | Step Functions | full | aws_sfn_state_machine |
 | aws | VPC | full | aws_vpc |
 | aws | WAF | full | aws_wafv2_web_acl |
-| aws | X-Ray | missing |  |
+| aws | X-Ray | full | aws_xray_sampling_rule |
 | aws | Lake Formation | missing | aws_lakeformation_data_lake_settings, aws_lakeformation_permissions |
 | aws | QuickSight | missing | aws_quicksight_data_source, aws_quicksight_dashboard |
 | aws | MQ | missing | aws_mq_broker |

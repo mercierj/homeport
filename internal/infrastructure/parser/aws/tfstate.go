@@ -358,6 +358,7 @@ func mapAWSTerraformType(tfType string) resource.Type {
 		"aws_cloudwatch_metric_alarm": resource.TypeCloudWatchMetricAlarm,
 		"aws_cloudwatch_log_group":    resource.TypeCloudWatchLogGroup,
 		"aws_cloudwatch_dashboard":    resource.TypeCloudWatchDashboard,
+		"aws_xray_sampling_rule":      resource.TypeXRaySamplingRule,
 
 		// DevOps
 		"aws_codebuild_project": resource.TypeCodeBuild,

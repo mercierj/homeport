@@ -534,6 +534,7 @@ func mapCFNTypeToResourceType(cfnType string) resource.Type {
 		"AWS::CloudWatch::Alarm":     resource.TypeCloudWatchMetricAlarm,
 		"AWS::Logs::LogGroup":        resource.TypeCloudWatchLogGroup,
 		"AWS::CloudWatch::Dashboard": resource.TypeCloudWatchDashboard,
+		"AWS::XRay::SamplingRule":    resource.TypeXRaySamplingRule,
 
 		// DevOps
 		"AWS::CodeBuild::Project":          resource.TypeCodeBuild,

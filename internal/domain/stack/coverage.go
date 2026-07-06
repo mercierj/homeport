@@ -78,6 +78,7 @@ var ResourceMapping = map[resource.Type]StackType{
 	resource.TypeCloudWatchMetricAlarm: StackTypeObservability, // Monitoring consolidates
 	resource.TypeCloudWatchLogGroup:    StackTypeObservability, // Logging consolidates
 	resource.TypeCloudWatchDashboard:   StackTypeObservability, // Dashboards consolidate
+	resource.TypeXRaySamplingRule:      StackTypeObservability, // Tracing consolidates
 
 	// ─────────────────────────────────────────────────────
 	// GCP Resource Types (25 types)

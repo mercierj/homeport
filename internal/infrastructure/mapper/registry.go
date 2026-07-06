@@ -104,6 +104,7 @@ func (r *Registry) RegisterDefaults() {
 	r.Register(monitoring.NewCloudWatchLogsMapper())
 	r.Register(monitoring.NewCloudWatchMetricAlarmMapper())
 	r.Register(monitoring.NewCloudWatchDashboardMapper())
+	r.Register(monitoring.NewXRayMapper())
 
 	// ─────────────────────────────────────────────────────
 	// GCP Mappers
