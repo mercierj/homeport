@@ -64,6 +64,7 @@ const (
 	TypeKinesis     Type = "aws_kinesis_stream"
 	TypeMSKCluster  Type = "aws_msk_cluster"
 	TypeSESIdentity Type = "aws_ses_domain_identity"
+	TypeMQBroker    Type = "aws_mq_broker"
 
 	// AWS Security (additional)
 	TypeKMSKey Type = "aws_kms_key"

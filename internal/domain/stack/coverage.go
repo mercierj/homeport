@@ -8,14 +8,14 @@ import (
 )
 
 // ═══════════════════════════════════════════════════════════════════════════════
-// ResourceMapping - Complete mapping of all 96 resource types to stack types
+// ResourceMapping - Complete mapping of all resource types to stack types
 // ═══════════════════════════════════════════════════════════════════════════════
 
 // ResourceMapping maps every resource.Type constant to its corresponding StackType.
-// This provides 100% coverage of all 96 resource types (42 AWS + 25 GCP + 29 Azure).
+// This provides 100% coverage of all resource types.
 var ResourceMapping = map[resource.Type]StackType{
 	// ─────────────────────────────────────────────────────
-	// AWS Resource Types (42 types)
+	// AWS Resource Types
 	// ─────────────────────────────────────────────────────
 
 	// AWS Compute and devops
@@ -65,13 +65,14 @@ var ResourceMapping = map[resource.Type]StackType{
 	resource.TypeGuardDutyDetector: StackTypePassthrough, // Security detections stay explicit
 	resource.TypeWAFWebACL:         StackTypePassthrough, // WAF policies stay explicit edge controls
 
-	// AWS Messaging (6 types)
+	// AWS Messaging
 	resource.TypeSQSQueue:    StackTypeMessaging, // Queue consolidates
 	resource.TypeSNSTopic:    StackTypeMessaging, // PubSub consolidates
 	resource.TypeEventBridge: StackTypeMessaging, // Event routing consolidates
 	resource.TypeKinesis:     StackTypeMessaging, // Stream consolidates
 	resource.TypeMSKCluster:  StackTypeMessaging, // Kafka stream consolidates
 	resource.TypeSESIdentity: StackTypeMessaging, // Email service consolidates
+	resource.TypeMQBroker:    StackTypeMessaging, // Managed brokers consolidate with open brokers
 
 	// AWS Security additional (1 type)
 	resource.TypeKMSKey: StackTypeSecrets, // Key management consolidates with secrets

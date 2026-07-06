@@ -357,6 +357,7 @@ func mapAWSTerraformType(tfType string) resource.Type {
 		"aws_kinesis_stream":         resource.TypeKinesis,
 		"aws_msk_cluster":            resource.TypeMSKCluster,
 		"aws_msk_serverless_cluster": resource.TypeMSKCluster,
+		"aws_mq_broker":              resource.TypeMQBroker,
 
 		// Monitoring
 		"aws_cloudwatch_metric_alarm": resource.TypeCloudWatchMetricAlarm,

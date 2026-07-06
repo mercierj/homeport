@@ -533,6 +533,7 @@ func mapCFNTypeToResourceType(cfnType string) resource.Type {
 		"AWS::Kinesis::Stream":        resource.TypeKinesis,
 		"AWS::MSK::Cluster":           resource.TypeMSKCluster,
 		"AWS::MSK::ServerlessCluster": resource.TypeMSKCluster,
+		"AWS::AmazonMQ::Broker":       resource.TypeMQBroker,
 
 		// Monitoring
 		"AWS::CloudWatch::Alarm":     resource.TypeCloudWatchMetricAlarm,
