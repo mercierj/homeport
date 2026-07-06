@@ -226,6 +226,8 @@ func mapTerraformTypeToResourceType(tfType string) resource.Type {
 		return resource.TypeCloudWatchDashboard
 	case "aws_codebuild_project":
 		return resource.TypeCodeBuild
+	case "aws_codepipeline":
+		return resource.TypeCodePipeline
 
 	default:
 		// Return the Terraform type as-is for unknown types

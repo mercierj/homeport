@@ -64,6 +64,7 @@ func (r *Registry) RegisterDefaults() {
 	r.Register(compute.NewEKSMapper())
 	r.Register(compute.NewBedrockMapper())
 	r.Register(devops.NewCodeBuildMapper())
+	r.Register(devops.NewCodePipelineMapper())
 
 	// AWS Networking mappers
 	r.Register(networking.NewALBMapper())

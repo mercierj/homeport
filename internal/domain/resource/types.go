@@ -18,6 +18,7 @@ const (
 	TypeEKSCluster     Type = "aws_eks_cluster"
 	TypeBedrockModel   Type = "aws_bedrock_inference_profile"
 	TypeCodeBuild      Type = "aws_codebuild_project"
+	TypeCodePipeline   Type = "aws_codepipeline"
 
 	// AWS Storage
 	TypeS3Bucket  Type = "aws_s3_bucket"

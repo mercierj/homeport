@@ -9,7 +9,7 @@
 | aws | CloudFront | full | aws_cloudfront_distribution |
 | aws | CloudWatch | full | aws_cloudwatch_metric_alarm, aws_cloudwatch_log_group, aws_cloudwatch_dashboard |
 | aws | CodeBuild | full | aws_codebuild_project |
-| aws | CodePipeline | missing |  |
+| aws | CodePipeline | full | aws_codepipeline |
 | aws | Cognito | guided | aws_cognito_user_pool |
 | aws | DynamoDB | mapped | aws_dynamodb_table |
 | aws | EBS | mapped | aws_ebs_volume |

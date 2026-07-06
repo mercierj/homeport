@@ -348,6 +348,7 @@ func mapAWSTerraformType(tfType string) resource.Type {
 
 		// DevOps
 		"aws_codebuild_project": resource.TypeCodeBuild,
+		"aws_codepipeline":      resource.TypeCodePipeline,
 	}
 
 	if resType, ok := mapping[tfType]; ok {

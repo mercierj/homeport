@@ -94,6 +94,7 @@ var CategoryMapping = map[Type]Category{
 	TypeEKSCluster:     CategoryKubernetes,
 	TypeBedrockModel:   CategoryServerless,
 	TypeCodeBuild:      CategoryDevOps,
+	TypeCodePipeline:   CategoryDevOps,
 
 	// AWS Storage
 	TypeS3Bucket:  CategoryObjectStorage,
