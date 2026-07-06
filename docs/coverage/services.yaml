@@ -482,19 +482,21 @@ services:
     service: Kinesis
     resource_types:
       - aws_kinesis_stream
+    target: Redpanda with HomePort Kinesis adapter
+    api_compatibility_strategy: adapter
+    manual_steps_resolved: true
     discover: true
-    cost: false
-    provision: false
-    migrate: false
+    cost: true
+    provision: true
+    migrate: true
     api_compat: true
-    env_dns: false
-    ha: false
-    backup: false
-    validate: false
-    cutover: false
-    rollback: false
-    status: guided
-    blocker: Kinesis-compatible edge adapter exists for basic SDK flow; Redpanda/Kafka production path needs consumer-group and replay validation
+    env_dns: true
+    ha: true
+    backup: true
+    validate: true
+    cutover: true
+    rollback: true
+    status: full
   - provider: aws
     service: Lambda
     resource_types:

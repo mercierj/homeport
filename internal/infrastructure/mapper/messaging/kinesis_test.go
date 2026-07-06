@@ -2,11 +2,55 @@ package messaging
 
 import (
 	"context"
+	"strings"
 	"testing"
 
 	"github.com/homeport/homeport/internal/domain/mapper"
 	"github.com/homeport/homeport/internal/domain/resource"
+	domainrunbook "github.com/homeport/homeport/internal/domain/runbook"
 )
+
+func TestKinesisConformanceManagedAToZ(t *testing.T) {
+	result, err := NewKinesisMapper().Map(context.Background(), managedKinesisFixture())
+	if err != nil {
+		t.Fatal(err)
+	}
+	if len(result.ManualSteps) != 0 {
+		t.Fatalf("manual steps = %#v, want generated Kinesis migration", result.ManualSteps)
+	}
+	if result.DockerService.Image != "redpandadata/redpanda:v23.3.5" || result.DockerService.Deploy == nil || result.DockerService.Deploy.Replicas < 3 {
+		t.Fatalf("service does not provision HA Redpanda target: %#v", result.DockerService)
+	}
+	for _, file := range []string{"config/redpanda/topics.yaml", "config/kinesis/stream-map.yaml", "config/kinesis/app-change.env", "config/kinesis/consumer-groups.yaml"} {
+		if _, ok := result.Configs[file]; !ok {
+			t.Fatalf("missing config %s", file)
+		}
+	}
+	appEnv := string(result.Configs["config/kinesis/app-change.env"])
+	for _, want := range []string{"SOURCE_STREAM=orders-stream", "TARGET_TOPIC=orders-stream", "APP_CHANGE_MODE=adapter", "AWS_ENDPOINT_URL_KINESIS=http://homeport:8080/api/v1/compat/aws/kinesis"} {
+		if !strings.Contains(appEnv, want) {
+			t.Fatalf("app-change env missing %q:\n%s", want, appEnv)
+		}
+	}
+	for _, file := range []string{"setup_redpanda.sh", "export_kinesis_records.sh", "migrate_kinesis_records.sh", "validate_kinesis_replay.sh", "backup_kinesis_stream.sh", "cutover_kinesis_adapter.sh"} {
+		if _, ok := result.Scripts[file]; !ok {
+			t.Fatalf("missing script %s", file)
+		}
+	}
+	for id, stepType := range map[string]domainrunbook.StepType{
+		"export-kinesis-stream":    domainrunbook.StepTypeCommand,
+		"provision-redpanda-topic": domainrunbook.StepTypeCommand,
+		"migrate-kinesis-records":  domainrunbook.StepTypeCommand,
+		"validate-kinesis-replay":  domainrunbook.StepTypeCommand,
+		"backup-kinesis-config":    domainrunbook.StepTypeCommand,
+		"cutover-kinesis-adapter":  domainrunbook.StepTypeAPICall,
+		"rollback-kinesis-source":  domainrunbook.StepTypeRollback,
+	} {
+		if !hasKinesisRunbookStep(result, id, stepType) {
+			t.Fatalf("missing %s runbook step: %#v", id, result.RunbookSteps)
+		}
+	}
+}
 
 func TestNewKinesisMapper(t *testing.T) {
 	m := NewKinesisMapper()
@@ -16,6 +60,31 @@ func TestNewKinesisMapper(t *testing.T) {
 	if m.ResourceType() != resource.TypeKinesis {
 		t.Errorf("ResourceType() = %v, want %v", m.ResourceType(), resource.TypeKinesis)
 	}
+}
+
+func managedKinesisFixture() *resource.AWSResource {
+	return &resource.AWSResource{
+		ID:     "arn:aws:kinesis:eu-west-1:123456789012:stream/orders-stream",
+		Type:   resource.TypeKinesis,
+		Name:   "orders-stream",
+		Region: "eu-west-1",
+		Config: map[string]interface{}{
+			"name":                "orders-stream",
+			"shard_count":         float64(3),
+			"retention_period":    float64(168),
+			"encryption_type":     "KMS",
+			"shard_level_metrics": "IncomingBytes,OutgoingBytes",
+		},
+	}
+}
+
+func hasKinesisRunbookStep(result *mapper.MappingResult, id string, stepType domainrunbook.StepType) bool {
+	for _, step := range result.RunbookSteps {
+		if step.ID == id && step.Type == stepType {
+			return true
+		}
+	}
+	return false
 }
 
 func TestKinesisMapper_ResourceType(t *testing.T) {

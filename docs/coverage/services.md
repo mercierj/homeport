@@ -25,7 +25,7 @@
 | aws | GuardDuty | full | aws_guardduty_detector |
 | aws | IAM | full | aws_iam_role |
 | aws | KMS | full | aws_kms_key |
-| aws | Kinesis | guided | aws_kinesis_stream |
+| aws | Kinesis | full | aws_kinesis_stream |
 | aws | Lambda | mapped | aws_lambda_function |
 | aws | MSK | missing |  |
 | aws | OpenSearch | missing |  |
