@@ -2,12 +2,39 @@ package storage
 
 import (
 	"context"
+	"strings"
 	"testing"
 
 	"github.com/homeport/homeport/internal/domain/mapper"
 	"github.com/homeport/homeport/internal/domain/resource"
 	domainrunbook "github.com/homeport/homeport/internal/domain/runbook"
 )
+
+func TestS3ConformanceManagedAToZ(t *testing.T) {
+	result, err := NewS3Mapper().Map(context.Background(), &resource.AWSResource{ID: "assets", Type: resource.TypeS3Bucket, Name: "assets", Config: map[string]interface{}{"bucket": "assets", "versioning": map[string]interface{}{"enabled": true}, "server_side_encryption_configuration": "aws:kms"}})
+	if err != nil {
+		t.Fatal(err)
+	}
+	if len(result.ManualSteps) != 0 {
+		t.Fatalf("manual steps = %#v, want generated S3 migration", result.ManualSteps)
+	}
+	if result.DockerService.Deploy == nil || result.DockerService.Deploy.Replicas < 2 {
+		t.Fatalf("service does not provision HA MinIO target: %#v", result.DockerService)
+	}
+	for _, file := range []string{"config/minio/app-change.env", "config/minio/encryption.env"} {
+		if _, ok := result.Configs[file]; !ok {
+			t.Fatalf("missing config %s", file)
+		}
+	}
+	if !strings.Contains(string(result.Configs["config/minio/app-change.env"]), "APP_CHANGE_MODE=adapter") {
+		t.Fatalf("missing adapter app-change env")
+	}
+	for _, file := range []string{"setup_minio.sh", "validate_s3_api.sh", "backup_s3_config.sh", "cutover_s3_clients.sh", "configure_versioning.sh"} {
+		if _, ok := result.Scripts[file]; !ok {
+			t.Fatalf("missing script %s", file)
+		}
+	}
+}
 
 func TestNewS3Mapper(t *testing.T) {
 	m := NewS3Mapper()

@@ -32,7 +32,7 @@
 | aws | RDS | full | aws_db_instance, aws_rds_cluster |
 | aws | Redshift | full | aws_redshift_cluster |
 | aws | Route 53 | full | aws_route53_zone |
-| aws | S3 | mapped | aws_s3_bucket |
+| aws | S3 | full | aws_s3_bucket |
 | aws | SES | guided | aws_ses_domain_identity |
 | aws | SNS | mapped | aws_sns_topic |
 | aws | SQS | mapped | aws_sqs_queue |

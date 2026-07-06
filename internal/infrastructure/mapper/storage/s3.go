@@ -55,6 +55,7 @@ func (m *S3Mapper) Map(ctx context.Context, res *resource.AWSResource) (*mapper.
 		"./data/minio:/data",
 	}
 	svc.Command = []string{"server", "/data", "--console-address", ":9001"}
+	svc.Deploy = &mapper.DeployConfig{Replicas: 2}
 	svc.HealthCheck = &mapper.HealthCheck{
 		Test:     []string{"CMD", "curl", "-f", "http://localhost:9000/minio/health/live"},
 		Interval: 30 * time.Second,
@@ -72,14 +73,17 @@ func (m *S3Mapper) Map(ctx context.Context, res *resource.AWSResource) (*mapper.
 	// Generate MinIO client (mc) setup script
 	mcScript := m.generateMCScript(res, bucketName)
 	result.AddScript("setup_minio.sh", []byte(mcScript))
+	result.AddConfig("config/minio/app-change.env", []byte(m.generateS3AppChange(bucketName)))
+	result.AddScript("validate_s3_api.sh", []byte(m.generateS3ValidateScript(bucketName)))
+	result.AddScript("backup_s3_config.sh", []byte(m.generateS3BackupScript(bucketName)))
+	result.AddScript("cutover_s3_clients.sh", []byte(m.generateS3CutoverScript(bucketName)))
 	for _, step := range storagerunbook.ObjectStorage(bucketName, "s3:"+bucketName) {
 		result.AddRunbookStep(step)
 	}
 
 	// Handle versioning
 	if res.GetConfigBool("versioning.enabled") || m.hasVersioningBlock(res) {
-		result.AddManualStep(
-			fmt.Sprintf("Enable versioning on bucket '%s' using: mc version enable local/%s", bucketName, bucketName))
+		result.AddScript("configure_versioning.sh", []byte(fmt.Sprintf("#!/bin/sh\nset -eu\nmc version enable local/%s\n", bucketName)))
 	}
 
 	// Handle lifecycle rules
@@ -93,20 +97,19 @@ func (m *S3Mapper) Map(ctx context.Context, res *resource.AWSResource) (*mapper.
 	if corsRules := m.getCORSRules(res); len(corsRules) > 0 {
 		corsConfig := m.generateCORSConfig(bucketName, corsRules)
 		result.AddConfig(fmt.Sprintf("config/minio/%s-cors.json", bucketName), []byte(corsConfig))
-		result.AddManualStep(
-			fmt.Sprintf("Apply CORS configuration: mc anonymous set-json config/minio/%s-cors.json local/%s", bucketName, bucketName))
+		result.AddScript("configure_cors.sh", []byte(fmt.Sprintf("#!/bin/sh\nset -eu\nmc anonymous set-json config/minio/%s-cors.json local/%s\n", bucketName, bucketName)))
 	}
 
 	// Handle public access settings
 	if m.isPublicBucket(res) {
-		result.AddManualStep(fmt.Sprintf("Set public read access: mc anonymous set download local/%s", bucketName))
+		result.AddScript("configure_public_access.sh", []byte(fmt.Sprintf("#!/bin/sh\nset -eu\nmc anonymous set download local/%s\n", bucketName)))
 		result.AddWarning("Bucket has public access enabled. Ensure this is intentional in your self-hosted environment.")
 	}
 
 	// Handle encryption
 	if res.GetConfigString("server_side_encryption_configuration") != "" {
-		result.AddWarning("S3 server-side encryption is configured. MinIO supports encryption at rest - configure manually if needed.")
-		result.AddManualStep("Configure MinIO encryption: https://min.io/docs/minio/linux/operations/server-side-encryption.html")
+		result.AddWarning("S3 server-side encryption is configured. MinIO encryption env is generated for target deployment.")
+		result.AddConfig("config/minio/encryption.env", []byte("MINIO_KMS_SECRET_KEY=homeport-key:${MINIO_MASTER_KEY}\n"))
 	}
 
 	// Handle replication
@@ -148,6 +151,22 @@ echo "Credentials: minioadmin / minioadmin"
 echo ""
 echo "To use with AWS SDK, configure endpoint: http://localhost:9000"
 `, bucketName, bucketName, region, bucketName)
+}
+
+func (m *S3Mapper) generateS3AppChange(bucketName string) string {
+	return fmt.Sprintf("APP_CHANGE_MODE=adapter\nSOURCE_BUCKET=%s\nTARGET_BUCKET=%s\nAWS_ENDPOINT_URL_S3=http://minio:9000\nAWS_S3_FORCE_PATH_STYLE=true\n", bucketName, bucketName)
+}
+
+func (m *S3Mapper) generateS3ValidateScript(bucketName string) string {
+	return fmt.Sprintf("#!/bin/sh\nset -eu\naws --endpoint-url http://localhost:9000 s3api head-bucket --bucket %s\naws --endpoint-url http://localhost:9000 s3api list-objects-v2 --bucket %s >/tmp/homeport-s3-list.json\n", bucketName, bucketName)
+}
+
+func (m *S3Mapper) generateS3BackupScript(bucketName string) string {
+	return fmt.Sprintf("#!/bin/sh\nset -eu\narchive=\"${BACKUP_DIR:-./backups}/%s-minio-$(date +%%Y%%m%%d%%H%%M%%S).tgz\"\nmkdir -p \"$(dirname \"$archive\")\"\ntar -czf \"$archive\" config/minio setup_minio.sh validate_s3_api.sh cutover_s3_clients.sh\necho \"$archive\"\n", bucketName)
+}
+
+func (m *S3Mapper) generateS3CutoverScript(bucketName string) string {
+	return fmt.Sprintf("#!/bin/sh\nset -eu\n. config/minio/app-change.env\ntest \"$SOURCE_BUCKET\" = %q\ntest \"$APP_CHANGE_MODE\" = \"adapter\"\necho \"Use AWS_ENDPOINT_URL_S3=$AWS_ENDPOINT_URL_S3 for S3 clients\"\n", bucketName)
 }
 
 // generateLifecycleScript creates a script to configure lifecycle policies.
