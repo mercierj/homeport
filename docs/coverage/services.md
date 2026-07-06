@@ -6,7 +6,7 @@
 | aws | AppSync | full | aws_appsync_graphql_api |
 | aws | Athena | full | aws_athena_workgroup |
 | aws | Bedrock | full | aws_bedrock_inference_profile |
-| aws | CloudFront | mapped | aws_cloudfront_distribution |
+| aws | CloudFront | full | aws_cloudfront_distribution |
 | aws | CloudWatch | mapped | aws_cloudwatch_metric_alarm, aws_cloudwatch_log_group, aws_cloudwatch_dashboard |
 | aws | CodeBuild | missing |  |
 | aws | CodePipeline | missing |  |

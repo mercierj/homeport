@@ -2,10 +2,12 @@ package networking
 
 import (
 	"context"
+	"strings"
 	"testing"
 
 	"github.com/homeport/homeport/internal/domain/mapper"
 	"github.com/homeport/homeport/internal/domain/resource"
+	domainrunbook "github.com/homeport/homeport/internal/domain/runbook"
 )
 
 func TestNewCloudFrontMapper(t *testing.T) {
@@ -400,6 +402,130 @@ func TestCloudFrontMapper_Map(t *testing.T) {
 			}
 		})
 	}
+}
+
+func TestCloudFrontMapper_MapBuildsDeterministicCDNWhenOriginsAreKnown(t *testing.T) {
+	res := managedCloudFrontFixture()
+
+	result, err := NewCloudFrontMapper().Map(context.Background(), res)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if len(result.ManualSteps) != 0 {
+		t.Fatalf("manual steps = %#v, want none when CloudFront origins and behavior are known", result.ManualSteps)
+	}
+	caddyfile := string(result.Configs["config/caddy/Caddyfile"])
+	for _, want := range []string{
+		"shop.example.com, cdn.example.com",
+		"reverse_proxy varnish:6081",
+		"Strict-Transport-Security",
+	} {
+		if !strings.Contains(caddyfile, want) {
+			t.Fatalf("Caddyfile missing %q:\n%s", want, caddyfile)
+		}
+	}
+	vcl := string(result.Configs["config/varnish/default.vcl"])
+	for _, want := range []string{
+		"backend api_origin",
+		".host = \"api.internal\"",
+		"if (req.url ~ \"^/static\")",
+		"set beresp.ttl = 3600s",
+	} {
+		if !strings.Contains(vcl, want) {
+			t.Fatalf("VCL missing %q:\n%s", want, vcl)
+		}
+	}
+	if strings.Contains(caddyfile, "TODO") || strings.Contains(vcl, "TODO") {
+		t.Fatalf("generated config still contains TODO\nCaddy:\n%s\nVCL:\n%s", caddyfile, vcl)
+	}
+}
+
+func TestCloudFrontConformanceManagedAToZ(t *testing.T) {
+	result, err := NewCloudFrontMapper().Map(context.Background(), managedCloudFrontFixture())
+	if err != nil {
+		t.Fatal(err)
+	}
+	if len(result.ManualSteps) != 0 {
+		t.Fatalf("manual steps = %#v, want generated CloudFront migration", result.ManualSteps)
+	}
+	if result.DockerService.Image != "caddy:2.7-alpine" || result.DockerService.Deploy == nil || result.DockerService.Deploy.Replicas < 2 {
+		t.Fatalf("service does not provision HA Caddy: %#v", result.DockerService)
+	}
+	if len(result.AdditionalServices) != 1 || result.AdditionalServices[0].Image != "varnish:7.5-alpine" {
+		t.Fatalf("missing Varnish cache service: %#v", result.AdditionalServices)
+	}
+	for _, file := range []string{
+		"config/caddy/Caddyfile",
+		"config/varnish/default.vcl",
+		"config/cloudfront/dns-cutover.env",
+		"config/cloudfront/validation.sh",
+	} {
+		if _, ok := result.Configs[file]; !ok {
+			t.Fatalf("missing %s", file)
+		}
+	}
+	if _, ok := result.Scripts["backup_cloudfront_config.sh"]; !ok {
+		t.Fatal("missing backup script")
+	}
+	for id, stepType := range map[string]domainrunbook.StepType{
+		"render-cloudfront-cdn-config": domainrunbook.StepTypeCommand,
+		"provision-caddy-varnish-cdn":  domainrunbook.StepTypeCommand,
+		"validate-cdn-cache-routing":   domainrunbook.StepTypeHealth,
+		"backup-cloudfront-config":     domainrunbook.StepTypeCommand,
+		"cutover-cloudfront-dns":       domainrunbook.StepTypeDNSCheck,
+		"rollback-cloudfront-dns":      domainrunbook.StepTypeRollback,
+	} {
+		if !hasCloudFrontRunbookStep(result, id, stepType) {
+			t.Fatalf("missing %s runbook step: %#v", id, result.RunbookSteps)
+		}
+	}
+}
+
+func managedCloudFrontFixture() *resource.AWSResource {
+	return &resource.AWSResource{
+		ID:   "E1234567890ABC",
+		Type: resource.TypeCloudFront,
+		Name: "shop-cdn",
+		Config: map[string]interface{}{
+			"domain_name": "d111111abcdef8.cloudfront.net",
+			"aliases":     []interface{}{"shop.example.com", "cdn.example.com"},
+			"origins": []map[string]interface{}{
+				{
+					"id":          "api",
+					"domain_name": "api.internal",
+					"origin_type": "custom",
+					"http_port":   8080,
+				},
+			},
+			"default_cache_behavior": map[string]interface{}{
+				"target_origin_id":       "api",
+				"viewer_protocol_policy": "redirect-to-https",
+				"compress":               true,
+			},
+			"ordered_cache_behavior": []interface{}{
+				map[string]interface{}{
+					"path_pattern":     "/static/*",
+					"target_origin_id": "api",
+					"default_ttl":      3600,
+				},
+			},
+			"viewer_certificate": map[string]interface{}{
+				"minimum_protocol_version": "TLSv1.2_2021",
+			},
+			"logging_config": map[string]interface{}{
+				"prefix": "cloudfront/",
+			},
+		},
+	}
+}
+
+func hasCloudFrontRunbookStep(result *mapper.MappingResult, id string, stepType domainrunbook.StepType) bool {
+	for _, step := range result.RunbookSteps {
+		if step.ID == id && step.Type == stepType {
+			return true
+		}
+	}
+	return false
 }
 
 // containsSubstring checks if a string contains a substring (case-insensitive).

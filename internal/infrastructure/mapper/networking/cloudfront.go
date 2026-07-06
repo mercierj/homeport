@@ -9,6 +9,7 @@ import (
 
 	"github.com/homeport/homeport/internal/domain/mapper"
 	"github.com/homeport/homeport/internal/domain/resource"
+	domainrunbook "github.com/homeport/homeport/internal/domain/runbook"
 	"github.com/homeport/homeport/internal/infrastructure/mapper/shared/netrunbook"
 )
 
@@ -53,6 +54,7 @@ func (m *CloudFrontMapper) Map(ctx context.Context, res *resource.AWSResource) (
 		"caddy-config:/config",
 	}
 	svc.Networks = []string{"homeport"}
+	svc.Deploy = &mapper.DeployConfig{Replicas: 2}
 	svc.Labels = map[string]string{
 		"homeport.source":          "aws_cloudfront",
 		"homeport.distribution_id": distributionID,
@@ -69,6 +71,25 @@ func (m *CloudFrontMapper) Map(ctx context.Context, res *resource.AWSResource) (
 		Retries:  3,
 	}
 
+	result.AddService(&mapper.DockerService{
+		Name:    "varnish",
+		Image:   "varnish:7.5-alpine",
+		Command: []string{"varnishd", "-F", "-f", "/etc/varnish/default.vcl", "-s", "malloc,512m"},
+		Volumes: []string{
+			"./config/varnish/default.vcl:/etc/varnish/default.vcl:ro",
+			"varnish-cache:/var/lib/varnish",
+		},
+		Networks: []string{"homeport"},
+		HealthCheck: &mapper.HealthCheck{
+			Test:     []string{"CMD", "varnishadm", "ping"},
+			Interval: 30 * time.Second,
+			Timeout:  10 * time.Second,
+			Retries:  3,
+		},
+		Deploy:  &mapper.DeployConfig{Replicas: 2},
+		Restart: "unless-stopped",
+	})
+
 	// Add Caddy volumes
 	result.AddVolume(mapper.Volume{
 		Name:   "caddy-data",
@@ -78,79 +99,71 @@ func (m *CloudFrontMapper) Map(ctx context.Context, res *resource.AWSResource) (
 		Name:   "caddy-config",
 		Driver: "local",
 	})
+	result.AddVolume(mapper.Volume{
+		Name:   "varnish-cache",
+		Driver: "local",
+	})
 
 	// Generate Caddyfile configuration
 	caddyfile := m.generateCaddyfile(res)
 	result.AddConfig("config/caddy/Caddyfile", []byte(caddyfile))
-
-	// Generate nginx alternative configuration
-	nginxConfig := m.generateNginxConfig(res)
-	result.AddConfig("config/nginx/nginx.conf", []byte(nginxConfig))
-	result.AddConfig("config/nginx/README.md", []byte("# Alternative nginx configuration\nIf you prefer nginx over Caddy, use this configuration instead.\n"))
+	result.AddConfig("config/varnish/default.vcl", []byte(m.generateVarnishConfig(res)))
+	result.AddConfig("config/cloudfront/dns-cutover.env", []byte(m.generateDNSCutoverEnv(res, distributionID)))
+	result.AddConfig("config/cloudfront/validation.sh", []byte(m.generateValidationScript(res)))
+	result.AddConfig("config/cloudfront/cache-behaviors.md", []byte(m.generateCacheConfig(res)))
+	result.AddConfig("config/caddy/log-config.txt", []byte(m.generateLogConfig(res)))
+	result.AddScript("backup_cloudfront_config.sh", []byte(m.generateBackupScript(distributionID)))
 
 	// Handle origins
 	if m.hasOrigins(res) {
 		origins := m.extractOrigins(res)
-		result.AddManualStep(fmt.Sprintf("Configure backend origins: %s", strings.Join(origins, ", ")))
-		result.AddWarning("CloudFront origins detected. Ensure backend services are accessible from Caddy/nginx.")
+		result.AddWarning(fmt.Sprintf("CloudFront origins mapped to Varnish backends: %s", strings.Join(origins, ", ")))
 	}
 
 	// Handle cache behaviors
 	if m.hasCacheBehaviors(res) {
-		result.AddWarning("CloudFront cache behaviors detected. Configure Caddy cache directives accordingly.")
-		result.AddManualStep("Review CloudFront cache behaviors and implement equivalent Caddy caching rules")
-
-		cacheConfig := m.generateCacheConfig(res)
-		result.AddConfig("config/caddy/cache-config.txt", []byte(cacheConfig))
+		result.AddWarning("CloudFront cache behaviors mapped to Varnish TTL rules.")
 	}
 
 	// Handle custom domains
 	if m.hasCustomDomains(res) {
 		domains := m.extractCustomDomains(res)
-		result.AddWarning(fmt.Sprintf("Custom domains detected: %s", strings.Join(domains, ", ")))
-		result.AddManualStep("Configure DNS records to point to your Caddy instance")
-		result.AddManualStep("Caddy will automatically obtain SSL certificates via Let's Encrypt")
+		result.AddWarning(fmt.Sprintf("Custom domains mapped to Caddy hosts and DNS cutover env: %s", strings.Join(domains, ", ")))
 	}
 
 	// Handle SSL/TLS certificates
 	if m.hasSSLCertificate(res) {
 		certARN := res.GetConfigString("viewer_certificate.acm_certificate_arn")
-		result.AddWarning(fmt.Sprintf("ACM certificate detected: %s. Caddy will manage SSL automatically with Let's Encrypt.", certARN))
-		result.AddManualStep("If you need to use custom certificates, place them in ./config/caddy/certs/")
+		if certARN != "" {
+			result.AddWarning(fmt.Sprintf("ACM certificate detected: %s. Caddy manages replacement certificates for mapped hostnames.", certARN))
+		}
 	}
 
 	// Handle geo-restrictions
 	if m.hasGeoRestrictions(res) {
-		result.AddWarning("CloudFront geo-restrictions detected. Consider using Caddy GeoIP module or configure at firewall level.")
-		result.AddManualStep("Review geo-restriction settings and implement equivalent controls")
+		result.AddWarning("CloudFront geo-restrictions detected. Generated CDN keeps routing explicit; enforce country controls at upstream auth or firewall.")
 	}
 
 	// Handle WAF integration
 	if wafARN := res.GetConfigString("web_acl_id"); wafARN != "" {
-		result.AddWarning(fmt.Sprintf("AWS WAF integration detected: %s. Configure Caddy security plugins or external WAF.", wafARN))
-		result.AddManualStep("Review WAF rules and implement security controls in Caddy or reverse proxy")
+		result.AddWarning(fmt.Sprintf("AWS WAF integration detected: %s. Preserve policy in generated app-change report or upstream WAF.", wafARN))
 	}
 
 	// Handle Lambda@Edge functions
 	if m.hasLambdaEdge(res) {
-		result.AddWarning("Lambda@Edge functions detected. These need to be migrated to backend services or Caddy modules.")
-		result.AddManualStep("Migrate Lambda@Edge functions to backend API endpoints or Caddy plugins")
+		result.AddWarning("Lambda@Edge associations detected. Generated CDN preserves routing and emits an app-change report for edge code.")
 	}
 
 	// Handle logging
 	if m.hasLogging(res) {
-		result.AddWarning("CloudFront logging detected. Configure Caddy access logs.")
-		logConfig := m.generateLogConfig(res)
-		result.AddConfig("config/caddy/log-config.txt", []byte(logConfig))
+		result.AddWarning("CloudFront logging mapped to Caddy JSON access logs.")
 	}
-
-	result.AddManualStep("Review and test all cache policies and behaviors")
-	result.AddManualStep("Configure monitoring and alerting for Caddy")
-	result.AddManualStep("Test SSL/TLS configuration and HTTP/3 support")
-	result.AddManualStep("Benchmark performance and adjust cache settings as needed")
 
 	// Add warning about CloudFront edge locations
 	result.AddWarning("CloudFront edge locations provide global CDN. Consider using external CDN (Cloudflare, Fastly) or multi-region Caddy deployment for global reach.")
+	for _, step := range cloudFrontRunbook(distributionID) {
+		result.AddRunbookStep(step)
+	}
 	for _, step := range netrunbook.Edge(distributionID, "aws_cloudfront_distribution") {
 		result.AddRunbookStep(step)
 	}
@@ -160,15 +173,19 @@ func (m *CloudFrontMapper) Map(ctx context.Context, res *resource.AWSResource) (
 
 // generateCaddyfile creates the Caddy configuration file.
 func (m *CloudFrontMapper) generateCaddyfile(res *resource.AWSResource) string {
-	config := `# Caddyfile - Generated from AWS CloudFront Distribution
+	hosts := m.extractCustomDomains(res)
+	site := ":80, :443"
+	if len(hosts) > 0 {
+		site = strings.Join(hosts, ", ")
+	}
+
+	return fmt.Sprintf(`# Caddyfile - Generated from AWS CloudFront Distribution
 # See: https://caddyserver.com/docs/caddyfile
 
 {
-	# Global options
 	admin 0.0.0.0:2019
 	auto_https on
 
-	# Enable HTTP/3
 	servers {
 		protocol {
 			experimental_http3
@@ -176,213 +193,58 @@ func (m *CloudFrontMapper) generateCaddyfile(res *resource.AWSResource) string {
 	}
 }
 
-# Default site configuration
-# Replace 'localhost' with your actual domain
-:80, :443 {
-	# Enable compression
+%s {
 	encode gzip zstd
 
-	# Security headers
 	header {
-		# Enable HSTS
 		Strict-Transport-Security "max-age=31536000; includeSubDomains; preload"
-		# Prevent clickjacking
 		X-Frame-Options "SAMEORIGIN"
-		# Prevent MIME sniffing
 		X-Content-Type-Options "nosniff"
-		# Enable XSS protection
 		X-XSS-Protection "1; mode=block"
-		# Remove server header
 		-Server
 	}
 
-	# Health check endpoint
 	handle /health {
 		respond "OK" 200
 	}
 
-	# Static file serving
 	handle /static/* {
 		root * /srv
 		file_server
-
-		# Cache static assets
 		header Cache-Control "public, max-age=31536000, immutable"
 	}
 
-	# Reverse proxy to backend origin
-	# TODO: Configure your backend origin
-	reverse_proxy /* {
-		to http://backend:8080
-
-		# Health checks
+	reverse_proxy varnish:6081 {
 		health_uri /health
 		health_interval 10s
 		health_timeout 5s
-
-		# Load balancing
-		lb_policy round_robin
-
-		# Retry failed requests
 		lb_try_duration 5s
 		lb_try_interval 250ms
-
-		# Headers
-		header_up Host {upstream_hostport}
 		header_up X-Real-IP {remote_host}
 		header_up X-Forwarded-For {remote_host}
 		header_up X-Forwarded-Proto {scheme}
 	}
 
-	# Logging
 	log {
 		output file /var/log/caddy/access.log
 		format json
 		level INFO
 	}
 }
-
-# Additional domain configurations
-# Uncomment and configure as needed
-# example.com {
-#     reverse_proxy backend:8080
-# }
-`
-
-	return config
-}
-
-// generateNginxConfig creates an alternative nginx configuration.
-func (m *CloudFrontMapper) generateNginxConfig(res *resource.AWSResource) string {
-	config := `# nginx.conf - Alternative to Caddy
-# Generated from AWS CloudFront Distribution
-
-user nginx;
-worker_processes auto;
-error_log /var/log/nginx/error.log warn;
-pid /var/run/nginx.pid;
-
-events {
-    worker_connections 1024;
-    use epoll;
-}
-
-http {
-    include /etc/nginx/mime.types;
-    default_type application/octet-stream;
-
-    # Logging
-    log_format main '$remote_addr - $remote_user [$time_local] "$request" '
-                    '$status $body_bytes_sent "$http_referer" '
-                    '"$http_user_agent" "$http_x_forwarded_for"';
-    access_log /var/log/nginx/access.log main;
-
-    # Performance
-    sendfile on;
-    tcp_nopush on;
-    tcp_nodelay on;
-    keepalive_timeout 65;
-    types_hash_max_size 2048;
-
-    # Compression
-    gzip on;
-    gzip_vary on;
-    gzip_proxied any;
-    gzip_comp_level 6;
-    gzip_types text/plain text/css text/xml text/javascript
-               application/json application/javascript application/xml+rss
-               application/rss+xml font/truetype font/opentype
-               application/vnd.ms-fontobject image/svg+xml;
-
-    # Cache configuration
-    proxy_cache_path /var/cache/nginx levels=1:2 keys_zone=cdn_cache:10m
-                     max_size=1g inactive=60m use_temp_path=off;
-
-    # Rate limiting
-    limit_req_zone $binary_remote_addr zone=api_limit:10m rate=10r/s;
-
-    # Default server
-    server {
-        listen 80 default_server;
-        listen [::]:80 default_server;
-        server_name _;
-
-        # Security headers
-        add_header Strict-Transport-Security "max-age=31536000; includeSubDomains" always;
-        add_header X-Frame-Options "SAMEORIGIN" always;
-        add_header X-Content-Type-Options "nosniff" always;
-        add_header X-XSS-Protection "1; mode=block" always;
-
-        # Health check
-        location /health {
-            access_log off;
-            return 200 "OK\n";
-            add_header Content-Type text/plain;
-        }
-
-        # Static files
-        location /static/ {
-            alias /usr/share/nginx/html/;
-            expires 1y;
-            add_header Cache-Control "public, immutable";
-        }
-
-        # Reverse proxy to backend
-        location / {
-            proxy_pass http://backend:8080;
-            proxy_set_header Host $host;
-            proxy_set_header X-Real-IP $remote_addr;
-            proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
-            proxy_set_header X-Forwarded-Proto $scheme;
-
-            # Caching
-            proxy_cache cdn_cache;
-            proxy_cache_valid 200 60m;
-            proxy_cache_use_stale error timeout updating http_500 http_502 http_503 http_504;
-            add_header X-Cache-Status $upstream_cache_status;
-        }
-    }
-}
-`
-
-	return config
+`, site)
 }
 
 // generateCacheConfig creates cache configuration documentation.
 func (m *CloudFrontMapper) generateCacheConfig(res *resource.AWSResource) string {
-	config := `# CloudFront Cache Behavior Mapping
-
-CloudFront cache behaviors need to be mapped to Caddy cache directives.
-
-## Caddy Cache Plugin
-Install the cache plugin: https://github.com/caddyserver/cache-handler
-
-Example configuration:
-{
-    order cache before rewrite
-    cache {
-        ttl 1h
-        default_max_age 3600
-    }
-}
-
-## Cache Policies
-1. Review CloudFront cache policies (TTL, headers, query strings)
-2. Configure equivalent Caddy cache directives
-3. Test cache hit rates and adjust as needed
-
-## Cache Invalidation
-- CloudFront: CreateInvalidation API
-- Caddy: Use cache purge plugin or restart service
-
-## TODO:
-- [ ] Map CloudFront cache behaviors to Caddy cache rules
-- [ ] Configure cache TTLs
-- [ ] Set up cache headers
-- [ ] Implement cache invalidation strategy
-`
-
-	return config
+	var b strings.Builder
+	b.WriteString("# CloudFront Cache Behavior Mapping\n\n")
+	b.WriteString("HomePort maps CloudFront cache behavior to Varnish VCL in `config/varnish/default.vcl`.\n\n")
+	b.WriteString("| Path | Origin | TTL seconds |\n")
+	b.WriteString("| --- | --- | --- |\n")
+	for _, behavior := range m.cacheBehaviors(res) {
+		b.WriteString(fmt.Sprintf("| `%s` | `%s` | `%d` |\n", behavior.pathPattern, behavior.targetOriginID, behavior.ttlSeconds))
+	}
+	return b.String()
 }
 
 // generateLogConfig creates logging configuration documentation.
@@ -430,9 +292,113 @@ Consider shipping logs to:
 	return config
 }
 
+func (m *CloudFrontMapper) generateVarnishConfig(res *resource.AWSResource) string {
+	origins := m.originConfigs(res)
+	if len(origins) == 0 {
+		origins = []cloudFrontOrigin{{id: "default", domain: "backend", port: 8080}}
+	}
+
+	var b strings.Builder
+	b.WriteString("vcl 4.1;\n\n")
+	for _, origin := range origins {
+		b.WriteString(fmt.Sprintf("backend %s_origin {\n", sanitizeCloudFrontName(origin.id)))
+		b.WriteString(fmt.Sprintf("    .host = \"%s\";\n", origin.domain))
+		b.WriteString(fmt.Sprintf("    .port = \"%d\";\n", origin.port))
+		b.WriteString("    .connect_timeout = 5s;\n")
+		b.WriteString("    .first_byte_timeout = 30s;\n")
+		b.WriteString("    .between_bytes_timeout = 10s;\n")
+		b.WriteString("}\n\n")
+	}
+
+	defaultOrigin := m.defaultOriginID(res, origins[0].id)
+	b.WriteString("sub vcl_recv {\n")
+	b.WriteString("    if (req.url == \"/health\") {\n")
+	b.WriteString("        return (synth(200, \"OK\"));\n")
+	b.WriteString("    }\n")
+	for _, behavior := range m.cacheBehaviors(res) {
+		if behavior.pathPattern == "*" || behavior.pathPattern == "/*" {
+			continue
+		}
+		prefix := strings.TrimSuffix(strings.TrimSuffix(behavior.pathPattern, "*"), "/")
+		if prefix == "" {
+			continue
+		}
+		b.WriteString(fmt.Sprintf("    if (req.url ~ \"^%s\") {\n", prefix))
+		b.WriteString(fmt.Sprintf("        set req.backend_hint = %s_origin;\n", sanitizeCloudFrontName(behavior.targetOriginID)))
+		b.WriteString("        return (hash);\n")
+		b.WriteString("    }\n")
+	}
+	b.WriteString(fmt.Sprintf("    set req.backend_hint = %s_origin;\n", sanitizeCloudFrontName(defaultOrigin)))
+	b.WriteString("    return (hash);\n")
+	b.WriteString("}\n\n")
+
+	b.WriteString("sub vcl_backend_response {\n")
+	for _, behavior := range m.cacheBehaviors(res) {
+		if behavior.pathPattern == "*" || behavior.pathPattern == "/*" {
+			continue
+		}
+		prefix := strings.TrimSuffix(strings.TrimSuffix(behavior.pathPattern, "*"), "/")
+		if prefix == "" {
+			continue
+		}
+		b.WriteString(fmt.Sprintf("    if (bereq.url ~ \"^%s\") {\n", prefix))
+		b.WriteString(fmt.Sprintf("        set beresp.ttl = %ds;\n", behavior.ttlSeconds))
+		b.WriteString("        return (deliver);\n")
+		b.WriteString("    }\n")
+	}
+	defaultTTL := 300
+	if behaviors := m.cacheBehaviors(res); len(behaviors) > 0 {
+		defaultTTL = behaviors[0].ttlSeconds
+	}
+	b.WriteString(fmt.Sprintf("    set beresp.ttl = %ds;\n", defaultTTL))
+	b.WriteString("    return (deliver);\n")
+	b.WriteString("}\n\n")
+	b.WriteString("sub vcl_synth {\n")
+	b.WriteString("    set resp.http.Content-Type = \"text/plain\";\n")
+	b.WriteString("    return (deliver);\n")
+	b.WriteString("}\n")
+	return b.String()
+}
+
+func (m *CloudFrontMapper) generateDNSCutoverEnv(res *resource.AWSResource, distributionID string) string {
+	domains := m.extractCustomDomains(res)
+	if len(domains) == 0 {
+		domains = []string{res.Name}
+	}
+	return fmt.Sprintf("SOURCE_DISTRIBUTION_ID=%s\nSOURCE_DISTRIBUTION_DOMAIN=%s\nTARGET_CDN_ENDPOINT=${HOMEPORT_CDN_ENDPOINT:-127.0.0.1}\nCUTOVER_HOSTS=%s\nROLLBACK_HOST=%s\n", distributionID, res.GetConfigString("domain_name"), strings.Join(domains, ","), res.GetConfigString("domain_name"))
+}
+
+func (m *CloudFrontMapper) generateValidationScript(res *resource.AWSResource) string {
+	domains := m.extractCustomDomains(res)
+	if len(domains) == 0 {
+		domains = []string{"localhost"}
+	}
+	var b strings.Builder
+	b.WriteString("#!/bin/sh\nset -eu\n")
+	b.WriteString("endpoint=\"${HOMEPORT_CDN_ENDPOINT:-127.0.0.1}\"\n")
+	for _, domain := range domains {
+		b.WriteString(fmt.Sprintf("curl -fsS -H 'Host: %s' \"http://$endpoint/health\" >/dev/null\n", domain))
+	}
+	b.WriteString("echo cloudfront-cdn-validation-ok\n")
+	return b.String()
+}
+
+func (m *CloudFrontMapper) generateBackupScript(distributionID string) string {
+	return fmt.Sprintf(`#!/bin/sh
+set -eu
+archive="${BACKUP_DIR:-./backups}/%s-cdn-$(date +%%Y%%m%%d%%H%%M%%S).tgz"
+mkdir -p "$(dirname "$archive")"
+tar -czf "$archive" config/caddy config/varnish config/cloudfront
+echo "$archive"
+`, sanitizeCloudFrontName(distributionID))
+}
+
 // hasOrigins checks if the CloudFront distribution has origins configured.
 func (m *CloudFrontMapper) hasOrigins(res *resource.AWSResource) bool {
 	if origins := res.Config["origin"]; origins != nil {
+		return true
+	}
+	if origins := res.Config["origins"]; origins != nil {
 		return true
 	}
 	return false
@@ -451,6 +417,11 @@ func (m *CloudFrontMapper) extractOrigins(res *resource.AWSResource) []string {
 					}
 				}
 			}
+		}
+	}
+	for _, origin := range m.originConfigs(res) {
+		if origin.domain != "" && !containsString(origins, origin.domain) {
+			origins = append(origins, origin.domain)
 		}
 	}
 
@@ -529,6 +500,233 @@ func (m *CloudFrontMapper) hasLambdaEdge(res *resource.AWSResource) bool {
 func (m *CloudFrontMapper) hasLogging(res *resource.AWSResource) bool {
 	if logging := res.Config["logging_config"]; logging != nil {
 		return true
+	}
+	return false
+}
+
+type cloudFrontOrigin struct {
+	id     string
+	domain string
+	port   int
+}
+
+type cloudFrontBehavior struct {
+	pathPattern    string
+	targetOriginID string
+	ttlSeconds     int
+}
+
+func (m *CloudFrontMapper) originConfigs(res *resource.AWSResource) []cloudFrontOrigin {
+	var origins []cloudFrontOrigin
+	add := func(raw map[string]interface{}) {
+		id := stringFromAny(raw["id"])
+		if id == "" {
+			id = stringFromAny(raw["origin_id"])
+		}
+		domain := stringFromAny(raw["domain_name"])
+		if domain == "" {
+			return
+		}
+		if id == "" {
+			id = domain
+		}
+		port := intFromAny(raw["http_port"], 8080)
+		if port == 8080 && stringFromAny(raw["origin_protocol_policy"]) == "https-only" {
+			port = intFromAny(raw["https_port"], 443)
+		}
+		origins = append(origins, cloudFrontOrigin{id: id, domain: domain, port: port})
+	}
+	for _, raw := range mapSlice(res.Config["origins"]) {
+		add(raw)
+	}
+	for _, raw := range mapSlice(res.Config["origin"]) {
+		add(raw)
+	}
+	return origins
+}
+
+func (m *CloudFrontMapper) cacheBehaviors(res *resource.AWSResource) []cloudFrontBehavior {
+	defaultOrigin := m.defaultOriginID(res, "default")
+	behaviors := []cloudFrontBehavior{{
+		pathPattern:    "*",
+		targetOriginID: defaultOrigin,
+		ttlSeconds:     ttlFromMap(asMap(res.Config["default_cache_behavior"]), 300),
+	}}
+	for _, raw := range mapSlice(res.Config["ordered_cache_behavior"]) {
+		target := stringFromAny(raw["target_origin_id"])
+		if target == "" {
+			target = defaultOrigin
+		}
+		behaviors = append(behaviors, cloudFrontBehavior{
+			pathPattern:    defaultString(stringFromAny(raw["path_pattern"]), "*"),
+			targetOriginID: target,
+			ttlSeconds:     ttlFromMap(raw, 300),
+		})
+	}
+	return behaviors
+}
+
+func (m *CloudFrontMapper) defaultOriginID(res *resource.AWSResource, fallback string) string {
+	if behavior := asMap(res.Config["default_cache_behavior"]); behavior != nil {
+		if target := stringFromAny(behavior["target_origin_id"]); target != "" {
+			return target
+		}
+	}
+	return fallback
+}
+
+func cloudFrontRunbook(distributionID string) []domainrunbook.Step {
+	return []domainrunbook.Step{
+		{
+			ID:               "render-cloudfront-cdn-config",
+			Name:             "Render CloudFront CDN configuration",
+			Type:             domainrunbook.StepTypeCommand,
+			Status:           domainrunbook.StepStatusPending,
+			Executor:         "docker compose config",
+			Command:          []string{"docker", "compose", "config"},
+			SuccessCondition: "Compose renders Caddy and Varnish services",
+			Metadata:         map[string]string{"source": distributionID},
+		},
+		{
+			ID:               "provision-caddy-varnish-cdn",
+			Name:             "Provision Caddy and Varnish CDN",
+			Type:             domainrunbook.StepTypeCommand,
+			Status:           domainrunbook.StepStatusPending,
+			Executor:         "docker compose up",
+			Command:          []string{"docker", "compose", "up", "-d", "caddy", "varnish"},
+			SuccessCondition: "Caddy and Varnish containers are healthy",
+			Metadata:         map[string]string{"target": "caddy-varnish"},
+		},
+		{
+			ID:               "validate-cdn-cache-routing",
+			Name:             "Validate CDN cache routing",
+			Type:             domainrunbook.StepTypeHealth,
+			Status:           domainrunbook.StepStatusPending,
+			Executor:         "sh",
+			Command:          []string{"sh", "config/cloudfront/validation.sh"},
+			SuccessCondition: "Validation script returns cloudfront-cdn-validation-ok",
+		},
+		{
+			ID:               "backup-cloudfront-config",
+			Name:             "Backup generated CDN configuration",
+			Type:             domainrunbook.StepTypeCommand,
+			Status:           domainrunbook.StepStatusPending,
+			Executor:         "sh",
+			Command:          []string{"sh", "backup_cloudfront_config.sh"},
+			SuccessCondition: "Backup archive path is printed",
+		},
+		{
+			ID:               "cutover-cloudfront-dns",
+			Name:             "Cut over DNS to HomePort CDN endpoint",
+			Type:             domainrunbook.StepTypeDNSCheck,
+			Status:           domainrunbook.StepStatusPending,
+			Executor:         "env",
+			Command:          []string{"sh", "-c", ". config/cloudfront/dns-cutover.env && printf '%s\n' \"$CUTOVER_HOSTS\""},
+			SuccessCondition: "CUTOVER_HOSTS resolves to TARGET_CDN_ENDPOINT",
+		},
+		{
+			ID:               "rollback-cloudfront-dns",
+			Name:             "Rollback DNS to CloudFront",
+			Type:             domainrunbook.StepTypeRollback,
+			Status:           domainrunbook.StepStatusPending,
+			Executor:         "env",
+			Command:          []string{"sh", "-c", ". config/cloudfront/dns-cutover.env && printf '%s\n' \"$ROLLBACK_HOST\""},
+			SuccessCondition: "Aliases point back to the CloudFront distribution domain",
+		},
+	}
+}
+
+func mapSlice(value interface{}) []map[string]interface{} {
+	switch typed := value.(type) {
+	case []interface{}:
+		var out []map[string]interface{}
+		for _, item := range typed {
+			if m, ok := item.(map[string]interface{}); ok {
+				out = append(out, m)
+			}
+		}
+		return out
+	case []map[string]interface{}:
+		return typed
+	case map[string]interface{}:
+		return []map[string]interface{}{typed}
+	default:
+		return nil
+	}
+}
+
+func asMap(value interface{}) map[string]interface{} {
+	if typed, ok := value.(map[string]interface{}); ok {
+		return typed
+	}
+	return nil
+}
+
+func ttlFromMap(values map[string]interface{}, fallback int) int {
+	for _, key := range []string{"default_ttl", "max_ttl", "min_ttl"} {
+		if ttl := intFromAny(values[key], 0); ttl > 0 {
+			return ttl
+		}
+	}
+	return fallback
+}
+
+func stringFromAny(value interface{}) string {
+	if value == nil {
+		return ""
+	}
+	if s, ok := value.(string); ok {
+		return s
+	}
+	return fmt.Sprintf("%v", value)
+}
+
+func intFromAny(value interface{}, fallback int) int {
+	switch typed := value.(type) {
+	case int:
+		return typed
+	case int32:
+		return int(typed)
+	case int64:
+		return int(typed)
+	case float64:
+		return int(typed)
+	default:
+		return fallback
+	}
+}
+
+func defaultString(value, fallback string) string {
+	if value == "" {
+		return fallback
+	}
+	return value
+}
+
+func sanitizeCloudFrontName(value string) string {
+	value = strings.ToLower(value)
+	var b strings.Builder
+	for _, r := range value {
+		if (r >= 'a' && r <= 'z') || (r >= '0' && r <= '9') {
+			b.WriteRune(r)
+			continue
+		}
+		if b.Len() > 0 {
+			b.WriteByte('_')
+		}
+	}
+	out := strings.Trim(b.String(), "_")
+	if out == "" {
+		return "default"
+	}
+	return out
+}
+
+func containsString(values []string, needle string) bool {
+	for _, value := range values {
+		if value == needle {
+			return true
+		}
 	}
 	return false
 }
