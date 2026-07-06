@@ -2,11 +2,61 @@ package database
 
 import (
 	"context"
+	"strings"
 	"testing"
 
 	"github.com/homeport/homeport/internal/domain/mapper"
 	"github.com/homeport/homeport/internal/domain/resource"
+	domainrunbook "github.com/homeport/homeport/internal/domain/runbook"
 )
+
+func TestRDSConformanceManagedAToZ(t *testing.T) {
+	result, err := NewRDSMapper().Map(context.Background(), managedRDSFixture())
+	if err != nil {
+		t.Fatal(err)
+	}
+	if len(result.ManualSteps) != 0 {
+		t.Fatalf("manual steps = %#v, want generated RDS migration", result.ManualSteps)
+	}
+	if result.DockerService.Deploy == nil || result.DockerService.Deploy.Replicas < 2 {
+		t.Fatalf("service does not provision HA SQL target: %#v", result.DockerService)
+	}
+	for _, file := range []string{"config/postgres/postgresql.conf", "config/sql/app-change.env", "config/sql/credentials.env", "config/sql/replication.env"} {
+		if _, ok := result.Configs[file]; !ok {
+			t.Fatalf("missing config %s", file)
+		}
+	}
+	appEnv := string(result.Configs["config/sql/app-change.env"])
+	for _, want := range []string{"SOURCE_DATABASE=orders", "DATABASE_HOST=postgres", "APP_CHANGE_MODE=generated_patch"} {
+		if !strings.Contains(appEnv, want) {
+			t.Fatalf("app-change env missing %q:\n%s", want, appEnv)
+		}
+	}
+	for _, file := range []string{"migrate_database.sh", "validate_database.sh", "backup_database.sh", "cutover_database.sh"} {
+		if _, ok := result.Scripts[file]; !ok {
+			t.Fatalf("missing script %s", file)
+		}
+	}
+	for _, step := range result.RunbookSteps {
+		if step.Type == domainrunbook.StepTypeInput {
+			t.Fatalf("runbook has input step %s: %#v", step.ID, result.RunbookSteps)
+		}
+	}
+	for id, stepType := range map[string]domainrunbook.StepType{
+		"generate-sql-credentials":       domainrunbook.StepTypeCommand,
+		"validate-sql-source":            domainrunbook.StepTypeCommand,
+		"dump-restore-sql":               domainrunbook.StepTypeCommand,
+		"configure-live-sql-replication": domainrunbook.StepTypeCommand,
+		"validate-sql-migration":         domainrunbook.StepTypeCommand,
+		"backup-sql-target":              domainrunbook.StepTypeCommand,
+		"validate-app-sql-connection":    domainrunbook.StepTypeCommand,
+		"rollback-sql-source-authority":  domainrunbook.StepTypeRollback,
+	} {
+		if !hasRDSRunbookStep(result, id, stepType) {
+			t.Fatalf("missing %s runbook step: %#v", id, result.RunbookSteps)
+		}
+	}
+}
 
 func TestNewRDSMapper(t *testing.T) {
 	m := NewRDSMapper()
@@ -16,6 +66,33 @@ func TestNewRDSMapper(t *testing.T) {
 	if m.ResourceType() != resource.TypeRDSInstance {
 		t.Errorf("ResourceType() = %v, want %v", m.ResourceType(), resource.TypeRDSInstance)
 	}
+}
+
+func managedRDSFixture() *resource.AWSResource {
+	return &resource.AWSResource{
+		ID:   "orders-db",
+		Type: resource.TypeRDSInstance,
+		Name: "orders",
+		Config: map[string]interface{}{
+			"identifier":              "orders-db",
+			"db_name":                 "orders",
+			"engine":                  "postgres",
+			"engine_version":          "15.4",
+			"allocated_storage":       float64(100),
+			"backup_retention_period": float64(7),
+			"multi_az":                true,
+			"storage_encrypted":       true,
+		},
+	}
+}
+
+func hasRDSRunbookStep(result *mapper.MappingResult, id string, stepType domainrunbook.StepType) bool {
+	for _, step := range result.RunbookSteps {
+		if step.ID == id && step.Type == stepType {
+			return true
+		}
+	}
+	return false
 }
 
 func TestRDSMapper_ResourceType(t *testing.T) {

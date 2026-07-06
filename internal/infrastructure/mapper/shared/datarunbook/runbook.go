@@ -20,12 +20,13 @@ func SQL(engine, database, script string) []domainrunbook.Step {
 		metadata["DATABASE_URL"] = "sqlserver://sa:YourStrong@Passw0rd@mssql:1433?database=" + database
 	}
 	return []domainrunbook.Step{
-		input("collect-sql-credentials", "Collect SQL credentials", "Credentials", "source and target credentials provided", metadata),
-		command("validate-sql-source", "Validate source SQL connection", "Credentials", []string{"sh", "-c", "echo validate source SQL credentials"}, "source connection succeeds", metadata),
+		command("generate-sql-credentials", "Generate SQL credential config", "Credentials", []string{"sh", "-c", "test -s config/sql/credentials.env && test -s config/sql/app-change.env"}, "source and target credential config exists", metadata),
+		command("validate-sql-source", "Validate source SQL connection", "Credentials", []string{"sh", "validate_database.sh"}, "source and target connections are validated", metadata),
 		command("dump-restore-sql", "Dump and restore small database", "Sync", []string{"sh", script}, "dump and restore completed", metadata),
-		input("configure-live-sql-replication", "Configure live SQL replication", "Sync", "replication configured when supported or consciously skipped", metadata),
-		command("validate-sql-migration", "Validate SQL migration", "Validate", []string{"sh", "-c", "echo validate schemas tables rows sequences extensions checksums"}, "schema count, table count, row counts, sequences, extensions, and sampled checksums match", metadata),
-		command("validate-app-sql-connection", "Validate app SQL connection", "Cutover", []string{"sh", "-c", "echo validate application container database connection"}, "application container can connect before cutover", metadata),
+		command("configure-live-sql-replication", "Configure live SQL replication", "Sync", []string{"sh", "-c", "test -s config/sql/replication.env"}, "replication configuration is generated for supported engines", metadata),
+		command("validate-sql-migration", "Validate SQL migration", "Validate", []string{"sh", "validate_database.sh"}, "schema count, table count, row counts, sequences, extensions, and sampled checksums match", metadata),
+		command("backup-sql-target", "Backup SQL target", "Backup", []string{"sh", "backup_database.sh"}, "target database backup archive is created", metadata),
+		command("validate-app-sql-connection", "Validate app SQL connection", "Cutover", []string{"sh", "cutover_database.sh"}, "application database endpoint config is ready before cutover", metadata),
 		rollback("rollback-sql-source-authority", "Keep source SQL database authoritative", metadata),
 	}
 }

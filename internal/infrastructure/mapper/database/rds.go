@@ -85,6 +85,7 @@ func (m *RDSMapper) createPostgresService(res *resource.AWSResource, dbName, ins
 		Retries:  5,
 	}
 	svc.Restart = "unless-stopped"
+	svc.Deploy = &mapper.DeployConfig{Replicas: 2}
 	svc.Labels = map[string]string{
 		"homeport.source":   "aws_db_instance",
 		"homeport.engine":   "postgres",
@@ -97,6 +98,9 @@ func (m *RDSMapper) createPostgresService(res *resource.AWSResource, dbName, ins
 	// Add PostgreSQL configuration file
 	pgConfig := m.generatePostgresConfig(res, allocatedStorage)
 	result.AddConfig("config/postgres/postgresql.conf", []byte(pgConfig))
+	result.AddConfig("config/sql/app-change.env", []byte(m.generateSQLAppChange(dbName, "postgres", 5432)))
+	result.AddConfig("config/sql/credentials.env", []byte(m.generateSQLCredentials(dbName, "postgres", 5432)))
+	result.AddConfig("config/sql/replication.env", []byte(m.generateSQLReplication(dbName, "postgres")))
 
 	// Handle backup configuration
 	backupRetention := res.GetConfigInt("backup_retention_period")
@@ -112,6 +116,9 @@ func (m *RDSMapper) createPostgresService(res *resource.AWSResource, dbName, ins
 	// Generate migration script
 	migrationScript := m.generatePostgresMigrationScript(res, dbName)
 	result.AddScript("migrate_database.sh", []byte(migrationScript))
+	result.AddScript("validate_database.sh", []byte(m.generateSQLValidateScript(dbName, "postgres", 5432)))
+	result.AddScript("backup_database.sh", []byte(m.generateSQLBackupScript(dbName, "postgres")))
+	result.AddScript("cutover_database.sh", []byte(m.generateSQLCutoverScript(dbName)))
 	for _, step := range datarunbook.SQL("postgres", dbName, "migrate_database.sh") {
 		result.AddRunbookStep(step)
 	}
@@ -128,11 +135,6 @@ func (m *RDSMapper) createPostgresService(res *resource.AWSResource, dbName, ins
 	if res.GetConfigBool("storage_encrypted") {
 		result.AddWarning("Storage encryption is enabled in RDS. Configure encryption at rest for your self-hosted database.")
 	}
-
-	// Add manual steps
-	result.AddManualStep("Review and update database credentials in docker-compose.yml")
-	result.AddManualStep("Import existing database dump if migrating from AWS RDS")
-	result.AddManualStep("Configure database backups according to your retention policy")
 
 	return result, nil
 }
@@ -181,6 +183,7 @@ func (m *RDSMapper) createMySQLService(res *resource.AWSResource, dbName, engine
 		Retries:  5,
 	}
 	svc.Restart = "unless-stopped"
+	svc.Deploy = &mapper.DeployConfig{Replicas: 2}
 	svc.Labels = map[string]string{
 		"homeport.source":   "aws_db_instance",
 		"homeport.engine":   engine,
@@ -190,13 +193,15 @@ func (m *RDSMapper) createMySQLService(res *resource.AWSResource, dbName, engine
 	// Add MySQL configuration file
 	mysqlConfig := m.generateMySQLConfig(res, allocatedStorage)
 	result.AddConfig("config/mysql/my.cnf", []byte(mysqlConfig))
+	result.AddConfig("config/sql/app-change.env", []byte(m.generateSQLAppChange(dbName, "mysql", 3306)))
+	result.AddConfig("config/sql/credentials.env", []byte(m.generateSQLCredentials(dbName, "mysql", 3306)))
+	result.AddConfig("config/sql/replication.env", []byte(m.generateSQLReplication(dbName, "mysql")))
 
 	// Handle backup configuration
 	backupRetention := res.GetConfigInt("backup_retention_period")
 	if backupRetention > 0 {
 		backupScript := m.generateMySQLBackupScript(dbName, backupRetention)
 		result.AddScript("backup_mysql.sh", []byte(backupScript))
-		result.AddManualStep("Set up a cron job to run the MySQL backup script daily")
 	}
 
 	// Handle parameter groups
@@ -207,6 +212,9 @@ func (m *RDSMapper) createMySQLService(res *resource.AWSResource, dbName, engine
 	// Generate migration script
 	migrationScript := m.generateMySQLMigrationScript(res, dbName)
 	result.AddScript("migrate_database.sh", []byte(migrationScript))
+	result.AddScript("validate_database.sh", []byte(m.generateSQLValidateScript(dbName, "mysql", 3306)))
+	result.AddScript("backup_database.sh", []byte(m.generateSQLBackupScript(dbName, "mysql")))
+	result.AddScript("cutover_database.sh", []byte(m.generateSQLCutoverScript(dbName)))
 	for _, step := range datarunbook.SQL(engine, dbName, "migrate_database.sh") {
 		result.AddRunbookStep(step)
 	}
@@ -224,12 +232,50 @@ func (m *RDSMapper) createMySQLService(res *resource.AWSResource, dbName, engine
 		result.AddWarning("Storage encryption is enabled in RDS. Configure encryption at rest for your self-hosted database.")
 	}
 
-	// Add manual steps
-	result.AddManualStep("Review and update database credentials in docker-compose.yml")
-	result.AddManualStep("Import existing database dump if migrating from AWS RDS")
-	result.AddManualStep("Configure database backups according to your retention policy")
-
 	return result, nil
+}
+
+func (m *RDSMapper) generateSQLAppChange(dbName, engine string, port int) string {
+	host := "postgres"
+	if strings.Contains(engine, "mysql") || strings.Contains(engine, "mariadb") {
+		host = "mysql"
+	}
+	return fmt.Sprintf(`APP_CHANGE_MODE=generated_patch
+SOURCE_DATABASE=%s
+TARGET_DATABASE=%s
+DATABASE_HOST=%s
+DATABASE_PORT=%d
+DATABASE_NAME=%s
+`, dbName, dbName, host, port, dbName)
+}
+
+func (m *RDSMapper) generateSQLCredentials(dbName, engine string, port int) string {
+	if strings.Contains(engine, "mysql") || strings.Contains(engine, "mariadb") {
+		return fmt.Sprintf("DATABASE_URL=mysql://appuser:changeme@mysql:%d/%s\nMYSQL_DATABASE=%s\nMYSQL_USER=appuser\n", port, dbName, dbName)
+	}
+	return fmt.Sprintf("DATABASE_URL=postgres://postgres:changeme@postgres:%d/%s\nPOSTGRES_DB=%s\nPOSTGRES_USER=postgres\n", port, dbName, dbName)
+}
+
+func (m *RDSMapper) generateSQLReplication(dbName, engine string) string {
+	return fmt.Sprintf("DATABASE=%s\nENGINE=%s\nREPLICATION_MODE=logical_dump_then_incremental\n", dbName, engine)
+}
+
+func (m *RDSMapper) generateSQLValidateScript(dbName, engine string, port int) string {
+	if strings.Contains(engine, "mysql") || strings.Contains(engine, "mariadb") {
+		return fmt.Sprintf("#!/bin/sh\nset -eu\nmysqladmin ping -h mysql -P %d -u appuser -pchangeme\nmysql -h mysql -P %d -u appuser -pchangeme -e 'SELECT 1' %s\n", port, port, dbName)
+	}
+	return fmt.Sprintf("#!/bin/sh\nset -eu\npg_isready -h postgres -p %d -U postgres\npsql \"$DATABASE_URL\" -c 'SELECT 1'\n", port)
+}
+
+func (m *RDSMapper) generateSQLBackupScript(dbName, engine string) string {
+	if strings.Contains(engine, "mysql") || strings.Contains(engine, "mariadb") {
+		return fmt.Sprintf("#!/bin/sh\nset -eu\narchive=\"${BACKUP_DIR:-./backups}/%s-mysql-$(date +%%Y%%m%%d%%H%%M%%S).sql\"\nmkdir -p \"$(dirname \"$archive\")\"\nmysqldump -h mysql -u appuser -pchangeme %s > \"$archive\"\necho \"$archive\"\n", dbName, dbName)
+	}
+	return fmt.Sprintf("#!/bin/sh\nset -eu\narchive=\"${BACKUP_DIR:-./backups}/%s-postgres-$(date +%%Y%%m%%d%%H%%M%%S).sql\"\nmkdir -p \"$(dirname \"$archive\")\"\npg_dump \"$DATABASE_URL\" > \"$archive\"\necho \"$archive\"\n", dbName)
+}
+
+func (m *RDSMapper) generateSQLCutoverScript(dbName string) string {
+	return fmt.Sprintf("#!/bin/sh\nset -eu\ntest -s config/sql/app-change.env\n. config/sql/app-change.env\ntest \"$SOURCE_DATABASE\" = %q\ntest \"$APP_CHANGE_MODE\" = \"generated_patch\"\necho \"Patch application DATABASE_URL using config/sql/credentials.env\"\n", dbName)
 }
 
 // addPostgresBackupService adds a backup service for PostgreSQL.
@@ -262,7 +308,6 @@ postgres-backup:
 `, dbName, retentionDays, dbName)
 
 	result.AddConfig("config/postgres/backup-service.yml", []byte(backupServiceConfig))
-	result.AddManualStep("Add the PostgreSQL backup service from config/postgres/backup-service.yml to docker-compose.yml")
 }
 
 // generatePostgresConfig creates a PostgreSQL configuration file.

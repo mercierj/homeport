@@ -29,7 +29,7 @@
 | aws | Lambda | full | aws_lambda_function |
 | aws | MSK | full | aws_msk_cluster |
 | aws | OpenSearch | full | aws_opensearch_domain |
-| aws | RDS | mapped | aws_db_instance, aws_rds_cluster |
+| aws | RDS | full | aws_db_instance, aws_rds_cluster |
 | aws | Redshift | missing |  |
 | aws | Route 53 | mapped | aws_route53_zone |
 | aws | S3 | mapped | aws_s3_bucket |
