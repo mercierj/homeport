@@ -63,6 +63,7 @@ const (
 	TypeSecurityHubAccount        Type = "aws_securityhub_account"
 	TypeAWSConfigRule             Type = "aws_config_config_rule"
 	TypeOrganizationsOrganization Type = "aws_organizations_organization"
+	TypeControlTowerControl       Type = "aws_controltower_control"
 
 	// AWS Messaging
 	TypeSQSQueue    Type = "aws_sqs_queue"

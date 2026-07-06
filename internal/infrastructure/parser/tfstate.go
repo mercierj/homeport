@@ -228,6 +228,8 @@ func mapTerraformTypeToResourceType(tfType string) resource.Type {
 		return resource.TypeAWSConfigRule
 	case "aws_organizations_organization", "aws_organizations_account":
 		return resource.TypeOrganizationsOrganization
+	case "aws_controltower_control":
+		return resource.TypeControlTowerControl
 
 	// Messaging
 	case "aws_sqs_queue":

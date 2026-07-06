@@ -139,6 +139,7 @@ var CategoryMapping = map[Type]Category{
 	TypeSecurityHubAccount:        CategorySecurity,
 	TypeAWSConfigRule:             CategorySecurity,
 	TypeOrganizationsOrganization: CategorySecurity,
+	TypeControlTowerControl:       CategorySecurity,
 
 	// AWS Messaging
 	TypeSQSQueue:    CategoryQueue,

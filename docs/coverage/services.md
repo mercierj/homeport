@@ -53,7 +53,7 @@
 | aws | Security Hub | full | aws_securityhub_account |
 | aws | Config | full | aws_config_config_rule |
 | aws | Organizations | full | aws_organizations_organization |
-| aws | Control Tower | missing | aws_controltower_control |
+| aws | Control Tower | full | aws_controltower_control |
 | aws | Textract | missing | aws_textract_adapter |
 | aws | Transcribe | missing | aws_transcribe_vocabulary, aws_transcribe_language_model |
 | aws | Translate | missing |  |

@@ -535,6 +535,8 @@ func mapCFNTypeToResourceType(cfnType string) resource.Type {
 		"AWS::Config::ConfigurationRecorder":   resource.TypeAWSConfigRule,
 		"AWS::Organizations::Organization":     resource.TypeOrganizationsOrganization,
 		"AWS::Organizations::Account":          resource.TypeOrganizationsOrganization,
+		"AWS::ControlTower::EnabledControl":    resource.TypeControlTowerControl,
+		"AWS::ControlTower::LandingZone":       resource.TypeControlTowerControl,
 
 		// Messaging
 		"AWS::SQS::Queue":             resource.TypeSQSQueue,
