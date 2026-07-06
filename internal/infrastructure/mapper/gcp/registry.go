@@ -25,6 +25,7 @@ func RegisterAll(registry MapperRegistrar) {
 	registry.Register(compute.NewGKEMapper())
 	registry.Register(compute.NewAppEngineMapper())
 	registry.Register(compute.NewCloudSchedulerMapper())
+	registry.Register(compute.NewArtifactRegistryMapper())
 
 	// Database mappers
 	registry.Register(database.NewCloudSQLMapper())

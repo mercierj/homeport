@@ -317,9 +317,10 @@ func mapDMTypeToResourceType(dmType string) resource.Type {
 
 	mapping := map[string]resource.Type{
 		// Compute
-		"compute.v1.instance":         resource.TypeGCEInstance,
-		"compute.v1.instancetemplate": resource.TypeGCEInstance,
-		"compute.beta.instance":       resource.TypeGCEInstance,
+		"compute.v1.instance":            resource.TypeGCEInstance,
+		"compute.v1.instancetemplate":    resource.TypeGCEInstance,
+		"compute.beta.instance":          resource.TypeGCEInstance,
+		"artifactregistry.v1.repository": resource.TypeArtifactRegistryRepository,
 
 		// Storage
 		"storage.v1.bucket": resource.TypeGCSBucket,

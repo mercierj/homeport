@@ -302,11 +302,12 @@ func (p *TFStateParser) shouldIncludeResource(res *resource.Resource, opts *pars
 func mapGCPTerraformType(tfType string) resource.Type {
 	mapping := map[string]resource.Type{
 		// Compute
-		"google_compute_instance":        resource.TypeGCEInstance,
-		"google_cloud_run_service":       resource.TypeCloudRun,
-		"google_cloudfunctions_function": resource.TypeCloudFunction,
-		"google_container_cluster":       resource.TypeGKE,
-		"google_app_engine_application":  resource.TypeAppEngine,
+		"google_compute_instance":             resource.TypeGCEInstance,
+		"google_cloud_run_service":            resource.TypeCloudRun,
+		"google_cloudfunctions_function":      resource.TypeCloudFunction,
+		"google_container_cluster":            resource.TypeGKE,
+		"google_app_engine_application":       resource.TypeAppEngine,
+		"google_artifact_registry_repository": resource.TypeArtifactRegistryRepository,
 
 		// Storage
 		"google_storage_bucket":     resource.TypeGCSBucket,

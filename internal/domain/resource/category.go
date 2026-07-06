@@ -170,11 +170,12 @@ var CategoryMapping = map[Type]Category{
 	// ─────────────────────────────────────────────────────
 
 	// GCP Compute
-	TypeGCEInstance:   CategoryCompute,
-	TypeCloudRun:      CategoryContainer,
-	TypeCloudFunction: CategoryServerless,
-	TypeGKE:           CategoryKubernetes,
-	TypeAppEngine:     CategoryCompute,
+	TypeGCEInstance:                CategoryCompute,
+	TypeCloudRun:                   CategoryContainer,
+	TypeCloudFunction:              CategoryServerless,
+	TypeGKE:                        CategoryKubernetes,
+	TypeAppEngine:                  CategoryCompute,
+	TypeArtifactRegistryRepository: CategoryContainer,
 
 	// GCP Storage
 	TypeGCSBucket:      CategoryObjectStorage,

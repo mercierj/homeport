@@ -98,15 +98,16 @@ var ResourceMapping = map[resource.Type]StackType{
 	resource.TypeXRaySamplingRule:      StackTypeObservability, // Tracing consolidates
 
 	// ─────────────────────────────────────────────────────
-	// GCP Resource Types (26 types)
+	// GCP Resource Types (27 types)
 	// ─────────────────────────────────────────────────────
 
 	// GCP Compute (5 types) - Passthrough except serverless
-	resource.TypeGCEInstance:   StackTypePassthrough, // VMs stay individual
-	resource.TypeCloudRun:      StackTypePassthrough, // Container platform stays individual
-	resource.TypeCloudFunction: StackTypeCompute,     // Serverless consolidates
-	resource.TypeGKE:           StackTypePassthrough, // Kubernetes stays individual
-	resource.TypeAppEngine:     StackTypePassthrough, // App Engine stays individual
+	resource.TypeGCEInstance:                StackTypePassthrough, // VMs stay individual
+	resource.TypeCloudRun:                   StackTypePassthrough, // Container platform stays individual
+	resource.TypeCloudFunction:              StackTypeCompute,     // Serverless consolidates
+	resource.TypeGKE:                        StackTypePassthrough, // Kubernetes stays individual
+	resource.TypeAppEngine:                  StackTypePassthrough, // App Engine stays individual
+	resource.TypeArtifactRegistryRepository: StackTypePassthrough, // Registries remain individual infrastructure
 
 	// GCP Storage (3 types)
 	resource.TypeGCSBucket:      StackTypeStorage,     // Object storage consolidates

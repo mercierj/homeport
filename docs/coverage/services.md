@@ -61,7 +61,7 @@
 | aws | Comprehend | full | aws_comprehend_document_classifier |
 | gcp | Apigee | full | google_apigee_organization |
 | gcp | App Engine | full | google_app_engine_application |
-| gcp | Artifact Registry | missing |  |
+| gcp | Artifact Registry | full | google_artifact_registry_repository |
 | gcp | BigQuery | missing |  |
 | gcp | Bigtable | guided | google_bigtable_instance |
 | gcp | Cloud Armor | mapped | google_compute_security_policy |
