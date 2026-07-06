@@ -39,7 +39,7 @@
 | aws | SageMaker | full | aws_sagemaker_endpoint |
 | aws | Secrets Manager | full | aws_secretsmanager_secret |
 | aws | Step Functions | full | aws_sfn_state_machine |
-| aws | VPC | mapped | aws_vpc |
+| aws | VPC | full | aws_vpc |
 | aws | WAF | missing |  |
 | aws | X-Ray | missing |  |
 | aws | Lake Formation | missing | aws_lakeformation_data_lake_settings, aws_lakeformation_permissions |

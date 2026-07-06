@@ -2,11 +2,64 @@ package networking
 
 import (
 	"context"
+	"strings"
 	"testing"
 
 	"github.com/homeport/homeport/internal/domain/mapper"
 	"github.com/homeport/homeport/internal/domain/resource"
 )
+
+func TestVPCConformanceManagedAToZ(t *testing.T) {
+	result, err := NewVPCMapper().Map(context.Background(), &resource.AWSResource{
+		ID:   "vpc-12345678",
+		Type: resource.TypeVPC,
+		Name: "prod-vpc",
+		Config: map[string]interface{}{
+			"cidr_block":           "10.0.0.0/16",
+			"enable_dns_hostnames": true,
+			"subnet": []interface{}{
+				map[string]interface{}{"cidr_block": "10.0.1.0/24", "availability_zone": "eu-west-1a"},
+			},
+			"vpc_peering_connection": map[string]interface{}{"peer_vpc_id": "vpc-peer"},
+			"nat_gateway":            map[string]interface{}{"allocation_id": "eipalloc-1"},
+			"internet_gateway":       map[string]interface{}{"id": "igw-1"},
+			"security_group":         []interface{}{map[string]interface{}{"name": "web"}},
+			"network_acl":            []interface{}{map[string]interface{}{"id": "acl-1"}},
+			"vpn_gateway":            map[string]interface{}{"id": "vgw-1"},
+			"vpc_endpoint":           []interface{}{map[string]interface{}{"service_name": "com.amazonaws.eu-west-1.s3"}},
+			"dhcp_options":           map[string]interface{}{"domain_name_servers": []interface{}{"10.0.0.2"}},
+			"ipv6_cidr_block":        "2600:1f18::/56",
+			"flow_log":               map[string]interface{}{"traffic_type": "ALL"},
+		},
+	})
+	if err != nil {
+		t.Fatal(err)
+	}
+	if len(result.ManualSteps) != 0 {
+		t.Fatalf("manual steps = %#v, want generated VPC migration", result.ManualSteps)
+	}
+	for _, file := range []string{"docker-compose-networks.yml", "config/vpc/network-mapping.md", "config/vpc/subnets.yml", "config/vpc/app-change.env", "config/vpc/security-groups.md", "config/vpc/network-acls.md", "config/vpc/vpn-setup.md", "config/vpc/coredns-zonefile", "config/vpc/flow-logs.yml"} {
+		if _, ok := result.Configs[file]; !ok {
+			t.Fatalf("missing config %s", file)
+		}
+	}
+	appEnv := string(result.Configs["config/vpc/app-change.env"])
+	for _, want := range []string{"APP_CHANGE_MODE=generated_patch", "SOURCE_VPC=prod-vpc", "TARGET_NETWORK=prod-vpc", "CIDR_BLOCK=10.0.0.0/16"} {
+		if !strings.Contains(appEnv, want) {
+			t.Fatalf("app-change env missing %q:\n%s", want, appEnv)
+		}
+	}
+	for _, file := range []string{"create_vpc_networks.sh", "apply_vpc_firewall.sh", "validate_vpc_network.sh", "backup_vpc_config.sh", "cutover_vpc_attachments.sh"} {
+		if _, ok := result.Scripts[file]; !ok {
+			t.Fatalf("missing script %s", file)
+		}
+	}
+	for _, id := range []string{"render-network-config", "render-firewall-rules", "validate-network-flows", "rollback-network-source-authority"} {
+		if !hasVPCRunbookStep(result, id) {
+			t.Fatalf("missing runbook step %s: %#v", id, result.RunbookSteps)
+		}
+	}
+}
 
 func TestNewVPCMapper(t *testing.T) {
 	m := NewVPCMapper()
@@ -16,6 +69,15 @@ func TestNewVPCMapper(t *testing.T) {
 	if m.ResourceType() != resource.TypeVPC {
 		t.Errorf("ResourceType() = %v, want %v", m.ResourceType(), resource.TypeVPC)
 	}
+}
+
+func hasVPCRunbookStep(result *mapper.MappingResult, id string) bool {
+	for _, step := range result.RunbookSteps {
+		if step.ID == id {
+			return true
+		}
+	}
+	return false
 }
 
 func TestVPCMapper_ResourceType(t *testing.T) {

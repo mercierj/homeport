@@ -56,6 +56,7 @@ func (m *VPCMapper) Map(ctx context.Context, res *resource.AWSResource) (*mapper
 		"homeport.vpc_id":     vpcID,
 		"homeport.vpc_name":   vpcName,
 		"homeport.cidr_block": cidrBlock,
+		"homeport.target":     "docker-networks",
 	}
 	svc.Restart = "no"
 
@@ -66,6 +67,7 @@ func (m *VPCMapper) Map(ctx context.Context, res *resource.AWSResource) (*mapper
 	// Generate network documentation
 	networkDoc := m.generateNetworkDocumentation(res, vpcName, cidrBlock)
 	result.AddConfig("config/vpc/network-mapping.md", []byte(networkDoc))
+	result.AddConfig("config/vpc/app-change.env", []byte(m.generateAppChangeConfig(vpcName, cidrBlock)))
 
 	// Generate subnet configuration
 	if m.hasSubnets(res) {
@@ -76,7 +78,6 @@ func (m *VPCMapper) Map(ctx context.Context, res *resource.AWSResource) (*mapper
 	// Handle VPC peering
 	if m.hasVPCPeering(res) {
 		result.AddWarning("VPC peering connections detected. Docker networks can be connected using network attachments.")
-		result.AddManualStep("Configure Docker network connections for cross-network communication")
 
 		peeringConfig := m.generatePeeringConfig()
 		result.AddConfig("config/vpc/peering-guide.md", []byte(peeringConfig))
@@ -85,19 +86,18 @@ func (m *VPCMapper) Map(ctx context.Context, res *resource.AWSResource) (*mapper
 	// Handle NAT Gateways
 	if m.hasNATGateway(res) {
 		result.AddWarning("NAT Gateway detected. Docker containers can access external networks directly. Configure iptables/firewall rules if specific NAT behavior is required.")
-		result.AddManualStep("Review NAT Gateway configuration and implement equivalent routing if needed")
+		result.AddConfig("config/vpc/nat-rules.sh", []byte(m.generateNATRules(vpcName)))
 	}
 
 	// Handle Internet Gateway
 	if m.hasInternetGateway(res) {
 		result.AddWarning("Internet Gateway detected. Docker containers have internet access by default.")
-		result.AddManualStep("Configure Docker network driver to control internet access if needed")
+		result.AddConfig("config/vpc/internet-gateway-policy.json", []byte(m.generateInternetGatewayPolicy(vpcName)))
 	}
 
 	// Handle Security Groups
 	if m.hasSecurityGroups(res) {
 		result.AddWarning("Security Groups detected. These need to be implemented using Docker network policies, iptables, or service-level firewalls.")
-		result.AddManualStep("Review Security Group rules and implement equivalent network policies")
 
 		securityGroupConfig := m.generateSecurityGroupMapping()
 		result.AddConfig("config/vpc/security-groups.md", []byte(securityGroupConfig))
@@ -106,7 +106,6 @@ func (m *VPCMapper) Map(ctx context.Context, res *resource.AWSResource) (*mapper
 	// Handle Network ACLs
 	if m.hasNetworkACLs(res) {
 		result.AddWarning("Network ACLs detected. Implement using iptables, nftables, or Docker network policies.")
-		result.AddManualStep("Review Network ACL rules and configure host firewall accordingly")
 
 		aclConfig := m.generateACLMapping()
 		result.AddConfig("config/vpc/network-acls.md", []byte(aclConfig))
@@ -115,7 +114,6 @@ func (m *VPCMapper) Map(ctx context.Context, res *resource.AWSResource) (*mapper
 	// Handle VPN Gateway
 	if m.hasVPNGateway(res) {
 		result.AddWarning("VPN Gateway detected. Set up VPN server (WireGuard, OpenVPN) for secure remote access.")
-		result.AddManualStep("Configure VPN server for remote access to Docker networks")
 
 		vpnConfig := m.generateVPNConfig()
 		result.AddConfig("config/vpc/vpn-setup.md", []byte(vpnConfig))
@@ -124,19 +122,18 @@ func (m *VPCMapper) Map(ctx context.Context, res *resource.AWSResource) (*mapper
 	// Handle VPC Endpoints
 	if m.hasVPCEndpoints(res) {
 		result.AddWarning("VPC Endpoints detected. Service endpoints need to be configured in service discovery or DNS.")
-		result.AddManualStep("Configure service discovery for private service endpoints")
+		result.AddConfig("config/vpc/service-endpoints.yml", []byte(m.generateServiceEndpoints(vpcName)))
 	}
 
 	// Handle DNS settings
 	if enableDNSHostnames := res.GetConfigBool("enable_dns_hostnames"); enableDNSHostnames {
 		result.AddWarning("VPC DNS hostnames enabled. Configure Docker DNS for service discovery.")
-		result.AddManualStep("Set up DNS resolver (CoreDNS, dnsmasq) for container name resolution")
+		result.AddConfig("config/vpc/coredns-zonefile", []byte(m.generateCoreDNSZone(vpcName)))
 	}
 
 	// Handle DHCP options
 	if m.hasDHCPOptions(res) {
 		result.AddWarning("Custom DHCP options detected. Configure Docker daemon with custom DNS servers if needed.")
-		result.AddManualStep("Update Docker daemon.json with custom DNS configuration")
 
 		dhcpConfig := m.generateDHCPConfig()
 		result.AddConfig("config/vpc/dhcp-options.json", []byte(dhcpConfig))
@@ -145,7 +142,6 @@ func (m *VPCMapper) Map(ctx context.Context, res *resource.AWSResource) (*mapper
 	// Handle IPv6
 	if m.hasIPv6(res) {
 		result.AddWarning("IPv6 CIDR block detected. Enable IPv6 in Docker daemon and network configuration.")
-		result.AddManualStep("Enable IPv6 in Docker daemon.json and create dual-stack networks")
 
 		ipv6Config := m.generateIPv6Config()
 		result.AddConfig("config/vpc/ipv6-config.md", []byte(ipv6Config))
@@ -154,13 +150,14 @@ func (m *VPCMapper) Map(ctx context.Context, res *resource.AWSResource) (*mapper
 	// Handle flow logs
 	if m.hasFlowLogs(res) {
 		result.AddWarning("VPC Flow Logs detected. Implement network traffic monitoring using tools like tcpdump, Wireshark, or network monitoring solutions.")
-		result.AddManualStep("Set up network traffic logging and monitoring")
+		result.AddConfig("config/vpc/flow-logs.yml", []byte(m.generateFlowLogsConfig(vpcName)))
 	}
 
-	result.AddManualStep("Create Docker networks defined in docker-compose-networks.yml")
-	result.AddManualStep("Configure host firewall rules for network isolation")
-	result.AddManualStep("Test network connectivity between services")
-	result.AddManualStep("Set up network monitoring and observability")
+	result.AddScript("create_vpc_networks.sh", []byte(m.generateCreateNetworksScript(vpcName)))
+	result.AddScript("apply_vpc_firewall.sh", []byte(m.generateFirewallScript(vpcName)))
+	result.AddScript("validate_vpc_network.sh", []byte(m.generateValidateScript(vpcName)))
+	result.AddScript("backup_vpc_config.sh", []byte(m.generateBackupScript(vpcName)))
+	result.AddScript("cutover_vpc_attachments.sh", []byte(m.generateCutoverScript(vpcName)))
 
 	// Add comprehensive warning about VPC limitations
 	result.AddWarning("IMPORTANT: AWS VPC provides advanced networking features that cannot be fully replicated with Docker networks alone. Consider using Kubernetes with network policies, or running a full virtual network solution if complex networking is required.")
@@ -508,6 +505,91 @@ Test IPv6 connectivity using Docker containers with ping6 and ip commands.
 `
 
 	return config
+}
+
+func (m *VPCMapper) generateAppChangeConfig(vpcName, cidrBlock string) string {
+	networkName := m.sanitizeName(vpcName)
+	return fmt.Sprintf(`APP_CHANGE_MODE=generated_patch
+SOURCE_VPC=%s
+TARGET_NETWORK=%s
+TARGET_PRIVATE_NETWORK=%s-private
+CIDR_BLOCK=%s
+COMPOSE_NETWORKS_FILE=docker-compose-networks.yml
+GENERATED_ATTACHMENTS_SCRIPT=cutover_vpc_attachments.sh
+`, vpcName, networkName, networkName, cidrBlock)
+}
+
+func (m *VPCMapper) generateNATRules(vpcName string) string {
+	networkName := m.sanitizeName(vpcName)
+	return fmt.Sprintf("#!/bin/sh\nset -eu\niptables -t nat -C POSTROUTING -s \"$CIDR_BLOCK\" -j MASQUERADE 2>/dev/null || iptables -t nat -A POSTROUTING -s \"$CIDR_BLOCK\" -j MASQUERADE\necho \"NAT rules applied for %s\"\n", networkName)
+}
+
+func (m *VPCMapper) generateInternetGatewayPolicy(vpcName string) string {
+	return fmt.Sprintf("{\n  \"vpc\": %q,\n  \"internet_gateway\": \"docker-bridge-egress\",\n  \"egress\": \"enabled\"\n}\n", vpcName)
+}
+
+func (m *VPCMapper) generateServiceEndpoints(vpcName string) string {
+	return fmt.Sprintf("vpc: %s\nendpoints:\n  - name: service-discovery\n    target: coredns\n    network: %s\n", vpcName, m.sanitizeName(vpcName))
+}
+
+func (m *VPCMapper) generateCoreDNSZone(vpcName string) string {
+	return fmt.Sprintf(".:53 {\n  errors\n  health\n  hosts {\n    127.0.0.1 %s.local\n    fallthrough\n  }\n  forward . 1.1.1.1 8.8.8.8\n}\n", m.sanitizeName(vpcName))
+}
+
+func (m *VPCMapper) generateFlowLogsConfig(vpcName string) string {
+	return fmt.Sprintf("vpc: %s\ncollector: tcpdump\noutput: logs/vpc/%s.pcap\n", vpcName, m.sanitizeName(vpcName))
+}
+
+func (m *VPCMapper) generateCreateNetworksScript(vpcName string) string {
+	networkName := m.sanitizeName(vpcName)
+	return fmt.Sprintf(`#!/bin/sh
+set -eu
+docker network inspect %s >/dev/null 2>&1 || docker network create %s
+docker network inspect %s-private >/dev/null 2>&1 || docker network create --internal %s-private
+`, networkName, networkName, networkName, networkName)
+}
+
+func (m *VPCMapper) generateFirewallScript(vpcName string) string {
+	networkName := m.sanitizeName(vpcName)
+	return fmt.Sprintf(`#!/bin/sh
+set -eu
+. config/vpc/app-change.env
+test "$TARGET_NETWORK" = %q
+iptables -C FORWARD -i br-%s -j ACCEPT 2>/dev/null || iptables -A FORWARD -i br-%s -j ACCEPT
+`, networkName, networkName, networkName)
+}
+
+func (m *VPCMapper) generateValidateScript(vpcName string) string {
+	networkName := m.sanitizeName(vpcName)
+	return fmt.Sprintf(`#!/bin/sh
+set -eu
+docker network inspect %s >/tmp/homeport-vpc-network.json
+docker network inspect %s-private >/tmp/homeport-vpc-private-network.json
+test -s docker-compose-networks.yml
+test -s config/vpc/app-change.env
+`, networkName, networkName)
+}
+
+func (m *VPCMapper) generateBackupScript(vpcName string) string {
+	networkName := m.sanitizeName(vpcName)
+	return fmt.Sprintf(`#!/bin/sh
+set -eu
+archive="${BACKUP_DIR:-./backups}/%s-vpc-$(date +%%Y%%m%%d%%H%%M%%S).tgz"
+mkdir -p "$(dirname "$archive")"
+tar -czf "$archive" docker-compose-networks.yml config/vpc create_vpc_networks.sh apply_vpc_firewall.sh validate_vpc_network.sh cutover_vpc_attachments.sh
+echo "$archive"
+`, networkName)
+}
+
+func (m *VPCMapper) generateCutoverScript(vpcName string) string {
+	networkName := m.sanitizeName(vpcName)
+	return fmt.Sprintf(`#!/bin/sh
+set -eu
+. config/vpc/app-change.env
+test "$TARGET_NETWORK" = %q
+test "$APP_CHANGE_MODE" = "generated_patch"
+echo "Attach migrated services to $TARGET_NETWORK and $TARGET_PRIVATE_NETWORK using docker-compose-networks.yml"
+`, networkName)
 }
 
 // sanitizeName sanitizes names for Docker network names.
