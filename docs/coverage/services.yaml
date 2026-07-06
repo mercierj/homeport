@@ -340,7 +340,8 @@ services:
     validate: false
     cutover: false
     rollback: false
-    status: mapped
+    status: guided
+    blocker: EventBridge rule mapping exists, but executable routing delivery needs generated targets and end-to-end validation
   - provider: aws
     service: Glue
     resource_types: []
@@ -414,14 +415,15 @@ services:
     cost: false
     provision: false
     migrate: false
-    api_compat: false
+    api_compat: true
     env_dns: false
     ha: false
     backup: false
     validate: false
     cutover: false
     rollback: false
-    status: mapped
+    status: guided
+    blocker: Kinesis-compatible edge adapter exists for basic SDK flow; Redpanda/Kafka production path needs consumer-group and replay validation
   - provider: aws
     service: Lambda
     resource_types:
@@ -550,7 +552,8 @@ services:
     validate: false
     cutover: false
     rollback: false
-    status: mapped
+    status: guided
+    blocker: production-capable Postal/Maddy target and DKIM/SPF/DMARC automation still need validation
   - provider: aws
     service: SNS
     resource_types:
@@ -559,7 +562,7 @@ services:
     cost: false
     provision: false
     migrate: false
-    api_compat: false
+    api_compat: true
     env_dns: false
     ha: false
     backup: false
@@ -575,7 +578,7 @@ services:
     cost: false
     provision: false
     migrate: false
-    api_compat: false
+    api_compat: true
     env_dns: false
     ha: false
     backup: false
@@ -889,7 +892,8 @@ services:
     validate: false
     cutover: false
     rollback: false
-    status: mapped
+    status: guided
+    blocker: scheduler mapping exists, but generated healthchecks and trigger delivery need validation
   - provider: gcp
     service: Cloud SQL
     resource_types:
@@ -938,7 +942,8 @@ services:
     validate: false
     cutover: false
     rollback: false
-    status: mapped
+    status: guided
+    blocker: no Cloud Tasks-compatible local API adapter exists yet
   - provider: gcp
     service: Compute Engine
     resource_types:
@@ -1180,7 +1185,8 @@ services:
     validate: false
     cutover: false
     rollback: false
-    status: mapped
+    status: guided
+    blocker: no Pub/Sub-compatible local API adapter exists yet
   - provider: gcp
     service: Secret Manager
     resource_types:
@@ -1668,7 +1674,8 @@ services:
     validate: false
     cutover: false
     rollback: false
-    status: mapped
+    status: guided
+    blocker: Event Grid mapping exists, but executable routing delivery needs generated targets and end-to-end validation
   - provider: azure
     service: Event Hubs
     resource_types:
@@ -1684,7 +1691,8 @@ services:
     validate: false
     cutover: false
     rollback: false
-    status: mapped
+    status: guided
+    blocker: Kafka-compatible path needs explicit consumer-group, offset, retention, and replay validation
   - provider: azure
     service: Foundry/OpenAI
     resource_types: []
@@ -1780,7 +1788,8 @@ services:
     validate: false
     cutover: false
     rollback: false
-    status: mapped
+    status: guided
+    blocker: only workflows representable as generated routing config can be automated; others need review checklist
   - provider: azure
     service: Managed Disk
     resource_types:
@@ -1861,7 +1870,8 @@ services:
     validate: false
     cutover: false
     rollback: false
-    status: mapped
+    status: guided
+    blocker: no Azure Service Bus-compatible local API adapter exists yet
   - provider: azure
     service: SignalR
     resource_types: []

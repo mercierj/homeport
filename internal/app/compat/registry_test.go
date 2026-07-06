@@ -46,7 +46,7 @@ func TestRegistryUnknownAdapterHasClearError(t *testing.T) {
 
 func TestDefaultRegistryIncludesBuiltins(t *testing.T) {
 	registry := NewDefaultRegistry()
-	for _, service := range []string{"s3", "dynamodb", "redis", "sqs", "sns", "secretsmanager", "ssm", "cloudwatchlogs"} {
+	for _, service := range []string{"s3", "dynamodb", "redis", "sqs", "sns", "kinesis", "secretsmanager", "ssm", "cloudwatchlogs"} {
 		adapter, err := registry.Get("aws", service)
 		if err != nil {
 			t.Fatalf("Get(aws, %s) error = %v", service, err)

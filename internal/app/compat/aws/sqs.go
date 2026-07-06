@@ -164,6 +164,24 @@ func (a *SQSAdapter) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		}
 		delete(q.Inflight, stringValue(body["ReceiptHandle"]))
 		writeJSON(w, http.StatusOK, map[string]string{})
+	case "ChangeMessageVisibility":
+		q := a.queueByURL(stringValue(body["QueueUrl"]))
+		if q == nil {
+			writeJSON(w, http.StatusBadRequest, map[string]string{"message": "queue not found"})
+			return
+		}
+		receipt := stringValue(body["ReceiptHandle"])
+		msg, ok := q.Inflight[receipt]
+		if !ok {
+			writeJSON(w, http.StatusBadRequest, map[string]string{"message": "receipt not found"})
+			return
+		}
+		visibility := secondsValue(body["VisibilityTimeout"], secondsAttr(q.Attributes, "VisibilityTimeout", 30))
+		delete(q.Inflight, receipt)
+		msg.VisibleAt = time.Now().Add(time.Duration(visibility) * time.Second)
+		msg.ReceiptHandle = ""
+		q.Messages = append(q.Messages, msg)
+		writeJSON(w, http.StatusOK, map[string]string{})
 	default:
 		writeJSON(w, http.StatusBadRequest, map[string]string{"message": "unsupported SQS action: " + action})
 	}

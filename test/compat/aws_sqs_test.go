@@ -85,6 +85,27 @@ func TestSQSCompatibilityAdapterWithAWSSDK(t *testing.T) {
 	}
 	receipt := received.Messages[0].ReceiptHandle
 
+	if _, err := client.ChangeMessageVisibility(context.Background(), &sqs.ChangeMessageVisibilityInput{
+		QueueUrl:          url.QueueUrl,
+		ReceiptHandle:     receipt,
+		VisibilityTimeout: 0,
+	}); err != nil {
+		t.Fatalf("ChangeMessageVisibility() error = %v", err)
+	}
+
+	receivedAgain, err := client.ReceiveMessage(context.Background(), &sqs.ReceiveMessageInput{
+		QueueUrl:            url.QueueUrl,
+		MaxNumberOfMessages: 1,
+		WaitTimeSeconds:     0,
+	})
+	if err != nil {
+		t.Fatalf("ReceiveMessage(after visibility change) error = %v", err)
+	}
+	if len(receivedAgain.Messages) != 1 || *receivedAgain.Messages[0].Body != "payload" {
+		t.Fatalf("ReceiveMessage(after visibility change) = %#v, want payload", receivedAgain.Messages)
+	}
+	receipt = receivedAgain.Messages[0].ReceiptHandle
+
 	if _, err := client.DeleteMessage(context.Background(), &sqs.DeleteMessageInput{
 		QueueUrl:      url.QueueUrl,
 		ReceiptHandle: receipt,

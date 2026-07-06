@@ -53,15 +53,13 @@ func NewDefaultRegistry() *Registry {
 			"HOMEPORT_COMPAT_BACKEND":  "redis",
 			"HOMEPORT_COMPAT_PROTOCOL": "redis",
 		}, "set-key", "get-key"),
-		NativeAdapter("aws", "sns", map[string]string{
-			"HOMEPORT_COMPAT_BACKEND": "nats",
-			"AWS_ENDPOINT_URL_SNS":    "http://homeport:8080/api/v1/compat/aws/sns",
-		}, "publish"),
 		NativeAdapter("aws", "ssm", map[string]string{
 			"HOMEPORT_COMPAT_BACKEND": "vault",
 			"AWS_ENDPOINT_URL_SSM":    "http://homeport:8080/api/v1/compat/aws/ssm",
 		}, "get-parameter"),
 		compataws.NewSQSAdapter(),
+		compataws.NewSNSAdapter(),
+		compataws.NewKinesisAdapter(),
 		compataws.NewSecretsAdapter(),
 		compataws.NewCloudWatchLogsAdapter(),
 	} {

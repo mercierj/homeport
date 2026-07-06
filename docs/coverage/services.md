@@ -20,12 +20,12 @@
 | aws | EKS | mapped | aws_eks_cluster |
 | aws | EMR | missing |  |
 | aws | ElastiCache | mapped | aws_elasticache_cluster |
-| aws | EventBridge | mapped | aws_cloudwatch_event_rule |
+| aws | EventBridge | guided | aws_cloudwatch_event_rule |
 | aws | Glue | missing |  |
 | aws | GuardDuty | missing |  |
 | aws | IAM | mapped | aws_iam_role |
 | aws | KMS | guided | aws_kms_key |
-| aws | Kinesis | mapped | aws_kinesis_stream |
+| aws | Kinesis | guided | aws_kinesis_stream |
 | aws | Lambda | mapped | aws_lambda_function |
 | aws | MSK | missing |  |
 | aws | OpenSearch | missing |  |
@@ -33,7 +33,7 @@
 | aws | Redshift | missing |  |
 | aws | Route 53 | mapped | aws_route53_zone |
 | aws | S3 | mapped | aws_s3_bucket |
-| aws | SES | mapped | aws_ses_domain_identity |
+| aws | SES | guided | aws_ses_domain_identity |
 | aws | SNS | mapped | aws_sns_topic |
 | aws | SQS | mapped | aws_sqs_queue |
 | aws | SageMaker | missing |  |
@@ -54,10 +54,10 @@
 | gcp | Cloud Functions | mapped | google_cloudfunctions_function |
 | gcp | Cloud Load Balancing | mapped | google_compute_backend_service |
 | gcp | Cloud Run | mapped | google_cloud_run_service |
-| gcp | Cloud Scheduler | mapped | google_cloud_scheduler_job |
+| gcp | Cloud Scheduler | guided | google_cloud_scheduler_job |
 | gcp | Cloud SQL | mapped | google_sql_database_instance |
 | gcp | Cloud Storage | guided | google_storage_bucket |
-| gcp | Cloud Tasks | mapped | google_cloud_tasks_queue |
+| gcp | Cloud Tasks | guided | google_cloud_tasks_queue |
 | gcp | Compute Engine | mapped | google_compute_instance |
 | gcp | Composer | missing |  |
 | gcp | Dataflow | missing |  |
@@ -72,7 +72,7 @@
 | gcp | Memorystore | mapped | google_redis_instance |
 | gcp | Monitoring | missing |  |
 | gcp | Persistent Disk | mapped | google_compute_disk |
-| gcp | Pub/Sub | mapped | google_pubsub_topic, google_pubsub_subscription |
+| gcp | Pub/Sub | guided | google_pubsub_topic, google_pubsub_subscription |
 | gcp | Secret Manager | mapped | google_secret_manager_secret |
 | gcp | Spanner | guided | google_spanner_instance |
 | gcp | Trace | missing |  |
@@ -102,19 +102,19 @@
 | azure | Cosmos DB | guided | azurerm_cosmosdb_account |
 | azure | Data Factory | missing |  |
 | azure | Databricks | missing |  |
-| azure | Event Grid | mapped | azurerm_eventgrid_topic |
-| azure | Event Hubs | mapped | azurerm_eventhub |
+| azure | Event Grid | guided | azurerm_eventgrid_topic |
+| azure | Event Hubs | guided | azurerm_eventhub |
 | azure | Foundry/OpenAI | missing |  |
 | azure | Front Door | mapped | azurerm_frontdoor |
 | azure | IoT Hub | missing |  |
 | azure | Key Vault | mapped | azurerm_key_vault |
 | azure | Log Analytics | missing |  |
-| azure | Logic Apps | mapped | azurerm_logic_app_workflow |
+| azure | Logic Apps | guided | azurerm_logic_app_workflow |
 | azure | Managed Disk | mapped | azurerm_managed_disk |
 | azure | Monitor | missing |  |
 | azure | MySQL | mapped | azurerm_mysql_flexible_server |
 | azure | PostgreSQL | mapped | azurerm_postgresql_flexible_server |
-| azure | Service Bus | mapped | azurerm_servicebus_namespace, azurerm_servicebus_queue |
+| azure | Service Bus | guided | azurerm_servicebus_namespace, azurerm_servicebus_queue |
 | azure | SignalR | missing |  |
 | azure | Synapse | missing |  |
 | azure | VM Scale Sets | missing |  |
