@@ -269,6 +269,7 @@ export function AnalyzeStep() {
 
   // Can proceed to next step
   const canProceed = analysisResult && selectedResources.length > 0;
+  const appChanges = analysisResult?.app_change_report?.changes ?? [];
 
   // ============== REVIEW PHASE (Full-screen Architecture Diagram) ==============
   if (phase === 'review' && analysisResult) {
@@ -363,6 +364,27 @@ export function AnalyzeStep() {
             {consolidate && selectedResources.length > 0 && (
               <div className="flex-shrink-0">
                 <ConsolidationPreviewPanel resources={selectedResources} />
+              </div>
+            )}
+
+            {appChanges.length > 0 && (
+              <div className="border-b p-4">
+                <h3 className="font-medium mb-3">Application changes</h3>
+                <div className="space-y-3">
+                  {appChanges.map((change, index) => (
+                    <div key={`${change.service}-${change.file || index}`} className="text-sm">
+                      <div className="flex items-center justify-between gap-2">
+                        <span className="font-medium">{change.service}</span>
+                        <span className="badge-outline">{change.mode}</span>
+                      </div>
+                      {change.file && <p className="text-muted-foreground mt-1">{change.file}</p>}
+                      <p className="text-muted-foreground mt-1">{change.reason}</p>
+                      {change.adapter_url && <p className="code-inline mt-2 break-all">{change.adapter_url}</p>}
+                      {change.search && <p className="code-inline mt-2 break-all">{change.search}</p>}
+                      {change.replace && <p className="code-inline mt-2 break-all">{change.replace}</p>}
+                    </div>
+                  ))}
+                </div>
               </div>
             )}
 

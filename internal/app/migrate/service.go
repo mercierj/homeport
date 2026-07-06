@@ -12,6 +12,8 @@ import (
 	"golang.org/x/text/cases"
 	"golang.org/x/text/language"
 
+	appchange "github.com/homeport/homeport/internal/app/appchange"
+	domainappchange "github.com/homeport/homeport/internal/domain/appchange"
 	"github.com/homeport/homeport/internal/domain/generator"
 	"github.com/homeport/homeport/internal/domain/mapper"
 	"github.com/homeport/homeport/internal/domain/parser"
@@ -113,9 +115,10 @@ type AnalyzeRequest struct {
 
 // AnalyzeResponse represents the analysis result.
 type AnalyzeResponse struct {
-	Resources []ResourceInfo `json:"resources"`
-	Warnings  []string       `json:"warnings"`
-	Provider  string         `json:"provider"`
+	Resources       []ResourceInfo         `json:"resources"`
+	Warnings        []string               `json:"warnings"`
+	Provider        string                 `json:"provider"`
+	AppChangeReport domainappchange.Report `json:"app_change_report"`
 }
 
 // ResourceInfo represents a discovered resource.
@@ -133,16 +136,16 @@ type ResourceInfo struct {
 
 // ProgressEvent represents a progress update during discovery.
 type ProgressEvent struct {
-	Type           string `json:"type"`            // "progress", "error", "complete"
-	Step           string `json:"step"`            // Current step: "init", "regions", "scanning"
-	Message        string `json:"message"`         // Human-readable message
-	Region         string `json:"region,omitempty"`// Current region being scanned
-	Service        string `json:"service,omitempty"`// Current service being scanned
-	CurrentRegion  int    `json:"current_region"`  // Current region index (1-based)
-	TotalRegions   int    `json:"total_regions"`   // Total number of regions
-	CurrentService int    `json:"current_service"` // Current service index (1-based)
-	TotalServices  int    `json:"total_services"`  // Total number of services to scan
-	ResourcesFound int    `json:"resources_found"` // Total resources found so far
+	Type           string `json:"type"`              // "progress", "error", "complete"
+	Step           string `json:"step"`              // Current step: "init", "regions", "scanning"
+	Message        string `json:"message"`           // Human-readable message
+	Region         string `json:"region,omitempty"`  // Current region being scanned
+	Service        string `json:"service,omitempty"` // Current service being scanned
+	CurrentRegion  int    `json:"current_region"`    // Current region index (1-based)
+	TotalRegions   int    `json:"total_regions"`     // Total number of regions
+	CurrentService int    `json:"current_service"`   // Current service index (1-based)
+	TotalServices  int    `json:"total_services"`    // Total number of services to scan
+	ResourcesFound int    `json:"resources_found"`   // Total resources found so far
 }
 
 // ProgressCallback is called during discovery to report progress.
@@ -182,6 +185,9 @@ func (s *Service) Analyze(ctx context.Context, req AnalyzeRequest) (*AnalyzeResp
 		Resources: make([]ResourceInfo, 0, len(infra.Resources)),
 		Warnings:  []string{},
 		Provider:  string(infra.Provider),
+	}
+	if report, err := appchange.NewService().ScanPath(tmpDir); err == nil {
+		resp.AppChangeReport = report
 	}
 
 	for _, res := range infra.Resources {

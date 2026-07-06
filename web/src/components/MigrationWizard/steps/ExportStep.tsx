@@ -28,6 +28,7 @@ import {
 
 export function ExportStep() {
   const {
+    analysisResult,
     selectedResources,
     bundleId,
     bundleName,
@@ -51,6 +52,7 @@ export function ExportStep() {
   const [includeMigration, setIncludeMigration] = useState(true);
   const [includeMonitoring, setIncludeMonitoring] = useState(false);
   const [showMigrationConfig, setShowMigrationConfig] = useState(false);
+  const appChanges = analysisResult?.app_change_report?.changes ?? [];
 
   // Migration config store
   const {
@@ -373,6 +375,27 @@ export function ExportStep() {
               </div>
             </div>
           </div>
+
+          {appChanges.length > 0 && (
+            <div className="bg-card border border-border rounded-lg p-4">
+              <h4 className="font-medium mb-3">Application changes</h4>
+              <div className="space-y-3">
+                {appChanges.map((change, index) => (
+                  <div key={`${change.service}-${change.file || index}`} className="text-sm">
+                    <div className="flex items-center justify-between gap-2">
+                      <span className="font-medium">{change.service}</span>
+                      <span className="badge-outline">{change.mode}</span>
+                    </div>
+                    {change.file && <p className="text-muted-foreground mt-1">{change.file}</p>}
+                    <p className="text-muted-foreground mt-1">{change.reason}</p>
+                    {change.adapter_url && <p className="code-inline mt-2 break-all">{change.adapter_url}</p>}
+                    {change.search && <p className="code-inline mt-2 break-all">{change.search}</p>}
+                    {change.replace && <p className="code-inline mt-2 break-all">{change.replace}</p>}
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
 
           {/* Export button */}
           <div className="flex justify-center pt-4">

@@ -67,6 +67,39 @@ function mockCoreApis(
       });
       return;
     }
+    if (url.includes('/migrate/analyze')) {
+      await route.fulfill({
+        contentType: 'application/json',
+        body: JSON.stringify({
+          resources: [
+            {
+              id: 'google_storage_bucket.assets',
+              name: 'assets',
+              type: 'google_storage_bucket',
+              category: 'storage',
+              dependencies: [],
+            },
+          ],
+          warnings: [],
+          provider: 'gcp',
+          app_change_report: {
+            changes: [
+              {
+                service: 'Cloud Storage',
+                resource_id: 'google_storage_bucket.assets',
+                mode: 'generated_patch',
+                reason: 'Native GCS endpoint must point to the HomePort storage adapter',
+                file: '.env',
+                search: 'storage.googleapis.com',
+                replace: 'HOMEPORT_STORAGE_ENDPOINT',
+                validation_cmd: 'grep -R HOMEPORT_STORAGE_ENDPOINT .',
+              },
+            ],
+          },
+        }),
+      });
+      return;
+    }
     if (url.includes('/cloud-deploy/start') && method === 'POST') {
       await route.fulfill({ contentType: 'application/json', body: JSON.stringify({ id: 'cloud-1', status: 'planned', apply: false, logs: [] }) });
       return;
@@ -136,6 +169,29 @@ test('wizard deploy step contains local ssh and cloud targets', async ({ page })
   await expect(page.getByRole('button', { name: /Local Docker/i })).toBeVisible();
   await expect(page.getByRole('button', { name: /Remote SSH/i })).toBeVisible();
   await expect(page.getByRole('button', { name: /Cloud Provider/i })).toBeVisible();
+});
+
+test('wizard shows exact application changes before export', async ({ page }) => {
+  await mockCoreApis(page);
+  await page.goto('/migrate');
+  await page.getByRole('button', { name: /Analyze Source/i }).click();
+  await page.getByRole('button', { name: /Terraform Files/i }).click();
+  await page.locator('input[type="file"]').setInputFiles({
+    name: 'main.tf',
+    mimeType: 'text/plain',
+    buffer: Buffer.from('resource "google_storage_bucket" "assets" { name = "assets" }'),
+  });
+  await page.getByRole('button', { name: /^Analyze$/i }).click();
+
+  await expect(page.getByText(/Application changes/i)).toBeVisible();
+  await expect(page.getByText(/Cloud Storage/i)).toBeVisible();
+  await expect(page.getByText(/storage.googleapis.com/i)).toBeVisible();
+  await expect(page.getByText(/HOMEPORT_STORAGE_ENDPOINT/i)).toBeVisible();
+
+  await page.getByRole('button', { name: /Continue to Export/i }).click();
+  await expect(page.getByText(/Bundle Summary/i)).toBeVisible();
+  await expect(page.getByText(/Application changes/i)).toBeVisible();
+  await expect(page.getByText(/HOMEPORT_STORAGE_ENDPOINT/i)).toBeVisible();
 });
 
 test('centralized navigation exposes no Deploy link', async ({ page }) => {

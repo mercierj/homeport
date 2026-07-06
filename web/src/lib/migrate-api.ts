@@ -17,6 +17,23 @@ export interface AnalyzeResponse {
   resources: Resource[];
   warnings: string[];
   provider: string;
+  app_change_report?: AppChangeReport;
+}
+
+export interface AppChange {
+  service: string;
+  resource_id: string;
+  mode: 'none' | 'adapter' | 'generated_patch' | 'manual_review';
+  reason: string;
+  adapter_url?: string;
+  file?: string;
+  search?: string;
+  replace?: string;
+  validation_cmd?: string;
+}
+
+export interface AppChangeReport {
+  changes: AppChange[];
 }
 
 export interface GenerateOptions {
