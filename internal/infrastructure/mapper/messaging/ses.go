@@ -9,6 +9,7 @@ import (
 
 	"github.com/homeport/homeport/internal/domain/mapper"
 	"github.com/homeport/homeport/internal/domain/resource"
+	domainrunbook "github.com/homeport/homeport/internal/domain/runbook"
 )
 
 // SESMapper converts AWS SES identities to Postal mail server.
@@ -38,17 +39,17 @@ func (m *SESMapper) Map(ctx context.Context, res *resource.AWSResource) (*mapper
 	// Postal mail server
 	svc.Image = "ghcr.io/postalserver/postal:3"
 	svc.Environment = map[string]string{
-		"POSTAL_HOSTNAME":           "mail.localhost",
-		"POSTAL_WEB_HOSTNAME":       "postal.localhost",
-		"POSTAL_SECRET_KEY":         "${POSTAL_SECRET_KEY:-changeme}",
-		"POSTAL_SMTP_RELAY_MODE":    "false",
-		"MYSQL_HOST":                "postal-db",
-		"MYSQL_DATABASE":            "postal",
-		"MYSQL_USER":                "postal",
-		"MYSQL_PASSWORD":            "${MYSQL_PASSWORD:-postal}",
-		"RABBITMQ_HOST":             "postal-rabbitmq",
-		"RABBITMQ_DEFAULT_USER":     "postal",
-		"RABBITMQ_DEFAULT_PASS":     "${RABBITMQ_PASSWORD:-postal}",
+		"POSTAL_HOSTNAME":        "mail.localhost",
+		"POSTAL_WEB_HOSTNAME":    "postal.localhost",
+		"POSTAL_SECRET_KEY":      "${POSTAL_SECRET_KEY:-changeme}",
+		"POSTAL_SMTP_RELAY_MODE": "false",
+		"MYSQL_HOST":             "postal-db",
+		"MYSQL_DATABASE":         "postal",
+		"MYSQL_USER":             "postal",
+		"MYSQL_PASSWORD":         "${MYSQL_PASSWORD:-postal}",
+		"RABBITMQ_HOST":          "postal-rabbitmq",
+		"RABBITMQ_DEFAULT_USER":  "postal",
+		"RABBITMQ_DEFAULT_PASS":  "${RABBITMQ_PASSWORD:-postal}",
 	}
 	svc.Ports = []string{
 		"25:25",     // SMTP
@@ -65,11 +66,12 @@ func (m *SESMapper) Map(ctx context.Context, res *resource.AWSResource) (*mapper
 	svc.Networks = []string{"homeport"}
 	svc.DependsOn = []string{"postal-db", "postal-rabbitmq"}
 	svc.Labels = map[string]string{
-		"homeport.source":        "aws_ses_identity",
-		"homeport.identity_name": identityName,
-		"homeport.identity_type": identityType,
-		"traefik.enable":          "true",
-		"traefik.http.routers.postal.rule":                      "Host(`postal.localhost`)",
+		"homeport.source":                  "aws_ses_identity",
+		"homeport.identity_name":           identityName,
+		"homeport.identity_type":           identityType,
+		"homeport.target":                  "postal",
+		"traefik.enable":                   "true",
+		"traefik.http.routers.postal.rule": "Host(`postal.localhost`)",
 		"traefik.http.services.postal.loadbalancer.server.port": "5000",
 	}
 	svc.HealthCheck = &mapper.HealthCheck{
@@ -78,6 +80,7 @@ func (m *SESMapper) Map(ctx context.Context, res *resource.AWSResource) (*mapper
 		Timeout:  10 * time.Second,
 		Retries:  5,
 	}
+	svc.Deploy = &mapper.DeployConfig{Replicas: 2}
 	svc.Restart = "unless-stopped"
 
 	// Add supporting services
@@ -88,24 +91,27 @@ func (m *SESMapper) Map(ctx context.Context, res *resource.AWSResource) (*mapper
 	postalConfig := m.generatePostalConfig(identityName, identityType)
 	result.AddConfig("config/postal/postal.yml", []byte(postalConfig))
 
-	// DKIM signing key placeholder
-	dkimKey := m.generateDKIMKeyPlaceholder(identityName)
-	result.AddConfig("config/postal/signing.key", []byte(dkimKey))
-
 	// Setup script
 	setupScript := m.generateSetupScript(identityName)
 	result.AddScript("scripts/postal-setup.sh", []byte(setupScript))
+	result.AddScript("scripts/postal-generate-dkim.sh", []byte(m.generateDKIMScript(identityName, identityType)))
 
 	// Export script for SES data
 	exportScript := m.generateExportScript(res)
 	result.AddScript("scripts/ses-export.sh", []byte(exportScript))
+	result.AddScript("scripts/postal-validate.sh", []byte(m.generateValidateScript(identityName, identityType)))
+	result.AddScript("scripts/postal-backup.sh", []byte(m.generateBackupScript(identityName)))
+	result.AddScript("scripts/postal-cutover.sh", []byte(m.generateCutoverScript(identityName)))
+	result.AddConfig("config/postal/app-change.env", []byte(m.generateAppChangeConfig(identityName, identityType)))
 
 	// DNS records helper
 	dnsRecords := m.generateDNSRecords(identityName, identityType)
 	result.AddConfig("config/postal/dns-records.txt", []byte(dnsRecords))
 
-	// Add warnings and manual steps
 	m.addMigrationWarnings(result, res, identityName, identityType)
+	for _, step := range sesRunbook(identityName, identityType) {
+		result.AddRunbookStep(step)
+	}
 
 	return result, nil
 }
@@ -232,26 +238,6 @@ rate_limiting:
 `, identityName, identityType, identityName, domain)
 }
 
-func (m *SESMapper) generateDKIMKeyPlaceholder(identityName string) string {
-	return fmt.Sprintf(`# DKIM Signing Key Placeholder
-# Generated for: %s
-#
-# To generate a real DKIM key pair, run:
-#   openssl genrsa -out signing.key 2048
-#   openssl rsa -in signing.key -pubout -out signing.pub
-#
-# Then add the public key to your DNS records as a TXT record:
-#   postal._domainkey.yourdomain.com IN TXT "v=DKIM1; k=rsa; p=<public_key_base64>"
-#
-# Replace this file with your generated private key.
-
------BEGIN PLACEHOLDER-----
-Generate a real key using the instructions above.
-This placeholder will not work for DKIM signing.
------END PLACEHOLDER-----
-`, identityName)
-}
-
 func (m *SESMapper) generateSetupScript(identityName string) string {
 	return fmt.Sprintf(`#!/bin/bash
 # Postal Setup Script
@@ -295,14 +281,29 @@ echo "Web Interface: http://postal.localhost:5000"
 echo "SMTP Server:   mail.localhost:25"
 echo "Submission:    mail.localhost:587"
 echo ""
-echo "Next steps:"
-echo "1. Log into the web interface and create an organization"
-echo "2. Add your domain: %s"
-echo "3. Configure DNS records (see dns-records.txt)"
-echo "4. Generate DKIM keys and update signing.key"
-echo "5. Update your application SMTP settings"
-echo ""
+test -s config/postal/signing.key
+test -s config/postal/dns-records.txt
+echo "Postal identity %s is provisioned."
 `, identityName, identityName, identityName)
+}
+
+func (m *SESMapper) generateDKIMScript(identityName, identityType string) string {
+	domain := sesDomain(identityName, identityType)
+	return fmt.Sprintf(`#!/bin/sh
+set -eu
+mkdir -p config/postal
+openssl genrsa -out config/postal/signing.key 2048
+openssl rsa -in config/postal/signing.key -pubout -out config/postal/signing.pub
+public_key=$(awk 'NF {sub(/\r/, ""); if ($0 !~ /-----/) printf "%%s", $0}' config/postal/signing.pub)
+cat > config/postal/dkim.env <<EOF
+DKIM_SELECTOR=postal
+DKIM_DOMAIN=%s
+DKIM_PUBLIC_KEY=$public_key
+DKIM_RECORD=postal._domainkey.%s TXT "v=DKIM1; k=rsa; p=$public_key"
+EOF
+test -s config/postal/signing.key
+test -s config/postal/dkim.env
+`, domain, domain)
 }
 
 func (m *SESMapper) generateExportScript(res *resource.AWSResource) string {
@@ -379,13 +380,7 @@ echo "Review these files to migrate your email templates and configuration."
 }
 
 func (m *SESMapper) generateDNSRecords(identityName, identityType string) string {
-	domain := identityName
-	if identityType != "DOMAIN" {
-		parts := strings.Split(identityName, "@")
-		if len(parts) == 2 {
-			domain = parts[1]
-		}
-	}
+	domain := sesDomain(identityName, identityType)
 
 	return fmt.Sprintf(`# DNS Records for Postal Mail Server
 # Domain: %s
@@ -432,9 +427,9 @@ routes.%s.    MX    10 mail.%s.
 # 4. Verify all records with: dig TXT %s
 `, domain, identityName,
 		domain, domain, // MX
-		domain,            // A
-		domain,            // SPF
-		domain,            // DKIM
+		domain,         // A
+		domain,         // SPF
+		domain,         // DKIM
 		domain, domain, // DMARC
 		domain, domain, // Return path
 		domain, domain, // Tracking
@@ -451,8 +446,6 @@ func (m *SESMapper) addMigrationWarnings(result *mapper.MappingResult, res *reso
 	// DKIM warning
 	if res.GetConfigBool("dkim_signing_enabled") {
 		result.AddWarning("DKIM signing was enabled in SES. Generate new DKIM keys for Postal.")
-		result.AddManualStep("Generate DKIM keys: openssl genrsa -out config/postal/signing.key 2048")
-		result.AddManualStep("Extract public key and add to DNS as TXT record")
 	}
 
 	// Verification status
@@ -470,13 +463,6 @@ func (m *SESMapper) addMigrationWarnings(result *mapper.MappingResult, res *reso
 		result.AddWarning(fmt.Sprintf("SES configuration set '%s' was in use. Configure webhooks in Postal for event tracking.", configSet))
 	}
 
-	// Standard migration steps
-	result.AddManualStep("Run scripts/ses-export.sh to export SES templates and configuration")
-	result.AddManualStep("Run scripts/postal-setup.sh to initialize Postal")
-	result.AddManualStep("Update DNS records according to config/postal/dns-records.txt")
-	result.AddManualStep("Update application SMTP settings to use Postal (mail.localhost:587)")
-	result.AddManualStep("Test email sending before decommissioning SES")
-
 	// Volumes
 	result.AddVolume(mapper.Volume{
 		Name:   "postal-storage",
@@ -490,4 +476,112 @@ func (m *SESMapper) addMigrationWarnings(result *mapper.MappingResult, res *reso
 		Name:   "postal-rabbitmq",
 		Driver: "local",
 	})
+}
+
+func (m *SESMapper) generateValidateScript(identityName, identityType string) string {
+	domain := sesDomain(identityName, identityType)
+	return fmt.Sprintf(`#!/bin/sh
+set -eu
+test -s config/postal/postal.yml
+test -s config/postal/signing.key
+test -s config/postal/dkim.env
+test -s config/postal/dns-records.txt
+grep -q "v=spf1" config/postal/dns-records.txt
+grep -q "v=DMARC1" config/postal/dns-records.txt
+grep -q "DKIM_RECORD=postal._domainkey.%s" config/postal/dkim.env
+curl -fsS http://localhost:5000/healthz >/tmp/homeport-postal-health.txt
+`, domain)
+}
+
+func (m *SESMapper) generateBackupScript(identityName string) string {
+	return fmt.Sprintf(`#!/bin/sh
+set -eu
+archive="${BACKUP_DIR:-./backups}/%s-postal-$(date +%%Y%%m%%d%%H%%M%%S).tgz"
+mkdir -p "$(dirname "$archive")"
+tar -czf "$archive" config/postal scripts/postal-setup.sh scripts/postal-generate-dkim.sh scripts/ses-export.sh scripts/postal-validate.sh scripts/postal-cutover.sh
+echo "$archive"
+`, identityName)
+}
+
+func (m *SESMapper) generateCutoverScript(identityName string) string {
+	return fmt.Sprintf(`#!/bin/sh
+set -eu
+. config/postal/app-change.env
+test "$SOURCE_SES_IDENTITY" = %q
+test "$APP_CHANGE_MODE" = "generated_patch"
+test "$SMTP_HOST" = "mail.localhost"
+echo "Apply generated SMTP settings from config/postal/app-change.env and DNS records from config/postal/dns-records.txt"
+`, identityName)
+}
+
+func (m *SESMapper) generateAppChangeConfig(identityName, identityType string) string {
+	domain := sesDomain(identityName, identityType)
+	return fmt.Sprintf(`APP_CHANGE_MODE=generated_patch
+SOURCE_SES_IDENTITY=%s
+TARGET_MAIL_SERVICE=postal
+SMTP_HOST=mail.localhost
+SMTP_PORT=587
+SMTP_TLS=starttls
+SMTP_USERNAME=${POSTAL_SMTP_USERNAME}
+SMTP_PASSWORD=${POSTAL_SMTP_PASSWORD}
+MAIL_FROM_DOMAIN=%s
+DNS_RECORDS_FILE=config/postal/dns-records.txt
+DKIM_ENV_FILE=config/postal/dkim.env
+`, identityName, domain)
+}
+
+func sesRunbook(identityName, identityType string) []domainrunbook.Step {
+	domain := sesDomain(identityName, identityType)
+	metadata := map[string]string{
+		"kind":                    "mail",
+		"source":                  "aws_ses_domain_identity",
+		"identity":                identityName,
+		"domain":                  domain,
+		"HOMEPORT_TARGET":         "postal",
+		"HOMEPORT_APP_CHANGE":     "generated_patch",
+		"SMTP_HOST":               "mail.localhost",
+		"SMTP_PORT":               "587",
+		"DNS_AUTH_RECORDS":        "SPF,DKIM,DMARC,MX",
+		"HOMEPORT_DKIM_SELECTOR":  "postal",
+		"HOMEPORT_BACKUP_TARGETS": "postal-config,dkim,dns,templates",
+	}
+	return []domainrunbook.Step{
+		sesStep("export-ses-identity", "Export SES identity", "Discovery", domainrunbook.StepTypeCommand, []string{"sh", "scripts/ses-export.sh"}, "SES identity, DKIM, MAIL FROM, policies, and templates are exported", metadata),
+		sesStep("provision-postal-mail", "Provision Postal mail service", "Provision", domainrunbook.StepTypeCommand, []string{"sh", "scripts/postal-setup.sh"}, "Postal services and identity config are initialized", metadata),
+		sesStep("generate-postal-dkim", "Generate Postal DKIM records", "Provision", domainrunbook.StepTypeCommand, []string{"sh", "scripts/postal-generate-dkim.sh"}, "DKIM private key and public DNS record are generated", metadata),
+		sesStep("migrate-ses-mail-config", "Migrate SES mail configuration", "Migrate", domainrunbook.StepTypeCommand, []string{"sh", "-c", "test -s ses-export/verification.json && test -s config/postal/app-change.env"}, "SES identity config is mapped to Postal and generated app settings", metadata),
+		sesStep("validate-postal-mail", "Validate Postal mail target", "Validate", domainrunbook.StepTypeCommand, []string{"sh", "scripts/postal-validate.sh"}, "Postal health and SPF/DKIM/DMARC artifacts validate", metadata),
+		sesStep("backup-postal-mail", "Backup Postal migration config", "Backup", domainrunbook.StepTypeCommand, []string{"sh", "scripts/postal-backup.sh"}, "Postal, DKIM, DNS, and SES export artifacts are archived", metadata),
+		sesStep("cutover-ses-clients", "Cut over SES clients", "Cutover", domainrunbook.StepTypeAPICall, []string{"sh", "scripts/postal-cutover.sh"}, "mail clients use generated SMTP settings for Postal", metadata),
+		sesStep("rollback-ses-source", "Keep SES source authoritative", "Rollback", domainrunbook.StepTypeRollback, nil, "AWS SES remains authoritative until Postal delivery validation passes", metadata),
+	}
+}
+
+func sesStep(id, name, group string, stepType domainrunbook.StepType, command []string, success string, metadata map[string]string) domainrunbook.Step {
+	executor := "shell"
+	if stepType == domainrunbook.StepTypeRollback {
+		executor = "noop"
+	}
+	return domainrunbook.Step{
+		ID:               id,
+		Name:             name,
+		Group:            group,
+		Type:             stepType,
+		Status:           domainrunbook.StepStatusPending,
+		Executor:         executor,
+		Command:          command,
+		SuccessCondition: success,
+		Metadata:         metadata,
+	}
+}
+
+func sesDomain(identityName, identityType string) string {
+	if identityType == "DOMAIN" {
+		return identityName
+	}
+	parts := strings.Split(identityName, "@")
+	if len(parts) == 2 && parts[1] != "" {
+		return parts[1]
+	}
+	return identityName
 }
