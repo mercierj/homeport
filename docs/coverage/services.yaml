@@ -682,6 +682,193 @@ services:
     rollback: false
     status: missing
     blocker: not modeled yet
+  - provider: aws
+    service: Lake Formation
+    category: analytics/data
+    source_api: lakeformation
+    resource_types: []
+    terraform_resource_types: [aws_lakeformation_data_lake_settings, aws_lakeformation_permissions]
+    target: Apache Ranger
+    api_compatibility_strategy: export permissions and recreate table/resource policies
+    impossibility_notes: no drop-in Lake Formation API-compatible control plane is known
+    status: missing
+    blocker: not modeled yet
+  - provider: aws
+    service: QuickSight
+    category: analytics/data
+    source_api: quicksight
+    resource_types: []
+    terraform_resource_types: [aws_quicksight_data_source, aws_quicksight_dashboard]
+    target: Apache Superset
+    api_compatibility_strategy: export assets and rebuild dashboards against open BI targets
+    impossibility_notes: QuickSight dashboard/runtime APIs require guided replacement
+    status: missing
+    blocker: not modeled yet
+  - provider: aws
+    service: MQ
+    category: app/integration
+    source_api: mq
+    resource_types: []
+    terraform_resource_types: [aws_mq_broker]
+    target: RabbitMQ or ActiveMQ
+    api_compatibility_strategy: recreate brokers and migrate queues/topics with protocol-level clients
+    impossibility_notes: AWS MQ management API compatibility is not modeled
+    status: missing
+    blocker: not modeled yet
+  - provider: aws
+    service: IoT Core
+    category: app/integration
+    source_api: iot
+    resource_types: []
+    terraform_resource_types: [aws_iot_thing, aws_iot_topic_rule]
+    target: EMQX
+    api_compatibility_strategy: export things, certificates, and topic rules into MQTT-native routing
+    impossibility_notes: IoT Core registry and rules APIs require guided replacement
+    status: missing
+    blocker: not modeled yet
+  - provider: aws
+    service: App Mesh
+    category: app/integration
+    source_api: appmesh
+    resource_types: []
+    terraform_resource_types: [aws_appmesh_mesh, aws_appmesh_virtual_node]
+    target: Istio or Linkerd
+    api_compatibility_strategy: translate mesh topology into Kubernetes service mesh manifests
+    impossibility_notes: App Mesh control-plane API compatibility is not available
+    status: missing
+    blocker: not modeled yet
+  - provider: aws
+    service: CodeDeploy
+    category: devops
+    source_api: codedeploy
+    resource_types: []
+    terraform_resource_types: [aws_codedeploy_app, aws_codedeploy_deployment_group]
+    target: Argo Rollouts
+    api_compatibility_strategy: convert deployment groups into rollout strategies and health checks
+    impossibility_notes: CodeDeploy lifecycle hooks need guided pipeline migration
+    status: missing
+    blocker: not modeled yet
+  - provider: aws
+    service: CloudFormation full import
+    category: devops
+    source_api: cloudformation
+    resource_types: []
+    terraform_resource_types: [aws_cloudformation_stack]
+    target: OpenTofu import
+    api_compatibility_strategy: import stack resources into state and generate equivalent IaC
+    impossibility_notes: full CloudFormation semantic import is not modeled
+    status: missing
+    blocker: not modeled yet
+  - provider: aws
+    service: Shield
+    category: security/governance
+    source_api: shield
+    resource_types: []
+    terraform_resource_types: [aws_shield_protection]
+    target: edge WAF and DDoS provider controls
+    api_compatibility_strategy: map protected resources to edge rate limits and provider-specific defenses
+    impossibility_notes: Shield Advanced API compatibility depends on external network providers
+    status: missing
+    blocker: not modeled yet
+  - provider: aws
+    service: Security Hub
+    category: security/governance
+    source_api: securityhub
+    resource_types: []
+    terraform_resource_types: [aws_securityhub_account, aws_securityhub_standards_subscription]
+    target: DefectDojo or Wazuh
+    api_compatibility_strategy: export findings and standards into open security posture tooling
+    impossibility_notes: Security Hub finding aggregation API is not modeled
+    status: missing
+    blocker: not modeled yet
+  - provider: aws
+    service: Config
+    category: security/governance
+    source_api: config
+    resource_types: []
+    terraform_resource_types: [aws_config_configuration_recorder, aws_config_config_rule]
+    target: Open Policy Agent
+    api_compatibility_strategy: translate managed rules into policy checks over inventory snapshots
+    impossibility_notes: AWS Config recorder API compatibility is not available
+    status: missing
+    blocker: not modeled yet
+  - provider: aws
+    service: Organizations
+    category: security/governance
+    source_api: organizations
+    resource_types: []
+    terraform_resource_types: [aws_organizations_organization, aws_organizations_account]
+    target: OpenTofu workspaces and policy-as-code
+    api_compatibility_strategy: export account hierarchy and service control policies into landing-zone config
+    impossibility_notes: Organizations account vending APIs require guided replacement
+    status: missing
+    blocker: not modeled yet
+  - provider: aws
+    service: Control Tower
+    category: security/governance
+    source_api: controltower
+    resource_types: []
+    terraform_resource_types: [aws_controltower_control]
+    target: Crossplane and Open Policy Agent
+    api_compatibility_strategy: convert landing-zone controls into policy bundles and provisioning workflows
+    impossibility_notes: Control Tower orchestration API is not modeled
+    status: missing
+    blocker: not modeled yet
+  - provider: aws
+    service: Textract
+    category: ai/ml
+    source_api: textract
+    resource_types: []
+    terraform_resource_types: [aws_textract_adapter]
+    target: Tesseract OCR
+    api_compatibility_strategy: replace document extraction calls with OCR pipeline adapters
+    impossibility_notes: Textract model behavior cannot be guaranteed by local OCR
+    status: missing
+    blocker: not modeled yet
+  - provider: aws
+    service: Transcribe
+    category: ai/ml
+    source_api: transcribe
+    resource_types: []
+    terraform_resource_types: [aws_transcribe_vocabulary, aws_transcribe_language_model]
+    target: Whisper
+    api_compatibility_strategy: migrate custom vocabularies and route audio jobs to open transcription
+    impossibility_notes: Transcribe job API compatibility is not modeled
+    status: missing
+    blocker: not modeled yet
+  - provider: aws
+    service: Translate
+    category: ai/ml
+    source_api: translate
+    resource_types: []
+    terraform_resource_types: []
+    target: LibreTranslate
+    api_compatibility_strategy: replace translation calls with adapter-backed open translation endpoints
+    impossibility_notes: Translate API compatibility and language quality parity are not proven
+    status: missing
+    blocker: not modeled yet
+  - provider: aws
+    service: Rekognition
+    category: ai/ml
+    source_api: rekognition
+    resource_types: []
+    terraform_resource_types: [aws_rekognition_collection, aws_rekognition_project]
+    target: OpenCV
+    api_compatibility_strategy: replace image/video analysis calls with open computer-vision pipelines
+    impossibility_notes: Rekognition model behavior cannot be replicated exactly
+    status: missing
+    blocker: not modeled yet
+  - provider: aws
+    service: Comprehend
+    category: ai/ml
+    source_api: comprehend
+    resource_types: []
+    terraform_resource_types: [aws_comprehend_document_classifier, aws_comprehend_entity_recognizer]
+    target: spaCy
+    api_compatibility_strategy: migrate classifiers and route NLP jobs through open model adapters
+    impossibility_notes: Comprehend model and endpoint parity are not proven
+    status: missing
+    blocker: not modeled yet
 
   # GCP
   - provider: gcp
@@ -1282,6 +1469,116 @@ services:
     validate: false
     cutover: false
     rollback: false
+    status: missing
+    blocker: not modeled yet
+  - provider: gcp
+    service: Dataplex
+    category: analytics/data
+    source_api: dataplex
+    resource_types: []
+    terraform_resource_types: [google_dataplex_lake, google_dataplex_zone]
+    target: Apache Atlas
+    api_compatibility_strategy: export lakes, zones, and metadata into an open governance catalog
+    impossibility_notes: Dataplex API-compatible governance plane is not modeled
+    status: missing
+    blocker: not modeled yet
+  - provider: gcp
+    service: Looker
+    category: analytics/data
+    source_api: looker
+    resource_types: []
+    terraform_resource_types: [google_looker_instance]
+    target: Apache Superset
+    api_compatibility_strategy: export dashboards and semantic models into open BI assets
+    impossibility_notes: LookML/runtime parity requires guided migration
+    status: missing
+    blocker: not modeled yet
+  - provider: gcp
+    service: Cloud Deploy
+    category: devops
+    source_api: clouddeploy
+    resource_types: []
+    terraform_resource_types: [google_clouddeploy_delivery_pipeline, google_clouddeploy_target]
+    target: Argo CD
+    api_compatibility_strategy: convert delivery pipelines and targets into GitOps deployment flows
+    impossibility_notes: Cloud Deploy release API compatibility is not modeled
+    status: missing
+    blocker: not modeled yet
+  - provider: gcp
+    service: Error Reporting
+    category: observability
+    source_api: clouderrorreporting
+    resource_types: []
+    terraform_resource_types: []
+    target: Sentry
+    api_compatibility_strategy: route application errors into open error tracking
+    impossibility_notes: Error Reporting grouping semantics are provider-specific
+    status: missing
+    blocker: not modeled yet
+  - provider: gcp
+    service: Profiler
+    category: observability
+    source_api: cloudprofiler
+    resource_types: []
+    terraform_resource_types: []
+    target: Pyroscope
+    api_compatibility_strategy: replace profiling agents and route profiles to open storage
+    impossibility_notes: Cloud Profiler API compatibility is not modeled
+    status: missing
+    blocker: not modeled yet
+  - provider: gcp
+    service: TPU
+    category: ai/ml
+    source_api: tpu
+    resource_types: []
+    terraform_resource_types: [google_tpu_node, google_tpu_v2_vm]
+    target: Kubernetes GPU/accelerator scheduling
+    api_compatibility_strategy: map TPU workloads to portable accelerator jobs where possible
+    impossibility_notes: TPU hardware semantics cannot be reproduced by software migration
+    status: missing
+    blocker: not modeled yet
+  - provider: gcp
+    service: Document AI
+    category: ai/ml
+    source_api: documentai
+    resource_types: []
+    terraform_resource_types: [google_document_ai_processor]
+    target: Tesseract OCR
+    api_compatibility_strategy: replace document processors with open OCR/NLP pipelines
+    impossibility_notes: Document AI processor output parity is not guaranteed
+    status: missing
+    blocker: not modeled yet
+  - provider: gcp
+    service: Vision AI
+    category: ai/ml
+    source_api: visionai
+    resource_types: []
+    terraform_resource_types: []
+    target: OpenCV
+    api_compatibility_strategy: replace vision analysis calls with open computer-vision pipelines
+    impossibility_notes: Vision model behavior cannot be replicated exactly
+    status: missing
+    blocker: not modeled yet
+  - provider: gcp
+    service: Speech-to-Text
+    category: ai/ml
+    source_api: speech
+    resource_types: []
+    terraform_resource_types: [google_speech_custom_class, google_speech_phrase_set]
+    target: Whisper
+    api_compatibility_strategy: migrate phrase hints and route recognition jobs to open transcription
+    impossibility_notes: Speech-to-Text API and recognition parity are not proven
+    status: missing
+    blocker: not modeled yet
+  - provider: gcp
+    service: Translation
+    category: ai/ml
+    source_api: translate
+    resource_types: []
+    terraform_resource_types: []
+    target: LibreTranslate
+    api_compatibility_strategy: replace translation calls with adapter-backed open translation endpoints
+    impossibility_notes: Translation API compatibility and language quality parity are not proven
     status: missing
     blocker: not modeled yet
 
@@ -1918,5 +2215,148 @@ services:
     validate: false
     cutover: false
     rollback: false
+    status: missing
+    blocker: not modeled yet
+  - provider: azure
+    service: Data Lake
+    category: analytics/data
+    source_api: storage
+    resource_types: []
+    terraform_resource_types: [azurerm_storage_data_lake_gen2_filesystem]
+    target: MinIO and lakeFS
+    api_compatibility_strategy: migrate ADLS Gen2 namespaces into S3-compatible object storage with catalog metadata
+    impossibility_notes: hierarchical namespace and ACL parity require guided validation
+    status: missing
+    blocker: not modeled yet
+  - provider: azure
+    service: Fabric
+    category: analytics/data
+    source_api: fabric
+    resource_types: []
+    terraform_resource_types: []
+    target: Apache Superset and Trino
+    api_compatibility_strategy: decompose Fabric workspaces into BI, lakehouse, and SQL migration targets
+    impossibility_notes: Fabric workspace/runtime API compatibility is not modeled
+    status: missing
+    blocker: not modeled yet
+  - provider: azure
+    service: Power BI Embedded
+    category: analytics/data
+    source_api: powerbi
+    resource_types: []
+    terraform_resource_types: [azurerm_powerbi_embedded_capacity]
+    target: Apache Superset
+    api_compatibility_strategy: export reports and datasets into open BI dashboards
+    impossibility_notes: Power BI report rendering parity requires guided replacement
+    status: missing
+    blocker: not modeled yet
+  - provider: azure
+    service: Logic Apps advanced
+    category: app/integration
+    source_api: logic
+    resource_types: []
+    terraform_resource_types: [azurerm_logic_app_workflow, azurerm_logic_app_trigger_http_request]
+    target: n8n or Temporal
+    api_compatibility_strategy: convert advanced connectors and workflows into open orchestration definitions
+    impossibility_notes: proprietary managed connectors require guided replacement
+    status: missing
+    blocker: not modeled yet
+  - provider: azure
+    service: Notification Hubs
+    category: app/integration
+    source_api: notificationhubs
+    resource_types: []
+    terraform_resource_types: [azurerm_notification_hub_namespace, azurerm_notification_hub]
+    target: UnifiedPush gateway
+    api_compatibility_strategy: migrate registrations and route push delivery through open notification adapters
+    impossibility_notes: platform push-provider contracts still depend on Apple/Google endpoints
+    status: missing
+    blocker: not modeled yet
+  - provider: azure
+    service: DevOps Pipelines
+    category: devops
+    source_api: azuredevops
+    resource_types: []
+    terraform_resource_types: [azuredevops_build_definition, azuredevops_release_definition]
+    target: GitLab CI or Tekton
+    api_compatibility_strategy: translate pipeline definitions, variables, and environments into open CI workflows
+    impossibility_notes: Azure DevOps task ecosystem parity requires guided migration
+    status: missing
+    blocker: not modeled yet
+  - provider: azure
+    service: Application Insights
+    category: observability/governance
+    source_api: applicationinsights
+    resource_types: []
+    terraform_resource_types: [azurerm_application_insights]
+    target: OpenTelemetry and Grafana
+    api_compatibility_strategy: replace SDK exporters with OTLP and recreate dashboards/alerts
+    impossibility_notes: Application Insights query and sampling semantics are provider-specific
+    status: missing
+    blocker: not modeled yet
+  - provider: azure
+    service: Automation
+    category: observability/governance
+    source_api: automation
+    resource_types: []
+    terraform_resource_types: [azurerm_automation_account, azurerm_automation_runbook]
+    target: Rundeck
+    api_compatibility_strategy: export runbooks and schedules into open automation jobs
+    impossibility_notes: Hybrid worker and managed identity behavior require guided replacement
+    status: missing
+    blocker: not modeled yet
+  - provider: azure
+    service: Purview
+    category: observability/governance
+    source_api: purview
+    resource_types: []
+    terraform_resource_types: [azurerm_purview_account]
+    target: Apache Atlas
+    api_compatibility_strategy: export catalogs, classifications, and lineage into open governance metadata
+    impossibility_notes: Purview scanner and lineage parity is not modeled
+    status: missing
+    blocker: not modeled yet
+  - provider: azure
+    service: Machine Learning
+    category: ai/ml
+    source_api: machinelearningservices
+    resource_types: []
+    terraform_resource_types: [azurerm_machine_learning_workspace]
+    target: MLflow
+    api_compatibility_strategy: migrate workspaces, experiments, and model registry metadata to open ML tooling
+    impossibility_notes: Azure ML managed endpoint compatibility requires guided replacement
+    status: missing
+    blocker: not modeled yet
+  - provider: azure
+    service: Document Intelligence
+    category: ai/ml
+    source_api: cognitiveservices
+    resource_types: []
+    terraform_resource_types: [azurerm_cognitive_account]
+    target: Tesseract OCR
+    api_compatibility_strategy: replace document extraction calls with open OCR/NLP pipelines
+    impossibility_notes: model output parity is not guaranteed
+    status: missing
+    blocker: not modeled yet
+  - provider: azure
+    service: Speech
+    category: ai/ml
+    source_api: cognitiveservices
+    resource_types: []
+    terraform_resource_types: [azurerm_cognitive_account]
+    target: Whisper
+    api_compatibility_strategy: route speech jobs to open transcription and synthesis adapters
+    impossibility_notes: Speech API and voice parity are not proven
+    status: missing
+    blocker: not modeled yet
+  - provider: azure
+    service: Translator
+    category: ai/ml
+    source_api: cognitiveservices
+    resource_types: []
+    terraform_resource_types: [azurerm_cognitive_account]
+    target: LibreTranslate
+    api_compatibility_strategy: replace translation calls with adapter-backed open translation endpoints
+    impossibility_notes: Translator API compatibility and language quality parity are not proven
     status: missing
     blocker: not modeled yet

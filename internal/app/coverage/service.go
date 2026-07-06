@@ -2,8 +2,10 @@ package coverage
 
 import (
 	_ "embed"
+	"fmt"
 	"os"
 	"sort"
+	"strings"
 
 	datamigration "github.com/homeport/homeport/internal/app/datamigration"
 	domaincoverage "github.com/homeport/homeport/internal/domain/coverage"
@@ -47,6 +49,53 @@ func LoadCatalogData(data []byte) (*Catalog, error) {
 		return nil, err
 	}
 	return &catalog, nil
+}
+
+func SaveCatalog(path string, catalog Catalog) error {
+	data, err := yaml.Marshal(catalog)
+	if err != nil {
+		return err
+	}
+	return os.WriteFile(path, data, 0o644)
+}
+
+func (c *Catalog) AddMissing(row domaincoverage.ServiceCoverage) error {
+	if row.Provider == "" || row.Service == "" {
+		return fmt.Errorf("provider and service are required")
+	}
+	for _, existing := range c.Services {
+		if existing.Provider == row.Provider && strings.EqualFold(existing.Service, row.Service) {
+			return fmt.Errorf("coverage row already exists for %s/%s", row.Provider, row.Service)
+		}
+	}
+	row.Status = domaincoverage.StatusMissing
+	if row.Blocker == "" {
+		row.Blocker = "not modeled yet"
+	}
+	c.Services = append(c.Services, row)
+	return nil
+}
+
+func (c *Catalog) Promote(provider, service string, status domaincoverage.Status) error {
+	for i := range c.Services {
+		row := &c.Services[i]
+		if row.Provider != provider || !strings.EqualFold(row.Service, service) {
+			continue
+		}
+		if status == domaincoverage.StatusFull && (!fullChecklist(*row) || row.Blocker != "") {
+			return fmt.Errorf("cannot promote %s/%s to full until all checklist columns are true, blocker is empty, and unresolved manual steps are cleared", provider, service)
+		}
+		row.Status = status
+		if status != domaincoverage.StatusMissing {
+			row.Blocker = ""
+		}
+		return nil
+	}
+	return fmt.Errorf("coverage row not found for %s/%s", provider, service)
+}
+
+func fullChecklist(row domaincoverage.ServiceCoverage) bool {
+	return row.Discover && row.Cost && row.Provision && row.Migrate && row.APICompat && row.EnvDNS && row.HA && row.Backup && row.Validate && row.Cutover && row.Rollback
 }
 
 func NewService(catalog Catalog) *Service {

@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"encoding/json"
 	"os"
+	"path/filepath"
 	"strings"
 	"testing"
 
@@ -137,6 +138,92 @@ func TestCoverageCommandRunsOutsideRepoRoot(t *testing.T) {
 	}
 }
 
+func TestCoverageAddMissingCommandWritesCatalogAndMarkdown(t *testing.T) {
+	resetCoverageCommandState(t)
+	dir := t.TempDir()
+	coverageCatalog = filepath.Join(dir, "services.yaml")
+	coverageMarkdown = filepath.Join(dir, "services.md")
+	addMissingProvider = "aws"
+	addMissingService = "Athena"
+	addMissingCategory = "analytics/data"
+	addMissingSourceAPI = "athena"
+	addMissingResources = "aws_athena_database, aws_athena_workgroup"
+	addMissingTarget = "Trino"
+	addMissingAPIStrategy = "recreate catalogs and export saved queries"
+
+	if err := os.WriteFile(coverageCatalog, []byte("services: []\n"), 0o600); err != nil {
+		t.Fatal(err)
+	}
+
+	var buf bytes.Buffer
+	coverageAddMissingCmd.SetOut(&buf)
+	t.Cleanup(func() { coverageAddMissingCmd.SetOut(nil) })
+
+	if err := coverageAddMissingCmd.RunE(coverageAddMissingCmd, nil); err != nil {
+		t.Fatal(err)
+	}
+
+	catalog, err := appcoverage.LoadCatalog(coverageCatalog)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if len(catalog.Services) != 1 || catalog.Services[0].Status != domaincoverage.StatusMissing {
+		t.Fatalf("unexpected catalog: %#v", catalog.Services)
+	}
+	markdown, err := os.ReadFile(coverageMarkdown)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if !strings.Contains(string(markdown), "| aws | Athena | missing | aws_athena_database, aws_athena_workgroup |") {
+		t.Fatalf("missing markdown row:\n%s", markdown)
+	}
+}
+
+func TestCoveragePromoteCommandWritesChecklist(t *testing.T) {
+	resetCoverageCommandState(t)
+	dir := t.TempDir()
+	coverageCatalog = filepath.Join(dir, "services.yaml")
+	coverageChecklistDir = filepath.Join(dir, "checklists")
+	promoteProvider = "aws"
+	promoteService = "Athena"
+	promoteStatus = "guided"
+
+	if err := os.WriteFile(coverageCatalog, []byte(`
+services:
+  - provider: aws
+    service: Athena
+    resource_types: []
+    status: missing
+    blocker: not modeled yet
+`), 0o600); err != nil {
+		t.Fatal(err)
+	}
+
+	var buf bytes.Buffer
+	coveragePromoteCmd.SetOut(&buf)
+	t.Cleanup(func() { coveragePromoteCmd.SetOut(nil) })
+
+	if err := coveragePromoteCmd.RunE(coveragePromoteCmd, nil); err != nil {
+		t.Fatal(err)
+	}
+
+	catalog, err := appcoverage.LoadCatalog(coverageCatalog)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if got := catalog.Services[0]; got.Status != domaincoverage.StatusGuided || got.Blocker != "" {
+		t.Fatalf("unexpected promoted row: %#v", got)
+	}
+	checklist := filepath.Join(coverageChecklistDir, "aws-athena.md")
+	data, err := os.ReadFile(checklist)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if !strings.Contains(string(data), "Coverage Conformance Checklist") {
+		t.Fatalf("unexpected checklist:\n%s", data)
+	}
+}
+
 func testCoverageServices() []domaincoverage.ServiceCoverage {
 	return []domaincoverage.ServiceCoverage{
 		{
@@ -146,4 +233,41 @@ func testCoverageServices() []domaincoverage.ServiceCoverage {
 			Status:        domaincoverage.StatusMapped,
 		},
 	}
+}
+
+func resetCoverageCommandState(t *testing.T) {
+	t.Helper()
+	original := struct {
+		catalog, markdown, checklistDir string
+		addProvider, addService         string
+		addCategory, addSourceAPI       string
+		addResources, addTarget         string
+		addStrategy, addImpossible      string
+		promoteProvider, promoteService string
+		promoteStatus                   string
+	}{
+		coverageCatalog, coverageMarkdown, coverageChecklistDir,
+		addMissingProvider, addMissingService,
+		addMissingCategory, addMissingSourceAPI,
+		addMissingResources, addMissingTarget,
+		addMissingAPIStrategy, addMissingImpossible,
+		promoteProvider, promoteService,
+		promoteStatus,
+	}
+	t.Cleanup(func() {
+		coverageCatalog = original.catalog
+		coverageMarkdown = original.markdown
+		coverageChecklistDir = original.checklistDir
+		addMissingProvider = original.addProvider
+		addMissingService = original.addService
+		addMissingCategory = original.addCategory
+		addMissingSourceAPI = original.addSourceAPI
+		addMissingResources = original.addResources
+		addMissingTarget = original.addTarget
+		addMissingAPIStrategy = original.addStrategy
+		addMissingImpossible = original.addImpossible
+		promoteProvider = original.promoteProvider
+		promoteService = original.promoteService
+		promoteStatus = original.promoteStatus
+	})
 }

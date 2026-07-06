@@ -42,6 +42,23 @@
 | aws | VPC | mapped | aws_vpc |
 | aws | WAF | missing |  |
 | aws | X-Ray | missing |  |
+| aws | Lake Formation | missing | aws_lakeformation_data_lake_settings, aws_lakeformation_permissions |
+| aws | QuickSight | missing | aws_quicksight_data_source, aws_quicksight_dashboard |
+| aws | MQ | missing | aws_mq_broker |
+| aws | IoT Core | missing | aws_iot_thing, aws_iot_topic_rule |
+| aws | App Mesh | missing | aws_appmesh_mesh, aws_appmesh_virtual_node |
+| aws | CodeDeploy | missing | aws_codedeploy_app, aws_codedeploy_deployment_group |
+| aws | CloudFormation full import | missing | aws_cloudformation_stack |
+| aws | Shield | missing | aws_shield_protection |
+| aws | Security Hub | missing | aws_securityhub_account, aws_securityhub_standards_subscription |
+| aws | Config | missing | aws_config_configuration_recorder, aws_config_config_rule |
+| aws | Organizations | missing | aws_organizations_organization, aws_organizations_account |
+| aws | Control Tower | missing | aws_controltower_control |
+| aws | Textract | missing | aws_textract_adapter |
+| aws | Transcribe | missing | aws_transcribe_vocabulary, aws_transcribe_language_model |
+| aws | Translate | missing |  |
+| aws | Rekognition | missing | aws_rekognition_collection, aws_rekognition_project |
+| aws | Comprehend | missing | aws_comprehend_document_classifier, aws_comprehend_entity_recognizer |
 | gcp | Apigee | missing |  |
 | gcp | App Engine | mapped | google_app_engine_application |
 | gcp | Artifact Registry | missing |  |
@@ -79,6 +96,16 @@
 | gcp | VPC | mapped | google_compute_network |
 | gcp | Vertex AI | missing |  |
 | gcp | Workflows | missing |  |
+| gcp | Dataplex | missing | google_dataplex_lake, google_dataplex_zone |
+| gcp | Looker | missing | google_looker_instance |
+| gcp | Cloud Deploy | missing | google_clouddeploy_delivery_pipeline, google_clouddeploy_target |
+| gcp | Error Reporting | missing |  |
+| gcp | Profiler | missing |  |
+| gcp | TPU | missing | google_tpu_node, google_tpu_v2_vm |
+| gcp | Document AI | missing | google_document_ai_processor |
+| gcp | Vision AI | missing |  |
+| gcp | Speech-to-Text | missing | google_speech_custom_class, google_speech_phrase_set |
+| gcp | Translation | missing |  |
 | azure | AI Search | missing |  |
 | azure | AKS | mapped | azurerm_kubernetes_cluster |
 | azure | API Management | missing |  |
@@ -118,3 +145,16 @@
 | azure | SignalR | missing |  |
 | azure | Synapse | missing |  |
 | azure | VM Scale Sets | missing |  |
+| azure | Data Lake | missing | azurerm_storage_data_lake_gen2_filesystem |
+| azure | Fabric | missing |  |
+| azure | Power BI Embedded | missing | azurerm_powerbi_embedded_capacity |
+| azure | Logic Apps advanced | missing | azurerm_logic_app_workflow, azurerm_logic_app_trigger_http_request |
+| azure | Notification Hubs | missing | azurerm_notification_hub_namespace, azurerm_notification_hub |
+| azure | DevOps Pipelines | missing | azuredevops_build_definition, azuredevops_release_definition |
+| azure | Application Insights | missing | azurerm_application_insights |
+| azure | Automation | missing | azurerm_automation_account, azurerm_automation_runbook |
+| azure | Purview | missing | azurerm_purview_account |
+| azure | Machine Learning | missing | azurerm_machine_learning_workspace |
+| azure | Document Intelligence | missing | azurerm_cognitive_account |
+| azure | Speech | missing | azurerm_cognitive_account |
+| azure | Translator | missing | azurerm_cognitive_account |

@@ -96,3 +96,56 @@ func TestFindDriftMarshalsEmptyDriftListsAsArrays(t *testing.T) {
 		t.Fatalf("drift JSON = %s, want snake_case fields with empty arrays", data)
 	}
 }
+
+func TestAddMissingAddsBacklogRow(t *testing.T) {
+	catalog := Catalog{}
+
+	err := catalog.AddMissing(domaincoverage.ServiceCoverage{
+		Provider:                 "aws",
+		Service:                  "Athena",
+		Category:                 "analytics/data",
+		SourceAPI:                "athena",
+		ResourceTypes:            []string{"aws_athena_database"},
+		Target:                   "Trino",
+		APICompatibilityStrategy: "export queries and recreate catalogs",
+	})
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	got := catalog.Services[0]
+	if got.Status != domaincoverage.StatusMissing || got.Blocker == "" || got.Category != "analytics/data" {
+		t.Fatalf("unexpected missing row: %#v", got)
+	}
+	if err := catalog.AddMissing(got); err == nil {
+		t.Fatal("duplicate missing row should be rejected")
+	}
+}
+
+func TestPromoteRejectsFullUntilChecklistComplete(t *testing.T) {
+	catalog := Catalog{Services: []domaincoverage.ServiceCoverage{
+		{Provider: "aws", Service: "S3", Status: domaincoverage.StatusMapped},
+	}}
+
+	err := catalog.Promote("aws", "S3", domaincoverage.StatusFull)
+	if err == nil || !strings.Contains(err.Error(), "checklist columns") {
+		t.Fatalf("expected full promotion guard, got %v", err)
+	}
+}
+
+func TestPromoteUpdatesStatusWhenAllowed(t *testing.T) {
+	catalog := Catalog{Services: []domaincoverage.ServiceCoverage{
+		{
+			Provider: "aws", Service: "S3", Status: domaincoverage.StatusMapped, Blocker: "not modeled yet",
+			Discover: true, Cost: true, Provision: true, Migrate: true, APICompat: true,
+			EnvDNS: true, HA: true, Backup: true, Validate: true, Cutover: true, Rollback: true,
+		},
+	}}
+
+	if err := catalog.Promote("aws", "S3", domaincoverage.StatusGuided); err != nil {
+		t.Fatal(err)
+	}
+	if got := catalog.Services[0]; got.Status != domaincoverage.StatusGuided || got.Blocker != "" {
+		t.Fatalf("unexpected promoted row: %#v", got)
+	}
+}
