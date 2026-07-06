@@ -96,6 +96,7 @@ var CategoryMapping = map[Type]Category{
 	TypeSageMakerEndpoint:         CategoryCompute,
 	TypeCodeBuild:                 CategoryDevOps,
 	TypeCodePipeline:              CategoryDevOps,
+	TypeCodeDeployApp:             CategoryDevOps,
 	TypeECRRepository:             CategoryContainer,
 	TypeStepFunctionsStateMachine: CategoryMessaging,
 

@@ -20,6 +20,7 @@ const (
 	TypeSageMakerEndpoint         Type = "aws_sagemaker_endpoint"
 	TypeCodeBuild                 Type = "aws_codebuild_project"
 	TypeCodePipeline              Type = "aws_codepipeline"
+	TypeCodeDeployApp             Type = "aws_codedeploy_app"
 	TypeECRRepository             Type = "aws_ecr_repository"
 	TypeStepFunctionsStateMachine Type = "aws_sfn_state_machine"
 

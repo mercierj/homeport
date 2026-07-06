@@ -28,6 +28,7 @@ var ResourceMapping = map[resource.Type]StackType{
 	resource.TypeSageMakerEndpoint:         StackTypePassthrough, // ML inference endpoints stay individual
 	resource.TypeCodeBuild:                 StackTypePassthrough, // Build projects stay individual
 	resource.TypeCodePipeline:              StackTypePassthrough, // Pipelines remain workflow definitions
+	resource.TypeCodeDeployApp:             StackTypePassthrough, // Deploy strategies remain rollout definitions
 	resource.TypeECRRepository:             StackTypePassthrough, // Registries remain individual infrastructure
 	resource.TypeStepFunctionsStateMachine: StackTypeMessaging,   // Workflows consolidate with event orchestration
 

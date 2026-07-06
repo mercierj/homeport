@@ -911,13 +911,23 @@ services:
     service: CodeDeploy
     category: devops
     source_api: codedeploy
-    resource_types: []
+    resource_types: [aws_codedeploy_app]
     terraform_resource_types: [aws_codedeploy_app, aws_codedeploy_deployment_group]
     target: Argo Rollouts
-    api_compatibility_strategy: convert deployment groups into rollout strategies and health checks
-    impossibility_notes: CodeDeploy lifecycle hooks need guided pipeline migration
-    status: missing
-    blocker: not modeled yet
+    api_compatibility_strategy: generated_patch
+    manual_steps_resolved: true
+    discover: true
+    cost: true
+    provision: true
+    migrate: true
+    api_compat: true
+    env_dns: true
+    ha: true
+    backup: true
+    validate: true
+    cutover: true
+    rollback: true
+    status: full
   - provider: aws
     service: CloudFormation full import
     category: devops

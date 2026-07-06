@@ -370,9 +370,11 @@ func mapAWSTerraformType(tfType string) resource.Type {
 		"aws_xray_sampling_rule":      resource.TypeXRaySamplingRule,
 
 		// DevOps
-		"aws_codebuild_project": resource.TypeCodeBuild,
-		"aws_codepipeline":      resource.TypeCodePipeline,
-		"aws_sfn_state_machine": resource.TypeStepFunctionsStateMachine,
+		"aws_codebuild_project":           resource.TypeCodeBuild,
+		"aws_codepipeline":                resource.TypeCodePipeline,
+		"aws_codedeploy_app":              resource.TypeCodeDeployApp,
+		"aws_codedeploy_deployment_group": resource.TypeCodeDeployApp,
+		"aws_sfn_state_machine":           resource.TypeStepFunctionsStateMachine,
 	}
 
 	if resType, ok := mapping[tfType]; ok {
