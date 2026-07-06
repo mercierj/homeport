@@ -9,6 +9,51 @@ import (
 	"github.com/homeport/homeport/internal/domain/resource"
 )
 
+func TestSecretsManagerConformanceManagedAToZ(t *testing.T) {
+	result, err := NewSecretsManagerMapper().Map(context.Background(), &resource.AWSResource{
+		ID:   "arn:aws:secretsmanager:eu-west-1:123456789012:secret:app/db-abc123",
+		Type: resource.TypeSecretsManager,
+		Name: "app/db",
+		Config: map[string]interface{}{
+			"name":       "app/db",
+			"kms_key_id": "arn:aws:kms:eu-west-1:123456789012:key/1234",
+			"rotation_configuration": map[string]interface{}{
+				"automatically_after_days": float64(30),
+			},
+		},
+	})
+	if err != nil {
+		t.Fatal(err)
+	}
+	if len(result.ManualSteps) != 0 {
+		t.Fatalf("manual steps = %#v, want generated Secrets Manager migration", result.ManualSteps)
+	}
+	if result.DockerService.Image != "hashicorp/vault:1.15" || result.DockerService.Deploy == nil || result.DockerService.Deploy.Replicas < 2 {
+		t.Fatalf("service does not provision HA Vault target: %#v", result.DockerService)
+	}
+	for _, file := range []string{"config/vault/vault.hcl", "config/vault/app-change.env", "config/vault/rotation-policy.hcl"} {
+		if _, ok := result.Configs[file]; !ok {
+			t.Fatalf("missing config %s", file)
+		}
+	}
+	appEnv := string(result.Configs["config/vault/app-change.env"])
+	for _, want := range []string{"APP_CHANGE_MODE=adapter", "SOURCE_SECRET=app/db", "AWS_ENDPOINT_URL_SECRETSMANAGER=http://homeport:8080/api/v1/compat/aws/secretsmanager", "HOMEPORT_COMPAT_BACKEND=vault"} {
+		if !strings.Contains(appEnv, want) {
+			t.Fatalf("app-change env missing %q:\n%s", want, appEnv)
+		}
+	}
+	for _, file := range []string{"init_vault.sh", "migrate_secrets.sh", "validate_secretsmanager_adapter.sh", "backup_secretsmanager_config.sh", "cutover_secretsmanager_adapter.sh"} {
+		if _, ok := result.Scripts[file]; !ok {
+			t.Fatalf("missing script %s", file)
+		}
+	}
+	for _, id := range []string{"initialize-vault-secrets", "import-secret-value", "validate-secretsmanager-compat", "backup-secretsmanager-config", "cutover-secretsmanager-adapter", "rollback-secrets-source-authority"} {
+		if !hasRunbookStep(result, id) {
+			t.Fatalf("missing runbook step %s: %#v", id, result.RunbookSteps)
+		}
+	}
+}
+
 func TestNewSecretsManagerMapper(t *testing.T) {
 	m := NewSecretsManagerMapper()
 	if m == nil {

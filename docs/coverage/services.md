@@ -37,7 +37,7 @@
 | aws | SNS | full | aws_sns_topic |
 | aws | SQS | full | aws_sqs_queue |
 | aws | SageMaker | full | aws_sagemaker_endpoint |
-| aws | Secrets Manager | mapped | aws_secretsmanager_secret |
+| aws | Secrets Manager | full | aws_secretsmanager_secret |
 | aws | Step Functions | missing |  |
 | aws | VPC | mapped | aws_vpc |
 | aws | WAF | missing |  |
