@@ -1142,13 +1142,23 @@ services:
     service: Comprehend
     category: ai/ml
     source_api: comprehend
-    resource_types: []
+    resource_types: [aws_comprehend_document_classifier]
     terraform_resource_types: [aws_comprehend_document_classifier, aws_comprehend_entity_recognizer]
     target: spaCy
-    api_compatibility_strategy: migrate classifiers and route NLP jobs through open model adapters
-    impossibility_notes: Comprehend model and endpoint parity are not proven
-    status: missing
-    blocker: not modeled yet
+    api_compatibility_strategy: generated_patch
+    manual_steps_resolved: true
+    discover: true
+    cost: true
+    provision: true
+    migrate: true
+    api_compat: true
+    env_dns: true
+    ha: true
+    backup: true
+    validate: true
+    cutover: true
+    rollback: true
+    status: full
 
   # GCP
   - provider: gcp

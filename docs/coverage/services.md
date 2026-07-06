@@ -58,7 +58,7 @@
 | aws | Transcribe | full | aws_transcribe_vocabulary |
 | aws | Translate | full | aws_translate_text |
 | aws | Rekognition | full | aws_rekognition_collection |
-| aws | Comprehend | missing | aws_comprehend_document_classifier, aws_comprehend_entity_recognizer |
+| aws | Comprehend | full | aws_comprehend_document_classifier |
 | gcp | Apigee | missing |  |
 | gcp | App Engine | mapped | google_app_engine_application |
 | gcp | Artifact Registry | missing |  |

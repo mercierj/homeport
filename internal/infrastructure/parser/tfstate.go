@@ -180,6 +180,8 @@ func mapTerraformTypeToResourceType(tfType string) resource.Type {
 		return resource.TypeTranscribeVocabulary
 	case "aws_rekognition_collection", "aws_rekognition_project":
 		return resource.TypeRekognitionCollection
+	case "aws_comprehend_document_classifier", "aws_comprehend_entity_recognizer":
+		return resource.TypeComprehendClassifier
 
 	// Storage
 	case "aws_s3_bucket":

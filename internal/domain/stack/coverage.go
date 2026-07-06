@@ -30,6 +30,7 @@ var ResourceMapping = map[resource.Type]StackType{
 	resource.TypeTranscribeVocabulary:      StackTypePassthrough, // Speech vocabularies stay explicit transcription pipelines
 	resource.TypeTranslateText:             StackTypePassthrough, // Translation clients stay explicit API adapters
 	resource.TypeRekognitionCollection:     StackTypePassthrough, // Vision collections stay explicit CV pipelines
+	resource.TypeComprehendClassifier:      StackTypePassthrough, // NLP classifiers stay explicit model pipelines
 	resource.TypeCodeBuild:                 StackTypePassthrough, // Build projects stay individual
 	resource.TypeCodePipeline:              StackTypePassthrough, // Pipelines remain workflow definitions
 	resource.TypeCodeDeployApp:             StackTypePassthrough, // Deploy strategies remain rollout definitions

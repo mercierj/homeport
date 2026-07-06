@@ -489,6 +489,8 @@ func mapCFNTypeToResourceType(cfnType string) resource.Type {
 		"AWS::Transcribe::LanguageModel":            resource.TypeTranscribeVocabulary,
 		"AWS::Rekognition::Collection":              resource.TypeRekognitionCollection,
 		"AWS::Rekognition::Project":                 resource.TypeRekognitionCollection,
+		"AWS::Comprehend::DocumentClassifier":       resource.TypeComprehendClassifier,
+		"AWS::Comprehend::EntityRecognizer":         resource.TypeComprehendClassifier,
 
 		// Storage
 		"AWS::S3::Bucket":      resource.TypeS3Bucket,

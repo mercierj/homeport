@@ -308,6 +308,8 @@ func mapAWSTerraformType(tfType string) resource.Type {
 		"aws_transcribe_language_model":            resource.TypeTranscribeVocabulary,
 		"aws_rekognition_collection":               resource.TypeRekognitionCollection,
 		"aws_rekognition_project":                  resource.TypeRekognitionCollection,
+		"aws_comprehend_document_classifier":       resource.TypeComprehendClassifier,
+		"aws_comprehend_entity_recognizer":         resource.TypeComprehendClassifier,
 		"aws_ecr_repository":                       resource.TypeECRRepository,
 		"aws_ecrpublic_repository":                 resource.TypeECRRepository,
 

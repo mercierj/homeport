@@ -98,6 +98,7 @@ var CategoryMapping = map[Type]Category{
 	TypeTranscribeVocabulary:      CategoryCompute,
 	TypeTranslateText:             CategoryServerless,
 	TypeRekognitionCollection:     CategoryCompute,
+	TypeComprehendClassifier:      CategoryCompute,
 	TypeCodeBuild:                 CategoryDevOps,
 	TypeCodePipeline:              CategoryDevOps,
 	TypeCodeDeployApp:             CategoryDevOps,
