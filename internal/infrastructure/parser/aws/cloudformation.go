@@ -476,11 +476,13 @@ func isActualCloudFormation(path string) bool {
 func mapCFNTypeToResourceType(cfnType string) resource.Type {
 	mapping := map[string]resource.Type{
 		// Compute
-		"AWS::EC2::Instance":       resource.TypeEC2Instance,
-		"AWS::Lambda::Function":    resource.TypeLambdaFunction,
-		"AWS::ECS::Service":        resource.TypeECSService,
-		"AWS::ECS::TaskDefinition": resource.TypeECSTaskDef,
-		"AWS::EKS::Cluster":        resource.TypeEKSCluster,
+		"AWS::EC2::Instance":                        resource.TypeEC2Instance,
+		"AWS::Lambda::Function":                     resource.TypeLambdaFunction,
+		"AWS::ECS::Service":                         resource.TypeECSService,
+		"AWS::ECS::TaskDefinition":                  resource.TypeECSTaskDef,
+		"AWS::EKS::Cluster":                         resource.TypeEKSCluster,
+		"AWS::Bedrock::ApplicationInferenceProfile": resource.TypeBedrockModel,
+		"AWS::Bedrock::ProvisionedModelThroughput":  resource.TypeBedrockModel,
 
 		// Storage
 		"AWS::S3::Bucket":      resource.TypeS3Bucket,

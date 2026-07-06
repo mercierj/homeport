@@ -170,6 +170,8 @@ func mapTerraformTypeToResourceType(tfType string) resource.Type {
 		return resource.TypeECSService
 	case "aws_ecs_task_definition":
 		return resource.TypeECSTaskDef
+	case "aws_bedrock_inference_profile", "aws_bedrock_provisioned_model_throughput":
+		return resource.TypeBedrockModel
 
 	// Storage
 	case "aws_s3_bucket":

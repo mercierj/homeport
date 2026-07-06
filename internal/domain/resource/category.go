@@ -91,6 +91,7 @@ var CategoryMapping = map[Type]Category{
 	TypeECSService:     CategoryContainer,
 	TypeECSTaskDef:     CategoryContainer,
 	TypeEKSCluster:     CategoryKubernetes,
+	TypeBedrockModel:   CategoryServerless,
 
 	// AWS Storage
 	TypeS3Bucket:  CategoryObjectStorage,

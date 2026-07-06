@@ -295,11 +295,13 @@ func (p *TFStateParser) shouldIncludeResource(res *resource.Resource, opts *pars
 func mapAWSTerraformType(tfType string) resource.Type {
 	mapping := map[string]resource.Type{
 		// Compute
-		"aws_instance":            resource.TypeEC2Instance,
-		"aws_lambda_function":     resource.TypeLambdaFunction,
-		"aws_ecs_service":         resource.TypeECSService,
-		"aws_ecs_task_definition": resource.TypeECSTaskDef,
-		"aws_eks_cluster":         resource.TypeEKSCluster,
+		"aws_instance":                             resource.TypeEC2Instance,
+		"aws_lambda_function":                      resource.TypeLambdaFunction,
+		"aws_ecs_service":                          resource.TypeECSService,
+		"aws_ecs_task_definition":                  resource.TypeECSTaskDef,
+		"aws_eks_cluster":                          resource.TypeEKSCluster,
+		"aws_bedrock_inference_profile":            resource.TypeBedrockModel,
+		"aws_bedrock_provisioned_model_throughput": resource.TypeBedrockModel,
 
 		// Storage
 		"aws_s3_bucket":       resource.TypeS3Bucket,

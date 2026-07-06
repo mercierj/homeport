@@ -97,20 +97,23 @@ services:
     status: full
   - provider: aws
     service: Bedrock
-    resource_types: []
-    discover: false
-    cost: false
-    provision: false
-    migrate: false
-    api_compat: false
-    env_dns: false
-    ha: false
-    backup: false
-    validate: false
-    cutover: false
-    rollback: false
-    status: missing
-    blocker: no Bedrock-compatible local API adapter exists yet
+    resource_types:
+      - aws_bedrock_inference_profile
+    target: Ollama Bedrock adapter
+    api_compatibility_strategy: adapter
+    manual_steps_resolved: true
+    discover: true
+    cost: true
+    provision: true
+    migrate: true
+    api_compat: true
+    env_dns: true
+    ha: true
+    backup: true
+    validate: true
+    cutover: true
+    rollback: true
+    status: full
   - provider: aws
     service: CloudFront
     resource_types:

@@ -16,6 +16,7 @@ const (
 	TypeECSService     Type = "aws_ecs_service"
 	TypeECSTaskDef     Type = "aws_ecs_task_definition"
 	TypeEKSCluster     Type = "aws_eks_cluster"
+	TypeBedrockModel   Type = "aws_bedrock_inference_profile"
 
 	// AWS Storage
 	TypeS3Bucket  Type = "aws_s3_bucket"
