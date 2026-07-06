@@ -105,7 +105,7 @@ export function Dashboard() {
                   <div className="flex gap-1">
                     <Button
                       size="sm"
-                      onClick={() => navigate(`/deploy?stack=${stack.id}`)}
+                      onClick={() => navigate('/migrate')}
                     >
                       <Rocket className="h-4 w-4 mr-1" />
                       Deploy

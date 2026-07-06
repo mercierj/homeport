@@ -3,7 +3,6 @@ import { Link } from 'react-router-dom';
 import {
   Home,
   ArrowRightLeft,
-  Rocket,
   Database,
   HardDrive,
   Server,
@@ -108,7 +107,6 @@ export function Sidebar() {
 
         {/* Compute & Functions */}
         <SidebarSection label="Compute">
-          <SidebarItem icon={Rocket} href="/deploy" label="Deploy" />
           <SidebarItem icon={Code2} href="/functions" label="Functions" />
           <SidebarItem icon={Terminal} href="/terminal" label="Terminal" />
           <SidebarItem icon={Layers} href="/stacks" label="Stacks" />

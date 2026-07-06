@@ -9,7 +9,6 @@ import { Storage } from './pages/Storage';
 import { Database } from './pages/Database';
 import { LogExplorer } from './pages/LogExplorer';
 import { MetricsDashboard } from './pages/MetricsDashboard';
-import { Deploy } from './pages/Deploy';
 import { Functions } from './pages/Functions';
 import { TerminalPage } from './pages/TerminalPage';
 import { Stacks } from './pages/Stacks';
@@ -82,7 +81,7 @@ function AppRoutes() {
         <Route path="/migrate" element={<Migrate />} />
 
         {/* Compute & Functions */}
-        <Route path="/deploy" element={<Deploy />} />
+        <Route path="/deploy" element={<Navigate to="/migrate" replace />} />
         <Route path="/functions" element={<Functions />} />
         <Route path="/terminal" element={<TerminalPage />} />
         <Route path="/stacks" element={<Stacks />} />
