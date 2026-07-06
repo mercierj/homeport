@@ -10,6 +10,7 @@ import (
 	"github.com/homeport/homeport/internal/domain/mapper"
 	"github.com/homeport/homeport/internal/domain/policy"
 	"github.com/homeport/homeport/internal/domain/resource"
+	"github.com/homeport/homeport/internal/infrastructure/mapper/shared/netrunbook"
 )
 
 // VPCMapper converts AWS VPC to Docker networks.
@@ -163,6 +164,9 @@ func (m *VPCMapper) Map(ctx context.Context, res *resource.AWSResource) (*mapper
 
 	// Add comprehensive warning about VPC limitations
 	result.AddWarning("IMPORTANT: AWS VPC provides advanced networking features that cannot be fully replicated with Docker networks alone. Consider using Kubernetes with network policies, or running a full virtual network solution if complex networking is required.")
+	for _, step := range netrunbook.Network(vpcID, "aws_vpc") {
+		result.AddRunbookStep(step)
+	}
 
 	return result, nil
 }

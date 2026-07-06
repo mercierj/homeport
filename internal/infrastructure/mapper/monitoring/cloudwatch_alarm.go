@@ -10,6 +10,7 @@ import (
 
 	"github.com/homeport/homeport/internal/domain/mapper"
 	"github.com/homeport/homeport/internal/domain/resource"
+	"github.com/homeport/homeport/internal/infrastructure/mapper/shared/netrunbook"
 )
 
 // CloudWatchMetricAlarmMapper converts AWS CloudWatch Metric Alarms to Prometheus Alertmanager.
@@ -58,9 +59,9 @@ func (m *CloudWatchMetricAlarmMapper) Map(ctx context.Context, res *resource.AWS
 	}
 	svc.Networks = []string{"homeport"}
 	svc.Labels = map[string]string{
-		"homeport.source":     "aws_cloudwatch_metric_alarm",
-		"homeport.alarm_name": alarmName,
-		"traefik.enable":      "true",
+		"homeport.source":                                             "aws_cloudwatch_metric_alarm",
+		"homeport.alarm_name":                                         alarmName,
+		"traefik.enable":                                              "true",
 		"traefik.http.routers.alertmanager.rule":                      "Host(`alertmanager.localhost`)",
 		"traefik.http.routers.alertmanager.entrypoints":               "websecure",
 		"traefik.http.routers.alertmanager.tls":                       "true",
@@ -115,6 +116,9 @@ func (m *CloudWatchMetricAlarmMapper) Map(ctx context.Context, res *resource.AWS
 		Name:   "prometheus-data",
 		Driver: "local",
 	})
+	for _, step := range netrunbook.Alerts(alarmName, "aws_cloudwatch_metric_alarm", "scripts/test-alert.sh") {
+		result.AddRunbookStep(step)
+	}
 
 	return result, nil
 }
@@ -140,12 +144,12 @@ func (m *CloudWatchMetricAlarmMapper) createPrometheusService() *mapper.DockerSe
 		},
 		Networks: []string{"homeport"},
 		Labels: map[string]string{
-			"homeport.source":                                            "aws_cloudwatch_metric_alarm",
-			"traefik.enable":                                             "true",
-			"traefik.http.routers.prometheus.rule":                       "Host(`prometheus.localhost`)",
-			"traefik.http.routers.prometheus.entrypoints":                "websecure",
-			"traefik.http.routers.prometheus.tls":                        "true",
-			"traefik.http.services.prometheus.loadbalancer.server.port":  "9090",
+			"homeport.source":                                           "aws_cloudwatch_metric_alarm",
+			"traefik.enable":                                            "true",
+			"traefik.http.routers.prometheus.rule":                      "Host(`prometheus.localhost`)",
+			"traefik.http.routers.prometheus.entrypoints":               "websecure",
+			"traefik.http.routers.prometheus.tls":                       "true",
+			"traefik.http.services.prometheus.loadbalancer.server.port": "9090",
 		},
 		Restart: "unless-stopped",
 		HealthCheck: &mapper.HealthCheck{
@@ -690,32 +694,32 @@ func (m *CloudWatchMetricAlarmMapper) mapMetricToPromQL(namespace, metricName, s
 		"AWS/EC2/StatusCheckFailed": "up == 0",
 
 		// RDS metrics -> PostgreSQL/MySQL Exporter
-		"AWS/RDS/CPUUtilization":       "rate(process_cpu_seconds_total[5m]) * 100",
-		"AWS/RDS/DatabaseConnections":  "pg_stat_activity_count",
-		"AWS/RDS/FreeableMemory":       "pg_settings_shared_buffers_bytes",
-		"AWS/RDS/ReadIOPS":             "rate(pg_stat_database_blks_read[5m])",
-		"AWS/RDS/WriteIOPS":            "rate(pg_stat_database_blks_hit[5m])",
-		"AWS/RDS/FreeStorageSpace":     "pg_database_size_bytes",
-		"AWS/RDS/ReplicaLag":           "pg_replication_lag",
+		"AWS/RDS/CPUUtilization":      "rate(process_cpu_seconds_total[5m]) * 100",
+		"AWS/RDS/DatabaseConnections": "pg_stat_activity_count",
+		"AWS/RDS/FreeableMemory":      "pg_settings_shared_buffers_bytes",
+		"AWS/RDS/ReadIOPS":            "rate(pg_stat_database_blks_read[5m])",
+		"AWS/RDS/WriteIOPS":           "rate(pg_stat_database_blks_hit[5m])",
+		"AWS/RDS/FreeStorageSpace":    "pg_database_size_bytes",
+		"AWS/RDS/ReplicaLag":          "pg_replication_lag",
 
 		// ELB/ALB metrics -> Traefik
-		"AWS/ELB/RequestCount":            "rate(traefik_entrypoint_requests_total[5m])",
-		"AWS/ELB/Latency":                 "histogram_quantile(0.99, rate(traefik_entrypoint_request_duration_seconds_bucket[5m]))",
+		"AWS/ELB/RequestCount":              "rate(traefik_entrypoint_requests_total[5m])",
+		"AWS/ELB/Latency":                   "histogram_quantile(0.99, rate(traefik_entrypoint_request_duration_seconds_bucket[5m]))",
 		"AWS/ELB/HTTPCode_Target_2XX_Count": "rate(traefik_entrypoint_requests_total{code=~\"2..\"}[5m])",
 		"AWS/ELB/HTTPCode_Target_5XX_Count": "rate(traefik_entrypoint_requests_total{code=~\"5..\"}[5m])",
-		"AWS/ELB/HealthyHostCount":        "up",
-		"AWS/ELB/UnHealthyHostCount":      "up == 0",
+		"AWS/ELB/HealthyHostCount":          "up",
+		"AWS/ELB/UnHealthyHostCount":        "up == 0",
 
 		// ALB metrics
-		"AWS/ApplicationELB/RequestCount":      "rate(traefik_service_requests_total[5m])",
+		"AWS/ApplicationELB/RequestCount":       "rate(traefik_service_requests_total[5m])",
 		"AWS/ApplicationELB/TargetResponseTime": "histogram_quantile(0.99, rate(traefik_service_request_duration_seconds_bucket[5m]))",
 
 		// Lambda metrics -> Application metrics
-		"AWS/Lambda/Invocations":           "rate(http_requests_total[5m])",
-		"AWS/Lambda/Duration":              "histogram_quantile(0.99, rate(http_request_duration_seconds_bucket[5m]))",
-		"AWS/Lambda/Errors":                "rate(http_requests_total{status=~\"5..\"}[5m])",
-		"AWS/Lambda/ConcurrentExecutions":  "process_open_fds",
-		"AWS/Lambda/Throttles":             "rate(http_requests_total{status=\"429\"}[5m])",
+		"AWS/Lambda/Invocations":          "rate(http_requests_total[5m])",
+		"AWS/Lambda/Duration":             "histogram_quantile(0.99, rate(http_request_duration_seconds_bucket[5m]))",
+		"AWS/Lambda/Errors":               "rate(http_requests_total{status=~\"5..\"}[5m])",
+		"AWS/Lambda/ConcurrentExecutions": "process_open_fds",
+		"AWS/Lambda/Throttles":            "rate(http_requests_total{status=\"429\"}[5m])",
 
 		// ElastiCache/Redis metrics -> Redis Exporter
 		"AWS/ElastiCache/CPUUtilization":    "rate(redis_cpu_user_seconds_total[5m]) * 100",
@@ -735,8 +739,8 @@ func (m *CloudWatchMetricAlarmMapper) mapMetricToPromQL(namespace, metricName, s
 		"AWS/SNS/NumberOfMessagesPublished": "rate(rabbitmq_channel_messages_published_total[5m])",
 
 		// S3 metrics (limited - needs custom exporter)
-		"AWS/S3/BucketSizeBytes":        "minio_bucket_usage_total_bytes",
-		"AWS/S3/NumberOfObjects":        "minio_bucket_usage_object_total",
+		"AWS/S3/BucketSizeBytes": "minio_bucket_usage_total_bytes",
+		"AWS/S3/NumberOfObjects": "minio_bucket_usage_object_total",
 	}
 
 	if expr, ok := mappings[key]; ok {

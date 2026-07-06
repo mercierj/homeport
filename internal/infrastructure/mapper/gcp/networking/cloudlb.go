@@ -9,6 +9,7 @@ import (
 
 	"github.com/homeport/homeport/internal/domain/mapper"
 	"github.com/homeport/homeport/internal/domain/resource"
+	"github.com/homeport/homeport/internal/infrastructure/mapper/shared/netrunbook"
 )
 
 // CloudLBMapper converts GCP Cloud Load Balancer (Backend Service) to Traefik or HAProxy.
@@ -58,12 +59,12 @@ func (m *CloudLBMapper) Map(ctx context.Context, res *resource.AWSResource) (*ma
 
 	// Configure Traefik with labels
 	svc.Labels = map[string]string{
-		"homeport.source":       "google_compute_backend_service",
-		"homeport.service_name": serviceName,
-		"traefik.enable":         "true",
-		"traefik.http.routers.dashboard.rule":         "Host(`traefik.localhost`)",
-		"traefik.http.routers.dashboard.service":      "api@internal",
-		"traefik.http.routers.dashboard.entrypoints":  "web",
+		"homeport.source":                            "google_compute_backend_service",
+		"homeport.service_name":                      serviceName,
+		"traefik.enable":                             "true",
+		"traefik.http.routers.dashboard.rule":        "Host(`traefik.localhost`)",
+		"traefik.http.routers.dashboard.service":     "api@internal",
+		"traefik.http.routers.dashboard.entrypoints": "web",
 		"traefik.http.services." + m.sanitizeName(serviceName) + ".loadbalancer.sticky": fmt.Sprintf("%t", sessionAffinity),
 	}
 
@@ -119,6 +120,9 @@ func (m *CloudLBMapper) Map(ctx context.Context, res *resource.AWSResource) (*ma
 	result.AddManualStep("Configure SSL/TLS certificates for HTTPS support")
 	result.AddManualStep("Update backend service URLs in dynamic-config.yml")
 	result.AddWarning("Consider using HAProxy for more advanced load balancing features")
+	for _, step := range netrunbook.Routing(serviceName, "google_compute_backend_service") {
+		result.AddRunbookStep(step)
+	}
 
 	return result, nil
 }
@@ -269,7 +273,7 @@ func (m *CloudLBMapper) generateDynamicConfig(serviceName string, backends []str
 http:
   routers:
     %s:
-      rule: "PathPrefix(` + "`/`)" + `"
+      rule: "PathPrefix(`+"`/`)"+`"
       service: "%s"
       entryPoints:
         - web

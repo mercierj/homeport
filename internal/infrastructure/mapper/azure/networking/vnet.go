@@ -10,6 +10,7 @@ import (
 	"github.com/homeport/homeport/internal/domain/mapper"
 	"github.com/homeport/homeport/internal/domain/policy"
 	"github.com/homeport/homeport/internal/domain/resource"
+	"github.com/homeport/homeport/internal/infrastructure/mapper/shared/netrunbook"
 )
 
 // VNetMapper converts Azure Virtual Network to Docker networks.
@@ -121,6 +122,9 @@ func (m *VNetMapper) Map(ctx context.Context, res *resource.AWSResource) (*mappe
 	result.AddManualStep("Update services to use the appropriate networks")
 	result.AddManualStep("Configure firewall rules if NSGs were used")
 	result.AddManualStep("Review network isolation requirements")
+	for _, step := range netrunbook.Network(vnetName, "azurerm_virtual_network") {
+		result.AddRunbookStep(step)
+	}
 
 	return result, nil
 }

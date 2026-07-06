@@ -9,6 +9,7 @@ import (
 
 	"github.com/homeport/homeport/internal/domain/mapper"
 	"github.com/homeport/homeport/internal/domain/resource"
+	"github.com/homeport/homeport/internal/infrastructure/mapper/shared/netrunbook"
 )
 
 // FrontDoorMapper converts Azure Front Door to Traefik with caching.
@@ -151,6 +152,9 @@ func (m *FrontDoorMapper) Map(ctx context.Context, res *resource.AWSResource) (*
 	result.AddManualStep("Configure custom domains in routing rules")
 	result.AddManualStep("Adjust cache policies in Varnish VCL")
 	result.AddManualStep("Set up health probes for backend services")
+	for _, step := range netrunbook.Edge(fdName, "azurerm_frontdoor") {
+		result.AddRunbookStep(step)
+	}
 
 	return result, nil
 }

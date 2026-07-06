@@ -9,6 +9,7 @@ import (
 
 	"github.com/homeport/homeport/internal/domain/mapper"
 	"github.com/homeport/homeport/internal/domain/resource"
+	"github.com/homeport/homeport/internal/infrastructure/mapper/shared/netrunbook"
 )
 
 // DNSMapper converts Azure DNS to CoreDNS or PowerDNS.
@@ -103,6 +104,9 @@ func (m *DNSMapper) Map(ctx context.Context, res *resource.AWSResource) (*mapper
 	result.AddManualStep("Update your domain registrar to point to the new DNS servers")
 	result.AddManualStep("Test DNS resolution: dig @localhost example.com")
 	result.AddManualStep("Configure DNSSEC if required")
+	for _, step := range netrunbook.DNS(zoneName, "azurerm_dns_zone", "setup_dns.sh") {
+		result.AddRunbookStep(step)
+	}
 
 	return result, nil
 }

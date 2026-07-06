@@ -9,6 +9,7 @@ import (
 
 	"github.com/homeport/homeport/internal/domain/mapper"
 	"github.com/homeport/homeport/internal/domain/resource"
+	"github.com/homeport/homeport/internal/infrastructure/mapper/shared/netrunbook"
 )
 
 // CloudFrontMapper converts AWS CloudFront distributions to Caddy or nginx as CDN.
@@ -150,6 +151,9 @@ func (m *CloudFrontMapper) Map(ctx context.Context, res *resource.AWSResource) (
 
 	// Add warning about CloudFront edge locations
 	result.AddWarning("CloudFront edge locations provide global CDN. Consider using external CDN (Cloudflare, Fastly) or multi-region Caddy deployment for global reach.")
+	for _, step := range netrunbook.Edge(distributionID, "aws_cloudfront_distribution") {
+		result.AddRunbookStep(step)
+	}
 
 	return result, nil
 }

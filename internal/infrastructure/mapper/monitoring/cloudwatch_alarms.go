@@ -9,6 +9,7 @@ import (
 
 	"github.com/homeport/homeport/internal/domain/mapper"
 	"github.com/homeport/homeport/internal/domain/resource"
+	"github.com/homeport/homeport/internal/infrastructure/mapper/shared/netrunbook"
 )
 
 // CloudWatchAlarmsMapper converts AWS CloudWatch Alarms to Prometheus Alertmanager.
@@ -53,10 +54,10 @@ func (m *CloudWatchAlarmsMapper) Map(ctx context.Context, res *resource.AWSResou
 	}
 	svc.Networks = []string{"homeport"}
 	svc.Labels = map[string]string{
-		"homeport.source":     "aws_cloudwatch_metric_alarm",
-		"homeport.alarm_name": alarmName,
-		"traefik.enable":       "true",
-		"traefik.http.routers.alertmanager.rule":                      "Host(`alertmanager.localhost`)",
+		"homeport.source":                        "aws_cloudwatch_metric_alarm",
+		"homeport.alarm_name":                    alarmName,
+		"traefik.enable":                         "true",
+		"traefik.http.routers.alertmanager.rule": "Host(`alertmanager.localhost`)",
 		"traefik.http.services.alertmanager.loadbalancer.server.port": "9093",
 	}
 	svc.Restart = "unless-stopped"
@@ -85,6 +86,9 @@ func (m *CloudWatchAlarmsMapper) Map(ctx context.Context, res *resource.AWSResou
 
 	// Add warnings and manual steps
 	m.addMigrationWarnings(result, res, alarmName)
+	for _, step := range netrunbook.Alerts(alarmName, "aws_cloudwatch_metric_alarm", "scripts/test-alerts.sh") {
+		result.AddRunbookStep(step)
+	}
 
 	return result, nil
 }
@@ -315,19 +319,19 @@ func (m *CloudWatchAlarmsMapper) convertMetricName(namespace, metricName string)
 	key := fmt.Sprintf("%s/%s", namespace, metricName)
 
 	mappings := map[string]string{
-		"AWS/EC2/CPUUtilization":        "100 - (avg by(instance) (irate(node_cpu_seconds_total{mode=\"idle\"}[5m])) * 100)",
-		"AWS/EC2/NetworkIn":             "rate(node_network_receive_bytes_total[5m])",
-		"AWS/EC2/NetworkOut":            "rate(node_network_transmit_bytes_total[5m])",
-		"AWS/EC2/DiskReadBytes":         "rate(node_disk_read_bytes_total[5m])",
-		"AWS/EC2/DiskWriteBytes":        "rate(node_disk_written_bytes_total[5m])",
-		"AWS/RDS/CPUUtilization":        "rate(process_cpu_seconds_total[5m]) * 100",
-		"AWS/RDS/DatabaseConnections":   "pg_stat_activity_count",
-		"AWS/RDS/FreeableMemory":        "pg_settings_shared_buffers_bytes",
-		"AWS/ELB/RequestCount":          "rate(traefik_entrypoint_requests_total[5m])",
-		"AWS/ELB/Latency":               "histogram_quantile(0.99, rate(traefik_entrypoint_request_duration_seconds_bucket[5m]))",
-		"AWS/Lambda/Errors":             "rate(http_requests_total{status=~\"5..\"}[5m])",
-		"AWS/Lambda/Duration":           "histogram_quantile(0.99, rate(http_request_duration_seconds_bucket[5m]))",
-		"AWS/ElastiCache/CPUUtilization": "rate(redis_cpu_user_seconds_total[5m]) * 100",
+		"AWS/EC2/CPUUtilization":          "100 - (avg by(instance) (irate(node_cpu_seconds_total{mode=\"idle\"}[5m])) * 100)",
+		"AWS/EC2/NetworkIn":               "rate(node_network_receive_bytes_total[5m])",
+		"AWS/EC2/NetworkOut":              "rate(node_network_transmit_bytes_total[5m])",
+		"AWS/EC2/DiskReadBytes":           "rate(node_disk_read_bytes_total[5m])",
+		"AWS/EC2/DiskWriteBytes":          "rate(node_disk_written_bytes_total[5m])",
+		"AWS/RDS/CPUUtilization":          "rate(process_cpu_seconds_total[5m]) * 100",
+		"AWS/RDS/DatabaseConnections":     "pg_stat_activity_count",
+		"AWS/RDS/FreeableMemory":          "pg_settings_shared_buffers_bytes",
+		"AWS/ELB/RequestCount":            "rate(traefik_entrypoint_requests_total[5m])",
+		"AWS/ELB/Latency":                 "histogram_quantile(0.99, rate(traefik_entrypoint_request_duration_seconds_bucket[5m]))",
+		"AWS/Lambda/Errors":               "rate(http_requests_total{status=~\"5..\"}[5m])",
+		"AWS/Lambda/Duration":             "histogram_quantile(0.99, rate(http_request_duration_seconds_bucket[5m]))",
+		"AWS/ElastiCache/CPUUtilization":  "rate(redis_cpu_user_seconds_total[5m]) * 100",
 		"AWS/ElastiCache/CurrConnections": "redis_connected_clients",
 	}
 

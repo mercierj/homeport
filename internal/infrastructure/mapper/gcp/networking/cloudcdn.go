@@ -9,6 +9,7 @@ import (
 
 	"github.com/homeport/homeport/internal/domain/mapper"
 	"github.com/homeport/homeport/internal/domain/resource"
+	"github.com/homeport/homeport/internal/infrastructure/mapper/shared/netrunbook"
 )
 
 // CloudCDNMapper converts GCP Cloud CDN (Backend Bucket) to Varnish or nginx.
@@ -52,7 +53,7 @@ func (m *CloudCDNMapper) Map(ctx context.Context, res *resource.AWSResource) (*m
 
 	// Environment variables
 	svc.Environment = map[string]string{
-		"VARNISH_SIZE":   "256M",
+		"VARNISH_SIZE":    "256M",
 		"VARNISH_BACKEND": originURL,
 	}
 
@@ -131,6 +132,9 @@ func (m *CloudCDNMapper) Map(ctx context.Context, res *resource.AWSResource) (*m
 	result.AddManualStep("Monitor cache statistics: docker exec <container> varnishstat")
 	result.AddWarning("Consider using nginx with proxy_cache for simpler setup (see nginx-alternative/nginx.conf)")
 	result.AddWarning("Configure SSL/TLS termination with Traefik or nginx reverse proxy")
+	for _, step := range netrunbook.Edge(bucketName, "google_compute_backend_bucket") {
+		result.AddRunbookStep(step)
+	}
 
 	return result, nil
 }

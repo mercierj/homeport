@@ -8,6 +8,7 @@ import (
 
 	"github.com/homeport/homeport/internal/domain/mapper"
 	"github.com/homeport/homeport/internal/domain/resource"
+	"github.com/homeport/homeport/internal/infrastructure/mapper/shared/netrunbook"
 )
 
 // ALBMapper converts AWS Application Load Balancers to Traefik.
@@ -66,9 +67,9 @@ func (m *ALBMapper) Map(ctx context.Context, res *resource.AWSResource) (*mapper
 		"homeport.lb_name": lbNameStr,
 		"homeport.lb_type": "application",
 		// Traefik dashboard
-		"traefik.enable":                            "true",
-		"traefik.http.routers.dashboard.rule":       "Host(`traefik.localhost`)",
-		"traefik.http.routers.dashboard.service":    "api@internal",
+		"traefik.enable":                             "true",
+		"traefik.http.routers.dashboard.rule":        "Host(`traefik.localhost`)",
+		"traefik.http.routers.dashboard.service":     "api@internal",
 		"traefik.http.routers.dashboard.entrypoints": "web",
 	}
 	svc.Restart = "unless-stopped"
@@ -115,6 +116,9 @@ func (m *ALBMapper) Map(ctx context.Context, res *resource.AWSResource) (*mapper
 	result.AddManualStep("Review and update target group backends in dynamic configuration")
 	result.AddManualStep("Configure health check endpoints for all services")
 	result.AddManualStep("Test load balancing behavior")
+	for _, step := range netrunbook.Routing(lbNameStr, "aws_lb") {
+		result.AddRunbookStep(step)
+	}
 
 	return result, nil
 }
@@ -303,10 +307,10 @@ type RuleCondition struct {
 
 // RuleAction represents a rule action.
 type RuleAction struct {
-	Type            string
-	TargetGroupArn  string
-	RedirectConfig  map[string]interface{}
-	FixedResponse   map[string]interface{}
+	Type           string
+	TargetGroupArn string
+	RedirectConfig map[string]interface{}
+	FixedResponse  map[string]interface{}
 }
 
 // TargetGroup represents an ALB target group (for future use).

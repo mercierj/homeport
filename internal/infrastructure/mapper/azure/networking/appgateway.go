@@ -9,6 +9,7 @@ import (
 
 	"github.com/homeport/homeport/internal/domain/mapper"
 	"github.com/homeport/homeport/internal/domain/resource"
+	"github.com/homeport/homeport/internal/infrastructure/mapper/shared/netrunbook"
 )
 
 // AppGatewayMapper converts Azure Application Gateway to Traefik.
@@ -66,7 +67,7 @@ func (m *AppGatewayMapper) Map(ctx context.Context, res *resource.AWSResource) (
 	svc.Networks = []string{"homeport"}
 	svc.Restart = "unless-stopped"
 	svc.Labels = map[string]string{
-		"homeport.source":      "azurerm_application_gateway",
+		"homeport.source":       "azurerm_application_gateway",
 		"homeport.gateway_name": gwName,
 	}
 
@@ -159,6 +160,9 @@ func (m *AppGatewayMapper) Map(ctx context.Context, res *resource.AWSResource) (
 	result.AddManualStep("Place SSL certificates in ./certs directory")
 	result.AddManualStep("Update routing rules and path-based routing as needed")
 	result.AddManualStep("Configure custom error pages if required")
+	for _, step := range netrunbook.Routing(gwName, "azurerm_application_gateway") {
+		result.AddRunbookStep(step)
+	}
 
 	return result, nil
 }

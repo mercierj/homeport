@@ -9,6 +9,7 @@ import (
 
 	"github.com/homeport/homeport/internal/domain/mapper"
 	"github.com/homeport/homeport/internal/domain/resource"
+	"github.com/homeport/homeport/internal/infrastructure/mapper/shared/netrunbook"
 )
 
 // CDNMapper converts Azure CDN to Varnish or nginx.
@@ -104,6 +105,9 @@ func (m *CDNMapper) Map(ctx context.Context, res *resource.AWSResource) (*mapper
 	result.AddManualStep("Adjust cache storage size based on your needs")
 	result.AddManualStep("Configure custom domains and SSL certificates")
 	result.AddManualStep("Set up cache purging mechanisms")
+	for _, step := range netrunbook.Edge(cdnName, "azurerm_cdn_profile") {
+		result.AddRunbookStep(step)
+	}
 
 	return result, nil
 }

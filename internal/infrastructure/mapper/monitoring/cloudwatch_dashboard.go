@@ -10,6 +10,7 @@ import (
 
 	"github.com/homeport/homeport/internal/domain/mapper"
 	"github.com/homeport/homeport/internal/domain/resource"
+	"github.com/homeport/homeport/internal/infrastructure/mapper/shared/netrunbook"
 )
 
 // CloudWatchDashboardMapper converts AWS CloudWatch Dashboards to Grafana.
@@ -49,19 +50,19 @@ func (m *CloudWatchDashboardMapper) Map(ctx context.Context, res *resource.AWSRe
 		"./config/grafana/dashboards:/var/lib/grafana/dashboards",
 	}
 	svc.Environment = map[string]string{
-		"GF_SECURITY_ADMIN_USER":       "${GRAFANA_ADMIN_USER:-admin}",
-		"GF_SECURITY_ADMIN_PASSWORD":   "${GRAFANA_ADMIN_PASSWORD:-admin}",
-		"GF_USERS_ALLOW_SIGN_UP":       "false",
-		"GF_SERVER_ROOT_URL":           "http://grafana.localhost",
-		"GF_INSTALL_PLUGINS":           "grafana-clock-panel,grafana-piechart-panel",
+		"GF_SECURITY_ADMIN_USER":                    "${GRAFANA_ADMIN_USER:-admin}",
+		"GF_SECURITY_ADMIN_PASSWORD":                "${GRAFANA_ADMIN_PASSWORD:-admin}",
+		"GF_USERS_ALLOW_SIGN_UP":                    "false",
+		"GF_SERVER_ROOT_URL":                        "http://grafana.localhost",
+		"GF_INSTALL_PLUGINS":                        "grafana-clock-panel,grafana-piechart-panel",
 		"GF_DASHBOARDS_DEFAULT_HOME_DASHBOARD_PATH": "/var/lib/grafana/dashboards/home.json",
 	}
 	svc.Networks = []string{"homeport"}
 	svc.Labels = map[string]string{
-		"homeport.source":         "aws_cloudwatch_dashboard",
-		"homeport.dashboard_name": dashboardName,
-		"traefik.enable":          "true",
-		"traefik.http.routers.grafana.rule":                      "Host(`grafana.localhost`)",
+		"homeport.source":                   "aws_cloudwatch_dashboard",
+		"homeport.dashboard_name":           dashboardName,
+		"traefik.enable":                    "true",
+		"traefik.http.routers.grafana.rule": "Host(`grafana.localhost`)",
 		"traefik.http.services.grafana.loadbalancer.server.port": "3000",
 	}
 	svc.Restart = "unless-stopped"
@@ -98,6 +99,9 @@ func (m *CloudWatchDashboardMapper) Map(ctx context.Context, res *resource.AWSRe
 
 	// Add warnings and manual steps
 	m.addMigrationWarnings(result, res, dashboardName)
+	for _, step := range netrunbook.Observability(dashboardName, "aws_cloudwatch_dashboard") {
+		result.AddRunbookStep(step)
+	}
 
 	return result, nil
 }
@@ -331,11 +335,11 @@ func (m *CloudWatchDashboardMapper) convertWidget(widget CloudWatchWidget, id in
 			"uid":  "alertmanager",
 		}
 		panel.Options = map[string]interface{}{
-			"alertName":    "",
+			"alertName":       "",
 			"dashboardAlerts": false,
-			"maxItems":     20,
-			"sortOrder":    1,
-			"stateFilter":  map[string]bool{"firing": true, "pending": true},
+			"maxItems":        20,
+			"sortOrder":       1,
+			"stateFilter":     map[string]bool{"firing": true, "pending": true},
 		}
 
 	default:
@@ -367,9 +371,9 @@ func (m *CloudWatchDashboardMapper) convertMetricTargets(widget CloudWatchWidget
 		// Return a placeholder target
 		return []GrafanaTarget{
 			{
-				RefID:      "A",
-				Datasource: map[string]string{"type": "prometheus", "uid": "${datasource}"},
-				Expr:       "# TODO: Replace with actual Prometheus query",
+				RefID:        "A",
+				Datasource:   map[string]string{"type": "prometheus", "uid": "${datasource}"},
+				Expr:         "# TODO: Replace with actual Prometheus query",
 				LegendFormat: "{{instance}}",
 			},
 		}
@@ -379,9 +383,9 @@ func (m *CloudWatchDashboardMapper) convertMetricTargets(widget CloudWatchWidget
 	if !ok {
 		return []GrafanaTarget{
 			{
-				RefID:      "A",
-				Datasource: map[string]string{"type": "prometheus", "uid": "${datasource}"},
-				Expr:       "# TODO: Replace with actual Prometheus query",
+				RefID:        "A",
+				Datasource:   map[string]string{"type": "prometheus", "uid": "${datasource}"},
+				Expr:         "# TODO: Replace with actual Prometheus query",
 				LegendFormat: "{{instance}}",
 			},
 		}
@@ -422,9 +426,9 @@ func (m *CloudWatchDashboardMapper) convertMetricTargets(widget CloudWatchWidget
 	if len(targets) == 0 {
 		return []GrafanaTarget{
 			{
-				RefID:      "A",
-				Datasource: map[string]string{"type": "prometheus", "uid": "${datasource}"},
-				Expr:       "# TODO: Replace with actual Prometheus query",
+				RefID:        "A",
+				Datasource:   map[string]string{"type": "prometheus", "uid": "${datasource}"},
+				Expr:         "# TODO: Replace with actual Prometheus query",
 				LegendFormat: "{{instance}}",
 			},
 		}
@@ -439,25 +443,25 @@ func (m *CloudWatchDashboardMapper) convertMetricToPromQL(namespace, metricName 
 
 	mappings := map[string]string{
 		// EC2 metrics
-		"AWS/EC2/CPUUtilization":   "100 - (avg by(instance) (irate(node_cpu_seconds_total{mode=\"idle\"}[5m])) * 100)",
-		"AWS/EC2/NetworkIn":        "rate(node_network_receive_bytes_total[5m])",
-		"AWS/EC2/NetworkOut":       "rate(node_network_transmit_bytes_total[5m])",
-		"AWS/EC2/DiskReadBytes":    "rate(node_disk_read_bytes_total[5m])",
-		"AWS/EC2/DiskWriteBytes":   "rate(node_disk_written_bytes_total[5m])",
+		"AWS/EC2/CPUUtilization":    "100 - (avg by(instance) (irate(node_cpu_seconds_total{mode=\"idle\"}[5m])) * 100)",
+		"AWS/EC2/NetworkIn":         "rate(node_network_receive_bytes_total[5m])",
+		"AWS/EC2/NetworkOut":        "rate(node_network_transmit_bytes_total[5m])",
+		"AWS/EC2/DiskReadBytes":     "rate(node_disk_read_bytes_total[5m])",
+		"AWS/EC2/DiskWriteBytes":    "rate(node_disk_written_bytes_total[5m])",
 		"AWS/EC2/StatusCheckFailed": "up == 0",
 
 		// RDS metrics
-		"AWS/RDS/CPUUtilization":       "rate(process_cpu_seconds_total[5m]) * 100",
-		"AWS/RDS/DatabaseConnections":  "pg_stat_activity_count",
-		"AWS/RDS/FreeableMemory":       "pg_settings_shared_buffers_bytes",
-		"AWS/RDS/ReadIOPS":             "rate(pg_stat_bgwriter_buffers_backend_total[5m])",
-		"AWS/RDS/WriteIOPS":            "rate(pg_stat_bgwriter_buffers_alloc_total[5m])",
+		"AWS/RDS/CPUUtilization":      "rate(process_cpu_seconds_total[5m]) * 100",
+		"AWS/RDS/DatabaseConnections": "pg_stat_activity_count",
+		"AWS/RDS/FreeableMemory":      "pg_settings_shared_buffers_bytes",
+		"AWS/RDS/ReadIOPS":            "rate(pg_stat_bgwriter_buffers_backend_total[5m])",
+		"AWS/RDS/WriteIOPS":           "rate(pg_stat_bgwriter_buffers_alloc_total[5m])",
 
 		// ELB/ALB metrics
-		"AWS/ELB/RequestCount":         "rate(traefik_entrypoint_requests_total[5m])",
-		"AWS/ELB/Latency":              "histogram_quantile(0.99, rate(traefik_entrypoint_request_duration_seconds_bucket[5m]))",
-		"AWS/ELB/HTTPCode_ELB_5XX":     "rate(traefik_entrypoint_requests_total{code=~\"5..\"}[5m])",
-		"AWS/ELB/HTTPCode_Target_2XX":  "rate(traefik_entrypoint_requests_total{code=~\"2..\"}[5m])",
+		"AWS/ELB/RequestCount":            "rate(traefik_entrypoint_requests_total[5m])",
+		"AWS/ELB/Latency":                 "histogram_quantile(0.99, rate(traefik_entrypoint_request_duration_seconds_bucket[5m]))",
+		"AWS/ELB/HTTPCode_ELB_5XX":        "rate(traefik_entrypoint_requests_total{code=~\"5..\"}[5m])",
+		"AWS/ELB/HTTPCode_Target_2XX":     "rate(traefik_entrypoint_requests_total{code=~\"2..\"}[5m])",
 		"AWS/ApplicationELB/RequestCount": "rate(traefik_service_requests_total[5m])",
 
 		// Lambda metrics
@@ -467,14 +471,14 @@ func (m *CloudWatchDashboardMapper) convertMetricToPromQL(namespace, metricName 
 		"AWS/Lambda/Throttles":   "rate(http_requests_total{status=\"429\"}[5m])",
 
 		// ElastiCache metrics
-		"AWS/ElastiCache/CPUUtilization":    "rate(redis_cpu_user_seconds_total[5m]) * 100",
-		"AWS/ElastiCache/CurrConnections":   "redis_connected_clients",
-		"AWS/ElastiCache/CacheHits":         "rate(redis_keyspace_hits_total[5m])",
-		"AWS/ElastiCache/CacheMisses":       "rate(redis_keyspace_misses_total[5m])",
+		"AWS/ElastiCache/CPUUtilization":  "rate(redis_cpu_user_seconds_total[5m]) * 100",
+		"AWS/ElastiCache/CurrConnections": "redis_connected_clients",
+		"AWS/ElastiCache/CacheHits":       "rate(redis_keyspace_hits_total[5m])",
+		"AWS/ElastiCache/CacheMisses":     "rate(redis_keyspace_misses_total[5m])",
 
 		// SQS metrics
-		"AWS/SQS/NumberOfMessagesReceived": "rate(rabbitmq_queue_messages_delivered_total[5m])",
-		"AWS/SQS/NumberOfMessagesSent":     "rate(rabbitmq_queue_messages_published_total[5m])",
+		"AWS/SQS/NumberOfMessagesReceived":           "rate(rabbitmq_queue_messages_delivered_total[5m])",
+		"AWS/SQS/NumberOfMessagesSent":               "rate(rabbitmq_queue_messages_published_total[5m])",
 		"AWS/SQS/ApproximateNumberOfMessagesVisible": "rabbitmq_queue_messages_ready",
 
 		// DynamoDB metrics
@@ -543,9 +547,9 @@ func (m *CloudWatchDashboardMapper) defaultFieldConfig() map[string]interface{} 
 				"scaleDistribution": map[string]string{
 					"type": "linear",
 				},
-				"showPoints":   "auto",
-				"spanNulls":    false,
-				"stacking":     map[string]string{"group": "A", "mode": "none"},
+				"showPoints":      "auto",
+				"spanNulls":       false,
+				"stacking":        map[string]string{"group": "A", "mode": "none"},
 				"thresholdsStyle": map[string]string{"mode": "off"},
 			},
 			"mappings": []interface{}{},
@@ -1015,22 +1019,22 @@ type CloudWatchWidget struct {
 
 // GrafanaDashboard represents a Grafana dashboard structure.
 type GrafanaDashboard struct {
-	ID            interface{}         `json:"id"`
-	UID           string              `json:"uid"`
-	Title         string              `json:"title"`
-	Description   string              `json:"description,omitempty"`
-	Tags          []string            `json:"tags"`
-	Style         string              `json:"style"`
-	Timezone      string              `json:"timezone"`
-	Editable      bool                `json:"editable"`
-	GraphTooltip  int                 `json:"graphTooltip"`
-	Refresh       string              `json:"refresh"`
-	SchemaVersion int                 `json:"schemaVersion"`
-	Version       int                 `json:"version"`
-	Panels        []GrafanaPanel      `json:"panels"`
-	Time          GrafanaTimeRange    `json:"time"`
-	Templating    GrafanaTemplating   `json:"templating"`
-	Annotations   GrafanaAnnotations  `json:"annotations"`
+	ID            interface{}        `json:"id"`
+	UID           string             `json:"uid"`
+	Title         string             `json:"title"`
+	Description   string             `json:"description,omitempty"`
+	Tags          []string           `json:"tags"`
+	Style         string             `json:"style"`
+	Timezone      string             `json:"timezone"`
+	Editable      bool               `json:"editable"`
+	GraphTooltip  int                `json:"graphTooltip"`
+	Refresh       string             `json:"refresh"`
+	SchemaVersion int                `json:"schemaVersion"`
+	Version       int                `json:"version"`
+	Panels        []GrafanaPanel     `json:"panels"`
+	Time          GrafanaTimeRange   `json:"time"`
+	Templating    GrafanaTemplating  `json:"templating"`
+	Annotations   GrafanaAnnotations `json:"annotations"`
 }
 
 // GrafanaPanel represents a Grafana dashboard panel.

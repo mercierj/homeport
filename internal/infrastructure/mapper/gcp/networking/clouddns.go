@@ -9,6 +9,7 @@ import (
 
 	"github.com/homeport/homeport/internal/domain/mapper"
 	"github.com/homeport/homeport/internal/domain/resource"
+	"github.com/homeport/homeport/internal/infrastructure/mapper/shared/netrunbook"
 )
 
 // CloudDNSMapper converts GCP Cloud DNS to CoreDNS or PowerDNS.
@@ -117,6 +118,9 @@ func (m *CloudDNSMapper) Map(ctx context.Context, res *resource.AWSResource) (*m
 	result.AddManualStep("Point your domain nameservers to this CoreDNS instance")
 	result.AddManualStep("Test DNS resolution: dig @localhost " + strings.TrimSuffix(dnsName, "."))
 	result.AddWarning("Consider using PowerDNS for a more feature-rich DNS server with web UI")
+	for _, step := range netrunbook.DNS(dnsName, "google_dns_managed_zone", "migrate-dns-records.sh") {
+		result.AddRunbookStep(step)
+	}
 
 	return result, nil
 }

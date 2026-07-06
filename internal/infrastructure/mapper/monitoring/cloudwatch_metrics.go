@@ -8,6 +8,7 @@ import (
 
 	"github.com/homeport/homeport/internal/domain/mapper"
 	"github.com/homeport/homeport/internal/domain/resource"
+	"github.com/homeport/homeport/internal/infrastructure/mapper/shared/netrunbook"
 )
 
 // CloudWatchMetricsMapper converts AWS CloudWatch Dashboards to Prometheus + Grafana.
@@ -55,10 +56,10 @@ func (m *CloudWatchMetricsMapper) Map(ctx context.Context, res *resource.AWSReso
 	}
 	svc.Networks = []string{"homeport"}
 	svc.Labels = map[string]string{
-		"homeport.source":        "aws_cloudwatch_dashboard",
-		"homeport.dashboard":     dashboardName,
-		"traefik.enable":          "true",
-		"traefik.http.routers.prometheus.rule":                      "Host(`prometheus.localhost`)",
+		"homeport.source":                      "aws_cloudwatch_dashboard",
+		"homeport.dashboard":                   dashboardName,
+		"traefik.enable":                       "true",
+		"traefik.http.routers.prometheus.rule": "Host(`prometheus.localhost`)",
 		"traefik.http.services.prometheus.loadbalancer.server.port": "9090",
 	}
 	svc.Restart = "unless-stopped"
@@ -99,6 +100,9 @@ func (m *CloudWatchMetricsMapper) Map(ctx context.Context, res *resource.AWSReso
 
 	// Add warnings and manual steps
 	m.addMigrationWarnings(result, res, dashboardName)
+	for _, step := range netrunbook.Observability(dashboardName, "aws_cloudwatch_dashboard") {
+		result.AddRunbookStep(step)
+	}
 
 	return result, nil
 }
@@ -109,11 +113,11 @@ func (m *CloudWatchMetricsMapper) createGrafanaService(dashboardName string) *ma
 		Image: "grafana/grafana:10.2.0",
 		Ports: []string{"3000:3000"},
 		Environment: map[string]string{
-			"GF_SECURITY_ADMIN_USER":       "${GRAFANA_ADMIN_USER:-admin}",
-			"GF_SECURITY_ADMIN_PASSWORD":   "${GRAFANA_ADMIN_PASSWORD:-admin}",
-			"GF_USERS_ALLOW_SIGN_UP":       "false",
-			"GF_SERVER_ROOT_URL":           "http://grafana.localhost",
-			"GF_INSTALL_PLUGINS":           "grafana-clock-panel,grafana-piechart-panel",
+			"GF_SECURITY_ADMIN_USER":     "${GRAFANA_ADMIN_USER:-admin}",
+			"GF_SECURITY_ADMIN_PASSWORD": "${GRAFANA_ADMIN_PASSWORD:-admin}",
+			"GF_USERS_ALLOW_SIGN_UP":     "false",
+			"GF_SERVER_ROOT_URL":         "http://grafana.localhost",
+			"GF_INSTALL_PLUGINS":         "grafana-clock-panel,grafana-piechart-panel",
 		},
 		Volumes: []string{
 			"./data/grafana:/var/lib/grafana",
@@ -121,10 +125,10 @@ func (m *CloudWatchMetricsMapper) createGrafanaService(dashboardName string) *ma
 		},
 		Networks: []string{"homeport"},
 		Labels: map[string]string{
-			"homeport.source":    "aws_cloudwatch_dashboard",
-			"homeport.dashboard": dashboardName,
-			"traefik.enable":      "true",
-			"traefik.http.routers.grafana.rule":                      "Host(`grafana.localhost`)",
+			"homeport.source":                   "aws_cloudwatch_dashboard",
+			"homeport.dashboard":                dashboardName,
+			"traefik.enable":                    "true",
+			"traefik.http.routers.grafana.rule": "Host(`grafana.localhost`)",
 			"traefik.http.services.grafana.loadbalancer.server.port": "3000",
 		},
 		DependsOn: []string{"prometheus"},

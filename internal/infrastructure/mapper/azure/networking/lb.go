@@ -9,6 +9,7 @@ import (
 
 	"github.com/homeport/homeport/internal/domain/mapper"
 	"github.com/homeport/homeport/internal/domain/resource"
+	"github.com/homeport/homeport/internal/infrastructure/mapper/shared/netrunbook"
 )
 
 // LBMapper converts Azure Load Balancer to Traefik or HAProxy.
@@ -118,6 +119,9 @@ func (m *LBMapper) Map(ctx context.Context, res *resource.AWSResource) (*mapper.
 	result.AddManualStep("Configure backend service endpoints in Traefik dynamic configuration")
 	result.AddManualStep("Update health probe settings to match your services")
 	result.AddManualStep("Configure SSL certificates if using HTTPS")
+	for _, step := range netrunbook.Routing(lbName, "azurerm_lb") {
+		result.AddRunbookStep(step)
+	}
 
 	return result, nil
 }

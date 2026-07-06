@@ -8,6 +8,7 @@ import (
 
 	"github.com/homeport/homeport/internal/domain/mapper"
 	"github.com/homeport/homeport/internal/domain/resource"
+	"github.com/homeport/homeport/internal/infrastructure/mapper/shared/netrunbook"
 )
 
 // APIGatewayMapper converts AWS API Gateway to Kong or Traefik.
@@ -66,9 +67,9 @@ func (m *APIGatewayMapper) Map(ctx context.Context, res *resource.AWSResource) (
 		"homeport.source":   "aws_api_gateway",
 		"homeport.api_name": apiNameStr,
 		// Traefik integration for routing
-		"traefik.enable":                                "true",
-		"traefik.http.routers.kong-api.rule":            "Host(`api.localhost`)",
-		"traefik.http.routers.kong-api.entrypoints":     "web,websecure",
+		"traefik.enable":                                          "true",
+		"traefik.http.routers.kong-api.rule":                      "Host(`api.localhost`)",
+		"traefik.http.routers.kong-api.entrypoints":               "web,websecure",
 		"traefik.http.services.kong-api.loadbalancer.server.port": "8000",
 	}
 	svc.Restart = "unless-stopped"
@@ -137,6 +138,9 @@ func (m *APIGatewayMapper) Map(ctx context.Context, res *resource.AWSResource) (
 	result.AddManualStep("Apply Kong declarative configuration: deck sync -s config/kong/kong.yml")
 	result.AddManualStep("Review and update backend service URLs in Kong configuration")
 	result.AddManualStep("Test API endpoints and authentication flows")
+	for _, step := range netrunbook.Routing(apiNameStr, "aws_api_gateway_rest_api") {
+		result.AddRunbookStep(step)
+	}
 
 	return result, nil
 }

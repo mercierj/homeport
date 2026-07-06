@@ -9,6 +9,7 @@ import (
 
 	"github.com/homeport/homeport/internal/domain/mapper"
 	"github.com/homeport/homeport/internal/domain/resource"
+	"github.com/homeport/homeport/internal/infrastructure/mapper/shared/netrunbook"
 )
 
 // Route53Mapper converts AWS Route53 zones to CoreDNS or PowerDNS.
@@ -129,6 +130,9 @@ func (m *Route53Mapper) Map(ctx context.Context, res *resource.AWSResource) (*ma
 	result.AddManualStep("Test DNS resolution: dig @localhost <domain>")
 	result.AddManualStep("Monitor DNS query logs and performance")
 	result.AddManualStep("Set up secondary DNS servers for redundancy")
+	for _, step := range netrunbook.DNS(zoneNameStr, "aws_route53_zone", "scripts/route53-export.sh") {
+		result.AddRunbookStep(step)
+	}
 
 	return result, nil
 }

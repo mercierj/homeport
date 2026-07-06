@@ -9,6 +9,7 @@ import (
 
 	"github.com/homeport/homeport/internal/domain/mapper"
 	"github.com/homeport/homeport/internal/domain/resource"
+	"github.com/homeport/homeport/internal/infrastructure/mapper/shared/netrunbook"
 )
 
 // CloudWatchLogsMapper converts AWS CloudWatch Log Groups to Loki + Promtail.
@@ -49,10 +50,10 @@ func (m *CloudWatchLogsMapper) Map(ctx context.Context, res *resource.AWSResourc
 	svc.Command = []string{"-config.file=/etc/loki/loki-config.yaml"}
 	svc.Networks = []string{"homeport"}
 	svc.Labels = map[string]string{
-		"homeport.source":     "aws_cloudwatch_log_group",
-		"homeport.log_group":  logGroupName,
-		"traefik.enable":       "true",
-		"traefik.http.routers.loki.rule":                      "Host(`loki.localhost`)",
+		"homeport.source":                "aws_cloudwatch_log_group",
+		"homeport.log_group":             logGroupName,
+		"traefik.enable":                 "true",
+		"traefik.http.routers.loki.rule": "Host(`loki.localhost`)",
 		"traefik.http.services.loki.loadbalancer.server.port": "3100",
 	}
 	svc.Restart = "unless-stopped"
@@ -85,6 +86,9 @@ func (m *CloudWatchLogsMapper) Map(ctx context.Context, res *resource.AWSResourc
 
 	// Add warnings and manual steps
 	m.addMigrationWarnings(result, res, logGroupName)
+	for _, step := range netrunbook.Observability(logGroupName, "aws_cloudwatch_log_group") {
+		result.AddRunbookStep(step)
+	}
 
 	return result, nil
 }
