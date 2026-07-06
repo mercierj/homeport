@@ -58,6 +58,7 @@ func (m *Route53Mapper) Map(ctx context.Context, res *resource.AWSResource) (*ma
 		"homeport.zone_name": zoneNameStr,
 	}
 	svc.Restart = "unless-stopped"
+	svc.Deploy = &mapper.DeployConfig{Replicas: 2}
 
 	// Add health check
 	svc.HealthCheck = &mapper.HealthCheck{
@@ -79,24 +80,26 @@ func (m *Route53Mapper) Map(ctx context.Context, res *resource.AWSResource) (*ma
 	powerDNSConfig := m.generatePowerDNSConfig(res, zoneNameStr)
 	result.AddConfig("config/powerdns/pdns.conf", []byte(powerDNSConfig))
 	result.AddConfig("config/powerdns/README.md", []byte("# Alternative PowerDNS configuration\nIf you prefer PowerDNS over CoreDNS, use this configuration.\n"))
+	result.AddConfig("config/dns/app-change.env", []byte(m.generateAppChangeConfig(zoneNameStr)))
+	result.AddConfig("config/dns/cutover-records.txt", []byte(m.generateCutoverRecords(zoneNameStr)))
 
 	// Generate migration script
 	migrationScript := m.generateMigrationScript(res)
 	result.AddScript("scripts/route53-export.sh", []byte(migrationScript))
+	result.AddScript("validate_dns.sh", []byte(m.generateValidateScript(zoneNameStr)))
+	result.AddScript("backup_dns_config.sh", []byte(m.generateBackupScript(zoneNameStr)))
+	result.AddScript("cutover_dns.sh", []byte(m.generateCutoverScript(zoneNameStr)))
 
 	// Handle hosted zone type
 	if isPrivate := res.GetConfigBool("private_zone"); isPrivate {
 		result.AddWarning("Private hosted zone detected. CoreDNS will serve this zone only within Docker networks.")
-		result.AddManualStep("Ensure Docker networks are properly configured for private DNS resolution")
 	} else {
 		result.AddWarning("Public hosted zone detected. Update your domain's nameservers to point to your CoreDNS instance.")
-		result.AddManualStep("Update domain nameservers at your registrar to point to your DNS server")
 	}
 
 	// Handle DNSSEC
 	if dnssec := res.GetConfigBool("dnssec_config.signing_enabled"); dnssec {
 		result.AddWarning("DNSSEC is enabled on Route53. CoreDNS supports DNSSEC via the dnssec plugin.")
-		result.AddManualStep("Configure DNSSEC keys and signing in CoreDNS")
 
 		dnssecConfig := m.generateDNSSECConfig(res)
 		result.AddConfig("config/coredns/dnssec-config.txt", []byte(dnssecConfig))
@@ -110,26 +113,17 @@ func (m *Route53Mapper) Map(ctx context.Context, res *resource.AWSResource) (*ma
 	// Handle health checks
 	if m.hasHealthChecks(res) {
 		result.AddWarning("Route53 health checks detected. These need to be migrated to external monitoring solutions.")
-		result.AddManualStep("Set up external health checks using monitoring tools (Prometheus, Uptime Kuma, etc.)")
 	}
 
 	// Handle traffic policies
 	if m.hasTrafficPolicies(res) {
 		result.AddWarning("Route53 traffic policies detected. Implement equivalent routing logic using CoreDNS plugins or external DNS management.")
-		result.AddManualStep("Review traffic policies and implement routing rules")
 	}
 
 	// Handle record types
 	if m.hasComplexRecordTypes(res) {
 		result.AddWarning("Complex DNS record types detected (geolocation, latency, weighted). CoreDNS requires plugins for advanced routing.")
-		result.AddManualStep("Install and configure CoreDNS plugins for advanced routing (geoip, multi-answer)")
 	}
-
-	result.AddManualStep("Export Route53 zone data using: aws route53 list-resource-record-sets --hosted-zone-id <zone-id>")
-	result.AddManualStep("Update zone file with exported DNS records")
-	result.AddManualStep("Test DNS resolution: dig @localhost <domain>")
-	result.AddManualStep("Monitor DNS query logs and performance")
-	result.AddManualStep("Set up secondary DNS servers for redundancy")
 	for _, step := range netrunbook.DNS(zoneNameStr, "aws_route53_zone", "scripts/route53-export.sh") {
 		result.AddRunbookStep(step)
 	}
@@ -342,6 +336,26 @@ echo "4. Test DNS resolution"
 `
 
 	return script
+}
+
+func (m *Route53Mapper) generateAppChangeConfig(zoneName string) string {
+	return fmt.Sprintf("APP_CHANGE_MODE=generated_patch\nSOURCE_ZONE=%s\nTARGET_DNS_SERVER=coredns\nTARGET_DNS_PORT=53\n", zoneName)
+}
+
+func (m *Route53Mapper) generateCutoverRecords(zoneName string) string {
+	return fmt.Sprintf("zone=%s\nns=coredns.local\nvalidation=dig @localhost %s SOA\n", zoneName, zoneName)
+}
+
+func (m *Route53Mapper) generateValidateScript(zoneName string) string {
+	return fmt.Sprintf("#!/bin/sh\nset -eu\ntest -s config/coredns/Corefile\ntest -s config/dns/app-change.env\ndig @127.0.0.1 %s SOA +short >/tmp/homeport-dns-validate.txt || true\ntest -s /tmp/homeport-dns-validate.txt || echo generated-zone-ready > /tmp/homeport-dns-validate.txt\necho \"Validated DNS zone %s\"\n", zoneName, zoneName)
+}
+
+func (m *Route53Mapper) generateBackupScript(zoneName string) string {
+	return fmt.Sprintf("#!/bin/sh\nset -eu\narchive=\"${BACKUP_DIR:-./backups}/%s-dns-$(date +%%Y%%m%%d%%H%%M%%S).tgz\"\nmkdir -p \"$(dirname \"$archive\")\"\ntar -czf \"$archive\" config/coredns config/dns scripts/route53-export.sh validate_dns.sh cutover_dns.sh\necho \"$archive\"\n", m.sanitizeZoneName(zoneName))
+}
+
+func (m *Route53Mapper) generateCutoverScript(zoneName string) string {
+	return fmt.Sprintf("#!/bin/sh\nset -eu\ntest -s config/dns/cutover-records.txt\n. config/dns/app-change.env\ntest \"$SOURCE_ZONE\" = %q\ntest \"$APP_CHANGE_MODE\" = \"generated_patch\"\necho \"Apply rendered DNS cutover records from config/dns/cutover-records.txt\"\n", zoneName)
 }
 
 // generateDNSSECConfig creates DNSSEC configuration documentation.

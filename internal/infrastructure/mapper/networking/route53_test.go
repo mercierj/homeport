@@ -2,11 +2,44 @@ package networking
 
 import (
 	"context"
+	"strings"
 	"testing"
 
 	"github.com/homeport/homeport/internal/domain/mapper"
 	"github.com/homeport/homeport/internal/domain/resource"
+	domainrunbook "github.com/homeport/homeport/internal/domain/runbook"
 )
+
+func TestRoute53ConformanceManagedAToZ(t *testing.T) {
+	result, err := NewRoute53Mapper().Map(context.Background(), &resource.AWSResource{ID: "Z123", Type: resource.TypeRoute53Zone, Name: "example.com", Config: map[string]interface{}{"name": "example.com", "zone_id": "Z123", "private_zone": false}})
+	if err != nil {
+		t.Fatal(err)
+	}
+	if len(result.ManualSteps) != 0 {
+		t.Fatalf("manual steps = %#v, want generated DNS migration", result.ManualSteps)
+	}
+	if result.DockerService.Deploy == nil || result.DockerService.Deploy.Replicas < 2 {
+		t.Fatalf("service does not provision HA DNS target: %#v", result.DockerService)
+	}
+	for _, file := range []string{"config/coredns/Corefile", "config/coredns/db.example.com", "config/dns/app-change.env", "config/dns/cutover-records.txt"} {
+		if _, ok := result.Configs[file]; !ok {
+			t.Fatalf("missing config %s", file)
+		}
+	}
+	if !strings.Contains(string(result.Configs["config/dns/app-change.env"]), "APP_CHANGE_MODE=generated_patch") {
+		t.Fatalf("missing generated_patch app-change env")
+	}
+	for _, file := range []string{"scripts/route53-export.sh", "validate_dns.sh", "backup_dns_config.sh", "cutover_dns.sh"} {
+		if _, ok := result.Scripts[file]; !ok {
+			t.Fatalf("missing script %s", file)
+		}
+	}
+	for _, step := range result.RunbookSteps {
+		if step.Type == domainrunbook.StepTypeInput {
+			t.Fatalf("runbook has input step %s: %#v", step.ID, result.RunbookSteps)
+		}
+	}
+}
 
 func TestNewRoute53Mapper(t *testing.T) {
 	m := NewRoute53Mapper()

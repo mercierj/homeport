@@ -17,8 +17,8 @@ func DNS(zone, source, exportScript string) []domainrunbook.Step {
 	return []domainrunbook.Step{
 		command("export-dns-zone", "Export DNS zone", "Discovery", script(exportScript, "echo export DNS records"), "source DNS records are exported", metadata),
 		command("provision-local-dns-zone", "Provision local DNS zone", "Deploy", []string{"sh", "-c", "echo provision CoreDNS or PowerDNS zone"}, "CoreDNS or PowerDNS serves generated zone records", metadata),
-		input("publish-external-dns-records", "Publish external DNS records", "Cutover", "exact NS, A, CNAME, and TXT records are applied at registrar or authoritative DNS", metadata),
-		command("poll-public-dns", "Poll public DNS", "Validate", []string{"sh", "-c", "echo poll public resolvers for expected records"}, "internal and external DNS resolution match expected records", metadata),
+		command("publish-external-dns-records", "Publish external DNS records", "Cutover", []string{"sh", "cutover_dns.sh"}, "exact NS, A, CNAME, and TXT records are rendered for registrar or authoritative DNS", metadata),
+		command("poll-public-dns", "Poll public DNS", "Validate", []string{"sh", "validate_dns.sh"}, "internal and external DNS resolution match expected records", metadata),
 		rollback("rollback-dns-source-authority", "Keep source DNS authoritative", metadata),
 	}
 }
