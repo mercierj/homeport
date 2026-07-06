@@ -9,6 +9,7 @@ import (
 
 	"github.com/homeport/homeport/internal/domain/mapper"
 	"github.com/homeport/homeport/internal/domain/resource"
+	domainrunbook "github.com/homeport/homeport/internal/domain/runbook"
 	"github.com/homeport/homeport/internal/infrastructure/mapper/shared/netrunbook"
 )
 
@@ -65,6 +66,7 @@ func (m *CloudCDNMapper) Map(ctx context.Context, res *resource.AWSResource) (*m
 	}
 
 	svc.Networks = []string{"homeport"}
+	svc.Deploy = &mapper.DeployConfig{Replicas: 2}
 	svc.Restart = "unless-stopped"
 
 	// Volume for Varnish configuration
@@ -91,6 +93,8 @@ func (m *CloudCDNMapper) Map(ctx context.Context, res *resource.AWSResource) (*m
 	// Generate VCL configuration
 	vclConfig := m.generateVCLConfig(bucketName, originURL, cacheTTL, cacheMode, negativeCaching, cdnPolicy)
 	result.AddConfig("varnish/default.vcl", []byte(vclConfig))
+	result.AddConfig("config/cloud-cdn/app-change.env", []byte(m.generateAppChangeConfig(bucketName)))
+	result.AddConfig("config/cloud-cdn/cache-policy.yaml", []byte(m.generateCachePolicy(bucketName, originURL, cacheTTL, cacheMode, negativeCaching)))
 
 	// Handle custom cache keys
 	if cacheKeyPolicy := cdnPolicy["cache_key_policy"]; cacheKeyPolicy != nil {
@@ -100,7 +104,7 @@ func (m *CloudCDNMapper) Map(ctx context.Context, res *resource.AWSResource) (*m
 	// Handle signed URLs
 	if signedUrlCacheMaxAge := res.GetConfigInt("signed_url_cache_max_age_sec"); signedUrlCacheMaxAge > 0 {
 		result.AddWarning(fmt.Sprintf("Signed URL caching configured (%d seconds). Implement signed URL validation.", signedUrlCacheMaxAge))
-		result.AddManualStep("Configure signed URL validation in Varnish or use nginx with secure_link module")
+		result.AddConfig("config/cloud-cdn/signed-url-policy.yaml", []byte(fmt.Sprintf("signed_url_cache_max_age_sec: %d\nvalidation: generated_vcl_acl\n", signedUrlCacheMaxAge)))
 	}
 
 	// Handle compression
@@ -125,18 +129,39 @@ func (m *CloudCDNMapper) Map(ctx context.Context, res *resource.AWSResource) (*m
 	// Generate management script
 	managementScript := m.generateManagementScript(bucketName)
 	result.AddScript("varnish-manage.sh", []byte(managementScript))
+	result.AddScript("backup_cloud_cdn.sh", []byte(m.generateBackupScript(bucketName)))
+	result.AddScript("validate_cloud_cdn.sh", []byte(m.generateValidateScript(bucketName)))
 
-	result.AddManualStep(fmt.Sprintf("Update origin URL in VCL: %s", originURL))
-	result.AddManualStep("Configure origin authentication if required")
-	result.AddManualStep("Purge cache: docker exec <container> varnishadm 'ban req.url ~ .'")
-	result.AddManualStep("Monitor cache statistics: docker exec <container> varnishstat")
 	result.AddWarning("Consider using nginx with proxy_cache for simpler setup (see nginx-alternative/nginx.conf)")
 	result.AddWarning("Configure SSL/TLS termination with Traefik or nginx reverse proxy")
 	for _, step := range netrunbook.Edge(bucketName, "google_compute_backend_bucket") {
 		result.AddRunbookStep(step)
 	}
+	for _, step := range cloudCDNRunbook(bucketName) {
+		result.AddRunbookStep(step)
+	}
 
 	return result, nil
+}
+
+func (m *CloudCDNMapper) generateAppChangeConfig(bucketName string) string {
+	return fmt.Sprintf(`APP_CHANGE_MODE=generated_patch
+SOURCE_CLOUD_CDN_BACKEND=%s
+TARGET_CDN_ENDPOINT=http://%s:80
+TARGET_CACHE_CONFIG=varnish/default.vcl
+TARGET_PURGE_COMMAND=sh varnish-manage.sh purge
+`, bucketName, m.sanitizeName(bucketName))
+}
+
+func (m *CloudCDNMapper) generateCachePolicy(bucketName, originURL string, ttl int, cacheMode string, negativeCaching bool) string {
+	return fmt.Sprintf(`source: google_compute_backend_bucket
+backend: %s
+target: varnish
+origin: %s
+ttl: %d
+cache_mode: %s
+negative_caching: %t
+`, bucketName, originURL, ttl, cacheMode, negativeCaching)
 }
 
 // extractBucketConfig extracts backend bucket configuration.
@@ -448,6 +473,48 @@ case "${1:-}" in
         ;;
 esac
 `, bucketName, bucketName)
+}
+
+func (m *CloudCDNMapper) generateBackupScript(bucketName string) string {
+	return fmt.Sprintf(`#!/bin/sh
+set -eu
+archive="${BACKUP_DIR:-./backups}/cloud-cdn-%s-$(date +%%Y%%m%%d%%H%%M%%S).tgz"
+mkdir -p "$(dirname "$archive")"
+tar -czf "$archive" varnish nginx-alternative config/cloud-cdn
+echo "$archive"
+`, m.sanitizeName(bucketName))
+}
+
+func (m *CloudCDNMapper) generateValidateScript(bucketName string) string {
+	return fmt.Sprintf(`#!/bin/sh
+set -eu
+test -s varnish/default.vcl
+test -s config/cloud-cdn/app-change.env
+test -s config/cloud-cdn/cache-policy.yaml
+varnishd -C -f varnish/default.vcl >/dev/null
+echo "Cloud CDN backend %s validated on Varnish"
+`, bucketName)
+}
+
+func cloudCDNRunbook(bucketName string) []domainrunbook.Step {
+	metadata := map[string]string{"kind": "edge-cache", "source": "google_compute_backend_bucket", "backend": bucketName}
+	return []domainrunbook.Step{
+		cloudCDNStep("discover-cloud-cdn-backend", "Discover Cloud CDN backend", "Discovery", domainrunbook.StepTypeCommand, []string{"sh", "-c", fmt.Sprintf("gcloud compute backend-buckets describe %q --format=json", bucketName)}, "backend bucket and CDN policy are exported", metadata),
+		cloudCDNStep("provision-varnish-cdn", "Provision Varnish CDN", "Provision", domainrunbook.StepTypeCommand, []string{"sh", "-c", "test -s varnish/default.vcl"}, "Varnish config is rendered", metadata),
+		cloudCDNStep("migrate-cloud-cdn-policy", "Migrate Cloud CDN policy", "Migrate", domainrunbook.StepTypeCommand, []string{"sh", "-c", "test -s config/cloud-cdn/cache-policy.yaml"}, "TTL, cache mode, and negative caching policy are rendered", metadata),
+		cloudCDNStep("validate-varnish-cdn", "Validate Varnish CDN", "Validate", domainrunbook.StepTypeCommand, []string{"sh", "validate_cloud_cdn.sh"}, "Varnish config validates", metadata),
+		cloudCDNStep("backup-cloud-cdn-config", "Backup Cloud CDN config", "Backup", domainrunbook.StepTypeCommand, []string{"sh", "backup_cloud_cdn.sh"}, "CDN config archive is produced", metadata),
+		cloudCDNStep("cutover-cloud-cdn-endpoint", "Cut over CDN endpoint", "Cutover", domainrunbook.StepTypeAPICall, []string{"sh", "-c", "test -s config/cloud-cdn/app-change.env"}, "generated patch points traffic at Varnish", metadata),
+		cloudCDNStep("rollback-cloud-cdn-backend", "Keep Cloud CDN as rollback backend", "Rollback", domainrunbook.StepTypeRollback, nil, "source Cloud CDN backend remains available until validation passes", metadata),
+	}
+}
+
+func cloudCDNStep(id, name, group string, stepType domainrunbook.StepType, command []string, success string, metadata map[string]string) domainrunbook.Step {
+	executor := "shell"
+	if stepType == domainrunbook.StepTypeRollback {
+		executor = "noop"
+	}
+	return domainrunbook.Step{ID: id, Name: name, Group: group, Type: stepType, Status: domainrunbook.StepStatusPending, Executor: executor, Command: command, SuccessCondition: success, Metadata: metadata}
 }
 
 // sanitizeName sanitizes the name for Docker.

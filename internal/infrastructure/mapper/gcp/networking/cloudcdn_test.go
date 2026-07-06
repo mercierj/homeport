@@ -2,11 +2,61 @@ package networking
 
 import (
 	"context"
+	"strings"
 	"testing"
 
 	"github.com/homeport/homeport/internal/domain/mapper"
 	"github.com/homeport/homeport/internal/domain/resource"
+	domainrunbook "github.com/homeport/homeport/internal/domain/runbook"
 )
+
+func TestCloudCDNConformanceManagedAToZ(t *testing.T) {
+	result, err := NewCloudCDNMapper().Map(context.Background(), managedCloudCDNFixture())
+	if err != nil {
+		t.Fatal(err)
+	}
+	if len(result.ManualSteps) != 0 {
+		t.Fatalf("manual steps = %#v, want generated Cloud CDN migration", result.ManualSteps)
+	}
+	if result.DockerService.Image != "varnish:7.4" || result.DockerService.Deploy == nil || result.DockerService.Deploy.Replicas < 2 {
+		t.Fatalf("service does not provision HA Varnish target: %#v", result.DockerService)
+	}
+	for _, file := range []string{"varnish/default.vcl", "nginx-alternative/nginx.conf", "config/cloud-cdn/app-change.env", "config/cloud-cdn/cache-policy.yaml"} {
+		if _, ok := result.Configs[file]; !ok {
+			t.Fatalf("missing config %s", file)
+		}
+	}
+	appEnv := string(result.Configs["config/cloud-cdn/app-change.env"])
+	for _, want := range []string{"APP_CHANGE_MODE=generated_patch", "SOURCE_CLOUD_CDN_BACKEND=edge-assets", "TARGET_CDN_ENDPOINT=http://edge-assets:80"} {
+		if !strings.Contains(appEnv, want) {
+			t.Fatalf("app-change env missing %q:\n%s", want, appEnv)
+		}
+	}
+	policy := string(result.Configs["config/cloud-cdn/cache-policy.yaml"])
+	for _, want := range []string{"google_compute_backend_bucket", "ttl: 7200", "cache_mode: CACHE_ALL_STATIC"} {
+		if !strings.Contains(policy, want) {
+			t.Fatalf("cache policy missing %q:\n%s", want, policy)
+		}
+	}
+	for _, file := range []string{"varnish-manage.sh", "backup_cloud_cdn.sh", "validate_cloud_cdn.sh"} {
+		if _, ok := result.Scripts[file]; !ok {
+			t.Fatalf("missing script %s", file)
+		}
+	}
+	for id, stepType := range map[string]domainrunbook.StepType{
+		"discover-cloud-cdn-backend": domainrunbook.StepTypeCommand,
+		"provision-varnish-cdn":      domainrunbook.StepTypeCommand,
+		"migrate-cloud-cdn-policy":   domainrunbook.StepTypeCommand,
+		"validate-varnish-cdn":       domainrunbook.StepTypeCommand,
+		"backup-cloud-cdn-config":    domainrunbook.StepTypeCommand,
+		"cutover-cloud-cdn-endpoint": domainrunbook.StepTypeAPICall,
+		"rollback-cloud-cdn-backend": domainrunbook.StepTypeRollback,
+	} {
+		if !hasCloudCDNRunbookStep(result, id, stepType) {
+			t.Fatalf("missing %s runbook step: %#v", id, result.RunbookSteps)
+		}
+	}
+}
 
 func TestNewCloudCDNMapper(t *testing.T) {
 	m := NewCloudCDNMapper()
@@ -145,8 +195,8 @@ func TestCloudCDNMapper_Map(t *testing.T) {
 				Type: resource.TypeCloudCDN,
 				Name: "signed-cdn",
 				Config: map[string]interface{}{
-					"name":                       "signed-cdn",
-					"bucket_name":                "signed-bucket",
+					"name":                         "signed-cdn",
+					"bucket_name":                  "signed-bucket",
 					"signed_url_cache_max_age_sec": float64(3600),
 				},
 			},
@@ -256,6 +306,33 @@ func TestCloudCDNMapper_sanitizeName(t *testing.T) {
 func containsCDN(s, substr string) bool {
 	for i := 0; i <= len(s)-len(substr); i++ {
 		if s[i:i+len(substr)] == substr {
+			return true
+		}
+	}
+	return false
+}
+
+func managedCloudCDNFixture() *resource.AWSResource {
+	return &resource.AWSResource{
+		ID:   "projects/demo/global/backendBuckets/edge-assets",
+		Type: resource.TypeCloudCDN,
+		Name: "edge-assets",
+		Config: map[string]interface{}{
+			"name":        "edge-assets",
+			"bucket_name": "assets-prod",
+			"enable_cdn":  true,
+			"cdn_policy": map[string]interface{}{
+				"default_ttl":      float64(7200),
+				"cache_mode":       "CACHE_ALL_STATIC",
+				"negative_caching": true,
+			},
+		},
+	}
+}
+
+func hasCloudCDNRunbookStep(result *mapper.MappingResult, id string, stepType domainrunbook.StepType) bool {
+	for _, step := range result.RunbookSteps {
+		if step.ID == id && step.Type == stepType {
 			return true
 		}
 	}
