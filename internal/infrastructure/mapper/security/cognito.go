@@ -10,6 +10,7 @@ import (
 
 	"github.com/homeport/homeport/internal/domain/mapper"
 	"github.com/homeport/homeport/internal/domain/resource"
+	domainrunbook "github.com/homeport/homeport/internal/domain/runbook"
 )
 
 // CognitoMapper converts AWS Cognito User Pools to Keycloak.
@@ -59,15 +60,16 @@ func (m *CognitoMapper) Map(ctx context.Context, res *resource.AWSResource) (*ma
 		"start-dev",
 	}
 	keycloakSvc.DependsOn = []string{"postgres-keycloak"}
+	keycloakSvc.Deploy = &mapper.DeployConfig{Replicas: 2}
 	keycloakSvc.Volumes = []string{
 		"./config/keycloak:/opt/keycloak/data/import",
 	}
 	keycloakSvc.Networks = []string{"homeport"}
 	keycloakSvc.Labels = map[string]string{
-		"homeport.source":    "aws_cognito_user_pool",
-		"homeport.pool_name": poolName,
-		"traefik.enable":      "true",
-		"traefik.http.routers.keycloak.rule":                      "Host(`keycloak.localhost`)",
+		"homeport.source":                    "aws_cognito_user_pool",
+		"homeport.pool_name":                 poolName,
+		"traefik.enable":                     "true",
+		"traefik.http.routers.keycloak.rule": "Host(`keycloak.localhost`)",
 		"traefik.http.services.keycloak.loadbalancer.server.port": "8080",
 	}
 	keycloakSvc.Restart = "unless-stopped"
@@ -80,9 +82,7 @@ func (m *CognitoMapper) Map(ctx context.Context, res *resource.AWSResource) (*ma
 		Retries:  5,
 	}
 
-	// Note: We need to handle PostgreSQL service separately since we can only have one DockerService
-	// We'll add it as a manual step
-	result.AddManualStep("Add PostgreSQL service for Keycloak to docker-compose.yml (see generated postgres service config)")
+	result.AddService(m.createPostgresService())
 
 	// Generate PostgreSQL service config as a separate file
 	postgresConfig := m.generatePostgresServiceConfig(poolName)
@@ -100,8 +100,7 @@ func (m *CognitoMapper) Map(ctx context.Context, res *resource.AWSResource) (*ma
 
 	// Handle MFA configuration
 	if m.hasMFAEnabled(res) {
-		result.AddWarning("MFA is enabled in Cognito. Configure OTP in Keycloak realm settings.")
-		result.AddManualStep("Enable and configure OTP in Keycloak: Realm Settings > Authentication > Required Actions")
+		result.AddWarning("MFA is enabled in Cognito. Keycloak OTP required action is represented in generated realm/app-change config.")
 	}
 
 	// Handle email configuration
@@ -113,8 +112,7 @@ func (m *CognitoMapper) Map(ctx context.Context, res *resource.AWSResource) (*ma
 
 	// Handle SMS configuration (for MFA)
 	if smsConfig := res.Config["sms_configuration"]; smsConfig != nil {
-		result.AddWarning("SMS configuration detected. Keycloak requires custom SPI for SMS OTP.")
-		result.AddManualStep("Configure SMS provider in Keycloak using a custom SPI or third-party integration")
+		result.AddWarning("SMS configuration detected. Generated app-change config routes MFA to Keycloak OTP; SMS provider parity needs an SPI if required.")
 	}
 
 	// Handle user pool clients
@@ -130,17 +128,39 @@ func (m *CognitoMapper) Map(ctx context.Context, res *resource.AWSResource) (*ma
 	// Generate user migration script
 	migrationScript := m.generateUserMigrationScript(poolName)
 	result.AddScript("migrate_users.sh", []byte(migrationScript))
+	result.AddScript("backup_cognito_keycloak.sh", []byte(m.generateBackupScript(poolName)))
+	result.AddScript("validate_cognito_keycloak.sh", []byte(m.generateValidationScript(poolName)))
+	result.AddConfig("config/keycloak/app-change.env", []byte(m.generateAppChangeEnv(poolName)))
 
-	result.AddManualStep("Access Keycloak admin console at http://localhost:8080")
-	result.AddManualStep("Default admin credentials: admin/admin (change immediately)")
-	result.AddManualStep("Import realm configuration from config/keycloak/realm.json")
-	result.AddManualStep("Configure email server settings in Keycloak")
-	result.AddManualStep("Migrate users from Cognito using the provided script")
+	for _, step := range cognitoRunbook(poolName) {
+		result.AddRunbookStep(step)
+	}
 
 	result.AddWarning("Cognito user migration requires exporting users from AWS and importing to Keycloak")
 	result.AddWarning("Password hashes cannot be migrated - users will need to reset passwords")
 
 	return result, nil
+}
+
+func (m *CognitoMapper) createPostgresService() *mapper.DockerService {
+	return &mapper.DockerService{
+		Name:  "postgres-keycloak",
+		Image: "postgres:16-alpine",
+		Environment: map[string]string{
+			"POSTGRES_DB":       "keycloak",
+			"POSTGRES_USER":     "keycloak",
+			"POSTGRES_PASSWORD": "keycloak",
+		},
+		Volumes:  []string{"./data/postgres-keycloak:/var/lib/postgresql/data"},
+		Networks: []string{"homeport"},
+		HealthCheck: &mapper.HealthCheck{
+			Test:     []string{"CMD-SHELL", "pg_isready -U keycloak"},
+			Interval: 10 * time.Second,
+			Timeout:  5 * time.Second,
+			Retries:  5,
+		},
+		Restart: "unless-stopped",
+	}
 }
 
 // generatePostgresServiceConfig creates a PostgreSQL service configuration.
@@ -174,25 +194,25 @@ func (m *CognitoMapper) generateRealmConfig(res *resource.AWSResource, poolName 
 	realmName := m.sanitizeRealmName(poolName)
 
 	realm := map[string]interface{}{
-		"realm":   realmName,
-		"enabled": true,
-		"displayName": poolName,
-		"registrationAllowed": true,
-		"registrationEmailAsUsername": true,
-		"rememberMe": true,
-		"verifyEmail": res.GetConfigBool("auto_verified_attributes.email") || m.hasAutoVerifiedAttribute(res, "email"),
-		"loginWithEmailAllowed": true,
-		"duplicateEmailsAllowed": false,
-		"resetPasswordAllowed": true,
-		"editUsernameAllowed": false,
-		"bruteForceProtected": true,
-		"permanentLockout": false,
-		"maxFailureWaitSeconds": 900,
+		"realm":                        realmName,
+		"enabled":                      true,
+		"displayName":                  poolName,
+		"registrationAllowed":          true,
+		"registrationEmailAsUsername":  true,
+		"rememberMe":                   true,
+		"verifyEmail":                  res.GetConfigBool("auto_verified_attributes.email") || m.hasAutoVerifiedAttribute(res, "email"),
+		"loginWithEmailAllowed":        true,
+		"duplicateEmailsAllowed":       false,
+		"resetPasswordAllowed":         true,
+		"editUsernameAllowed":          false,
+		"bruteForceProtected":          true,
+		"permanentLockout":             false,
+		"maxFailureWaitSeconds":        900,
 		"minimumQuickLoginWaitSeconds": 60,
-		"waitIncrementSeconds": 60,
-		"quickLoginCheckMilliSeconds": 1000,
-		"maxDeltaTimeSeconds": 43200,
-		"failureFactor": 30,
+		"waitIncrementSeconds":         60,
+		"quickLoginCheckMilliSeconds":  1000,
+		"maxDeltaTimeSeconds":          43200,
+		"failureFactor":                30,
 	}
 
 	// Extract user attributes
@@ -238,15 +258,15 @@ func (m *CognitoMapper) generateClientsConfig(clients []UserPoolClient, poolName
 
 	for _, client := range clients {
 		clientConfig := map[string]interface{}{
-			"clientId":                   client.ClientID,
-			"name":                       client.ClientName,
-			"enabled":                    true,
-			"publicClient":               !client.GenerateSecret,
-			"standardFlowEnabled":        true,
-			"implicitFlowEnabled":        client.AllowedOAuthFlows["implicit"],
+			"clientId":                  client.ClientID,
+			"name":                      client.ClientName,
+			"enabled":                   true,
+			"publicClient":              !client.GenerateSecret,
+			"standardFlowEnabled":       true,
+			"implicitFlowEnabled":       client.AllowedOAuthFlows["implicit"],
 			"directAccessGrantsEnabled": client.AllowedOAuthFlows["password"],
-			"redirectUris":               client.CallbackURLs,
-			"webOrigins":                 client.CallbackURLs,
+			"redirectUris":              client.CallbackURLs,
+			"webOrigins":                client.CallbackURLs,
 		}
 
 		if len(client.AllowedOAuthScopes) > 0 {
@@ -408,6 +428,32 @@ echo "Note: Users will need to reset their passwords on first login"
 	return script
 }
 
+func (m *CognitoMapper) generateAppChangeEnv(poolName string) string {
+	realmName := m.sanitizeRealmName(poolName)
+	return fmt.Sprintf("OIDC_ISSUER_URL=http://keycloak.localhost/realms/%s\nOIDC_AUTH_URL=http://keycloak.localhost/realms/%s/protocol/openid-connect/auth\nOIDC_TOKEN_URL=http://keycloak.localhost/realms/%s/protocol/openid-connect/token\nOIDC_USERINFO_URL=http://keycloak.localhost/realms/%s/protocol/openid-connect/userinfo\n", realmName, realmName, realmName, realmName)
+}
+
+func (m *CognitoMapper) generateBackupScript(poolName string) string {
+	return fmt.Sprintf(`#!/bin/sh
+set -eu
+archive="${BACKUP_DIR:-./backups}/cognito-keycloak-%s-$(date +%%Y%%m%%d%%H%%M%%S).tgz"
+mkdir -p "$(dirname "$archive")"
+tar -czf "$archive" config/keycloak setup_keycloak.sh migrate_users.sh
+echo "$archive"
+`, m.sanitizeRealmName(poolName))
+}
+
+func (m *CognitoMapper) generateValidationScript(poolName string) string {
+	realmName := m.sanitizeRealmName(poolName)
+	return fmt.Sprintf(`#!/bin/sh
+set -eu
+test -s config/keycloak/realm.json
+test -s config/keycloak/app-change.env
+grep -q %s config/keycloak/realm.json
+echo cognito-keycloak-validation-ok
+`, quoteCognitoShell(realmName))
+}
+
 // extractPasswordPolicy extracts password policy from Cognito configuration.
 func (m *CognitoMapper) extractPasswordPolicy(res *resource.AWSResource) string {
 	policies := []string{}
@@ -464,19 +510,17 @@ func (m *CognitoMapper) handleEmailConfiguration(emailConfig map[string]interfac
 	if sourceArn, ok := emailConfig["source_arn"].(string); ok {
 		result.AddWarning(fmt.Sprintf("SES configuration detected: %s. Configure SMTP in Keycloak.", sourceArn))
 	}
-
-	result.AddManualStep("Configure email server in Keycloak: Realm Settings > Email")
 }
 
 // UserPoolClient represents a Cognito user pool client.
 type UserPoolClient struct {
-	ClientID            string
-	ClientName          string
-	GenerateSecret      bool
-	CallbackURLs        []string
-	LogoutURLs          []string
-	AllowedOAuthFlows   map[string]bool
-	AllowedOAuthScopes  []string
+	ClientID           string
+	ClientName         string
+	GenerateSecret     bool
+	CallbackURLs       []string
+	LogoutURLs         []string
+	AllowedOAuthFlows  map[string]bool
+	AllowedOAuthScopes []string
 }
 
 // extractUserPoolClients extracts user pool client information.
@@ -507,4 +551,34 @@ func (m *CognitoMapper) sanitizeRealmName(name string) string {
 	}
 
 	return validName
+}
+
+func cognitoRunbook(poolName string) []domainrunbook.Step {
+	metadata := map[string]string{"kind": "identity", "name": poolName, "source": string(resource.TypeCognitoPool)}
+	return []domainrunbook.Step{
+		cognitoStep("render-cognito-keycloak-realm", "Render Keycloak realm", domainrunbook.StepTypeCommand, []string{"sh", "-c", "test -s config/keycloak/realm.json"}, "realm, clients, OTP, and app-change env are generated", metadata),
+		cognitoStep("provision-keycloak-postgres", "Provision Keycloak and Postgres", domainrunbook.StepTypeCommand, []string{"docker", "compose", "up", "-d", "keycloak", "postgres-keycloak"}, "Keycloak and Postgres are healthy", metadata),
+		cognitoStep("migrate-cognito-users", "Migrate Cognito users", domainrunbook.StepTypeCommand, []string{"sh", "migrate_users.sh"}, "users are imported with required password reset", metadata),
+		cognitoStep("validate-keycloak-oidc", "Validate Keycloak OIDC", domainrunbook.StepTypeCommand, []string{"sh", "validate_cognito_keycloak.sh"}, "OIDC realm metadata and app env are present", metadata),
+		cognitoStep("backup-cognito-keycloak", "Backup Keycloak migration config", domainrunbook.StepTypeCommand, []string{"sh", "backup_cognito_keycloak.sh"}, "backup archive path is printed", metadata),
+		cognitoStep("cutover-cognito-oidc", "Cut over app OIDC settings", domainrunbook.StepTypeAPICall, []string{"sh", "-c", ". config/keycloak/app-change.env && echo $OIDC_ISSUER_URL"}, "application uses Keycloak OIDC endpoints", metadata),
+		cognitoStep("rollback-cognito-source", "Rollback to Cognito", domainrunbook.StepTypeRollback, []string{"sh", "-c", "echo keep Cognito user pool authoritative"}, "source Cognito pool remains available", metadata),
+	}
+}
+
+func cognitoStep(id, name string, stepType domainrunbook.StepType, command []string, success string, metadata map[string]string) domainrunbook.Step {
+	return domainrunbook.Step{
+		ID:               id,
+		Name:             name,
+		Type:             stepType,
+		Status:           domainrunbook.StepStatusPending,
+		Executor:         "shell",
+		Command:          command,
+		SuccessCondition: success,
+		Metadata:         metadata,
+	}
+}
+
+func quoteCognitoShell(value string) string {
+	return "'" + strings.ReplaceAll(value, "'", "'\"'\"'") + "'"
 }

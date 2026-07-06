@@ -2,10 +2,12 @@ package security
 
 import (
 	"context"
+	"strings"
 	"testing"
 
 	"github.com/homeport/homeport/internal/domain/mapper"
 	"github.com/homeport/homeport/internal/domain/resource"
+	domainrunbook "github.com/homeport/homeport/internal/domain/runbook"
 )
 
 func TestNewCognitoMapper(t *testing.T) {
@@ -292,6 +294,80 @@ func TestCognitoMapper_Map(t *testing.T) {
 			}
 		})
 	}
+}
+
+func TestCognitoConformanceManagedAToZ(t *testing.T) {
+	result, err := NewCognitoMapper().Map(context.Background(), managedCognitoFixture())
+	if err != nil {
+		t.Fatal(err)
+	}
+	if len(result.ManualSteps) != 0 {
+		t.Fatalf("manual steps = %#v, want generated Keycloak migration", result.ManualSteps)
+	}
+	if result.DockerService.Image != "quay.io/keycloak/keycloak:23.0" || result.DockerService.Deploy == nil || result.DockerService.Deploy.Replicas < 2 {
+		t.Fatalf("service does not provision HA Keycloak: %#v", result.DockerService)
+	}
+	if len(result.AdditionalServices) == 0 || result.AdditionalServices[0].Image != "postgres:16-alpine" {
+		t.Fatalf("missing generated Postgres service: %#v", result.AdditionalServices)
+	}
+	for _, file := range []string{"config/keycloak/realm.json", "config/keycloak/app-change.env", "config/keycloak/postgres-service.yml"} {
+		if _, ok := result.Configs[file]; !ok {
+			t.Fatalf("missing config %s", file)
+		}
+	}
+	realm := string(result.Configs["config/keycloak/realm.json"])
+	for _, want := range []string{`"realm": "prod-pool"`, `"verifyEmail": true`, `"passwordPolicy"`} {
+		if !strings.Contains(realm, want) {
+			t.Fatalf("realm config missing %q:\n%s", want, realm)
+		}
+	}
+	for _, file := range []string{"setup_keycloak.sh", "migrate_users.sh", "backup_cognito_keycloak.sh", "validate_cognito_keycloak.sh"} {
+		if _, ok := result.Scripts[file]; !ok {
+			t.Fatalf("missing script %s", file)
+		}
+	}
+	for id, stepType := range map[string]domainrunbook.StepType{
+		"render-cognito-keycloak-realm": domainrunbook.StepTypeCommand,
+		"provision-keycloak-postgres":   domainrunbook.StepTypeCommand,
+		"migrate-cognito-users":         domainrunbook.StepTypeCommand,
+		"validate-keycloak-oidc":        domainrunbook.StepTypeCommand,
+		"backup-cognito-keycloak":       domainrunbook.StepTypeCommand,
+		"cutover-cognito-oidc":          domainrunbook.StepTypeAPICall,
+		"rollback-cognito-source":       domainrunbook.StepTypeRollback,
+	} {
+		if !hasCognitoRunbookStep(result, id, stepType) {
+			t.Fatalf("missing %s runbook step: %#v", id, result.RunbookSteps)
+		}
+	}
+}
+
+func managedCognitoFixture() *resource.AWSResource {
+	return &resource.AWSResource{
+		ID:   "us-east-1_prod",
+		Type: resource.TypeCognitoPool,
+		Name: "Prod Pool",
+		Config: map[string]interface{}{
+			"name":                     "Prod Pool",
+			"auto_verified_attributes": []interface{}{"email"},
+			"mfa_configuration":        "OPTIONAL",
+			"password_policy": map[string]interface{}{
+				"minimum_length":    float64(12),
+				"require_lowercase": true,
+				"require_uppercase": true,
+				"require_numbers":   true,
+				"require_symbols":   true,
+			},
+		},
+	}
+}
+
+func hasCognitoRunbookStep(result *mapper.MappingResult, id string, stepType domainrunbook.StepType) bool {
+	for _, step := range result.RunbookSteps {
+		if step.ID == id && step.Type == stepType {
+			return true
+		}
+	}
+	return false
 }
 
 func TestCognitoMapper_sanitizeRealmName(t *testing.T) {
