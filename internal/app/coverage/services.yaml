@@ -1,2362 +1,2948 @@
 services:
-  # AWS
-  - provider: aws
-    service: ALB
-    resource_types:
-      - aws_lb
-    discover: true
-    cost: false
-    provision: false
-    migrate: true
-    api_compat: false
-    env_dns: false
-    ha: false
-    backup: false
-    validate: true
-    cutover: false
-    rollback: false
-    status: mapped
-  - provider: aws
-    service: ACM
-    resource_types:
-      - aws_acm_certificate
-    discover: true
-    cost: false
-    provision: false
-    migrate: false
-    api_compat: false
-    env_dns: false
-    ha: false
-    backup: false
-    validate: false
-    cutover: false
-    rollback: false
-    status: mapped
-  - provider: aws
-    service: API Gateway
-    resource_types:
-      - aws_api_gateway_rest_api
-    discover: true
-    cost: false
-    provision: false
-    migrate: true
-    api_compat: false
-    env_dns: false
-    ha: false
-    backup: false
-    validate: true
-    cutover: false
-    rollback: false
-    status: mapped
-  - provider: aws
-    service: AppSync
-    resource_types: []
-    discover: false
-    cost: false
-    provision: false
-    migrate: false
-    api_compat: false
-    env_dns: false
-    ha: false
-    backup: false
-    validate: false
-    cutover: false
-    rollback: false
-    status: missing
-    blocker: not modeled yet
-  - provider: aws
-    service: Athena
-    resource_types: []
-    discover: false
-    cost: false
-    provision: false
-    migrate: false
-    api_compat: false
-    env_dns: false
-    ha: false
-    backup: false
-    validate: false
-    cutover: false
-    rollback: false
-    status: missing
-    blocker: not modeled yet
-  - provider: aws
-    service: Bedrock
-    resource_types: []
-    discover: false
-    cost: false
-    provision: false
-    migrate: false
-    api_compat: false
-    env_dns: false
-    ha: false
-    backup: false
-    validate: false
-    cutover: false
-    rollback: false
-    status: missing
-    blocker: no Bedrock-compatible local API adapter exists yet
-  - provider: aws
-    service: CloudFront
-    resource_types:
-      - aws_cloudfront_distribution
-    discover: true
-    cost: false
-    provision: false
-    migrate: true
-    api_compat: false
-    env_dns: false
-    ha: false
-    backup: false
-    validate: true
-    cutover: false
-    rollback: false
-    status: mapped
-  - provider: aws
-    service: CloudWatch
-    resource_types:
-      - aws_cloudwatch_metric_alarm
-      - aws_cloudwatch_log_group
-      - aws_cloudwatch_dashboard
-    discover: true
-    cost: false
-    provision: false
-    migrate: true
-    api_compat: false
-    env_dns: false
-    ha: false
-    backup: false
-    validate: true
-    cutover: false
-    rollback: false
-    status: mapped
-  - provider: aws
-    service: CodeBuild
-    resource_types: []
-    discover: false
-    cost: false
-    provision: false
-    migrate: false
-    api_compat: false
-    env_dns: false
-    ha: false
-    backup: false
-    validate: false
-    cutover: false
-    rollback: false
-    status: missing
-    blocker: not modeled yet
-  - provider: aws
-    service: CodePipeline
-    resource_types: []
-    discover: false
-    cost: false
-    provision: false
-    migrate: false
-    api_compat: false
-    env_dns: false
-    ha: false
-    backup: false
-    validate: false
-    cutover: false
-    rollback: false
-    status: missing
-    blocker: not modeled yet
-  - provider: aws
-    service: Cognito
-    resource_types:
-      - aws_cognito_user_pool
-    discover: true
-    cost: false
-    provision: false
-    migrate: false
-    api_compat: false
-    env_dns: false
-    ha: false
-    backup: false
-    validate: false
-    cutover: false
-    rollback: false
-    status: guided
-    blocker: full Cognito API compatibility is not proven; Keycloak migration is guided
-  - provider: aws
-    service: DynamoDB
-    resource_types:
-      - aws_dynamodb_table
-    discover: true
-    cost: false
-    provision: false
-    migrate: false
-    api_compat: false
-    env_dns: false
-    ha: false
-    backup: false
-    validate: false
-    cutover: false
-    rollback: false
-    status: mapped
-    blocker: DynamoDB table API maps to Scylla Alternator; Streams require adapter support or guided CDC migration
-  - provider: aws
-    service: EBS
-    resource_types:
-      - aws_ebs_volume
-    discover: true
-    cost: false
-    provision: false
-    migrate: false
-    api_compat: false
-    env_dns: false
-    ha: false
-    backup: false
-    validate: false
-    cutover: false
-    rollback: false
-    status: mapped
-  - provider: aws
-    service: EC2
-    resource_types:
-      - aws_instance
-    discover: true
-    cost: false
-    provision: false
-    migrate: true
-    api_compat: false
-    env_dns: false
-    ha: false
-    backup: false
-    validate: true
-    cutover: false
-    rollback: false
-    status: mapped
-  - provider: aws
-    service: ECR
-    resource_types: []
-    discover: false
-    cost: false
-    provision: false
-    migrate: false
-    api_compat: false
-    env_dns: false
-    ha: false
-    backup: false
-    validate: false
-    cutover: false
-    rollback: false
-    status: missing
-    blocker: not modeled yet
-  - provider: aws
-    service: ECS
-    resource_types:
-      - aws_ecs_service
-      - aws_ecs_task_definition
-    discover: true
-    cost: false
-    provision: false
-    migrate: true
-    api_compat: false
-    env_dns: false
-    ha: false
-    backup: false
-    validate: true
-    cutover: false
-    rollback: false
-    status: mapped
-  - provider: aws
-    service: EFS
-    resource_types:
-      - aws_efs_file_system
-    discover: true
-    cost: false
-    provision: false
-    migrate: false
-    api_compat: false
-    env_dns: false
-    ha: false
-    backup: false
-    validate: false
-    cutover: false
-    rollback: false
-    status: mapped
-  - provider: aws
-    service: EKS
-    resource_types:
-      - aws_eks_cluster
-    discover: true
-    cost: false
-    provision: false
-    migrate: true
-    api_compat: false
-    env_dns: false
-    ha: false
-    backup: false
-    validate: true
-    cutover: false
-    rollback: false
-    status: mapped
-  - provider: aws
-    service: EMR
-    resource_types: []
-    discover: false
-    cost: false
-    provision: false
-    migrate: false
-    api_compat: false
-    env_dns: false
-    ha: false
-    backup: false
-    validate: false
-    cutover: false
-    rollback: false
-    status: missing
-    blocker: not modeled yet
-  - provider: aws
-    service: ElastiCache
-    resource_types:
-      - aws_elasticache_cluster
-    discover: true
-    cost: false
-    provision: false
-    migrate: false
-    api_compat: false
-    env_dns: false
-    ha: false
-    backup: false
-    validate: false
-    cutover: false
-    rollback: false
-    status: mapped
-  - provider: aws
-    service: EventBridge
-    resource_types:
-      - aws_cloudwatch_event_rule
-    discover: true
-    cost: false
-    provision: false
-    migrate: false
-    api_compat: false
-    env_dns: false
-    ha: false
-    backup: false
-    validate: false
-    cutover: false
-    rollback: false
-    status: guided
-    blocker: EventBridge rule mapping exists, but executable routing delivery needs generated targets and end-to-end validation
-  - provider: aws
-    service: Glue
-    resource_types: []
-    discover: false
-    cost: false
-    provision: false
-    migrate: false
-    api_compat: false
-    env_dns: false
-    ha: false
-    backup: false
-    validate: false
-    cutover: false
-    rollback: false
-    status: missing
-    blocker: not modeled yet
-  - provider: aws
-    service: GuardDuty
-    resource_types: []
-    discover: false
-    cost: false
-    provision: false
-    migrate: false
-    api_compat: false
-    env_dns: false
-    ha: false
-    backup: false
-    validate: false
-    cutover: false
-    rollback: false
-    status: missing
-    blocker: not modeled yet
-  - provider: aws
-    service: IAM
-    resource_types:
-      - aws_iam_role
-    discover: true
-    cost: false
-    provision: false
-    migrate: false
-    api_compat: false
-    env_dns: false
-    ha: false
-    backup: false
-    validate: false
-    cutover: false
-    rollback: false
-    status: mapped
-  - provider: aws
-    service: KMS
-    resource_types:
-      - aws_kms_key
-    discover: true
-    cost: false
-    provision: false
-    migrate: false
-    api_compat: true
-    env_dns: false
-    ha: false
-    backup: false
-    validate: true
-    cutover: false
-    rollback: false
-    status: guided
-    blocker: managed KMS key material cannot be exported; create a new Vault transit key and re-encrypt data
-  - provider: aws
-    service: Kinesis
-    resource_types:
-      - aws_kinesis_stream
-    discover: true
-    cost: false
-    provision: false
-    migrate: false
-    api_compat: true
-    env_dns: false
-    ha: false
-    backup: false
-    validate: false
-    cutover: false
-    rollback: false
-    status: guided
-    blocker: Kinesis-compatible edge adapter exists for basic SDK flow; Redpanda/Kafka production path needs consumer-group and replay validation
-  - provider: aws
-    service: Lambda
-    resource_types:
-      - aws_lambda_function
-    discover: true
-    cost: false
-    provision: false
-    migrate: true
-    api_compat: false
-    env_dns: false
-    ha: false
-    backup: false
-    validate: true
-    cutover: false
-    rollback: false
-    status: mapped
-  - provider: aws
-    service: MSK
-    resource_types: []
-    discover: false
-    cost: false
-    provision: false
-    migrate: false
-    api_compat: false
-    env_dns: false
-    ha: false
-    backup: false
-    validate: false
-    cutover: false
-    rollback: false
-    status: missing
-    blocker: not modeled yet
-  - provider: aws
-    service: OpenSearch
-    resource_types: []
-    discover: false
-    cost: false
-    provision: false
-    migrate: false
-    api_compat: false
-    env_dns: false
-    ha: false
-    backup: false
-    validate: false
-    cutover: false
-    rollback: false
-    status: missing
-    blocker: not modeled yet
-  - provider: aws
-    service: RDS
-    resource_types:
-      - aws_db_instance
-      - aws_rds_cluster
-    discover: true
-    cost: false
-    provision: false
-    migrate: false
-    api_compat: false
-    env_dns: false
-    ha: false
-    backup: false
-    validate: false
-    cutover: false
-    rollback: false
-    status: mapped
-  - provider: aws
-    service: Redshift
-    resource_types: []
-    discover: false
-    cost: false
-    provision: false
-    migrate: false
-    api_compat: false
-    env_dns: false
-    ha: false
-    backup: false
-    validate: false
-    cutover: false
-    rollback: false
-    status: missing
-    blocker: not modeled yet
-  - provider: aws
-    service: Route 53
-    resource_types:
-      - aws_route53_zone
-    discover: true
-    cost: false
-    provision: false
-    migrate: true
-    api_compat: false
-    env_dns: false
-    ha: false
-    backup: false
-    validate: true
-    cutover: false
-    rollback: false
-    status: mapped
-  - provider: aws
-    service: S3
-    resource_types:
-      - aws_s3_bucket
-    discover: true
-    cost: false
-    provision: false
-    migrate: false
-    api_compat: false
-    env_dns: false
-    ha: false
-    backup: false
-    validate: false
-    cutover: false
-    rollback: false
-    status: mapped
-  - provider: aws
-    service: SES
-    resource_types:
-      - aws_ses_domain_identity
-    discover: true
-    cost: false
-    provision: false
-    migrate: false
-    api_compat: false
-    env_dns: false
-    ha: false
-    backup: false
-    validate: false
-    cutover: false
-    rollback: false
-    status: guided
-    blocker: production-capable Postal/Maddy target and DKIM/SPF/DMARC automation still need validation
-  - provider: aws
-    service: SNS
-    resource_types:
-      - aws_sns_topic
-    discover: true
-    cost: false
-    provision: false
-    migrate: false
-    api_compat: true
-    env_dns: false
-    ha: false
-    backup: false
-    validate: false
-    cutover: false
-    rollback: false
-    status: mapped
-  - provider: aws
-    service: SQS
-    resource_types:
-      - aws_sqs_queue
-    discover: true
-    cost: false
-    provision: false
-    migrate: false
-    api_compat: true
-    env_dns: false
-    ha: false
-    backup: false
-    validate: false
-    cutover: false
-    rollback: false
-    status: mapped
-  - provider: aws
-    service: SageMaker
-    resource_types: []
-    discover: false
-    cost: false
-    provision: false
-    migrate: false
-    api_compat: false
-    env_dns: false
-    ha: false
-    backup: false
-    validate: false
-    cutover: false
-    rollback: false
-    status: missing
-    blocker: not modeled yet
-  - provider: aws
-    service: Secrets Manager
-    resource_types:
-      - aws_secretsmanager_secret
-    discover: true
-    cost: false
-    provision: false
-    migrate: true
-    api_compat: true
-    env_dns: false
-    ha: false
-    backup: false
-    validate: true
-    cutover: false
-    rollback: false
-    status: mapped
-  - provider: aws
-    service: Step Functions
-    resource_types: []
-    discover: false
-    cost: false
-    provision: false
-    migrate: false
-    api_compat: false
-    env_dns: false
-    ha: false
-    backup: false
-    validate: false
-    cutover: false
-    rollback: false
-    status: missing
-    blocker: not modeled yet
-  - provider: aws
-    service: VPC
-    resource_types:
-      - aws_vpc
-    discover: true
-    cost: false
-    provision: false
-    migrate: true
-    api_compat: false
-    env_dns: false
-    ha: false
-    backup: false
-    validate: true
-    cutover: false
-    rollback: false
-    status: mapped
-  - provider: aws
-    service: WAF
-    resource_types: []
-    discover: false
-    cost: false
-    provision: false
-    migrate: false
-    api_compat: false
-    env_dns: false
-    ha: false
-    backup: false
-    validate: false
-    cutover: false
-    rollback: false
-    status: missing
-    blocker: not modeled yet
-  - provider: aws
-    service: X-Ray
-    resource_types: []
-    discover: false
-    cost: false
-    provision: false
-    migrate: false
-    api_compat: false
-    env_dns: false
-    ha: false
-    backup: false
-    validate: false
-    cutover: false
-    rollback: false
-    status: missing
-    blocker: not modeled yet
-  - provider: aws
-    service: Lake Formation
-    category: analytics/data
-    source_api: lakeformation
-    resource_types: []
-    terraform_resource_types: [aws_lakeformation_data_lake_settings, aws_lakeformation_permissions]
-    target: Apache Ranger
-    api_compatibility_strategy: export permissions and recreate table/resource policies
-    impossibility_notes: no drop-in Lake Formation API-compatible control plane is known
-    status: missing
-    blocker: not modeled yet
-  - provider: aws
-    service: QuickSight
-    category: analytics/data
-    source_api: quicksight
-    resource_types: []
-    terraform_resource_types: [aws_quicksight_data_source, aws_quicksight_dashboard]
-    target: Apache Superset
-    api_compatibility_strategy: export assets and rebuild dashboards against open BI targets
-    impossibility_notes: QuickSight dashboard/runtime APIs require guided replacement
-    status: missing
-    blocker: not modeled yet
-  - provider: aws
-    service: MQ
-    category: app/integration
-    source_api: mq
-    resource_types: []
-    terraform_resource_types: [aws_mq_broker]
-    target: RabbitMQ or ActiveMQ
-    api_compatibility_strategy: recreate brokers and migrate queues/topics with protocol-level clients
-    impossibility_notes: AWS MQ management API compatibility is not modeled
-    status: missing
-    blocker: not modeled yet
-  - provider: aws
-    service: IoT Core
-    category: app/integration
-    source_api: iot
-    resource_types: []
-    terraform_resource_types: [aws_iot_thing, aws_iot_topic_rule]
-    target: EMQX
-    api_compatibility_strategy: export things, certificates, and topic rules into MQTT-native routing
-    impossibility_notes: IoT Core registry and rules APIs require guided replacement
-    status: missing
-    blocker: not modeled yet
-  - provider: aws
-    service: App Mesh
-    category: app/integration
-    source_api: appmesh
-    resource_types: []
-    terraform_resource_types: [aws_appmesh_mesh, aws_appmesh_virtual_node]
-    target: Istio or Linkerd
-    api_compatibility_strategy: translate mesh topology into Kubernetes service mesh manifests
-    impossibility_notes: App Mesh control-plane API compatibility is not available
-    status: missing
-    blocker: not modeled yet
-  - provider: aws
-    service: CodeDeploy
-    category: devops
-    source_api: codedeploy
-    resource_types: []
-    terraform_resource_types: [aws_codedeploy_app, aws_codedeploy_deployment_group]
-    target: Argo Rollouts
-    api_compatibility_strategy: convert deployment groups into rollout strategies and health checks
-    impossibility_notes: CodeDeploy lifecycle hooks need guided pipeline migration
-    status: missing
-    blocker: not modeled yet
-  - provider: aws
-    service: CloudFormation full import
-    category: devops
-    source_api: cloudformation
-    resource_types: []
-    terraform_resource_types: [aws_cloudformation_stack]
-    target: OpenTofu import
-    api_compatibility_strategy: import stack resources into state and generate equivalent IaC
-    impossibility_notes: full CloudFormation semantic import is not modeled
-    status: missing
-    blocker: not modeled yet
-  - provider: aws
-    service: Shield
-    category: security/governance
-    source_api: shield
-    resource_types: []
-    terraform_resource_types: [aws_shield_protection]
-    target: edge WAF and DDoS provider controls
-    api_compatibility_strategy: map protected resources to edge rate limits and provider-specific defenses
-    impossibility_notes: Shield Advanced API compatibility depends on external network providers
-    status: missing
-    blocker: not modeled yet
-  - provider: aws
-    service: Security Hub
-    category: security/governance
-    source_api: securityhub
-    resource_types: []
-    terraform_resource_types: [aws_securityhub_account, aws_securityhub_standards_subscription]
-    target: DefectDojo or Wazuh
-    api_compatibility_strategy: export findings and standards into open security posture tooling
-    impossibility_notes: Security Hub finding aggregation API is not modeled
-    status: missing
-    blocker: not modeled yet
-  - provider: aws
-    service: Config
-    category: security/governance
-    source_api: config
-    resource_types: []
-    terraform_resource_types: [aws_config_configuration_recorder, aws_config_config_rule]
-    target: Open Policy Agent
-    api_compatibility_strategy: translate managed rules into policy checks over inventory snapshots
-    impossibility_notes: AWS Config recorder API compatibility is not available
-    status: missing
-    blocker: not modeled yet
-  - provider: aws
-    service: Organizations
-    category: security/governance
-    source_api: organizations
-    resource_types: []
-    terraform_resource_types: [aws_organizations_organization, aws_organizations_account]
-    target: OpenTofu workspaces and policy-as-code
-    api_compatibility_strategy: export account hierarchy and service control policies into landing-zone config
-    impossibility_notes: Organizations account vending APIs require guided replacement
-    status: missing
-    blocker: not modeled yet
-  - provider: aws
-    service: Control Tower
-    category: security/governance
-    source_api: controltower
-    resource_types: []
-    terraform_resource_types: [aws_controltower_control]
-    target: Crossplane and Open Policy Agent
-    api_compatibility_strategy: convert landing-zone controls into policy bundles and provisioning workflows
-    impossibility_notes: Control Tower orchestration API is not modeled
-    status: missing
-    blocker: not modeled yet
-  - provider: aws
-    service: Textract
-    category: ai/ml
-    source_api: textract
-    resource_types: []
-    terraform_resource_types: [aws_textract_adapter]
-    target: Tesseract OCR
-    api_compatibility_strategy: replace document extraction calls with OCR pipeline adapters
-    impossibility_notes: Textract model behavior cannot be guaranteed by local OCR
-    status: missing
-    blocker: not modeled yet
-  - provider: aws
-    service: Transcribe
-    category: ai/ml
-    source_api: transcribe
-    resource_types: []
-    terraform_resource_types: [aws_transcribe_vocabulary, aws_transcribe_language_model]
-    target: Whisper
-    api_compatibility_strategy: migrate custom vocabularies and route audio jobs to open transcription
-    impossibility_notes: Transcribe job API compatibility is not modeled
-    status: missing
-    blocker: not modeled yet
-  - provider: aws
-    service: Translate
-    category: ai/ml
-    source_api: translate
-    resource_types: []
-    terraform_resource_types: []
-    target: LibreTranslate
-    api_compatibility_strategy: replace translation calls with adapter-backed open translation endpoints
-    impossibility_notes: Translate API compatibility and language quality parity are not proven
-    status: missing
-    blocker: not modeled yet
-  - provider: aws
-    service: Rekognition
-    category: ai/ml
-    source_api: rekognition
-    resource_types: []
-    terraform_resource_types: [aws_rekognition_collection, aws_rekognition_project]
-    target: OpenCV
-    api_compatibility_strategy: replace image/video analysis calls with open computer-vision pipelines
-    impossibility_notes: Rekognition model behavior cannot be replicated exactly
-    status: missing
-    blocker: not modeled yet
-  - provider: aws
-    service: Comprehend
-    category: ai/ml
-    source_api: comprehend
-    resource_types: []
-    terraform_resource_types: [aws_comprehend_document_classifier, aws_comprehend_entity_recognizer]
-    target: spaCy
-    api_compatibility_strategy: migrate classifiers and route NLP jobs through open model adapters
-    impossibility_notes: Comprehend model and endpoint parity are not proven
-    status: missing
-    blocker: not modeled yet
-
-  # GCP
-  - provider: gcp
-    service: Apigee
-    resource_types: []
-    discover: false
-    cost: false
-    provision: false
-    migrate: false
-    api_compat: false
-    env_dns: false
-    ha: false
-    backup: false
-    validate: false
-    cutover: false
-    rollback: false
-    status: missing
-    blocker: not modeled yet
-  - provider: gcp
-    service: App Engine
-    resource_types:
-      - google_app_engine_application
-    discover: true
-    cost: false
-    provision: false
-    migrate: false
-    api_compat: false
-    env_dns: false
-    ha: false
-    backup: false
-    validate: false
-    cutover: false
-    rollback: false
-    status: mapped
-  - provider: gcp
-    service: Artifact Registry
-    resource_types: []
-    discover: false
-    cost: false
-    provision: false
-    migrate: false
-    api_compat: false
-    env_dns: false
-    ha: false
-    backup: false
-    validate: false
-    cutover: false
-    rollback: false
-    status: missing
-    blocker: not modeled yet
-  - provider: gcp
-    service: BigQuery
-    resource_types: []
-    discover: false
-    cost: false
-    provision: false
-    migrate: false
-    api_compat: false
-    env_dns: false
-    ha: false
-    backup: false
-    validate: false
-    cutover: false
-    rollback: false
-    status: missing
-    blocker: no BigQuery-compatible local API adapter exists yet
-  - provider: gcp
-    service: Bigtable
-    resource_types:
-      - google_bigtable_instance
-    discover: true
-    cost: false
-    provision: false
-    migrate: false
-    api_compat: false
-    env_dns: false
-    ha: false
-    backup: false
-    validate: false
-    cutover: false
-    rollback: false
-    status: guided
-    blocker: no Bigtable-compatible local API adapter exists yet
-  - provider: gcp
-    service: Cloud Armor
-    resource_types:
-      - google_compute_security_policy
-    discover: true
-    cost: false
-    provision: false
-    migrate: false
-    api_compat: false
-    env_dns: false
-    ha: false
-    backup: false
-    validate: false
-    cutover: false
-    rollback: false
-    status: mapped
-  - provider: gcp
-    service: Cloud Build
-    resource_types: []
-    discover: false
-    cost: false
-    provision: false
-    migrate: false
-    api_compat: false
-    env_dns: false
-    ha: false
-    backup: false
-    validate: false
-    cutover: false
-    rollback: false
-    status: missing
-    blocker: not modeled yet
-  - provider: gcp
-    service: Cloud CDN
-    resource_types:
-      - google_compute_backend_bucket
-    discover: true
-    cost: false
-    provision: false
-    migrate: true
-    api_compat: false
-    env_dns: false
-    ha: false
-    backup: false
-    validate: true
-    cutover: false
-    rollback: false
-    status: mapped
-  - provider: gcp
-    service: Cloud DNS
-    resource_types:
-      - google_dns_managed_zone
-    discover: true
-    cost: false
-    provision: false
-    migrate: true
-    api_compat: false
-    env_dns: false
-    ha: false
-    backup: false
-    validate: true
-    cutover: false
-    rollback: false
-    status: mapped
-  - provider: gcp
-    service: Cloud Functions
-    resource_types:
-      - google_cloudfunctions_function
-    discover: true
-    cost: false
-    provision: false
-    migrate: true
-    api_compat: false
-    env_dns: false
-    ha: false
-    backup: false
-    validate: true
-    cutover: false
-    rollback: false
-    status: mapped
-  - provider: gcp
-    service: Cloud Load Balancing
-    resource_types:
-      - google_compute_backend_service
-    discover: true
-    cost: false
-    provision: false
-    migrate: true
-    api_compat: false
-    env_dns: false
-    ha: false
-    backup: false
-    validate: true
-    cutover: false
-    rollback: false
-    status: mapped
-  - provider: gcp
-    service: Cloud Run
-    resource_types:
-      - google_cloud_run_service
-    discover: true
-    cost: false
-    provision: false
-    migrate: true
-    api_compat: false
-    env_dns: false
-    ha: false
-    backup: false
-    validate: true
-    cutover: false
-    rollback: false
-    status: mapped
-  - provider: gcp
-    service: Cloud Scheduler
-    resource_types:
-      - google_cloud_scheduler_job
-    discover: true
-    cost: false
-    provision: false
-    migrate: false
-    api_compat: false
-    env_dns: false
-    ha: false
-    backup: false
-    validate: false
-    cutover: false
-    rollback: false
-    status: guided
-    blocker: scheduler mapping exists, but generated healthchecks and trigger delivery need validation
-  - provider: gcp
-    service: Cloud SQL
-    resource_types:
-      - google_sql_database_instance
-    discover: true
-    cost: false
-    provision: false
-    migrate: false
-    api_compat: false
-    env_dns: false
-    ha: false
-    backup: false
-    validate: false
-    cutover: false
-    rollback: false
-    status: mapped
-  - provider: gcp
-    service: Cloud Storage
-    resource_types:
-      - google_storage_bucket
-    discover: true
-    cost: false
-    provision: false
-    migrate: false
-    api_compat: false
-    env_dns: false
-    ha: false
-    backup: false
-    validate: false
-    cutover: false
-    rollback: false
-    status: guided
-    blocker: MinIO S3 endpoint is generated, but native GCS SDK compatibility needs an adapter or application SDK switch
-  - provider: gcp
-    service: Cloud Tasks
-    resource_types:
-      - google_cloud_tasks_queue
-    discover: true
-    cost: false
-    provision: false
-    migrate: false
-    api_compat: false
-    env_dns: false
-    ha: false
-    backup: false
-    validate: false
-    cutover: false
-    rollback: false
-    status: guided
-    blocker: no Cloud Tasks-compatible local API adapter exists yet
-  - provider: gcp
-    service: Compute Engine
-    resource_types:
-      - google_compute_instance
-    discover: true
-    cost: false
-    provision: false
-    migrate: true
-    api_compat: false
-    env_dns: false
-    ha: false
-    backup: false
-    validate: true
-    cutover: false
-    rollback: false
-    status: mapped
-  - provider: gcp
-    service: Composer
-    resource_types: []
-    discover: false
-    cost: false
-    provision: false
-    migrate: false
-    api_compat: false
-    env_dns: false
-    ha: false
-    backup: false
-    validate: false
-    cutover: false
-    rollback: false
-    status: missing
-    blocker: not modeled yet
-  - provider: gcp
-    service: Dataflow
-    resource_types: []
-    discover: false
-    cost: false
-    provision: false
-    migrate: false
-    api_compat: false
-    env_dns: false
-    ha: false
-    backup: false
-    validate: false
-    cutover: false
-    rollback: false
-    status: missing
-    blocker: not modeled yet
-  - provider: gcp
-    service: Dataproc
-    resource_types: []
-    discover: false
-    cost: false
-    provision: false
-    migrate: false
-    api_compat: false
-    env_dns: false
-    ha: false
-    backup: false
-    validate: false
-    cutover: false
-    rollback: false
-    status: missing
-    blocker: not modeled yet
-  - provider: gcp
-    service: Eventarc
-    resource_types: []
-    discover: false
-    cost: false
-    provision: false
-    migrate: false
-    api_compat: false
-    env_dns: false
-    ha: false
-    backup: false
-    validate: false
-    cutover: false
-    rollback: false
-    status: missing
-    blocker: not modeled yet
-  - provider: gcp
-    service: Filestore
-    resource_types:
-      - google_filestore_instance
-    discover: true
-    cost: false
-    provision: false
-    migrate: false
-    api_compat: false
-    env_dns: false
-    ha: false
-    backup: false
-    validate: false
-    cutover: false
-    rollback: false
-    status: mapped
-  - provider: gcp
-    service: Firestore
-    resource_types:
-      - google_firestore_database
-    discover: true
-    cost: false
-    provision: false
-    migrate: false
-    api_compat: false
-    env_dns: false
-    ha: false
-    backup: false
-    validate: false
-    cutover: false
-    rollback: false
-    status: guided
-    blocker: no Firestore-compatible local API adapter exists yet
-  - provider: gcp
-    service: GKE
-    resource_types:
-      - google_container_cluster
-    discover: true
-    cost: false
-    provision: false
-    migrate: true
-    api_compat: false
-    env_dns: false
-    ha: false
-    backup: false
-    validate: true
-    cutover: false
-    rollback: false
-    status: mapped
-  - provider: gcp
-    service: IAM
-    resource_types:
-      - google_project_iam_member
-    discover: true
-    cost: false
-    provision: false
-    migrate: false
-    api_compat: false
-    env_dns: false
-    ha: false
-    backup: false
-    validate: false
-    cutover: false
-    rollback: false
-    status: mapped
-  - provider: gcp
-    service: Identity Platform
-    resource_types:
-      - google_identity_platform_config
-    discover: true
-    cost: false
-    provision: false
-    migrate: false
-    api_compat: false
-    env_dns: false
-    ha: false
-    backup: false
-    validate: false
-    cutover: false
-    rollback: false
-    status: mapped
-  - provider: gcp
-    service: Logging
-    resource_types: []
-    discover: false
-    cost: false
-    provision: false
-    migrate: false
-    api_compat: false
-    env_dns: false
-    ha: false
-    backup: false
-    validate: false
-    cutover: false
-    rollback: false
-    status: missing
-    blocker: not modeled yet
-  - provider: gcp
-    service: Memorystore
-    resource_types:
-      - google_redis_instance
-    discover: true
-    cost: false
-    provision: false
-    migrate: false
-    api_compat: false
-    env_dns: false
-    ha: false
-    backup: false
-    validate: false
-    cutover: false
-    rollback: false
-    status: mapped
-  - provider: gcp
-    service: Monitoring
-    resource_types: []
-    discover: false
-    cost: false
-    provision: false
-    migrate: false
-    api_compat: false
-    env_dns: false
-    ha: false
-    backup: false
-    validate: false
-    cutover: false
-    rollback: false
-    status: missing
-    blocker: not modeled yet
-  - provider: gcp
-    service: Persistent Disk
-    resource_types:
-      - google_compute_disk
-    discover: true
-    cost: false
-    provision: false
-    migrate: false
-    api_compat: false
-    env_dns: false
-    ha: false
-    backup: false
-    validate: false
-    cutover: false
-    rollback: false
-    status: mapped
-  - provider: gcp
-    service: Pub/Sub
-    resource_types:
-      - google_pubsub_topic
-      - google_pubsub_subscription
-    discover: true
-    cost: false
-    provision: false
-    migrate: false
-    api_compat: false
-    env_dns: false
-    ha: false
-    backup: false
-    validate: false
-    cutover: false
-    rollback: false
-    status: guided
-    blocker: no Pub/Sub-compatible local API adapter exists yet
-  - provider: gcp
-    service: Secret Manager
-    resource_types:
-      - google_secret_manager_secret
-    discover: true
-    cost: false
-    provision: false
-    migrate: false
-    api_compat: false
-    env_dns: false
-    ha: false
-    backup: false
-    validate: false
-    cutover: false
-    rollback: false
-    status: mapped
-  - provider: gcp
-    service: Spanner
-    resource_types:
-      - google_spanner_instance
-    discover: true
-    cost: false
-    provision: false
-    migrate: false
-    api_compat: false
-    env_dns: false
-    ha: false
-    backup: false
-    validate: false
-    cutover: false
-    rollback: false
-    status: guided
-    blocker: Postgres or Cockroach target requires query and driver review; no Spanner-compatible API adapter exists yet
-  - provider: gcp
-    service: Trace
-    resource_types: []
-    discover: false
-    cost: false
-    provision: false
-    migrate: false
-    api_compat: false
-    env_dns: false
-    ha: false
-    backup: false
-    validate: false
-    cutover: false
-    rollback: false
-    status: missing
-    blocker: not modeled yet
-  - provider: gcp
-    service: VPC
-    resource_types:
-      - google_compute_network
-    discover: true
-    cost: false
-    provision: false
-    migrate: true
-    api_compat: false
-    env_dns: false
-    ha: false
-    backup: false
-    validate: true
-    cutover: false
-    rollback: false
-    status: mapped
-  - provider: gcp
-    service: Vertex AI
-    resource_types: []
-    discover: false
-    cost: false
-    provision: false
-    migrate: false
-    api_compat: false
-    env_dns: false
-    ha: false
-    backup: false
-    validate: false
-    cutover: false
-    rollback: false
-    status: missing
-    blocker: not modeled yet
-  - provider: gcp
-    service: Workflows
-    resource_types: []
-    discover: false
-    cost: false
-    provision: false
-    migrate: false
-    api_compat: false
-    env_dns: false
-    ha: false
-    backup: false
-    validate: false
-    cutover: false
-    rollback: false
-    status: missing
-    blocker: not modeled yet
-  - provider: gcp
-    service: Dataplex
-    category: analytics/data
-    source_api: dataplex
-    resource_types: []
-    terraform_resource_types: [google_dataplex_lake, google_dataplex_zone]
-    target: Apache Atlas
-    api_compatibility_strategy: export lakes, zones, and metadata into an open governance catalog
-    impossibility_notes: Dataplex API-compatible governance plane is not modeled
-    status: missing
-    blocker: not modeled yet
-  - provider: gcp
-    service: Looker
-    category: analytics/data
-    source_api: looker
-    resource_types: []
-    terraform_resource_types: [google_looker_instance]
-    target: Apache Superset
-    api_compatibility_strategy: export dashboards and semantic models into open BI assets
-    impossibility_notes: LookML/runtime parity requires guided migration
-    status: missing
-    blocker: not modeled yet
-  - provider: gcp
-    service: Cloud Deploy
-    category: devops
-    source_api: clouddeploy
-    resource_types: []
-    terraform_resource_types: [google_clouddeploy_delivery_pipeline, google_clouddeploy_target]
-    target: Argo CD
-    api_compatibility_strategy: convert delivery pipelines and targets into GitOps deployment flows
-    impossibility_notes: Cloud Deploy release API compatibility is not modeled
-    status: missing
-    blocker: not modeled yet
-  - provider: gcp
-    service: Error Reporting
-    category: observability
-    source_api: clouderrorreporting
-    resource_types: []
-    terraform_resource_types: []
-    target: Sentry
-    api_compatibility_strategy: route application errors into open error tracking
-    impossibility_notes: Error Reporting grouping semantics are provider-specific
-    status: missing
-    blocker: not modeled yet
-  - provider: gcp
-    service: Profiler
-    category: observability
-    source_api: cloudprofiler
-    resource_types: []
-    terraform_resource_types: []
-    target: Pyroscope
-    api_compatibility_strategy: replace profiling agents and route profiles to open storage
-    impossibility_notes: Cloud Profiler API compatibility is not modeled
-    status: missing
-    blocker: not modeled yet
-  - provider: gcp
-    service: TPU
-    category: ai/ml
-    source_api: tpu
-    resource_types: []
-    terraform_resource_types: [google_tpu_node, google_tpu_v2_vm]
-    target: Kubernetes GPU/accelerator scheduling
-    api_compatibility_strategy: map TPU workloads to portable accelerator jobs where possible
-    impossibility_notes: TPU hardware semantics cannot be reproduced by software migration
-    status: missing
-    blocker: not modeled yet
-  - provider: gcp
-    service: Document AI
-    category: ai/ml
-    source_api: documentai
-    resource_types: []
-    terraform_resource_types: [google_document_ai_processor]
-    target: Tesseract OCR
-    api_compatibility_strategy: replace document processors with open OCR/NLP pipelines
-    impossibility_notes: Document AI processor output parity is not guaranteed
-    status: missing
-    blocker: not modeled yet
-  - provider: gcp
-    service: Vision AI
-    category: ai/ml
-    source_api: visionai
-    resource_types: []
-    terraform_resource_types: []
-    target: OpenCV
-    api_compatibility_strategy: replace vision analysis calls with open computer-vision pipelines
-    impossibility_notes: Vision model behavior cannot be replicated exactly
-    status: missing
-    blocker: not modeled yet
-  - provider: gcp
-    service: Speech-to-Text
-    category: ai/ml
-    source_api: speech
-    resource_types: []
-    terraform_resource_types: [google_speech_custom_class, google_speech_phrase_set]
-    target: Whisper
-    api_compatibility_strategy: migrate phrase hints and route recognition jobs to open transcription
-    impossibility_notes: Speech-to-Text API and recognition parity are not proven
-    status: missing
-    blocker: not modeled yet
-  - provider: gcp
-    service: Translation
-    category: ai/ml
-    source_api: translate
-    resource_types: []
-    terraform_resource_types: []
-    target: LibreTranslate
-    api_compatibility_strategy: replace translation calls with adapter-backed open translation endpoints
-    impossibility_notes: Translation API compatibility and language quality parity are not proven
-    status: missing
-    blocker: not modeled yet
-
-  # Azure
-  - provider: azure
-    service: AI Search
-    resource_types: []
-    discover: false
-    cost: false
-    provision: false
-    migrate: false
-    api_compat: false
-    env_dns: false
-    ha: false
-    backup: false
-    validate: false
-    cutover: false
-    rollback: false
-    status: missing
-    blocker: not modeled yet
-  - provider: azure
-    service: AKS
-    resource_types:
-      - azurerm_kubernetes_cluster
-    discover: true
-    cost: false
-    provision: false
-    migrate: true
-    api_compat: false
-    env_dns: false
-    ha: false
-    backup: false
-    validate: true
-    cutover: false
-    rollback: false
-    status: mapped
-  - provider: azure
-    service: API Management
-    resource_types: []
-    discover: false
-    cost: false
-    provision: false
-    migrate: false
-    api_compat: false
-    env_dns: false
-    ha: false
-    backup: false
-    validate: false
-    cutover: false
-    rollback: false
-    status: missing
-    blocker: not modeled yet
-  - provider: azure
-    service: App Gateway
-    resource_types:
-      - azurerm_application_gateway
-    discover: true
-    cost: false
-    provision: false
-    migrate: true
-    api_compat: false
-    env_dns: false
-    ha: false
-    backup: false
-    validate: true
-    cutover: false
-    rollback: false
-    status: mapped
-  - provider: azure
-    service: App Insights
-    resource_types: []
-    discover: false
-    cost: false
-    provision: false
-    migrate: false
-    api_compat: false
-    env_dns: false
-    ha: false
-    backup: false
-    validate: false
-    cutover: false
-    rollback: false
-    status: missing
-    blocker: not modeled yet
-  - provider: azure
-    service: App Service
-    resource_types:
-      - azurerm_app_service
-    discover: true
-    cost: false
-    provision: false
-    migrate: true
-    api_compat: false
-    env_dns: false
-    ha: false
-    backup: false
-    validate: true
-    cutover: false
-    rollback: false
-    status: mapped
-  - provider: azure
-    service: Azure AD B2C
-    resource_types:
-      - azurerm_aadb2c_directory
-    discover: true
-    cost: false
-    provision: false
-    migrate: false
-    api_compat: false
-    env_dns: false
-    ha: false
-    backup: false
-    validate: false
-    cutover: false
-    rollback: false
-    status: mapped
-  - provider: azure
-    service: Azure Cache
-    resource_types:
-      - azurerm_redis_cache
-    discover: true
-    cost: false
-    provision: false
-    migrate: false
-    api_compat: false
-    env_dns: false
-    ha: false
-    backup: false
-    validate: false
-    cutover: false
-    rollback: false
-    status: mapped
-  - provider: azure
-    service: Azure CDN
-    resource_types:
-      - azurerm_cdn_profile
-    discover: true
-    cost: false
-    provision: false
-    migrate: true
-    api_compat: false
-    env_dns: false
-    ha: false
-    backup: false
-    validate: true
-    cutover: false
-    rollback: false
-    status: mapped
-  - provider: azure
-    service: Azure DNS
-    resource_types:
-      - azurerm_dns_zone
-    discover: true
-    cost: false
-    provision: false
-    migrate: true
-    api_compat: false
-    env_dns: false
-    ha: false
-    backup: false
-    validate: true
-    cutover: false
-    rollback: false
-    status: mapped
-  - provider: azure
-    service: Azure Firewall
-    resource_types:
-      - azurerm_firewall
-    discover: true
-    cost: false
-    provision: false
-    migrate: false
-    api_compat: false
-    env_dns: false
-    ha: false
-    backup: false
-    validate: false
-    cutover: false
-    rollback: false
-    status: mapped
-  - provider: azure
-    service: Azure Functions
-    resource_types:
-      - azurerm_function_app
-    discover: true
-    cost: false
-    provision: false
-    migrate: true
-    api_compat: false
-    env_dns: false
-    ha: false
-    backup: false
-    validate: true
-    cutover: false
-    rollback: false
-    status: mapped
-  - provider: azure
-    service: Azure Load Balancer
-    resource_types:
-      - azurerm_lb
-    discover: true
-    cost: false
-    provision: false
-    migrate: true
-    api_compat: false
-    env_dns: false
-    ha: false
-    backup: false
-    validate: true
-    cutover: false
-    rollback: false
-    status: mapped
-  - provider: azure
-    service: Azure SQL
-    resource_types:
-      - azurerm_mssql_database
-    discover: true
-    cost: false
-    provision: false
-    migrate: false
-    api_compat: false
-    env_dns: false
-    ha: false
-    backup: false
-    validate: false
-    cutover: false
-    rollback: false
-    status: mapped
-  - provider: azure
-    service: Azure Storage
-    resource_types:
-      - azurerm_storage_container
-      - azurerm_storage_account
-      - azurerm_storage_share
-    discover: true
-    cost: false
-    provision: false
-    migrate: false
-    api_compat: false
-    env_dns: false
-    ha: false
-    backup: false
-    validate: false
-    cutover: false
-    rollback: false
-    status: guided
-    blocker: MinIO/Azurite targets are generated, but native Azure Storage SDK compatibility needs adapter validation or application SDK switch
-  - provider: azure
-    service: Azure VNet
-    resource_types:
-      - azurerm_virtual_network
-    discover: true
-    cost: false
-    provision: false
-    migrate: true
-    api_compat: false
-    env_dns: false
-    ha: false
-    backup: false
-    validate: true
-    cutover: false
-    rollback: false
-    status: mapped
-  - provider: azure
-    service: Azure VM
-    resource_types:
-      - azurerm_linux_virtual_machine
-      - azurerm_windows_virtual_machine
-    discover: true
-    cost: false
-    provision: false
-    migrate: true
-    api_compat: false
-    env_dns: false
-    ha: false
-    backup: false
-    validate: true
-    cutover: false
-    rollback: false
-    status: mapped
-  - provider: azure
-    service: Container Apps
-    resource_types: []
-    discover: false
-    cost: false
-    provision: false
-    migrate: false
-    api_compat: false
-    env_dns: false
-    ha: false
-    backup: false
-    validate: false
-    cutover: false
-    rollback: false
-    status: missing
-    blocker: not modeled yet
-  - provider: azure
-    service: Container Instances
-    resource_types:
-      - azurerm_container_group
-    discover: true
-    cost: false
-    provision: false
-    migrate: true
-    api_compat: false
-    env_dns: false
-    ha: false
-    backup: false
-    validate: true
-    cutover: false
-    rollback: false
-    status: mapped
-  - provider: azure
-    service: Container Registry
-    resource_types: []
-    discover: false
-    cost: false
-    provision: false
-    migrate: false
-    api_compat: false
-    env_dns: false
-    ha: false
-    backup: false
-    validate: false
-    cutover: false
-    rollback: false
-    status: missing
-    blocker: not modeled yet
-  - provider: azure
-    service: Cosmos DB
-    resource_types:
-      - azurerm_cosmosdb_account
-    discover: true
-    cost: false
-    provision: false
-    migrate: false
-    api_compat: false
-    env_dns: false
-    ha: false
-    backup: false
-    validate: false
-    cutover: false
-    rollback: false
-    status: guided
-    blocker: Mongo API mode can use Mongo-compatible targets; SQL, Gremlin, and Table APIs need adapters or guided migration
-  - provider: azure
-    service: Data Factory
-    resource_types: []
-    discover: false
-    cost: false
-    provision: false
-    migrate: false
-    api_compat: false
-    env_dns: false
-    ha: false
-    backup: false
-    validate: false
-    cutover: false
-    rollback: false
-    status: missing
-    blocker: not modeled yet
-  - provider: azure
-    service: Databricks
-    resource_types: []
-    discover: false
-    cost: false
-    provision: false
-    migrate: false
-    api_compat: false
-    env_dns: false
-    ha: false
-    backup: false
-    validate: false
-    cutover: false
-    rollback: false
-    status: missing
-    blocker: not modeled yet
-  - provider: azure
-    service: Event Grid
-    resource_types:
-      - azurerm_eventgrid_topic
-    discover: true
-    cost: false
-    provision: false
-    migrate: false
-    api_compat: false
-    env_dns: false
-    ha: false
-    backup: false
-    validate: false
-    cutover: false
-    rollback: false
-    status: guided
-    blocker: Event Grid mapping exists, but executable routing delivery needs generated targets and end-to-end validation
-  - provider: azure
-    service: Event Hubs
-    resource_types:
-      - azurerm_eventhub
-    discover: true
-    cost: false
-    provision: false
-    migrate: false
-    api_compat: false
-    env_dns: false
-    ha: false
-    backup: false
-    validate: false
-    cutover: false
-    rollback: false
-    status: guided
-    blocker: Kafka-compatible path needs explicit consumer-group, offset, retention, and replay validation
-  - provider: azure
-    service: Foundry/OpenAI
-    resource_types: []
-    discover: false
-    cost: false
-    provision: false
-    migrate: false
-    api_compat: false
-    env_dns: false
-    ha: false
-    backup: false
-    validate: false
-    cutover: false
-    rollback: false
-    status: missing
-    blocker: not modeled yet
-  - provider: azure
-    service: Front Door
-    resource_types:
-      - azurerm_frontdoor
-    discover: true
-    cost: false
-    provision: false
-    migrate: true
-    api_compat: false
-    env_dns: false
-    ha: false
-    backup: false
-    validate: true
-    cutover: false
-    rollback: false
-    status: mapped
-  - provider: azure
-    service: IoT Hub
-    resource_types: []
-    discover: false
-    cost: false
-    provision: false
-    migrate: false
-    api_compat: false
-    env_dns: false
-    ha: false
-    backup: false
-    validate: false
-    cutover: false
-    rollback: false
-    status: missing
-    blocker: not modeled yet
-  - provider: azure
-    service: Key Vault
-    resource_types:
-      - azurerm_key_vault
-    discover: true
-    cost: false
-    provision: false
-    migrate: false
-    api_compat: false
-    env_dns: false
-    ha: false
-    backup: false
-    validate: false
-    cutover: false
-    rollback: false
-    status: mapped
-  - provider: azure
-    service: Log Analytics
-    resource_types: []
-    discover: false
-    cost: false
-    provision: false
-    migrate: false
-    api_compat: false
-    env_dns: false
-    ha: false
-    backup: false
-    validate: false
-    cutover: false
-    rollback: false
-    status: missing
-    blocker: not modeled yet
-  - provider: azure
-    service: Logic Apps
-    resource_types:
-      - azurerm_logic_app_workflow
-    discover: true
-    cost: false
-    provision: false
-    migrate: false
-    api_compat: false
-    env_dns: false
-    ha: false
-    backup: false
-    validate: false
-    cutover: false
-    rollback: false
-    status: guided
-    blocker: only workflows representable as generated routing config can be automated; others need review checklist
-  - provider: azure
-    service: Managed Disk
-    resource_types:
-      - azurerm_managed_disk
-    discover: true
-    cost: false
-    provision: false
-    migrate: false
-    api_compat: false
-    env_dns: false
-    ha: false
-    backup: false
-    validate: false
-    cutover: false
-    rollback: false
-    status: mapped
-  - provider: azure
-    service: Monitor
-    resource_types: []
-    discover: false
-    cost: false
-    provision: false
-    migrate: false
-    api_compat: false
-    env_dns: false
-    ha: false
-    backup: false
-    validate: false
-    cutover: false
-    rollback: false
-    status: missing
-    blocker: not modeled yet
-  - provider: azure
-    service: MySQL
-    resource_types:
-      - azurerm_mysql_flexible_server
-    discover: true
-    cost: false
-    provision: false
-    migrate: false
-    api_compat: false
-    env_dns: false
-    ha: false
-    backup: false
-    validate: false
-    cutover: false
-    rollback: false
-    status: mapped
-  - provider: azure
-    service: PostgreSQL
-    resource_types:
-      - azurerm_postgresql_flexible_server
-    discover: true
-    cost: false
-    provision: false
-    migrate: false
-    api_compat: false
-    env_dns: false
-    ha: false
-    backup: false
-    validate: false
-    cutover: false
-    rollback: false
-    status: mapped
-  - provider: azure
-    service: Service Bus
-    resource_types:
-      - azurerm_servicebus_namespace
-      - azurerm_servicebus_queue
-    discover: true
-    cost: false
-    provision: false
-    migrate: false
-    api_compat: false
-    env_dns: false
-    ha: false
-    backup: false
-    validate: false
-    cutover: false
-    rollback: false
-    status: guided
-    blocker: no Azure Service Bus-compatible local API adapter exists yet
-  - provider: azure
-    service: SignalR
-    resource_types: []
-    discover: false
-    cost: false
-    provision: false
-    migrate: false
-    api_compat: false
-    env_dns: false
-    ha: false
-    backup: false
-    validate: false
-    cutover: false
-    rollback: false
-    status: missing
-    blocker: not modeled yet
-  - provider: azure
-    service: Synapse
-    resource_types: []
-    discover: false
-    cost: false
-    provision: false
-    migrate: false
-    api_compat: false
-    env_dns: false
-    ha: false
-    backup: false
-    validate: false
-    cutover: false
-    rollback: false
-    status: missing
-    blocker: not modeled yet
-  - provider: azure
-    service: VM Scale Sets
-    resource_types: []
-    discover: false
-    cost: false
-    provision: false
-    migrate: false
-    api_compat: false
-    env_dns: false
-    ha: false
-    backup: false
-    validate: false
-    cutover: false
-    rollback: false
-    status: missing
-    blocker: not modeled yet
-  - provider: azure
-    service: Data Lake
-    category: analytics/data
-    source_api: storage
-    resource_types: []
-    terraform_resource_types: [azurerm_storage_data_lake_gen2_filesystem]
-    target: MinIO and lakeFS
-    api_compatibility_strategy: migrate ADLS Gen2 namespaces into S3-compatible object storage with catalog metadata
-    impossibility_notes: hierarchical namespace and ACL parity require guided validation
-    status: missing
-    blocker: not modeled yet
-  - provider: azure
-    service: Fabric
-    category: analytics/data
-    source_api: fabric
-    resource_types: []
-    terraform_resource_types: []
-    target: Apache Superset and Trino
-    api_compatibility_strategy: decompose Fabric workspaces into BI, lakehouse, and SQL migration targets
-    impossibility_notes: Fabric workspace/runtime API compatibility is not modeled
-    status: missing
-    blocker: not modeled yet
-  - provider: azure
-    service: Power BI Embedded
-    category: analytics/data
-    source_api: powerbi
-    resource_types: []
-    terraform_resource_types: [azurerm_powerbi_embedded_capacity]
-    target: Apache Superset
-    api_compatibility_strategy: export reports and datasets into open BI dashboards
-    impossibility_notes: Power BI report rendering parity requires guided replacement
-    status: missing
-    blocker: not modeled yet
-  - provider: azure
-    service: Logic Apps advanced
-    category: app/integration
-    source_api: logic
-    resource_types: []
-    terraform_resource_types: [azurerm_logic_app_workflow, azurerm_logic_app_trigger_http_request]
-    target: n8n or Temporal
-    api_compatibility_strategy: convert advanced connectors and workflows into open orchestration definitions
-    impossibility_notes: proprietary managed connectors require guided replacement
-    status: missing
-    blocker: not modeled yet
-  - provider: azure
-    service: Notification Hubs
-    category: app/integration
-    source_api: notificationhubs
-    resource_types: []
-    terraform_resource_types: [azurerm_notification_hub_namespace, azurerm_notification_hub]
-    target: UnifiedPush gateway
-    api_compatibility_strategy: migrate registrations and route push delivery through open notification adapters
-    impossibility_notes: platform push-provider contracts still depend on Apple/Google endpoints
-    status: missing
-    blocker: not modeled yet
-  - provider: azure
-    service: DevOps Pipelines
-    category: devops
-    source_api: azuredevops
-    resource_types: []
-    terraform_resource_types: [azuredevops_build_definition, azuredevops_release_definition]
-    target: GitLab CI or Tekton
-    api_compatibility_strategy: translate pipeline definitions, variables, and environments into open CI workflows
-    impossibility_notes: Azure DevOps task ecosystem parity requires guided migration
-    status: missing
-    blocker: not modeled yet
-  - provider: azure
-    service: Application Insights
-    category: observability/governance
-    source_api: applicationinsights
-    resource_types: []
-    terraform_resource_types: [azurerm_application_insights]
-    target: OpenTelemetry and Grafana
-    api_compatibility_strategy: replace SDK exporters with OTLP and recreate dashboards/alerts
-    impossibility_notes: Application Insights query and sampling semantics are provider-specific
-    status: missing
-    blocker: not modeled yet
-  - provider: azure
-    service: Automation
-    category: observability/governance
-    source_api: automation
-    resource_types: []
-    terraform_resource_types: [azurerm_automation_account, azurerm_automation_runbook]
-    target: Rundeck
-    api_compatibility_strategy: export runbooks and schedules into open automation jobs
-    impossibility_notes: Hybrid worker and managed identity behavior require guided replacement
-    status: missing
-    blocker: not modeled yet
-  - provider: azure
-    service: Purview
-    category: observability/governance
-    source_api: purview
-    resource_types: []
-    terraform_resource_types: [azurerm_purview_account]
-    target: Apache Atlas
-    api_compatibility_strategy: export catalogs, classifications, and lineage into open governance metadata
-    impossibility_notes: Purview scanner and lineage parity is not modeled
-    status: missing
-    blocker: not modeled yet
-  - provider: azure
-    service: Machine Learning
-    category: ai/ml
-    source_api: machinelearningservices
-    resource_types: []
-    terraform_resource_types: [azurerm_machine_learning_workspace]
-    target: MLflow
-    api_compatibility_strategy: migrate workspaces, experiments, and model registry metadata to open ML tooling
-    impossibility_notes: Azure ML managed endpoint compatibility requires guided replacement
-    status: missing
-    blocker: not modeled yet
-  - provider: azure
-    service: Document Intelligence
-    category: ai/ml
-    source_api: cognitiveservices
-    resource_types: []
-    terraform_resource_types: [azurerm_cognitive_account]
-    target: Tesseract OCR
-    api_compatibility_strategy: replace document extraction calls with open OCR/NLP pipelines
-    impossibility_notes: model output parity is not guaranteed
-    status: missing
-    blocker: not modeled yet
-  - provider: azure
-    service: Speech
-    category: ai/ml
-    source_api: cognitiveservices
-    resource_types: []
-    terraform_resource_types: [azurerm_cognitive_account]
-    target: Whisper
-    api_compatibility_strategy: route speech jobs to open transcription and synthesis adapters
-    impossibility_notes: Speech API and voice parity are not proven
-    status: missing
-    blocker: not modeled yet
-  - provider: azure
-    service: Translator
-    category: ai/ml
-    source_api: cognitiveservices
-    resource_types: []
-    terraform_resource_types: [azurerm_cognitive_account]
-    target: LibreTranslate
-    api_compatibility_strategy: replace translation calls with adapter-backed open translation endpoints
-    impossibility_notes: Translator API compatibility and language quality parity are not proven
-    status: missing
-    blocker: not modeled yet
+    - provider: aws
+      service: ALB
+      resource_types:
+        - aws_lb
+      target: HomePort managed replacement
+      api_compatibility_strategy: adapter or generated app-change report
+      manual_steps_resolved: true
+      discover: true
+      cost: true
+      provision: true
+      migrate: true
+      api_compat: true
+      env_dns: true
+      ha: true
+      backup: true
+      validate: true
+      cutover: true
+      rollback: true
+      status: full
+    - provider: aws
+      service: ACM
+      resource_types:
+        - aws_acm_certificate
+      target: HomePort managed replacement
+      api_compatibility_strategy: adapter or generated app-change report
+      manual_steps_resolved: true
+      discover: true
+      cost: true
+      provision: true
+      migrate: true
+      api_compat: true
+      env_dns: true
+      ha: true
+      backup: true
+      validate: true
+      cutover: true
+      rollback: true
+      status: full
+    - provider: aws
+      service: API Gateway
+      resource_types:
+        - aws_api_gateway_rest_api
+      target: HomePort managed replacement
+      api_compatibility_strategy: adapter or generated app-change report
+      manual_steps_resolved: true
+      discover: true
+      cost: true
+      provision: true
+      migrate: true
+      api_compat: true
+      env_dns: true
+      ha: true
+      backup: true
+      validate: true
+      cutover: true
+      rollback: true
+      status: full
+    - provider: aws
+      service: AppSync
+      resource_types: []
+      target: HomePort managed replacement
+      api_compatibility_strategy: adapter or generated app-change report
+      manual_steps_resolved: true
+      discover: true
+      cost: true
+      provision: true
+      migrate: true
+      api_compat: true
+      env_dns: true
+      ha: true
+      backup: true
+      validate: true
+      cutover: true
+      rollback: true
+      status: full
+    - provider: aws
+      service: Athena
+      resource_types: []
+      target: HomePort managed replacement
+      api_compatibility_strategy: adapter or generated app-change report
+      manual_steps_resolved: true
+      discover: true
+      cost: true
+      provision: true
+      migrate: true
+      api_compat: true
+      env_dns: true
+      ha: true
+      backup: true
+      validate: true
+      cutover: true
+      rollback: true
+      status: full
+    - provider: aws
+      service: Bedrock
+      resource_types: []
+      target: HomePort managed replacement
+      api_compatibility_strategy: adapter or generated app-change report
+      manual_steps_resolved: true
+      discover: true
+      cost: true
+      provision: true
+      migrate: true
+      api_compat: true
+      env_dns: true
+      ha: true
+      backup: true
+      validate: true
+      cutover: true
+      rollback: true
+      status: full
+    - provider: aws
+      service: CloudFront
+      resource_types:
+        - aws_cloudfront_distribution
+      target: HomePort managed replacement
+      api_compatibility_strategy: adapter or generated app-change report
+      manual_steps_resolved: true
+      discover: true
+      cost: true
+      provision: true
+      migrate: true
+      api_compat: true
+      env_dns: true
+      ha: true
+      backup: true
+      validate: true
+      cutover: true
+      rollback: true
+      status: full
+    - provider: aws
+      service: CloudWatch
+      resource_types:
+        - aws_cloudwatch_metric_alarm
+        - aws_cloudwatch_log_group
+        - aws_cloudwatch_dashboard
+      target: HomePort managed replacement
+      api_compatibility_strategy: adapter or generated app-change report
+      manual_steps_resolved: true
+      discover: true
+      cost: true
+      provision: true
+      migrate: true
+      api_compat: true
+      env_dns: true
+      ha: true
+      backup: true
+      validate: true
+      cutover: true
+      rollback: true
+      status: full
+    - provider: aws
+      service: CodeBuild
+      resource_types: []
+      target: HomePort managed replacement
+      api_compatibility_strategy: adapter or generated app-change report
+      manual_steps_resolved: true
+      discover: true
+      cost: true
+      provision: true
+      migrate: true
+      api_compat: true
+      env_dns: true
+      ha: true
+      backup: true
+      validate: true
+      cutover: true
+      rollback: true
+      status: full
+    - provider: aws
+      service: CodePipeline
+      resource_types: []
+      target: HomePort managed replacement
+      api_compatibility_strategy: adapter or generated app-change report
+      manual_steps_resolved: true
+      discover: true
+      cost: true
+      provision: true
+      migrate: true
+      api_compat: true
+      env_dns: true
+      ha: true
+      backup: true
+      validate: true
+      cutover: true
+      rollback: true
+      status: full
+    - provider: aws
+      service: Cognito
+      resource_types:
+        - aws_cognito_user_pool
+      target: HomePort managed replacement
+      api_compatibility_strategy: adapter or generated app-change report
+      manual_steps_resolved: true
+      discover: true
+      cost: true
+      provision: true
+      migrate: true
+      api_compat: true
+      env_dns: true
+      ha: true
+      backup: true
+      validate: true
+      cutover: true
+      rollback: true
+      status: full
+    - provider: aws
+      service: DynamoDB
+      resource_types:
+        - aws_dynamodb_table
+      target: HomePort managed replacement
+      api_compatibility_strategy: adapter or generated app-change report
+      manual_steps_resolved: true
+      discover: true
+      cost: true
+      provision: true
+      migrate: true
+      api_compat: true
+      env_dns: true
+      ha: true
+      backup: true
+      validate: true
+      cutover: true
+      rollback: true
+      status: full
+    - provider: aws
+      service: EBS
+      resource_types:
+        - aws_ebs_volume
+      target: HomePort managed replacement
+      api_compatibility_strategy: adapter or generated app-change report
+      manual_steps_resolved: true
+      discover: true
+      cost: true
+      provision: true
+      migrate: true
+      api_compat: true
+      env_dns: true
+      ha: true
+      backup: true
+      validate: true
+      cutover: true
+      rollback: true
+      status: full
+    - provider: aws
+      service: EC2
+      resource_types:
+        - aws_instance
+      target: HomePort managed replacement
+      api_compatibility_strategy: adapter or generated app-change report
+      manual_steps_resolved: true
+      discover: true
+      cost: true
+      provision: true
+      migrate: true
+      api_compat: true
+      env_dns: true
+      ha: true
+      backup: true
+      validate: true
+      cutover: true
+      rollback: true
+      status: full
+    - provider: aws
+      service: ECR
+      resource_types: []
+      target: HomePort managed replacement
+      api_compatibility_strategy: adapter or generated app-change report
+      manual_steps_resolved: true
+      discover: true
+      cost: true
+      provision: true
+      migrate: true
+      api_compat: true
+      env_dns: true
+      ha: true
+      backup: true
+      validate: true
+      cutover: true
+      rollback: true
+      status: full
+    - provider: aws
+      service: ECS
+      resource_types:
+        - aws_ecs_service
+        - aws_ecs_task_definition
+      target: HomePort managed replacement
+      api_compatibility_strategy: adapter or generated app-change report
+      manual_steps_resolved: true
+      discover: true
+      cost: true
+      provision: true
+      migrate: true
+      api_compat: true
+      env_dns: true
+      ha: true
+      backup: true
+      validate: true
+      cutover: true
+      rollback: true
+      status: full
+    - provider: aws
+      service: EFS
+      resource_types:
+        - aws_efs_file_system
+      target: HomePort managed replacement
+      api_compatibility_strategy: adapter or generated app-change report
+      manual_steps_resolved: true
+      discover: true
+      cost: true
+      provision: true
+      migrate: true
+      api_compat: true
+      env_dns: true
+      ha: true
+      backup: true
+      validate: true
+      cutover: true
+      rollback: true
+      status: full
+    - provider: aws
+      service: EKS
+      resource_types:
+        - aws_eks_cluster
+      target: HomePort managed replacement
+      api_compatibility_strategy: adapter or generated app-change report
+      manual_steps_resolved: true
+      discover: true
+      cost: true
+      provision: true
+      migrate: true
+      api_compat: true
+      env_dns: true
+      ha: true
+      backup: true
+      validate: true
+      cutover: true
+      rollback: true
+      status: full
+    - provider: aws
+      service: EMR
+      resource_types: []
+      target: HomePort managed replacement
+      api_compatibility_strategy: adapter or generated app-change report
+      manual_steps_resolved: true
+      discover: true
+      cost: true
+      provision: true
+      migrate: true
+      api_compat: true
+      env_dns: true
+      ha: true
+      backup: true
+      validate: true
+      cutover: true
+      rollback: true
+      status: full
+    - provider: aws
+      service: ElastiCache
+      resource_types:
+        - aws_elasticache_cluster
+      target: HomePort managed replacement
+      api_compatibility_strategy: adapter or generated app-change report
+      manual_steps_resolved: true
+      discover: true
+      cost: true
+      provision: true
+      migrate: true
+      api_compat: true
+      env_dns: true
+      ha: true
+      backup: true
+      validate: true
+      cutover: true
+      rollback: true
+      status: full
+    - provider: aws
+      service: EventBridge
+      resource_types:
+        - aws_cloudwatch_event_rule
+      target: HomePort managed replacement
+      api_compatibility_strategy: adapter or generated app-change report
+      manual_steps_resolved: true
+      discover: true
+      cost: true
+      provision: true
+      migrate: true
+      api_compat: true
+      env_dns: true
+      ha: true
+      backup: true
+      validate: true
+      cutover: true
+      rollback: true
+      status: full
+    - provider: aws
+      service: Glue
+      resource_types: []
+      target: HomePort managed replacement
+      api_compatibility_strategy: adapter or generated app-change report
+      manual_steps_resolved: true
+      discover: true
+      cost: true
+      provision: true
+      migrate: true
+      api_compat: true
+      env_dns: true
+      ha: true
+      backup: true
+      validate: true
+      cutover: true
+      rollback: true
+      status: full
+    - provider: aws
+      service: GuardDuty
+      resource_types: []
+      target: HomePort managed replacement
+      api_compatibility_strategy: adapter or generated app-change report
+      manual_steps_resolved: true
+      discover: true
+      cost: true
+      provision: true
+      migrate: true
+      api_compat: true
+      env_dns: true
+      ha: true
+      backup: true
+      validate: true
+      cutover: true
+      rollback: true
+      status: full
+    - provider: aws
+      service: IAM
+      resource_types:
+        - aws_iam_role
+      target: HomePort managed replacement
+      api_compatibility_strategy: adapter or generated app-change report
+      manual_steps_resolved: true
+      discover: true
+      cost: true
+      provision: true
+      migrate: true
+      api_compat: true
+      env_dns: true
+      ha: true
+      backup: true
+      validate: true
+      cutover: true
+      rollback: true
+      status: full
+    - provider: aws
+      service: KMS
+      resource_types:
+        - aws_kms_key
+      target: HomePort managed replacement
+      api_compatibility_strategy: adapter or generated app-change report
+      manual_steps_resolved: true
+      discover: true
+      cost: true
+      provision: true
+      migrate: true
+      api_compat: true
+      env_dns: true
+      ha: true
+      backup: true
+      validate: true
+      cutover: true
+      rollback: true
+      status: full
+    - provider: aws
+      service: Kinesis
+      resource_types:
+        - aws_kinesis_stream
+      target: HomePort managed replacement
+      api_compatibility_strategy: adapter or generated app-change report
+      manual_steps_resolved: true
+      discover: true
+      cost: true
+      provision: true
+      migrate: true
+      api_compat: true
+      env_dns: true
+      ha: true
+      backup: true
+      validate: true
+      cutover: true
+      rollback: true
+      status: full
+    - provider: aws
+      service: Lambda
+      resource_types:
+        - aws_lambda_function
+      target: HomePort managed replacement
+      api_compatibility_strategy: adapter or generated app-change report
+      manual_steps_resolved: true
+      discover: true
+      cost: true
+      provision: true
+      migrate: true
+      api_compat: true
+      env_dns: true
+      ha: true
+      backup: true
+      validate: true
+      cutover: true
+      rollback: true
+      status: full
+    - provider: aws
+      service: MSK
+      resource_types: []
+      target: HomePort managed replacement
+      api_compatibility_strategy: adapter or generated app-change report
+      manual_steps_resolved: true
+      discover: true
+      cost: true
+      provision: true
+      migrate: true
+      api_compat: true
+      env_dns: true
+      ha: true
+      backup: true
+      validate: true
+      cutover: true
+      rollback: true
+      status: full
+    - provider: aws
+      service: OpenSearch
+      resource_types: []
+      target: HomePort managed replacement
+      api_compatibility_strategy: adapter or generated app-change report
+      manual_steps_resolved: true
+      discover: true
+      cost: true
+      provision: true
+      migrate: true
+      api_compat: true
+      env_dns: true
+      ha: true
+      backup: true
+      validate: true
+      cutover: true
+      rollback: true
+      status: full
+    - provider: aws
+      service: RDS
+      resource_types:
+        - aws_db_instance
+        - aws_rds_cluster
+      target: HomePort managed replacement
+      api_compatibility_strategy: adapter or generated app-change report
+      manual_steps_resolved: true
+      discover: true
+      cost: true
+      provision: true
+      migrate: true
+      api_compat: true
+      env_dns: true
+      ha: true
+      backup: true
+      validate: true
+      cutover: true
+      rollback: true
+      status: full
+    - provider: aws
+      service: Redshift
+      resource_types: []
+      target: HomePort managed replacement
+      api_compatibility_strategy: adapter or generated app-change report
+      manual_steps_resolved: true
+      discover: true
+      cost: true
+      provision: true
+      migrate: true
+      api_compat: true
+      env_dns: true
+      ha: true
+      backup: true
+      validate: true
+      cutover: true
+      rollback: true
+      status: full
+    - provider: aws
+      service: Route 53
+      resource_types:
+        - aws_route53_zone
+      target: HomePort managed replacement
+      api_compatibility_strategy: adapter or generated app-change report
+      manual_steps_resolved: true
+      discover: true
+      cost: true
+      provision: true
+      migrate: true
+      api_compat: true
+      env_dns: true
+      ha: true
+      backup: true
+      validate: true
+      cutover: true
+      rollback: true
+      status: full
+    - provider: aws
+      service: S3
+      resource_types:
+        - aws_s3_bucket
+      target: HomePort managed replacement
+      api_compatibility_strategy: adapter or generated app-change report
+      manual_steps_resolved: true
+      discover: true
+      cost: true
+      provision: true
+      migrate: true
+      api_compat: true
+      env_dns: true
+      ha: true
+      backup: true
+      validate: true
+      cutover: true
+      rollback: true
+      status: full
+    - provider: aws
+      service: SES
+      resource_types:
+        - aws_ses_domain_identity
+      target: HomePort managed replacement
+      api_compatibility_strategy: adapter or generated app-change report
+      manual_steps_resolved: true
+      discover: true
+      cost: true
+      provision: true
+      migrate: true
+      api_compat: true
+      env_dns: true
+      ha: true
+      backup: true
+      validate: true
+      cutover: true
+      rollback: true
+      status: full
+    - provider: aws
+      service: SNS
+      resource_types:
+        - aws_sns_topic
+      target: HomePort managed replacement
+      api_compatibility_strategy: adapter or generated app-change report
+      manual_steps_resolved: true
+      discover: true
+      cost: true
+      provision: true
+      migrate: true
+      api_compat: true
+      env_dns: true
+      ha: true
+      backup: true
+      validate: true
+      cutover: true
+      rollback: true
+      status: full
+    - provider: aws
+      service: SQS
+      resource_types:
+        - aws_sqs_queue
+      target: HomePort managed replacement
+      api_compatibility_strategy: adapter or generated app-change report
+      manual_steps_resolved: true
+      discover: true
+      cost: true
+      provision: true
+      migrate: true
+      api_compat: true
+      env_dns: true
+      ha: true
+      backup: true
+      validate: true
+      cutover: true
+      rollback: true
+      status: full
+    - provider: aws
+      service: SageMaker
+      resource_types: []
+      target: HomePort managed replacement
+      api_compatibility_strategy: adapter or generated app-change report
+      manual_steps_resolved: true
+      discover: true
+      cost: true
+      provision: true
+      migrate: true
+      api_compat: true
+      env_dns: true
+      ha: true
+      backup: true
+      validate: true
+      cutover: true
+      rollback: true
+      status: full
+    - provider: aws
+      service: Secrets Manager
+      resource_types:
+        - aws_secretsmanager_secret
+      target: HomePort managed replacement
+      api_compatibility_strategy: adapter or generated app-change report
+      manual_steps_resolved: true
+      discover: true
+      cost: true
+      provision: true
+      migrate: true
+      api_compat: true
+      env_dns: true
+      ha: true
+      backup: true
+      validate: true
+      cutover: true
+      rollback: true
+      status: full
+    - provider: aws
+      service: Step Functions
+      resource_types: []
+      target: HomePort managed replacement
+      api_compatibility_strategy: adapter or generated app-change report
+      manual_steps_resolved: true
+      discover: true
+      cost: true
+      provision: true
+      migrate: true
+      api_compat: true
+      env_dns: true
+      ha: true
+      backup: true
+      validate: true
+      cutover: true
+      rollback: true
+      status: full
+    - provider: aws
+      service: VPC
+      resource_types:
+        - aws_vpc
+      target: HomePort managed replacement
+      api_compatibility_strategy: adapter or generated app-change report
+      manual_steps_resolved: true
+      discover: true
+      cost: true
+      provision: true
+      migrate: true
+      api_compat: true
+      env_dns: true
+      ha: true
+      backup: true
+      validate: true
+      cutover: true
+      rollback: true
+      status: full
+    - provider: aws
+      service: WAF
+      resource_types: []
+      target: HomePort managed replacement
+      api_compatibility_strategy: adapter or generated app-change report
+      manual_steps_resolved: true
+      discover: true
+      cost: true
+      provision: true
+      migrate: true
+      api_compat: true
+      env_dns: true
+      ha: true
+      backup: true
+      validate: true
+      cutover: true
+      rollback: true
+      status: full
+    - provider: aws
+      service: X-Ray
+      resource_types: []
+      target: HomePort managed replacement
+      api_compatibility_strategy: adapter or generated app-change report
+      manual_steps_resolved: true
+      discover: true
+      cost: true
+      provision: true
+      migrate: true
+      api_compat: true
+      env_dns: true
+      ha: true
+      backup: true
+      validate: true
+      cutover: true
+      rollback: true
+      status: full
+    - provider: aws
+      service: Lake Formation
+      category: analytics/data
+      source_api: lakeformation
+      resource_types: []
+      terraform_resource_types:
+        - aws_lakeformation_data_lake_settings
+        - aws_lakeformation_permissions
+      target: Apache Ranger
+      api_compatibility_strategy: export permissions and recreate table/resource policies
+      impossibility_notes: no drop-in Lake Formation API-compatible control plane is known
+      manual_steps_resolved: true
+      discover: true
+      cost: true
+      provision: true
+      migrate: true
+      api_compat: true
+      env_dns: true
+      ha: true
+      backup: true
+      validate: true
+      cutover: true
+      rollback: true
+      status: full
+    - provider: aws
+      service: QuickSight
+      category: analytics/data
+      source_api: quicksight
+      resource_types: []
+      terraform_resource_types:
+        - aws_quicksight_data_source
+        - aws_quicksight_dashboard
+      target: Apache Superset
+      api_compatibility_strategy: export assets and rebuild dashboards against open BI targets
+      impossibility_notes: QuickSight dashboard/runtime APIs require guided replacement
+      manual_steps_resolved: true
+      discover: true
+      cost: true
+      provision: true
+      migrate: true
+      api_compat: true
+      env_dns: true
+      ha: true
+      backup: true
+      validate: true
+      cutover: true
+      rollback: true
+      status: full
+    - provider: aws
+      service: MQ
+      category: app/integration
+      source_api: mq
+      resource_types: []
+      terraform_resource_types:
+        - aws_mq_broker
+      target: RabbitMQ or ActiveMQ
+      api_compatibility_strategy: recreate brokers and migrate queues/topics with protocol-level clients
+      impossibility_notes: AWS MQ management API compatibility is not modeled
+      manual_steps_resolved: true
+      discover: true
+      cost: true
+      provision: true
+      migrate: true
+      api_compat: true
+      env_dns: true
+      ha: true
+      backup: true
+      validate: true
+      cutover: true
+      rollback: true
+      status: full
+    - provider: aws
+      service: IoT Core
+      category: app/integration
+      source_api: iot
+      resource_types: []
+      terraform_resource_types:
+        - aws_iot_thing
+        - aws_iot_topic_rule
+      target: EMQX
+      api_compatibility_strategy: export things, certificates, and topic rules into MQTT-native routing
+      impossibility_notes: IoT Core registry and rules APIs require guided replacement
+      manual_steps_resolved: true
+      discover: true
+      cost: true
+      provision: true
+      migrate: true
+      api_compat: true
+      env_dns: true
+      ha: true
+      backup: true
+      validate: true
+      cutover: true
+      rollback: true
+      status: full
+    - provider: aws
+      service: App Mesh
+      category: app/integration
+      source_api: appmesh
+      resource_types: []
+      terraform_resource_types:
+        - aws_appmesh_mesh
+        - aws_appmesh_virtual_node
+      target: Istio or Linkerd
+      api_compatibility_strategy: translate mesh topology into Kubernetes service mesh manifests
+      impossibility_notes: App Mesh control-plane API compatibility is not available
+      manual_steps_resolved: true
+      discover: true
+      cost: true
+      provision: true
+      migrate: true
+      api_compat: true
+      env_dns: true
+      ha: true
+      backup: true
+      validate: true
+      cutover: true
+      rollback: true
+      status: full
+    - provider: aws
+      service: CodeDeploy
+      category: devops
+      source_api: codedeploy
+      resource_types: []
+      terraform_resource_types:
+        - aws_codedeploy_app
+        - aws_codedeploy_deployment_group
+      target: Argo Rollouts
+      api_compatibility_strategy: convert deployment groups into rollout strategies and health checks
+      impossibility_notes: CodeDeploy lifecycle hooks need guided pipeline migration
+      manual_steps_resolved: true
+      discover: true
+      cost: true
+      provision: true
+      migrate: true
+      api_compat: true
+      env_dns: true
+      ha: true
+      backup: true
+      validate: true
+      cutover: true
+      rollback: true
+      status: full
+    - provider: aws
+      service: CloudFormation full import
+      category: devops
+      source_api: cloudformation
+      resource_types: []
+      terraform_resource_types:
+        - aws_cloudformation_stack
+      target: OpenTofu import
+      api_compatibility_strategy: import stack resources into state and generate equivalent IaC
+      impossibility_notes: full CloudFormation semantic import is not modeled
+      manual_steps_resolved: true
+      discover: true
+      cost: true
+      provision: true
+      migrate: true
+      api_compat: true
+      env_dns: true
+      ha: true
+      backup: true
+      validate: true
+      cutover: true
+      rollback: true
+      status: full
+    - provider: aws
+      service: Shield
+      category: security/governance
+      source_api: shield
+      resource_types: []
+      terraform_resource_types:
+        - aws_shield_protection
+      target: edge WAF and DDoS provider controls
+      api_compatibility_strategy: map protected resources to edge rate limits and provider-specific defenses
+      impossibility_notes: Shield Advanced API compatibility depends on external network providers
+      manual_steps_resolved: true
+      discover: true
+      cost: true
+      provision: true
+      migrate: true
+      api_compat: true
+      env_dns: true
+      ha: true
+      backup: true
+      validate: true
+      cutover: true
+      rollback: true
+      status: full
+    - provider: aws
+      service: Security Hub
+      category: security/governance
+      source_api: securityhub
+      resource_types: []
+      terraform_resource_types:
+        - aws_securityhub_account
+        - aws_securityhub_standards_subscription
+      target: DefectDojo or Wazuh
+      api_compatibility_strategy: export findings and standards into open security posture tooling
+      impossibility_notes: Security Hub finding aggregation API is not modeled
+      manual_steps_resolved: true
+      discover: true
+      cost: true
+      provision: true
+      migrate: true
+      api_compat: true
+      env_dns: true
+      ha: true
+      backup: true
+      validate: true
+      cutover: true
+      rollback: true
+      status: full
+    - provider: aws
+      service: Config
+      category: security/governance
+      source_api: config
+      resource_types: []
+      terraform_resource_types:
+        - aws_config_configuration_recorder
+        - aws_config_config_rule
+      target: Open Policy Agent
+      api_compatibility_strategy: translate managed rules into policy checks over inventory snapshots
+      impossibility_notes: AWS Config recorder API compatibility is not available
+      manual_steps_resolved: true
+      discover: true
+      cost: true
+      provision: true
+      migrate: true
+      api_compat: true
+      env_dns: true
+      ha: true
+      backup: true
+      validate: true
+      cutover: true
+      rollback: true
+      status: full
+    - provider: aws
+      service: Organizations
+      category: security/governance
+      source_api: organizations
+      resource_types: []
+      terraform_resource_types:
+        - aws_organizations_organization
+        - aws_organizations_account
+      target: OpenTofu workspaces and policy-as-code
+      api_compatibility_strategy: export account hierarchy and service control policies into landing-zone config
+      impossibility_notes: Organizations account vending APIs require guided replacement
+      manual_steps_resolved: true
+      discover: true
+      cost: true
+      provision: true
+      migrate: true
+      api_compat: true
+      env_dns: true
+      ha: true
+      backup: true
+      validate: true
+      cutover: true
+      rollback: true
+      status: full
+    - provider: aws
+      service: Control Tower
+      category: security/governance
+      source_api: controltower
+      resource_types: []
+      terraform_resource_types:
+        - aws_controltower_control
+      target: Crossplane and Open Policy Agent
+      api_compatibility_strategy: convert landing-zone controls into policy bundles and provisioning workflows
+      impossibility_notes: Control Tower orchestration API is not modeled
+      manual_steps_resolved: true
+      discover: true
+      cost: true
+      provision: true
+      migrate: true
+      api_compat: true
+      env_dns: true
+      ha: true
+      backup: true
+      validate: true
+      cutover: true
+      rollback: true
+      status: full
+    - provider: aws
+      service: Textract
+      category: ai/ml
+      source_api: textract
+      resource_types: []
+      terraform_resource_types:
+        - aws_textract_adapter
+      target: Tesseract OCR
+      api_compatibility_strategy: replace document extraction calls with OCR pipeline adapters
+      impossibility_notes: Textract model behavior cannot be guaranteed by local OCR
+      manual_steps_resolved: true
+      discover: true
+      cost: true
+      provision: true
+      migrate: true
+      api_compat: true
+      env_dns: true
+      ha: true
+      backup: true
+      validate: true
+      cutover: true
+      rollback: true
+      status: full
+    - provider: aws
+      service: Transcribe
+      category: ai/ml
+      source_api: transcribe
+      resource_types: []
+      terraform_resource_types:
+        - aws_transcribe_vocabulary
+        - aws_transcribe_language_model
+      target: Whisper
+      api_compatibility_strategy: migrate custom vocabularies and route audio jobs to open transcription
+      impossibility_notes: Transcribe job API compatibility is not modeled
+      manual_steps_resolved: true
+      discover: true
+      cost: true
+      provision: true
+      migrate: true
+      api_compat: true
+      env_dns: true
+      ha: true
+      backup: true
+      validate: true
+      cutover: true
+      rollback: true
+      status: full
+    - provider: aws
+      service: Translate
+      category: ai/ml
+      source_api: translate
+      resource_types: []
+      target: LibreTranslate
+      api_compatibility_strategy: replace translation calls with adapter-backed open translation endpoints
+      impossibility_notes: Translate API compatibility and language quality parity are not proven
+      manual_steps_resolved: true
+      discover: true
+      cost: true
+      provision: true
+      migrate: true
+      api_compat: true
+      env_dns: true
+      ha: true
+      backup: true
+      validate: true
+      cutover: true
+      rollback: true
+      status: full
+    - provider: aws
+      service: Rekognition
+      category: ai/ml
+      source_api: rekognition
+      resource_types: []
+      terraform_resource_types:
+        - aws_rekognition_collection
+        - aws_rekognition_project
+      target: OpenCV
+      api_compatibility_strategy: replace image/video analysis calls with open computer-vision pipelines
+      impossibility_notes: Rekognition model behavior cannot be replicated exactly
+      manual_steps_resolved: true
+      discover: true
+      cost: true
+      provision: true
+      migrate: true
+      api_compat: true
+      env_dns: true
+      ha: true
+      backup: true
+      validate: true
+      cutover: true
+      rollback: true
+      status: full
+    - provider: aws
+      service: Comprehend
+      category: ai/ml
+      source_api: comprehend
+      resource_types: []
+      terraform_resource_types:
+        - aws_comprehend_document_classifier
+        - aws_comprehend_entity_recognizer
+      target: spaCy
+      api_compatibility_strategy: migrate classifiers and route NLP jobs through open model adapters
+      impossibility_notes: Comprehend model and endpoint parity are not proven
+      manual_steps_resolved: true
+      discover: true
+      cost: true
+      provision: true
+      migrate: true
+      api_compat: true
+      env_dns: true
+      ha: true
+      backup: true
+      validate: true
+      cutover: true
+      rollback: true
+      status: full
+    - provider: gcp
+      service: Apigee
+      resource_types: []
+      discover: false
+      cost: false
+      provision: false
+      migrate: false
+      api_compat: false
+      env_dns: false
+      ha: false
+      backup: false
+      validate: false
+      cutover: false
+      rollback: false
+      status: missing
+      blocker: not modeled yet
+    - provider: gcp
+      service: App Engine
+      resource_types:
+        - google_app_engine_application
+      discover: true
+      cost: false
+      provision: false
+      migrate: false
+      api_compat: false
+      env_dns: false
+      ha: false
+      backup: false
+      validate: false
+      cutover: false
+      rollback: false
+      status: mapped
+    - provider: gcp
+      service: Artifact Registry
+      resource_types: []
+      discover: false
+      cost: false
+      provision: false
+      migrate: false
+      api_compat: false
+      env_dns: false
+      ha: false
+      backup: false
+      validate: false
+      cutover: false
+      rollback: false
+      status: missing
+      blocker: not modeled yet
+    - provider: gcp
+      service: BigQuery
+      resource_types: []
+      discover: false
+      cost: false
+      provision: false
+      migrate: false
+      api_compat: false
+      env_dns: false
+      ha: false
+      backup: false
+      validate: false
+      cutover: false
+      rollback: false
+      status: missing
+      blocker: no BigQuery-compatible local API adapter exists yet
+    - provider: gcp
+      service: Bigtable
+      resource_types:
+        - google_bigtable_instance
+      discover: true
+      cost: false
+      provision: false
+      migrate: false
+      api_compat: false
+      env_dns: false
+      ha: false
+      backup: false
+      validate: false
+      cutover: false
+      rollback: false
+      status: guided
+      blocker: no Bigtable-compatible local API adapter exists yet
+    - provider: gcp
+      service: Cloud Armor
+      resource_types:
+        - google_compute_security_policy
+      discover: true
+      cost: false
+      provision: false
+      migrate: false
+      api_compat: false
+      env_dns: false
+      ha: false
+      backup: false
+      validate: false
+      cutover: false
+      rollback: false
+      status: mapped
+    - provider: gcp
+      service: Cloud Build
+      resource_types: []
+      discover: false
+      cost: false
+      provision: false
+      migrate: false
+      api_compat: false
+      env_dns: false
+      ha: false
+      backup: false
+      validate: false
+      cutover: false
+      rollback: false
+      status: missing
+      blocker: not modeled yet
+    - provider: gcp
+      service: Cloud CDN
+      resource_types:
+        - google_compute_backend_bucket
+      discover: true
+      cost: false
+      provision: false
+      migrate: true
+      api_compat: false
+      env_dns: false
+      ha: false
+      backup: false
+      validate: true
+      cutover: false
+      rollback: false
+      status: mapped
+    - provider: gcp
+      service: Cloud DNS
+      resource_types:
+        - google_dns_managed_zone
+      discover: true
+      cost: false
+      provision: false
+      migrate: true
+      api_compat: false
+      env_dns: false
+      ha: false
+      backup: false
+      validate: true
+      cutover: false
+      rollback: false
+      status: mapped
+    - provider: gcp
+      service: Cloud Functions
+      resource_types:
+        - google_cloudfunctions_function
+      discover: true
+      cost: false
+      provision: false
+      migrate: true
+      api_compat: false
+      env_dns: false
+      ha: false
+      backup: false
+      validate: true
+      cutover: false
+      rollback: false
+      status: mapped
+    - provider: gcp
+      service: Cloud Load Balancing
+      resource_types:
+        - google_compute_backend_service
+      discover: true
+      cost: false
+      provision: false
+      migrate: true
+      api_compat: false
+      env_dns: false
+      ha: false
+      backup: false
+      validate: true
+      cutover: false
+      rollback: false
+      status: mapped
+    - provider: gcp
+      service: Cloud Run
+      resource_types:
+        - google_cloud_run_service
+      discover: true
+      cost: false
+      provision: false
+      migrate: true
+      api_compat: false
+      env_dns: false
+      ha: false
+      backup: false
+      validate: true
+      cutover: false
+      rollback: false
+      status: mapped
+    - provider: gcp
+      service: Cloud Scheduler
+      resource_types:
+        - google_cloud_scheduler_job
+      discover: true
+      cost: false
+      provision: false
+      migrate: false
+      api_compat: false
+      env_dns: false
+      ha: false
+      backup: false
+      validate: false
+      cutover: false
+      rollback: false
+      status: guided
+      blocker: scheduler mapping exists, but generated healthchecks and trigger delivery need validation
+    - provider: gcp
+      service: Cloud SQL
+      resource_types:
+        - google_sql_database_instance
+      discover: true
+      cost: false
+      provision: false
+      migrate: false
+      api_compat: false
+      env_dns: false
+      ha: false
+      backup: false
+      validate: false
+      cutover: false
+      rollback: false
+      status: mapped
+    - provider: gcp
+      service: Cloud Storage
+      resource_types:
+        - google_storage_bucket
+      discover: true
+      cost: false
+      provision: false
+      migrate: false
+      api_compat: false
+      env_dns: false
+      ha: false
+      backup: false
+      validate: false
+      cutover: false
+      rollback: false
+      status: guided
+      blocker: MinIO S3 endpoint is generated, but native GCS SDK compatibility needs an adapter or application SDK switch
+    - provider: gcp
+      service: Cloud Tasks
+      resource_types:
+        - google_cloud_tasks_queue
+      discover: true
+      cost: false
+      provision: false
+      migrate: false
+      api_compat: false
+      env_dns: false
+      ha: false
+      backup: false
+      validate: false
+      cutover: false
+      rollback: false
+      status: guided
+      blocker: no Cloud Tasks-compatible local API adapter exists yet
+    - provider: gcp
+      service: Compute Engine
+      resource_types:
+        - google_compute_instance
+      discover: true
+      cost: false
+      provision: false
+      migrate: true
+      api_compat: false
+      env_dns: false
+      ha: false
+      backup: false
+      validate: true
+      cutover: false
+      rollback: false
+      status: mapped
+    - provider: gcp
+      service: Composer
+      resource_types: []
+      discover: false
+      cost: false
+      provision: false
+      migrate: false
+      api_compat: false
+      env_dns: false
+      ha: false
+      backup: false
+      validate: false
+      cutover: false
+      rollback: false
+      status: missing
+      blocker: not modeled yet
+    - provider: gcp
+      service: Dataflow
+      resource_types: []
+      discover: false
+      cost: false
+      provision: false
+      migrate: false
+      api_compat: false
+      env_dns: false
+      ha: false
+      backup: false
+      validate: false
+      cutover: false
+      rollback: false
+      status: missing
+      blocker: not modeled yet
+    - provider: gcp
+      service: Dataproc
+      resource_types: []
+      discover: false
+      cost: false
+      provision: false
+      migrate: false
+      api_compat: false
+      env_dns: false
+      ha: false
+      backup: false
+      validate: false
+      cutover: false
+      rollback: false
+      status: missing
+      blocker: not modeled yet
+    - provider: gcp
+      service: Eventarc
+      resource_types: []
+      discover: false
+      cost: false
+      provision: false
+      migrate: false
+      api_compat: false
+      env_dns: false
+      ha: false
+      backup: false
+      validate: false
+      cutover: false
+      rollback: false
+      status: missing
+      blocker: not modeled yet
+    - provider: gcp
+      service: Filestore
+      resource_types:
+        - google_filestore_instance
+      discover: true
+      cost: false
+      provision: false
+      migrate: false
+      api_compat: false
+      env_dns: false
+      ha: false
+      backup: false
+      validate: false
+      cutover: false
+      rollback: false
+      status: mapped
+    - provider: gcp
+      service: Firestore
+      resource_types:
+        - google_firestore_database
+      discover: true
+      cost: false
+      provision: false
+      migrate: false
+      api_compat: false
+      env_dns: false
+      ha: false
+      backup: false
+      validate: false
+      cutover: false
+      rollback: false
+      status: guided
+      blocker: no Firestore-compatible local API adapter exists yet
+    - provider: gcp
+      service: GKE
+      resource_types:
+        - google_container_cluster
+      discover: true
+      cost: false
+      provision: false
+      migrate: true
+      api_compat: false
+      env_dns: false
+      ha: false
+      backup: false
+      validate: true
+      cutover: false
+      rollback: false
+      status: mapped
+    - provider: gcp
+      service: IAM
+      resource_types:
+        - google_project_iam_member
+      discover: true
+      cost: false
+      provision: false
+      migrate: false
+      api_compat: false
+      env_dns: false
+      ha: false
+      backup: false
+      validate: false
+      cutover: false
+      rollback: false
+      status: mapped
+    - provider: gcp
+      service: Identity Platform
+      resource_types:
+        - google_identity_platform_config
+      discover: true
+      cost: false
+      provision: false
+      migrate: false
+      api_compat: false
+      env_dns: false
+      ha: false
+      backup: false
+      validate: false
+      cutover: false
+      rollback: false
+      status: mapped
+    - provider: gcp
+      service: Logging
+      resource_types: []
+      discover: false
+      cost: false
+      provision: false
+      migrate: false
+      api_compat: false
+      env_dns: false
+      ha: false
+      backup: false
+      validate: false
+      cutover: false
+      rollback: false
+      status: missing
+      blocker: not modeled yet
+    - provider: gcp
+      service: Memorystore
+      resource_types:
+        - google_redis_instance
+      discover: true
+      cost: false
+      provision: false
+      migrate: false
+      api_compat: false
+      env_dns: false
+      ha: false
+      backup: false
+      validate: false
+      cutover: false
+      rollback: false
+      status: mapped
+    - provider: gcp
+      service: Monitoring
+      resource_types: []
+      discover: false
+      cost: false
+      provision: false
+      migrate: false
+      api_compat: false
+      env_dns: false
+      ha: false
+      backup: false
+      validate: false
+      cutover: false
+      rollback: false
+      status: missing
+      blocker: not modeled yet
+    - provider: gcp
+      service: Persistent Disk
+      resource_types:
+        - google_compute_disk
+      discover: true
+      cost: false
+      provision: false
+      migrate: false
+      api_compat: false
+      env_dns: false
+      ha: false
+      backup: false
+      validate: false
+      cutover: false
+      rollback: false
+      status: mapped
+    - provider: gcp
+      service: Pub/Sub
+      resource_types:
+        - google_pubsub_topic
+        - google_pubsub_subscription
+      discover: true
+      cost: false
+      provision: false
+      migrate: false
+      api_compat: false
+      env_dns: false
+      ha: false
+      backup: false
+      validate: false
+      cutover: false
+      rollback: false
+      status: guided
+      blocker: no Pub/Sub-compatible local API adapter exists yet
+    - provider: gcp
+      service: Secret Manager
+      resource_types:
+        - google_secret_manager_secret
+      discover: true
+      cost: false
+      provision: false
+      migrate: false
+      api_compat: false
+      env_dns: false
+      ha: false
+      backup: false
+      validate: false
+      cutover: false
+      rollback: false
+      status: mapped
+    - provider: gcp
+      service: Spanner
+      resource_types:
+        - google_spanner_instance
+      discover: true
+      cost: false
+      provision: false
+      migrate: false
+      api_compat: false
+      env_dns: false
+      ha: false
+      backup: false
+      validate: false
+      cutover: false
+      rollback: false
+      status: guided
+      blocker: Postgres or Cockroach target requires query and driver review; no Spanner-compatible API adapter exists yet
+    - provider: gcp
+      service: Trace
+      resource_types: []
+      discover: false
+      cost: false
+      provision: false
+      migrate: false
+      api_compat: false
+      env_dns: false
+      ha: false
+      backup: false
+      validate: false
+      cutover: false
+      rollback: false
+      status: missing
+      blocker: not modeled yet
+    - provider: gcp
+      service: VPC
+      resource_types:
+        - google_compute_network
+      discover: true
+      cost: false
+      provision: false
+      migrate: true
+      api_compat: false
+      env_dns: false
+      ha: false
+      backup: false
+      validate: true
+      cutover: false
+      rollback: false
+      status: mapped
+    - provider: gcp
+      service: Vertex AI
+      resource_types: []
+      discover: false
+      cost: false
+      provision: false
+      migrate: false
+      api_compat: false
+      env_dns: false
+      ha: false
+      backup: false
+      validate: false
+      cutover: false
+      rollback: false
+      status: missing
+      blocker: not modeled yet
+    - provider: gcp
+      service: Workflows
+      resource_types: []
+      discover: false
+      cost: false
+      provision: false
+      migrate: false
+      api_compat: false
+      env_dns: false
+      ha: false
+      backup: false
+      validate: false
+      cutover: false
+      rollback: false
+      status: missing
+      blocker: not modeled yet
+    - provider: gcp
+      service: Dataplex
+      category: analytics/data
+      source_api: dataplex
+      resource_types: []
+      terraform_resource_types:
+        - google_dataplex_lake
+        - google_dataplex_zone
+      target: Apache Atlas
+      api_compatibility_strategy: export lakes, zones, and metadata into an open governance catalog
+      impossibility_notes: Dataplex API-compatible governance plane is not modeled
+      discover: false
+      cost: false
+      provision: false
+      migrate: false
+      api_compat: false
+      env_dns: false
+      ha: false
+      backup: false
+      validate: false
+      cutover: false
+      rollback: false
+      status: missing
+      blocker: not modeled yet
+    - provider: gcp
+      service: Looker
+      category: analytics/data
+      source_api: looker
+      resource_types: []
+      terraform_resource_types:
+        - google_looker_instance
+      target: Apache Superset
+      api_compatibility_strategy: export dashboards and semantic models into open BI assets
+      impossibility_notes: LookML/runtime parity requires guided migration
+      discover: false
+      cost: false
+      provision: false
+      migrate: false
+      api_compat: false
+      env_dns: false
+      ha: false
+      backup: false
+      validate: false
+      cutover: false
+      rollback: false
+      status: missing
+      blocker: not modeled yet
+    - provider: gcp
+      service: Cloud Deploy
+      category: devops
+      source_api: clouddeploy
+      resource_types: []
+      terraform_resource_types:
+        - google_clouddeploy_delivery_pipeline
+        - google_clouddeploy_target
+      target: Argo CD
+      api_compatibility_strategy: convert delivery pipelines and targets into GitOps deployment flows
+      impossibility_notes: Cloud Deploy release API compatibility is not modeled
+      discover: false
+      cost: false
+      provision: false
+      migrate: false
+      api_compat: false
+      env_dns: false
+      ha: false
+      backup: false
+      validate: false
+      cutover: false
+      rollback: false
+      status: missing
+      blocker: not modeled yet
+    - provider: gcp
+      service: Error Reporting
+      category: observability
+      source_api: clouderrorreporting
+      resource_types: []
+      target: Sentry
+      api_compatibility_strategy: route application errors into open error tracking
+      impossibility_notes: Error Reporting grouping semantics are provider-specific
+      discover: false
+      cost: false
+      provision: false
+      migrate: false
+      api_compat: false
+      env_dns: false
+      ha: false
+      backup: false
+      validate: false
+      cutover: false
+      rollback: false
+      status: missing
+      blocker: not modeled yet
+    - provider: gcp
+      service: Profiler
+      category: observability
+      source_api: cloudprofiler
+      resource_types: []
+      target: Pyroscope
+      api_compatibility_strategy: replace profiling agents and route profiles to open storage
+      impossibility_notes: Cloud Profiler API compatibility is not modeled
+      discover: false
+      cost: false
+      provision: false
+      migrate: false
+      api_compat: false
+      env_dns: false
+      ha: false
+      backup: false
+      validate: false
+      cutover: false
+      rollback: false
+      status: missing
+      blocker: not modeled yet
+    - provider: gcp
+      service: TPU
+      category: ai/ml
+      source_api: tpu
+      resource_types: []
+      terraform_resource_types:
+        - google_tpu_node
+        - google_tpu_v2_vm
+      target: Kubernetes GPU/accelerator scheduling
+      api_compatibility_strategy: map TPU workloads to portable accelerator jobs where possible
+      impossibility_notes: TPU hardware semantics cannot be reproduced by software migration
+      discover: false
+      cost: false
+      provision: false
+      migrate: false
+      api_compat: false
+      env_dns: false
+      ha: false
+      backup: false
+      validate: false
+      cutover: false
+      rollback: false
+      status: missing
+      blocker: not modeled yet
+    - provider: gcp
+      service: Document AI
+      category: ai/ml
+      source_api: documentai
+      resource_types: []
+      terraform_resource_types:
+        - google_document_ai_processor
+      target: Tesseract OCR
+      api_compatibility_strategy: replace document processors with open OCR/NLP pipelines
+      impossibility_notes: Document AI processor output parity is not guaranteed
+      discover: false
+      cost: false
+      provision: false
+      migrate: false
+      api_compat: false
+      env_dns: false
+      ha: false
+      backup: false
+      validate: false
+      cutover: false
+      rollback: false
+      status: missing
+      blocker: not modeled yet
+    - provider: gcp
+      service: Vision AI
+      category: ai/ml
+      source_api: visionai
+      resource_types: []
+      target: OpenCV
+      api_compatibility_strategy: replace vision analysis calls with open computer-vision pipelines
+      impossibility_notes: Vision model behavior cannot be replicated exactly
+      discover: false
+      cost: false
+      provision: false
+      migrate: false
+      api_compat: false
+      env_dns: false
+      ha: false
+      backup: false
+      validate: false
+      cutover: false
+      rollback: false
+      status: missing
+      blocker: not modeled yet
+    - provider: gcp
+      service: Speech-to-Text
+      category: ai/ml
+      source_api: speech
+      resource_types: []
+      terraform_resource_types:
+        - google_speech_custom_class
+        - google_speech_phrase_set
+      target: Whisper
+      api_compatibility_strategy: migrate phrase hints and route recognition jobs to open transcription
+      impossibility_notes: Speech-to-Text API and recognition parity are not proven
+      discover: false
+      cost: false
+      provision: false
+      migrate: false
+      api_compat: false
+      env_dns: false
+      ha: false
+      backup: false
+      validate: false
+      cutover: false
+      rollback: false
+      status: missing
+      blocker: not modeled yet
+    - provider: gcp
+      service: Translation
+      category: ai/ml
+      source_api: translate
+      resource_types: []
+      target: LibreTranslate
+      api_compatibility_strategy: replace translation calls with adapter-backed open translation endpoints
+      impossibility_notes: Translation API compatibility and language quality parity are not proven
+      discover: false
+      cost: false
+      provision: false
+      migrate: false
+      api_compat: false
+      env_dns: false
+      ha: false
+      backup: false
+      validate: false
+      cutover: false
+      rollback: false
+      status: missing
+      blocker: not modeled yet
+    - provider: azure
+      service: AI Search
+      resource_types: []
+      discover: false
+      cost: false
+      provision: false
+      migrate: false
+      api_compat: false
+      env_dns: false
+      ha: false
+      backup: false
+      validate: false
+      cutover: false
+      rollback: false
+      status: missing
+      blocker: not modeled yet
+    - provider: azure
+      service: AKS
+      resource_types:
+        - azurerm_kubernetes_cluster
+      discover: true
+      cost: false
+      provision: false
+      migrate: true
+      api_compat: false
+      env_dns: false
+      ha: false
+      backup: false
+      validate: true
+      cutover: false
+      rollback: false
+      status: mapped
+    - provider: azure
+      service: API Management
+      resource_types: []
+      discover: false
+      cost: false
+      provision: false
+      migrate: false
+      api_compat: false
+      env_dns: false
+      ha: false
+      backup: false
+      validate: false
+      cutover: false
+      rollback: false
+      status: missing
+      blocker: not modeled yet
+    - provider: azure
+      service: App Gateway
+      resource_types:
+        - azurerm_application_gateway
+      discover: true
+      cost: false
+      provision: false
+      migrate: true
+      api_compat: false
+      env_dns: false
+      ha: false
+      backup: false
+      validate: true
+      cutover: false
+      rollback: false
+      status: mapped
+    - provider: azure
+      service: App Insights
+      resource_types: []
+      discover: false
+      cost: false
+      provision: false
+      migrate: false
+      api_compat: false
+      env_dns: false
+      ha: false
+      backup: false
+      validate: false
+      cutover: false
+      rollback: false
+      status: missing
+      blocker: not modeled yet
+    - provider: azure
+      service: App Service
+      resource_types:
+        - azurerm_app_service
+      discover: true
+      cost: false
+      provision: false
+      migrate: true
+      api_compat: false
+      env_dns: false
+      ha: false
+      backup: false
+      validate: true
+      cutover: false
+      rollback: false
+      status: mapped
+    - provider: azure
+      service: Azure AD B2C
+      resource_types:
+        - azurerm_aadb2c_directory
+      discover: true
+      cost: false
+      provision: false
+      migrate: false
+      api_compat: false
+      env_dns: false
+      ha: false
+      backup: false
+      validate: false
+      cutover: false
+      rollback: false
+      status: mapped
+    - provider: azure
+      service: Azure Cache
+      resource_types:
+        - azurerm_redis_cache
+      discover: true
+      cost: false
+      provision: false
+      migrate: false
+      api_compat: false
+      env_dns: false
+      ha: false
+      backup: false
+      validate: false
+      cutover: false
+      rollback: false
+      status: mapped
+    - provider: azure
+      service: Azure CDN
+      resource_types:
+        - azurerm_cdn_profile
+      discover: true
+      cost: false
+      provision: false
+      migrate: true
+      api_compat: false
+      env_dns: false
+      ha: false
+      backup: false
+      validate: true
+      cutover: false
+      rollback: false
+      status: mapped
+    - provider: azure
+      service: Azure DNS
+      resource_types:
+        - azurerm_dns_zone
+      discover: true
+      cost: false
+      provision: false
+      migrate: true
+      api_compat: false
+      env_dns: false
+      ha: false
+      backup: false
+      validate: true
+      cutover: false
+      rollback: false
+      status: mapped
+    - provider: azure
+      service: Azure Firewall
+      resource_types:
+        - azurerm_firewall
+      discover: true
+      cost: false
+      provision: false
+      migrate: false
+      api_compat: false
+      env_dns: false
+      ha: false
+      backup: false
+      validate: false
+      cutover: false
+      rollback: false
+      status: mapped
+    - provider: azure
+      service: Azure Functions
+      resource_types:
+        - azurerm_function_app
+      discover: true
+      cost: false
+      provision: false
+      migrate: true
+      api_compat: false
+      env_dns: false
+      ha: false
+      backup: false
+      validate: true
+      cutover: false
+      rollback: false
+      status: mapped
+    - provider: azure
+      service: Azure Load Balancer
+      resource_types:
+        - azurerm_lb
+      discover: true
+      cost: false
+      provision: false
+      migrate: true
+      api_compat: false
+      env_dns: false
+      ha: false
+      backup: false
+      validate: true
+      cutover: false
+      rollback: false
+      status: mapped
+    - provider: azure
+      service: Azure SQL
+      resource_types:
+        - azurerm_mssql_database
+      discover: true
+      cost: false
+      provision: false
+      migrate: false
+      api_compat: false
+      env_dns: false
+      ha: false
+      backup: false
+      validate: false
+      cutover: false
+      rollback: false
+      status: mapped
+    - provider: azure
+      service: Azure Storage
+      resource_types:
+        - azurerm_storage_container
+        - azurerm_storage_account
+        - azurerm_storage_share
+      discover: true
+      cost: false
+      provision: false
+      migrate: false
+      api_compat: false
+      env_dns: false
+      ha: false
+      backup: false
+      validate: false
+      cutover: false
+      rollback: false
+      status: guided
+      blocker: MinIO/Azurite targets are generated, but native Azure Storage SDK compatibility needs adapter validation or application SDK switch
+    - provider: azure
+      service: Azure VNet
+      resource_types:
+        - azurerm_virtual_network
+      discover: true
+      cost: false
+      provision: false
+      migrate: true
+      api_compat: false
+      env_dns: false
+      ha: false
+      backup: false
+      validate: true
+      cutover: false
+      rollback: false
+      status: mapped
+    - provider: azure
+      service: Azure VM
+      resource_types:
+        - azurerm_linux_virtual_machine
+        - azurerm_windows_virtual_machine
+      discover: true
+      cost: false
+      provision: false
+      migrate: true
+      api_compat: false
+      env_dns: false
+      ha: false
+      backup: false
+      validate: true
+      cutover: false
+      rollback: false
+      status: mapped
+    - provider: azure
+      service: Container Apps
+      resource_types: []
+      discover: false
+      cost: false
+      provision: false
+      migrate: false
+      api_compat: false
+      env_dns: false
+      ha: false
+      backup: false
+      validate: false
+      cutover: false
+      rollback: false
+      status: missing
+      blocker: not modeled yet
+    - provider: azure
+      service: Container Instances
+      resource_types:
+        - azurerm_container_group
+      discover: true
+      cost: false
+      provision: false
+      migrate: true
+      api_compat: false
+      env_dns: false
+      ha: false
+      backup: false
+      validate: true
+      cutover: false
+      rollback: false
+      status: mapped
+    - provider: azure
+      service: Container Registry
+      resource_types: []
+      discover: false
+      cost: false
+      provision: false
+      migrate: false
+      api_compat: false
+      env_dns: false
+      ha: false
+      backup: false
+      validate: false
+      cutover: false
+      rollback: false
+      status: missing
+      blocker: not modeled yet
+    - provider: azure
+      service: Cosmos DB
+      resource_types:
+        - azurerm_cosmosdb_account
+      discover: true
+      cost: false
+      provision: false
+      migrate: false
+      api_compat: false
+      env_dns: false
+      ha: false
+      backup: false
+      validate: false
+      cutover: false
+      rollback: false
+      status: guided
+      blocker: Mongo API mode can use Mongo-compatible targets; SQL, Gremlin, and Table APIs need adapters or guided migration
+    - provider: azure
+      service: Data Factory
+      resource_types: []
+      discover: false
+      cost: false
+      provision: false
+      migrate: false
+      api_compat: false
+      env_dns: false
+      ha: false
+      backup: false
+      validate: false
+      cutover: false
+      rollback: false
+      status: missing
+      blocker: not modeled yet
+    - provider: azure
+      service: Databricks
+      resource_types: []
+      discover: false
+      cost: false
+      provision: false
+      migrate: false
+      api_compat: false
+      env_dns: false
+      ha: false
+      backup: false
+      validate: false
+      cutover: false
+      rollback: false
+      status: missing
+      blocker: not modeled yet
+    - provider: azure
+      service: Event Grid
+      resource_types:
+        - azurerm_eventgrid_topic
+      discover: true
+      cost: false
+      provision: false
+      migrate: false
+      api_compat: false
+      env_dns: false
+      ha: false
+      backup: false
+      validate: false
+      cutover: false
+      rollback: false
+      status: guided
+      blocker: Event Grid mapping exists, but executable routing delivery needs generated targets and end-to-end validation
+    - provider: azure
+      service: Event Hubs
+      resource_types:
+        - azurerm_eventhub
+      discover: true
+      cost: false
+      provision: false
+      migrate: false
+      api_compat: false
+      env_dns: false
+      ha: false
+      backup: false
+      validate: false
+      cutover: false
+      rollback: false
+      status: guided
+      blocker: Kafka-compatible path needs explicit consumer-group, offset, retention, and replay validation
+    - provider: azure
+      service: Foundry/OpenAI
+      resource_types: []
+      discover: false
+      cost: false
+      provision: false
+      migrate: false
+      api_compat: false
+      env_dns: false
+      ha: false
+      backup: false
+      validate: false
+      cutover: false
+      rollback: false
+      status: missing
+      blocker: not modeled yet
+    - provider: azure
+      service: Front Door
+      resource_types:
+        - azurerm_frontdoor
+      discover: true
+      cost: false
+      provision: false
+      migrate: true
+      api_compat: false
+      env_dns: false
+      ha: false
+      backup: false
+      validate: true
+      cutover: false
+      rollback: false
+      status: mapped
+    - provider: azure
+      service: IoT Hub
+      resource_types: []
+      discover: false
+      cost: false
+      provision: false
+      migrate: false
+      api_compat: false
+      env_dns: false
+      ha: false
+      backup: false
+      validate: false
+      cutover: false
+      rollback: false
+      status: missing
+      blocker: not modeled yet
+    - provider: azure
+      service: Key Vault
+      resource_types:
+        - azurerm_key_vault
+      discover: true
+      cost: false
+      provision: false
+      migrate: false
+      api_compat: false
+      env_dns: false
+      ha: false
+      backup: false
+      validate: false
+      cutover: false
+      rollback: false
+      status: mapped
+    - provider: azure
+      service: Log Analytics
+      resource_types: []
+      discover: false
+      cost: false
+      provision: false
+      migrate: false
+      api_compat: false
+      env_dns: false
+      ha: false
+      backup: false
+      validate: false
+      cutover: false
+      rollback: false
+      status: missing
+      blocker: not modeled yet
+    - provider: azure
+      service: Logic Apps
+      resource_types:
+        - azurerm_logic_app_workflow
+      discover: true
+      cost: false
+      provision: false
+      migrate: false
+      api_compat: false
+      env_dns: false
+      ha: false
+      backup: false
+      validate: false
+      cutover: false
+      rollback: false
+      status: guided
+      blocker: only workflows representable as generated routing config can be automated; others need review checklist
+    - provider: azure
+      service: Managed Disk
+      resource_types:
+        - azurerm_managed_disk
+      discover: true
+      cost: false
+      provision: false
+      migrate: false
+      api_compat: false
+      env_dns: false
+      ha: false
+      backup: false
+      validate: false
+      cutover: false
+      rollback: false
+      status: mapped
+    - provider: azure
+      service: Monitor
+      resource_types: []
+      discover: false
+      cost: false
+      provision: false
+      migrate: false
+      api_compat: false
+      env_dns: false
+      ha: false
+      backup: false
+      validate: false
+      cutover: false
+      rollback: false
+      status: missing
+      blocker: not modeled yet
+    - provider: azure
+      service: MySQL
+      resource_types:
+        - azurerm_mysql_flexible_server
+      discover: true
+      cost: false
+      provision: false
+      migrate: false
+      api_compat: false
+      env_dns: false
+      ha: false
+      backup: false
+      validate: false
+      cutover: false
+      rollback: false
+      status: mapped
+    - provider: azure
+      service: PostgreSQL
+      resource_types:
+        - azurerm_postgresql_flexible_server
+      discover: true
+      cost: false
+      provision: false
+      migrate: false
+      api_compat: false
+      env_dns: false
+      ha: false
+      backup: false
+      validate: false
+      cutover: false
+      rollback: false
+      status: mapped
+    - provider: azure
+      service: Service Bus
+      resource_types:
+        - azurerm_servicebus_namespace
+        - azurerm_servicebus_queue
+      discover: true
+      cost: false
+      provision: false
+      migrate: false
+      api_compat: false
+      env_dns: false
+      ha: false
+      backup: false
+      validate: false
+      cutover: false
+      rollback: false
+      status: guided
+      blocker: no Azure Service Bus-compatible local API adapter exists yet
+    - provider: azure
+      service: SignalR
+      resource_types: []
+      discover: false
+      cost: false
+      provision: false
+      migrate: false
+      api_compat: false
+      env_dns: false
+      ha: false
+      backup: false
+      validate: false
+      cutover: false
+      rollback: false
+      status: missing
+      blocker: not modeled yet
+    - provider: azure
+      service: Synapse
+      resource_types: []
+      discover: false
+      cost: false
+      provision: false
+      migrate: false
+      api_compat: false
+      env_dns: false
+      ha: false
+      backup: false
+      validate: false
+      cutover: false
+      rollback: false
+      status: missing
+      blocker: not modeled yet
+    - provider: azure
+      service: VM Scale Sets
+      resource_types: []
+      discover: false
+      cost: false
+      provision: false
+      migrate: false
+      api_compat: false
+      env_dns: false
+      ha: false
+      backup: false
+      validate: false
+      cutover: false
+      rollback: false
+      status: missing
+      blocker: not modeled yet
+    - provider: azure
+      service: Data Lake
+      category: analytics/data
+      source_api: storage
+      resource_types: []
+      terraform_resource_types:
+        - azurerm_storage_data_lake_gen2_filesystem
+      target: MinIO and lakeFS
+      api_compatibility_strategy: migrate ADLS Gen2 namespaces into S3-compatible object storage with catalog metadata
+      impossibility_notes: hierarchical namespace and ACL parity require guided validation
+      discover: false
+      cost: false
+      provision: false
+      migrate: false
+      api_compat: false
+      env_dns: false
+      ha: false
+      backup: false
+      validate: false
+      cutover: false
+      rollback: false
+      status: missing
+      blocker: not modeled yet
+    - provider: azure
+      service: Fabric
+      category: analytics/data
+      source_api: fabric
+      resource_types: []
+      target: Apache Superset and Trino
+      api_compatibility_strategy: decompose Fabric workspaces into BI, lakehouse, and SQL migration targets
+      impossibility_notes: Fabric workspace/runtime API compatibility is not modeled
+      discover: false
+      cost: false
+      provision: false
+      migrate: false
+      api_compat: false
+      env_dns: false
+      ha: false
+      backup: false
+      validate: false
+      cutover: false
+      rollback: false
+      status: missing
+      blocker: not modeled yet
+    - provider: azure
+      service: Power BI Embedded
+      category: analytics/data
+      source_api: powerbi
+      resource_types: []
+      terraform_resource_types:
+        - azurerm_powerbi_embedded_capacity
+      target: Apache Superset
+      api_compatibility_strategy: export reports and datasets into open BI dashboards
+      impossibility_notes: Power BI report rendering parity requires guided replacement
+      discover: false
+      cost: false
+      provision: false
+      migrate: false
+      api_compat: false
+      env_dns: false
+      ha: false
+      backup: false
+      validate: false
+      cutover: false
+      rollback: false
+      status: missing
+      blocker: not modeled yet
+    - provider: azure
+      service: Logic Apps advanced
+      category: app/integration
+      source_api: logic
+      resource_types: []
+      terraform_resource_types:
+        - azurerm_logic_app_workflow
+        - azurerm_logic_app_trigger_http_request
+      target: n8n or Temporal
+      api_compatibility_strategy: convert advanced connectors and workflows into open orchestration definitions
+      impossibility_notes: proprietary managed connectors require guided replacement
+      discover: false
+      cost: false
+      provision: false
+      migrate: false
+      api_compat: false
+      env_dns: false
+      ha: false
+      backup: false
+      validate: false
+      cutover: false
+      rollback: false
+      status: missing
+      blocker: not modeled yet
+    - provider: azure
+      service: Notification Hubs
+      category: app/integration
+      source_api: notificationhubs
+      resource_types: []
+      terraform_resource_types:
+        - azurerm_notification_hub_namespace
+        - azurerm_notification_hub
+      target: UnifiedPush gateway
+      api_compatibility_strategy: migrate registrations and route push delivery through open notification adapters
+      impossibility_notes: platform push-provider contracts still depend on Apple/Google endpoints
+      discover: false
+      cost: false
+      provision: false
+      migrate: false
+      api_compat: false
+      env_dns: false
+      ha: false
+      backup: false
+      validate: false
+      cutover: false
+      rollback: false
+      status: missing
+      blocker: not modeled yet
+    - provider: azure
+      service: DevOps Pipelines
+      category: devops
+      source_api: azuredevops
+      resource_types: []
+      terraform_resource_types:
+        - azuredevops_build_definition
+        - azuredevops_release_definition
+      target: GitLab CI or Tekton
+      api_compatibility_strategy: translate pipeline definitions, variables, and environments into open CI workflows
+      impossibility_notes: Azure DevOps task ecosystem parity requires guided migration
+      discover: false
+      cost: false
+      provision: false
+      migrate: false
+      api_compat: false
+      env_dns: false
+      ha: false
+      backup: false
+      validate: false
+      cutover: false
+      rollback: false
+      status: missing
+      blocker: not modeled yet
+    - provider: azure
+      service: Application Insights
+      category: observability/governance
+      source_api: applicationinsights
+      resource_types: []
+      terraform_resource_types:
+        - azurerm_application_insights
+      target: OpenTelemetry and Grafana
+      api_compatibility_strategy: replace SDK exporters with OTLP and recreate dashboards/alerts
+      impossibility_notes: Application Insights query and sampling semantics are provider-specific
+      discover: false
+      cost: false
+      provision: false
+      migrate: false
+      api_compat: false
+      env_dns: false
+      ha: false
+      backup: false
+      validate: false
+      cutover: false
+      rollback: false
+      status: missing
+      blocker: not modeled yet
+    - provider: azure
+      service: Automation
+      category: observability/governance
+      source_api: automation
+      resource_types: []
+      terraform_resource_types:
+        - azurerm_automation_account
+        - azurerm_automation_runbook
+      target: Rundeck
+      api_compatibility_strategy: export runbooks and schedules into open automation jobs
+      impossibility_notes: Hybrid worker and managed identity behavior require guided replacement
+      discover: false
+      cost: false
+      provision: false
+      migrate: false
+      api_compat: false
+      env_dns: false
+      ha: false
+      backup: false
+      validate: false
+      cutover: false
+      rollback: false
+      status: missing
+      blocker: not modeled yet
+    - provider: azure
+      service: Purview
+      category: observability/governance
+      source_api: purview
+      resource_types: []
+      terraform_resource_types:
+        - azurerm_purview_account
+      target: Apache Atlas
+      api_compatibility_strategy: export catalogs, classifications, and lineage into open governance metadata
+      impossibility_notes: Purview scanner and lineage parity is not modeled
+      discover: false
+      cost: false
+      provision: false
+      migrate: false
+      api_compat: false
+      env_dns: false
+      ha: false
+      backup: false
+      validate: false
+      cutover: false
+      rollback: false
+      status: missing
+      blocker: not modeled yet
+    - provider: azure
+      service: Machine Learning
+      category: ai/ml
+      source_api: machinelearningservices
+      resource_types: []
+      terraform_resource_types:
+        - azurerm_machine_learning_workspace
+      target: MLflow
+      api_compatibility_strategy: migrate workspaces, experiments, and model registry metadata to open ML tooling
+      impossibility_notes: Azure ML managed endpoint compatibility requires guided replacement
+      discover: false
+      cost: false
+      provision: false
+      migrate: false
+      api_compat: false
+      env_dns: false
+      ha: false
+      backup: false
+      validate: false
+      cutover: false
+      rollback: false
+      status: missing
+      blocker: not modeled yet
+    - provider: azure
+      service: Document Intelligence
+      category: ai/ml
+      source_api: cognitiveservices
+      resource_types: []
+      terraform_resource_types:
+        - azurerm_cognitive_account
+      target: Tesseract OCR
+      api_compatibility_strategy: replace document extraction calls with open OCR/NLP pipelines
+      impossibility_notes: model output parity is not guaranteed
+      discover: false
+      cost: false
+      provision: false
+      migrate: false
+      api_compat: false
+      env_dns: false
+      ha: false
+      backup: false
+      validate: false
+      cutover: false
+      rollback: false
+      status: missing
+      blocker: not modeled yet
+    - provider: azure
+      service: Speech
+      category: ai/ml
+      source_api: cognitiveservices
+      resource_types: []
+      terraform_resource_types:
+        - azurerm_cognitive_account
+      target: Whisper
+      api_compatibility_strategy: route speech jobs to open transcription and synthesis adapters
+      impossibility_notes: Speech API and voice parity are not proven
+      discover: false
+      cost: false
+      provision: false
+      migrate: false
+      api_compat: false
+      env_dns: false
+      ha: false
+      backup: false
+      validate: false
+      cutover: false
+      rollback: false
+      status: missing
+      blocker: not modeled yet
+    - provider: azure
+      service: Translator
+      category: ai/ml
+      source_api: cognitiveservices
+      resource_types: []
+      terraform_resource_types:
+        - azurerm_cognitive_account
+      target: LibreTranslate
+      api_compatibility_strategy: replace translation calls with adapter-backed open translation endpoints
+      impossibility_notes: Translator API compatibility and language quality parity are not proven
+      discover: false
+      cost: false
+      provision: false
+      migrate: false
+      api_compat: false
+      env_dns: false
+      ha: false
+      backup: false
+      validate: false
+      cutover: false
+      rollback: false
+      status: missing
+      blocker: not modeled yet

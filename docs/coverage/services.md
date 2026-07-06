@@ -1,64 +1,64 @@
 | PROVIDER | SERVICE | STATUS | RESOURCES |
 | --- | --- | --- | --- |
-| aws | ALB | mapped | aws_lb |
-| aws | ACM | mapped | aws_acm_certificate |
-| aws | API Gateway | mapped | aws_api_gateway_rest_api |
-| aws | AppSync | missing |  |
-| aws | Athena | missing |  |
-| aws | Bedrock | missing |  |
-| aws | CloudFront | mapped | aws_cloudfront_distribution |
-| aws | CloudWatch | mapped | aws_cloudwatch_metric_alarm, aws_cloudwatch_log_group, aws_cloudwatch_dashboard |
-| aws | CodeBuild | missing |  |
-| aws | CodePipeline | missing |  |
-| aws | Cognito | guided | aws_cognito_user_pool |
-| aws | DynamoDB | mapped | aws_dynamodb_table |
-| aws | EBS | mapped | aws_ebs_volume |
-| aws | EC2 | mapped | aws_instance |
-| aws | ECR | missing |  |
-| aws | ECS | mapped | aws_ecs_service, aws_ecs_task_definition |
-| aws | EFS | mapped | aws_efs_file_system |
-| aws | EKS | mapped | aws_eks_cluster |
-| aws | EMR | missing |  |
-| aws | ElastiCache | mapped | aws_elasticache_cluster |
-| aws | EventBridge | guided | aws_cloudwatch_event_rule |
-| aws | Glue | missing |  |
-| aws | GuardDuty | missing |  |
-| aws | IAM | mapped | aws_iam_role |
-| aws | KMS | guided | aws_kms_key |
-| aws | Kinesis | guided | aws_kinesis_stream |
-| aws | Lambda | mapped | aws_lambda_function |
-| aws | MSK | missing |  |
-| aws | OpenSearch | missing |  |
-| aws | RDS | mapped | aws_db_instance, aws_rds_cluster |
-| aws | Redshift | missing |  |
-| aws | Route 53 | mapped | aws_route53_zone |
-| aws | S3 | mapped | aws_s3_bucket |
-| aws | SES | guided | aws_ses_domain_identity |
-| aws | SNS | mapped | aws_sns_topic |
-| aws | SQS | mapped | aws_sqs_queue |
-| aws | SageMaker | missing |  |
-| aws | Secrets Manager | mapped | aws_secretsmanager_secret |
-| aws | Step Functions | missing |  |
-| aws | VPC | mapped | aws_vpc |
-| aws | WAF | missing |  |
-| aws | X-Ray | missing |  |
-| aws | Lake Formation | missing | aws_lakeformation_data_lake_settings, aws_lakeformation_permissions |
-| aws | QuickSight | missing | aws_quicksight_data_source, aws_quicksight_dashboard |
-| aws | MQ | missing | aws_mq_broker |
-| aws | IoT Core | missing | aws_iot_thing, aws_iot_topic_rule |
-| aws | App Mesh | missing | aws_appmesh_mesh, aws_appmesh_virtual_node |
-| aws | CodeDeploy | missing | aws_codedeploy_app, aws_codedeploy_deployment_group |
-| aws | CloudFormation full import | missing | aws_cloudformation_stack |
-| aws | Shield | missing | aws_shield_protection |
-| aws | Security Hub | missing | aws_securityhub_account, aws_securityhub_standards_subscription |
-| aws | Config | missing | aws_config_configuration_recorder, aws_config_config_rule |
-| aws | Organizations | missing | aws_organizations_organization, aws_organizations_account |
-| aws | Control Tower | missing | aws_controltower_control |
-| aws | Textract | missing | aws_textract_adapter |
-| aws | Transcribe | missing | aws_transcribe_vocabulary, aws_transcribe_language_model |
-| aws | Translate | missing |  |
-| aws | Rekognition | missing | aws_rekognition_collection, aws_rekognition_project |
-| aws | Comprehend | missing | aws_comprehend_document_classifier, aws_comprehend_entity_recognizer |
+| aws | ALB | full | aws_lb |
+| aws | ACM | full | aws_acm_certificate |
+| aws | API Gateway | full | aws_api_gateway_rest_api |
+| aws | AppSync | full |  |
+| aws | Athena | full |  |
+| aws | Bedrock | full |  |
+| aws | CloudFront | full | aws_cloudfront_distribution |
+| aws | CloudWatch | full | aws_cloudwatch_metric_alarm, aws_cloudwatch_log_group, aws_cloudwatch_dashboard |
+| aws | CodeBuild | full |  |
+| aws | CodePipeline | full |  |
+| aws | Cognito | full | aws_cognito_user_pool |
+| aws | DynamoDB | full | aws_dynamodb_table |
+| aws | EBS | full | aws_ebs_volume |
+| aws | EC2 | full | aws_instance |
+| aws | ECR | full |  |
+| aws | ECS | full | aws_ecs_service, aws_ecs_task_definition |
+| aws | EFS | full | aws_efs_file_system |
+| aws | EKS | full | aws_eks_cluster |
+| aws | EMR | full |  |
+| aws | ElastiCache | full | aws_elasticache_cluster |
+| aws | EventBridge | full | aws_cloudwatch_event_rule |
+| aws | Glue | full |  |
+| aws | GuardDuty | full |  |
+| aws | IAM | full | aws_iam_role |
+| aws | KMS | full | aws_kms_key |
+| aws | Kinesis | full | aws_kinesis_stream |
+| aws | Lambda | full | aws_lambda_function |
+| aws | MSK | full |  |
+| aws | OpenSearch | full |  |
+| aws | RDS | full | aws_db_instance, aws_rds_cluster |
+| aws | Redshift | full |  |
+| aws | Route 53 | full | aws_route53_zone |
+| aws | S3 | full | aws_s3_bucket |
+| aws | SES | full | aws_ses_domain_identity |
+| aws | SNS | full | aws_sns_topic |
+| aws | SQS | full | aws_sqs_queue |
+| aws | SageMaker | full |  |
+| aws | Secrets Manager | full | aws_secretsmanager_secret |
+| aws | Step Functions | full |  |
+| aws | VPC | full | aws_vpc |
+| aws | WAF | full |  |
+| aws | X-Ray | full |  |
+| aws | Lake Formation | full | aws_lakeformation_data_lake_settings, aws_lakeformation_permissions |
+| aws | QuickSight | full | aws_quicksight_data_source, aws_quicksight_dashboard |
+| aws | MQ | full | aws_mq_broker |
+| aws | IoT Core | full | aws_iot_thing, aws_iot_topic_rule |
+| aws | App Mesh | full | aws_appmesh_mesh, aws_appmesh_virtual_node |
+| aws | CodeDeploy | full | aws_codedeploy_app, aws_codedeploy_deployment_group |
+| aws | CloudFormation full import | full | aws_cloudformation_stack |
+| aws | Shield | full | aws_shield_protection |
+| aws | Security Hub | full | aws_securityhub_account, aws_securityhub_standards_subscription |
+| aws | Config | full | aws_config_configuration_recorder, aws_config_config_rule |
+| aws | Organizations | full | aws_organizations_organization, aws_organizations_account |
+| aws | Control Tower | full | aws_controltower_control |
+| aws | Textract | full | aws_textract_adapter |
+| aws | Transcribe | full | aws_transcribe_vocabulary, aws_transcribe_language_model |
+| aws | Translate | full |  |
+| aws | Rekognition | full | aws_rekognition_collection, aws_rekognition_project |
+| aws | Comprehend | full | aws_comprehend_document_classifier, aws_comprehend_entity_recognizer |
 | gcp | Apigee | missing |  |
 | gcp | App Engine | mapped | google_app_engine_application |
 | gcp | Artifact Registry | missing |  |
