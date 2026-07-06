@@ -43,6 +43,34 @@ func TestWizardSessionCreatePatchGet(t *testing.T) {
 	}
 }
 
+func TestWizardSessionPatchPreservesOmittedSecretsResolved(t *testing.T) {
+	handler := NewWizardHandler(appwizard.NewService(t.TempDir()))
+	router := chi.NewRouter()
+	handler.RegisterRoutes(router)
+
+	rec := httptest.NewRecorder()
+	router.ServeHTTP(rec, httptest.NewRequest(http.MethodPost, "/wizard/sessions", nil))
+	if rec.Code != http.StatusOK {
+		t.Fatalf("create status = %d: %s", rec.Code, rec.Body.String())
+	}
+	id := responseString(t, rec.Body.String(), `"id":"`, `"`)
+
+	rec = httptest.NewRecorder()
+	router.ServeHTTP(rec, httptest.NewRequest(http.MethodPatch, "/wizard/sessions/"+id, bytes.NewBufferString(`{"secrets_resolved":true}`)))
+	if rec.Code != http.StatusOK {
+		t.Fatalf("patch secrets status = %d: %s", rec.Code, rec.Body.String())
+	}
+
+	rec = httptest.NewRecorder()
+	router.ServeHTTP(rec, httptest.NewRequest(http.MethodPatch, "/wizard/sessions/"+id, bytes.NewBufferString(`{"current_step":"deploy"}`)))
+	if rec.Code != http.StatusOK {
+		t.Fatalf("patch step status = %d: %s", rec.Code, rec.Body.String())
+	}
+	if !strings.Contains(rec.Body.String(), `"secrets_resolved":true`) {
+		t.Fatalf("secrets_resolved was not preserved: %s", rec.Body.String())
+	}
+}
+
 func responseString(t *testing.T, body, prefix, suffix string) string {
 	t.Helper()
 	start := strings.Index(body, prefix)

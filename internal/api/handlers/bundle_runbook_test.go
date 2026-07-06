@@ -126,3 +126,40 @@ func TestProvideSecretsSurvivesHandlerRestart(t *testing.T) {
 		t.Fatalf("unexpected response after restart: %d %s", rec.Code, rec.Body.String())
 	}
 }
+
+func TestProvideSecretsDoesNotOverwriteStoredSecretWithBlankValue(t *testing.T) {
+	previousDir, err := os.Getwd()
+	if err != nil {
+		t.Fatal(err)
+	}
+	if err := os.Chdir(t.TempDir()); err != nil {
+		t.Fatal(err)
+	}
+	t.Cleanup(func() {
+		if err := os.Chdir(previousDir); err != nil {
+			t.Fatal(err)
+		}
+	})
+
+	handler := NewBundleHandler()
+	handler.bundles["bundle-1"] = &BundleInfo{ID: "bundle-1", Secrets: []*SecretRef{{Name: "DB_PASSWORD", Required: true}}}
+	if err := apprunbook.NewService(".").Save(buildBundleRunbook("bundle-1", true, handler.bundles["bundle-1"].Secrets)); err != nil {
+		t.Fatal(err)
+	}
+	router := chi.NewRouter()
+	router.Post("/bundles/{bundleId}/secrets", handler.ProvideSecrets)
+
+	req := httptest.NewRequest(http.MethodPost, "/bundles/bundle-1/secrets", bytes.NewBufferString(`{"secrets":{"DB_PASSWORD":"secret"}}`))
+	rec := httptest.NewRecorder()
+	router.ServeHTTP(rec, req)
+	if rec.Code != http.StatusOK || !strings.Contains(rec.Body.String(), `"success":true`) {
+		t.Fatalf("unexpected initial response: %d %s", rec.Code, rec.Body.String())
+	}
+
+	req = httptest.NewRequest(http.MethodPost, "/bundles/bundle-1/secrets", bytes.NewBufferString(`{"secrets":{"DB_PASSWORD":""}}`))
+	rec = httptest.NewRecorder()
+	router.ServeHTTP(rec, req)
+	if rec.Code != http.StatusOK || !strings.Contains(rec.Body.String(), `"success":true`) {
+		t.Fatalf("blank value overwrote stored secret: %d %s", rec.Code, rec.Body.String())
+	}
+}

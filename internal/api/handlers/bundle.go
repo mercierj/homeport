@@ -721,6 +721,9 @@ func (h *BundleHandler) ProvideSecrets(w http.ResponseWriter, r *http.Request) {
 	}
 
 	for k, v := range req.Secrets {
+		if strings.TrimSpace(v) == "" {
+			continue
+		}
 		if err := h.secretStore.Put(bundleID, k, v); err != nil {
 			respondError(w, r, http.StatusInternalServerError, "Failed to store secrets")
 			return

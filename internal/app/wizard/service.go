@@ -18,6 +18,19 @@ type Service struct {
 	sessions map[string]*domainwizard.Session
 }
 
+type SessionPatch struct {
+	CurrentStep       domainwizard.Step
+	CompletedSteps    []domainwizard.Step
+	SourceProvider    string
+	SelectedResources []string
+	BundleID          string
+	SecretsResolved   *bool
+	DeploymentID      string
+	SyncPlanID        string
+	CutoverID         string
+	Metadata          map[string]string
+}
+
 func NewService(baseDir string) *Service {
 	if baseDir == "" {
 		baseDir = "."
@@ -63,6 +76,25 @@ func (s *Service) Get(id string) (*domainwizard.Session, error) {
 }
 
 func (s *Service) Update(id string, patch domainwizard.Session) (*domainwizard.Session, error) {
+	var secretsResolved *bool
+	if patch.SecretsResolved {
+		secretsResolved = &patch.SecretsResolved
+	}
+	return s.UpdatePatch(id, SessionPatch{
+		CurrentStep:       patch.CurrentStep,
+		CompletedSteps:    patch.CompletedSteps,
+		SourceProvider:    patch.SourceProvider,
+		SelectedResources: patch.SelectedResources,
+		BundleID:          patch.BundleID,
+		SecretsResolved:   secretsResolved,
+		DeploymentID:      patch.DeploymentID,
+		SyncPlanID:        patch.SyncPlanID,
+		CutoverID:         patch.CutoverID,
+		Metadata:          patch.Metadata,
+	})
+}
+
+func (s *Service) UpdatePatch(id string, patch SessionPatch) (*domainwizard.Session, error) {
 	session, err := s.Get(id)
 	if err != nil {
 		return nil, err
@@ -83,7 +115,9 @@ func (s *Service) Update(id string, patch domainwizard.Session) (*domainwizard.S
 		session.BundleID = patch.BundleID
 		session.RunbookID = patch.BundleID
 	}
-	session.SecretsResolved = patch.SecretsResolved
+	if patch.SecretsResolved != nil {
+		session.SecretsResolved = *patch.SecretsResolved
+	}
 	if patch.DeploymentID != "" {
 		session.DeploymentID = patch.DeploymentID
 	}

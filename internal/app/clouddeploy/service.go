@@ -62,7 +62,7 @@ func (s *Service) Start(ctx context.Context, id string, zipData []byte, apply bo
 	s.mu.Lock()
 	s.jobs[id] = job
 	s.mu.Unlock()
-	go s.run(ctx, job)
+	go s.run(context.Background(), job)
 	return job, nil
 }
 

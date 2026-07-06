@@ -69,12 +69,17 @@ export function SecretsStep() {
   const [pullError, setPullError] = useState<string | null>(null);
   const [showCredentialsPanel, setShowCredentialsPanel] = useState(false);
   const [showResolvedSecrets, setShowResolvedSecrets] = useState(false);
+  const [pulledSecretNames, setPulledSecretNames] = useState<Set<string>>(() => new Set());
   const autoPullRef = useRef(false);
 
   // Check if credentials are available for each provider
   const hasAwsCredentials = !!(awsCredentials.accessKeyId && awsCredentials.secretAccessKey);
   const hasGcpCredentials = !!(gcpCredentials.projectId);
   const hasAzureCredentials = !!(azureCredentials.subscriptionId && azureCredentials.clientId);
+
+  useEffect(() => {
+    setPulledSecretNames(new Set());
+  }, [bundleId]);
 
   // Handle pulling secrets from cloud provider
   const handlePullSecrets = async (provider: 'aws' | 'gcp' | 'azure') => {
@@ -117,10 +122,17 @@ export function SecretsStep() {
 
       const result = await pullSecrets(bundleId, request);
 
-      // Populate resolved secrets into the form
+      const resolvedNames = result.resolved ? Object.keys(result.resolved) : [];
+      if (resolvedNames.length > 0) {
+        setPulledSecretNames((previous) => new Set([...previous, ...resolvedNames]));
+      }
+
+      // Populate only real values; pulled secrets are blanked by the API after backend storage.
       if (result.resolved && Object.keys(result.resolved).length > 0) {
         Object.entries(result.resolved).forEach(([name, value]) => {
-          setSecretValue(name, value);
+          if (value.trim() !== '') {
+            setSecretValue(name, value);
+          }
         });
       }
 
@@ -176,11 +188,12 @@ export function SecretsStep() {
     setShowSecrets((prev) => ({ ...prev, [name]: !prev[name] }));
   };
 
+  const isSecretProvided = (name: string) =>
+    (secretValues[name] && secretValues[name].trim() !== '') || pulledSecretNames.has(name);
+
   // Check if all required secrets are provided
   const requiredSecrets = secretRefs.filter((s) => s.required);
-  const providedRequiredSecrets = requiredSecrets.filter(
-    (s) => secretValues[s.name] && secretValues[s.name].trim() !== ''
-  );
+  const providedRequiredSecrets = requiredSecrets.filter((s) => isSecretProvided(s.name));
   const allRequiredProvided = providedRequiredSecrets.length === requiredSecrets.length;
 
   // Handle submit secrets
@@ -337,17 +350,12 @@ export function SecretsStep() {
       {/* Secret inputs - separated into missing and resolved */}
       {secretRefs.length > 0 && (() => {
         // Separate secrets into missing and resolved
-        const missingSecrets = secretRefs.filter(
-          (s) => !secretValues[s.name] || secretValues[s.name].trim() === ''
-        );
-        const resolvedSecrets = secretRefs.filter(
-          (s) => secretValues[s.name] && secretValues[s.name].trim() !== ''
-        );
+        const missingSecrets = secretRefs.filter((s) => !isSecretProvided(s.name));
+        const resolvedSecrets = secretRefs.filter((s) => isSecretProvided(s.name));
 
         const renderSecretCard = (secret: typeof secretRefs[0]) => {
           const Icon = SOURCE_ICONS[secret.source] || Key;
-          const isProvided =
-            secretValues[secret.name] && secretValues[secret.name].trim() !== '';
+          const isProvided = isSecretProvided(secret.name);
           const showValue = showSecrets[secret.name];
 
           return (
