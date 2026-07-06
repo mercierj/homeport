@@ -1,0 +1,1906 @@
+services:
+  # AWS
+  - provider: aws
+    service: ALB
+    resource_types:
+      - aws_lb
+    discover: true
+    cost: false
+    provision: false
+    migrate: false
+    api_compat: false
+    env_dns: false
+    ha: false
+    backup: false
+    validate: false
+    cutover: false
+    rollback: false
+    status: mapped
+  - provider: aws
+    service: ACM
+    resource_types:
+      - aws_acm_certificate
+    discover: true
+    cost: false
+    provision: false
+    migrate: false
+    api_compat: false
+    env_dns: false
+    ha: false
+    backup: false
+    validate: false
+    cutover: false
+    rollback: false
+    status: mapped
+  - provider: aws
+    service: API Gateway
+    resource_types:
+      - aws_api_gateway_rest_api
+    discover: true
+    cost: false
+    provision: false
+    migrate: false
+    api_compat: false
+    env_dns: false
+    ha: false
+    backup: false
+    validate: false
+    cutover: false
+    rollback: false
+    status: mapped
+  - provider: aws
+    service: AppSync
+    resource_types: []
+    discover: false
+    cost: false
+    provision: false
+    migrate: false
+    api_compat: false
+    env_dns: false
+    ha: false
+    backup: false
+    validate: false
+    cutover: false
+    rollback: false
+    status: missing
+    blocker: not modeled yet
+  - provider: aws
+    service: Athena
+    resource_types: []
+    discover: false
+    cost: false
+    provision: false
+    migrate: false
+    api_compat: false
+    env_dns: false
+    ha: false
+    backup: false
+    validate: false
+    cutover: false
+    rollback: false
+    status: missing
+    blocker: not modeled yet
+  - provider: aws
+    service: Bedrock
+    resource_types: []
+    discover: false
+    cost: false
+    provision: false
+    migrate: false
+    api_compat: false
+    env_dns: false
+    ha: false
+    backup: false
+    validate: false
+    cutover: false
+    rollback: false
+    status: missing
+    blocker: no Bedrock-compatible local API adapter exists yet
+  - provider: aws
+    service: CloudFront
+    resource_types:
+      - aws_cloudfront_distribution
+    discover: true
+    cost: false
+    provision: false
+    migrate: false
+    api_compat: false
+    env_dns: false
+    ha: false
+    backup: false
+    validate: false
+    cutover: false
+    rollback: false
+    status: mapped
+  - provider: aws
+    service: CloudWatch
+    resource_types:
+      - aws_cloudwatch_metric_alarm
+      - aws_cloudwatch_log_group
+      - aws_cloudwatch_dashboard
+    discover: true
+    cost: false
+    provision: false
+    migrate: false
+    api_compat: false
+    env_dns: false
+    ha: false
+    backup: false
+    validate: false
+    cutover: false
+    rollback: false
+    status: mapped
+  - provider: aws
+    service: CodeBuild
+    resource_types: []
+    discover: false
+    cost: false
+    provision: false
+    migrate: false
+    api_compat: false
+    env_dns: false
+    ha: false
+    backup: false
+    validate: false
+    cutover: false
+    rollback: false
+    status: missing
+    blocker: not modeled yet
+  - provider: aws
+    service: CodePipeline
+    resource_types: []
+    discover: false
+    cost: false
+    provision: false
+    migrate: false
+    api_compat: false
+    env_dns: false
+    ha: false
+    backup: false
+    validate: false
+    cutover: false
+    rollback: false
+    status: missing
+    blocker: not modeled yet
+  - provider: aws
+    service: Cognito
+    resource_types:
+      - aws_cognito_user_pool
+    discover: true
+    cost: false
+    provision: false
+    migrate: false
+    api_compat: false
+    env_dns: false
+    ha: false
+    backup: false
+    validate: false
+    cutover: false
+    rollback: false
+    status: guided
+    blocker: full Cognito API compatibility is not proven; Keycloak migration is guided
+  - provider: aws
+    service: DynamoDB
+    resource_types:
+      - aws_dynamodb_table
+    discover: true
+    cost: false
+    provision: false
+    migrate: false
+    api_compat: false
+    env_dns: false
+    ha: false
+    backup: false
+    validate: false
+    cutover: false
+    rollback: false
+    status: mapped
+  - provider: aws
+    service: EBS
+    resource_types:
+      - aws_ebs_volume
+    discover: true
+    cost: false
+    provision: false
+    migrate: false
+    api_compat: false
+    env_dns: false
+    ha: false
+    backup: false
+    validate: false
+    cutover: false
+    rollback: false
+    status: mapped
+  - provider: aws
+    service: EC2
+    resource_types:
+      - aws_instance
+    discover: true
+    cost: false
+    provision: false
+    migrate: false
+    api_compat: false
+    env_dns: false
+    ha: false
+    backup: false
+    validate: false
+    cutover: false
+    rollback: false
+    status: mapped
+  - provider: aws
+    service: ECR
+    resource_types: []
+    discover: false
+    cost: false
+    provision: false
+    migrate: false
+    api_compat: false
+    env_dns: false
+    ha: false
+    backup: false
+    validate: false
+    cutover: false
+    rollback: false
+    status: missing
+    blocker: not modeled yet
+  - provider: aws
+    service: ECS
+    resource_types:
+      - aws_ecs_service
+      - aws_ecs_task_definition
+    discover: true
+    cost: false
+    provision: false
+    migrate: false
+    api_compat: false
+    env_dns: false
+    ha: false
+    backup: false
+    validate: false
+    cutover: false
+    rollback: false
+    status: mapped
+  - provider: aws
+    service: EFS
+    resource_types:
+      - aws_efs_file_system
+    discover: true
+    cost: false
+    provision: false
+    migrate: false
+    api_compat: false
+    env_dns: false
+    ha: false
+    backup: false
+    validate: false
+    cutover: false
+    rollback: false
+    status: mapped
+  - provider: aws
+    service: EKS
+    resource_types:
+      - aws_eks_cluster
+    discover: true
+    cost: false
+    provision: false
+    migrate: false
+    api_compat: false
+    env_dns: false
+    ha: false
+    backup: false
+    validate: false
+    cutover: false
+    rollback: false
+    status: mapped
+  - provider: aws
+    service: EMR
+    resource_types: []
+    discover: false
+    cost: false
+    provision: false
+    migrate: false
+    api_compat: false
+    env_dns: false
+    ha: false
+    backup: false
+    validate: false
+    cutover: false
+    rollback: false
+    status: missing
+    blocker: not modeled yet
+  - provider: aws
+    service: ElastiCache
+    resource_types:
+      - aws_elasticache_cluster
+    discover: true
+    cost: false
+    provision: false
+    migrate: false
+    api_compat: false
+    env_dns: false
+    ha: false
+    backup: false
+    validate: false
+    cutover: false
+    rollback: false
+    status: mapped
+  - provider: aws
+    service: EventBridge
+    resource_types:
+      - aws_cloudwatch_event_rule
+    discover: true
+    cost: false
+    provision: false
+    migrate: false
+    api_compat: false
+    env_dns: false
+    ha: false
+    backup: false
+    validate: false
+    cutover: false
+    rollback: false
+    status: mapped
+  - provider: aws
+    service: Glue
+    resource_types: []
+    discover: false
+    cost: false
+    provision: false
+    migrate: false
+    api_compat: false
+    env_dns: false
+    ha: false
+    backup: false
+    validate: false
+    cutover: false
+    rollback: false
+    status: missing
+    blocker: not modeled yet
+  - provider: aws
+    service: GuardDuty
+    resource_types: []
+    discover: false
+    cost: false
+    provision: false
+    migrate: false
+    api_compat: false
+    env_dns: false
+    ha: false
+    backup: false
+    validate: false
+    cutover: false
+    rollback: false
+    status: missing
+    blocker: not modeled yet
+  - provider: aws
+    service: IAM
+    resource_types:
+      - aws_iam_role
+    discover: true
+    cost: false
+    provision: false
+    migrate: false
+    api_compat: false
+    env_dns: false
+    ha: false
+    backup: false
+    validate: false
+    cutover: false
+    rollback: false
+    status: mapped
+  - provider: aws
+    service: KMS
+    resource_types:
+      - aws_kms_key
+    discover: true
+    cost: false
+    provision: false
+    migrate: false
+    api_compat: false
+    env_dns: false
+    ha: false
+    backup: false
+    validate: false
+    cutover: false
+    rollback: false
+    status: guided
+    blocker: managed KMS key material cannot be exported; create a new Vault transit key and re-encrypt data
+  - provider: aws
+    service: Kinesis
+    resource_types:
+      - aws_kinesis_stream
+    discover: true
+    cost: false
+    provision: false
+    migrate: false
+    api_compat: false
+    env_dns: false
+    ha: false
+    backup: false
+    validate: false
+    cutover: false
+    rollback: false
+    status: mapped
+  - provider: aws
+    service: Lambda
+    resource_types:
+      - aws_lambda_function
+    discover: true
+    cost: false
+    provision: false
+    migrate: false
+    api_compat: false
+    env_dns: false
+    ha: false
+    backup: false
+    validate: false
+    cutover: false
+    rollback: false
+    status: mapped
+  - provider: aws
+    service: MSK
+    resource_types: []
+    discover: false
+    cost: false
+    provision: false
+    migrate: false
+    api_compat: false
+    env_dns: false
+    ha: false
+    backup: false
+    validate: false
+    cutover: false
+    rollback: false
+    status: missing
+    blocker: not modeled yet
+  - provider: aws
+    service: OpenSearch
+    resource_types: []
+    discover: false
+    cost: false
+    provision: false
+    migrate: false
+    api_compat: false
+    env_dns: false
+    ha: false
+    backup: false
+    validate: false
+    cutover: false
+    rollback: false
+    status: missing
+    blocker: not modeled yet
+  - provider: aws
+    service: RDS
+    resource_types:
+      - aws_db_instance
+      - aws_rds_cluster
+    discover: true
+    cost: false
+    provision: false
+    migrate: false
+    api_compat: false
+    env_dns: false
+    ha: false
+    backup: false
+    validate: false
+    cutover: false
+    rollback: false
+    status: mapped
+  - provider: aws
+    service: Redshift
+    resource_types: []
+    discover: false
+    cost: false
+    provision: false
+    migrate: false
+    api_compat: false
+    env_dns: false
+    ha: false
+    backup: false
+    validate: false
+    cutover: false
+    rollback: false
+    status: missing
+    blocker: not modeled yet
+  - provider: aws
+    service: Route 53
+    resource_types:
+      - aws_route53_zone
+    discover: true
+    cost: false
+    provision: false
+    migrate: false
+    api_compat: false
+    env_dns: false
+    ha: false
+    backup: false
+    validate: false
+    cutover: false
+    rollback: false
+    status: mapped
+  - provider: aws
+    service: S3
+    resource_types:
+      - aws_s3_bucket
+    discover: true
+    cost: false
+    provision: false
+    migrate: false
+    api_compat: false
+    env_dns: false
+    ha: false
+    backup: false
+    validate: false
+    cutover: false
+    rollback: false
+    status: mapped
+  - provider: aws
+    service: SES
+    resource_types:
+      - aws_ses_domain_identity
+    discover: true
+    cost: false
+    provision: false
+    migrate: false
+    api_compat: false
+    env_dns: false
+    ha: false
+    backup: false
+    validate: false
+    cutover: false
+    rollback: false
+    status: mapped
+  - provider: aws
+    service: SNS
+    resource_types:
+      - aws_sns_topic
+    discover: true
+    cost: false
+    provision: false
+    migrate: false
+    api_compat: false
+    env_dns: false
+    ha: false
+    backup: false
+    validate: false
+    cutover: false
+    rollback: false
+    status: mapped
+  - provider: aws
+    service: SQS
+    resource_types:
+      - aws_sqs_queue
+    discover: true
+    cost: false
+    provision: false
+    migrate: false
+    api_compat: false
+    env_dns: false
+    ha: false
+    backup: false
+    validate: false
+    cutover: false
+    rollback: false
+    status: mapped
+  - provider: aws
+    service: SageMaker
+    resource_types: []
+    discover: false
+    cost: false
+    provision: false
+    migrate: false
+    api_compat: false
+    env_dns: false
+    ha: false
+    backup: false
+    validate: false
+    cutover: false
+    rollback: false
+    status: missing
+    blocker: not modeled yet
+  - provider: aws
+    service: Secrets Manager
+    resource_types:
+      - aws_secretsmanager_secret
+    discover: true
+    cost: false
+    provision: false
+    migrate: false
+    api_compat: false
+    env_dns: false
+    ha: false
+    backup: false
+    validate: false
+    cutover: false
+    rollback: false
+    status: mapped
+  - provider: aws
+    service: Step Functions
+    resource_types: []
+    discover: false
+    cost: false
+    provision: false
+    migrate: false
+    api_compat: false
+    env_dns: false
+    ha: false
+    backup: false
+    validate: false
+    cutover: false
+    rollback: false
+    status: missing
+    blocker: not modeled yet
+  - provider: aws
+    service: VPC
+    resource_types:
+      - aws_vpc
+    discover: true
+    cost: false
+    provision: false
+    migrate: false
+    api_compat: false
+    env_dns: false
+    ha: false
+    backup: false
+    validate: false
+    cutover: false
+    rollback: false
+    status: mapped
+  - provider: aws
+    service: WAF
+    resource_types: []
+    discover: false
+    cost: false
+    provision: false
+    migrate: false
+    api_compat: false
+    env_dns: false
+    ha: false
+    backup: false
+    validate: false
+    cutover: false
+    rollback: false
+    status: missing
+    blocker: not modeled yet
+  - provider: aws
+    service: X-Ray
+    resource_types: []
+    discover: false
+    cost: false
+    provision: false
+    migrate: false
+    api_compat: false
+    env_dns: false
+    ha: false
+    backup: false
+    validate: false
+    cutover: false
+    rollback: false
+    status: missing
+    blocker: not modeled yet
+
+  # GCP
+  - provider: gcp
+    service: Apigee
+    resource_types: []
+    discover: false
+    cost: false
+    provision: false
+    migrate: false
+    api_compat: false
+    env_dns: false
+    ha: false
+    backup: false
+    validate: false
+    cutover: false
+    rollback: false
+    status: missing
+    blocker: not modeled yet
+  - provider: gcp
+    service: App Engine
+    resource_types:
+      - google_app_engine_application
+    discover: true
+    cost: false
+    provision: false
+    migrate: false
+    api_compat: false
+    env_dns: false
+    ha: false
+    backup: false
+    validate: false
+    cutover: false
+    rollback: false
+    status: mapped
+  - provider: gcp
+    service: Artifact Registry
+    resource_types: []
+    discover: false
+    cost: false
+    provision: false
+    migrate: false
+    api_compat: false
+    env_dns: false
+    ha: false
+    backup: false
+    validate: false
+    cutover: false
+    rollback: false
+    status: missing
+    blocker: not modeled yet
+  - provider: gcp
+    service: BigQuery
+    resource_types: []
+    discover: false
+    cost: false
+    provision: false
+    migrate: false
+    api_compat: false
+    env_dns: false
+    ha: false
+    backup: false
+    validate: false
+    cutover: false
+    rollback: false
+    status: missing
+    blocker: no BigQuery-compatible local API adapter exists yet
+  - provider: gcp
+    service: Bigtable
+    resource_types:
+      - google_bigtable_instance
+    discover: true
+    cost: false
+    provision: false
+    migrate: false
+    api_compat: false
+    env_dns: false
+    ha: false
+    backup: false
+    validate: false
+    cutover: false
+    rollback: false
+    status: mapped
+  - provider: gcp
+    service: Cloud Armor
+    resource_types:
+      - google_compute_security_policy
+    discover: true
+    cost: false
+    provision: false
+    migrate: false
+    api_compat: false
+    env_dns: false
+    ha: false
+    backup: false
+    validate: false
+    cutover: false
+    rollback: false
+    status: mapped
+  - provider: gcp
+    service: Cloud Build
+    resource_types: []
+    discover: false
+    cost: false
+    provision: false
+    migrate: false
+    api_compat: false
+    env_dns: false
+    ha: false
+    backup: false
+    validate: false
+    cutover: false
+    rollback: false
+    status: missing
+    blocker: not modeled yet
+  - provider: gcp
+    service: Cloud CDN
+    resource_types:
+      - google_compute_backend_bucket
+    discover: true
+    cost: false
+    provision: false
+    migrate: false
+    api_compat: false
+    env_dns: false
+    ha: false
+    backup: false
+    validate: false
+    cutover: false
+    rollback: false
+    status: mapped
+  - provider: gcp
+    service: Cloud DNS
+    resource_types:
+      - google_dns_managed_zone
+    discover: true
+    cost: false
+    provision: false
+    migrate: false
+    api_compat: false
+    env_dns: false
+    ha: false
+    backup: false
+    validate: false
+    cutover: false
+    rollback: false
+    status: mapped
+  - provider: gcp
+    service: Cloud Functions
+    resource_types:
+      - google_cloudfunctions_function
+    discover: true
+    cost: false
+    provision: false
+    migrate: false
+    api_compat: false
+    env_dns: false
+    ha: false
+    backup: false
+    validate: false
+    cutover: false
+    rollback: false
+    status: mapped
+  - provider: gcp
+    service: Cloud Load Balancing
+    resource_types:
+      - google_compute_backend_service
+    discover: true
+    cost: false
+    provision: false
+    migrate: false
+    api_compat: false
+    env_dns: false
+    ha: false
+    backup: false
+    validate: false
+    cutover: false
+    rollback: false
+    status: mapped
+  - provider: gcp
+    service: Cloud Run
+    resource_types:
+      - google_cloud_run_service
+    discover: true
+    cost: false
+    provision: false
+    migrate: false
+    api_compat: false
+    env_dns: false
+    ha: false
+    backup: false
+    validate: false
+    cutover: false
+    rollback: false
+    status: mapped
+  - provider: gcp
+    service: Cloud Scheduler
+    resource_types:
+      - google_cloud_scheduler_job
+    discover: true
+    cost: false
+    provision: false
+    migrate: false
+    api_compat: false
+    env_dns: false
+    ha: false
+    backup: false
+    validate: false
+    cutover: false
+    rollback: false
+    status: mapped
+  - provider: gcp
+    service: Cloud SQL
+    resource_types:
+      - google_sql_database_instance
+    discover: true
+    cost: false
+    provision: false
+    migrate: false
+    api_compat: false
+    env_dns: false
+    ha: false
+    backup: false
+    validate: false
+    cutover: false
+    rollback: false
+    status: mapped
+  - provider: gcp
+    service: Cloud Storage
+    resource_types:
+      - google_storage_bucket
+    discover: true
+    cost: false
+    provision: false
+    migrate: false
+    api_compat: false
+    env_dns: false
+    ha: false
+    backup: false
+    validate: false
+    cutover: false
+    rollback: false
+    status: mapped
+  - provider: gcp
+    service: Cloud Tasks
+    resource_types:
+      - google_cloud_tasks_queue
+    discover: true
+    cost: false
+    provision: false
+    migrate: false
+    api_compat: false
+    env_dns: false
+    ha: false
+    backup: false
+    validate: false
+    cutover: false
+    rollback: false
+    status: mapped
+  - provider: gcp
+    service: Compute Engine
+    resource_types:
+      - google_compute_instance
+    discover: true
+    cost: false
+    provision: false
+    migrate: false
+    api_compat: false
+    env_dns: false
+    ha: false
+    backup: false
+    validate: false
+    cutover: false
+    rollback: false
+    status: mapped
+  - provider: gcp
+    service: Composer
+    resource_types: []
+    discover: false
+    cost: false
+    provision: false
+    migrate: false
+    api_compat: false
+    env_dns: false
+    ha: false
+    backup: false
+    validate: false
+    cutover: false
+    rollback: false
+    status: missing
+    blocker: not modeled yet
+  - provider: gcp
+    service: Dataflow
+    resource_types: []
+    discover: false
+    cost: false
+    provision: false
+    migrate: false
+    api_compat: false
+    env_dns: false
+    ha: false
+    backup: false
+    validate: false
+    cutover: false
+    rollback: false
+    status: missing
+    blocker: not modeled yet
+  - provider: gcp
+    service: Dataproc
+    resource_types: []
+    discover: false
+    cost: false
+    provision: false
+    migrate: false
+    api_compat: false
+    env_dns: false
+    ha: false
+    backup: false
+    validate: false
+    cutover: false
+    rollback: false
+    status: missing
+    blocker: not modeled yet
+  - provider: gcp
+    service: Eventarc
+    resource_types: []
+    discover: false
+    cost: false
+    provision: false
+    migrate: false
+    api_compat: false
+    env_dns: false
+    ha: false
+    backup: false
+    validate: false
+    cutover: false
+    rollback: false
+    status: missing
+    blocker: not modeled yet
+  - provider: gcp
+    service: Filestore
+    resource_types:
+      - google_filestore_instance
+    discover: true
+    cost: false
+    provision: false
+    migrate: false
+    api_compat: false
+    env_dns: false
+    ha: false
+    backup: false
+    validate: false
+    cutover: false
+    rollback: false
+    status: mapped
+  - provider: gcp
+    service: Firestore
+    resource_types:
+      - google_firestore_database
+    discover: true
+    cost: false
+    provision: false
+    migrate: false
+    api_compat: false
+    env_dns: false
+    ha: false
+    backup: false
+    validate: false
+    cutover: false
+    rollback: false
+    status: mapped
+  - provider: gcp
+    service: GKE
+    resource_types:
+      - google_container_cluster
+    discover: true
+    cost: false
+    provision: false
+    migrate: false
+    api_compat: false
+    env_dns: false
+    ha: false
+    backup: false
+    validate: false
+    cutover: false
+    rollback: false
+    status: mapped
+  - provider: gcp
+    service: IAM
+    resource_types:
+      - google_project_iam_member
+    discover: true
+    cost: false
+    provision: false
+    migrate: false
+    api_compat: false
+    env_dns: false
+    ha: false
+    backup: false
+    validate: false
+    cutover: false
+    rollback: false
+    status: mapped
+  - provider: gcp
+    service: Identity Platform
+    resource_types:
+      - google_identity_platform_config
+    discover: true
+    cost: false
+    provision: false
+    migrate: false
+    api_compat: false
+    env_dns: false
+    ha: false
+    backup: false
+    validate: false
+    cutover: false
+    rollback: false
+    status: mapped
+  - provider: gcp
+    service: Logging
+    resource_types: []
+    discover: false
+    cost: false
+    provision: false
+    migrate: false
+    api_compat: false
+    env_dns: false
+    ha: false
+    backup: false
+    validate: false
+    cutover: false
+    rollback: false
+    status: missing
+    blocker: not modeled yet
+  - provider: gcp
+    service: Memorystore
+    resource_types:
+      - google_redis_instance
+    discover: true
+    cost: false
+    provision: false
+    migrate: false
+    api_compat: false
+    env_dns: false
+    ha: false
+    backup: false
+    validate: false
+    cutover: false
+    rollback: false
+    status: mapped
+  - provider: gcp
+    service: Monitoring
+    resource_types: []
+    discover: false
+    cost: false
+    provision: false
+    migrate: false
+    api_compat: false
+    env_dns: false
+    ha: false
+    backup: false
+    validate: false
+    cutover: false
+    rollback: false
+    status: missing
+    blocker: not modeled yet
+  - provider: gcp
+    service: Persistent Disk
+    resource_types:
+      - google_compute_disk
+    discover: true
+    cost: false
+    provision: false
+    migrate: false
+    api_compat: false
+    env_dns: false
+    ha: false
+    backup: false
+    validate: false
+    cutover: false
+    rollback: false
+    status: mapped
+  - provider: gcp
+    service: Pub/Sub
+    resource_types:
+      - google_pubsub_topic
+      - google_pubsub_subscription
+    discover: true
+    cost: false
+    provision: false
+    migrate: false
+    api_compat: false
+    env_dns: false
+    ha: false
+    backup: false
+    validate: false
+    cutover: false
+    rollback: false
+    status: mapped
+  - provider: gcp
+    service: Secret Manager
+    resource_types:
+      - google_secret_manager_secret
+    discover: true
+    cost: false
+    provision: false
+    migrate: false
+    api_compat: false
+    env_dns: false
+    ha: false
+    backup: false
+    validate: false
+    cutover: false
+    rollback: false
+    status: mapped
+  - provider: gcp
+    service: Spanner
+    resource_types:
+      - google_spanner_instance
+    discover: true
+    cost: false
+    provision: false
+    migrate: false
+    api_compat: false
+    env_dns: false
+    ha: false
+    backup: false
+    validate: false
+    cutover: false
+    rollback: false
+    status: guided
+    blocker: Postgres or Cockroach target requires query and driver review; no Spanner-compatible API adapter exists yet
+  - provider: gcp
+    service: Trace
+    resource_types: []
+    discover: false
+    cost: false
+    provision: false
+    migrate: false
+    api_compat: false
+    env_dns: false
+    ha: false
+    backup: false
+    validate: false
+    cutover: false
+    rollback: false
+    status: missing
+    blocker: not modeled yet
+  - provider: gcp
+    service: VPC
+    resource_types:
+      - google_compute_network
+    discover: true
+    cost: false
+    provision: false
+    migrate: false
+    api_compat: false
+    env_dns: false
+    ha: false
+    backup: false
+    validate: false
+    cutover: false
+    rollback: false
+    status: mapped
+  - provider: gcp
+    service: Vertex AI
+    resource_types: []
+    discover: false
+    cost: false
+    provision: false
+    migrate: false
+    api_compat: false
+    env_dns: false
+    ha: false
+    backup: false
+    validate: false
+    cutover: false
+    rollback: false
+    status: missing
+    blocker: not modeled yet
+  - provider: gcp
+    service: Workflows
+    resource_types: []
+    discover: false
+    cost: false
+    provision: false
+    migrate: false
+    api_compat: false
+    env_dns: false
+    ha: false
+    backup: false
+    validate: false
+    cutover: false
+    rollback: false
+    status: missing
+    blocker: not modeled yet
+
+  # Azure
+  - provider: azure
+    service: AI Search
+    resource_types: []
+    discover: false
+    cost: false
+    provision: false
+    migrate: false
+    api_compat: false
+    env_dns: false
+    ha: false
+    backup: false
+    validate: false
+    cutover: false
+    rollback: false
+    status: missing
+    blocker: not modeled yet
+  - provider: azure
+    service: AKS
+    resource_types:
+      - azurerm_kubernetes_cluster
+    discover: true
+    cost: false
+    provision: false
+    migrate: false
+    api_compat: false
+    env_dns: false
+    ha: false
+    backup: false
+    validate: false
+    cutover: false
+    rollback: false
+    status: mapped
+  - provider: azure
+    service: API Management
+    resource_types: []
+    discover: false
+    cost: false
+    provision: false
+    migrate: false
+    api_compat: false
+    env_dns: false
+    ha: false
+    backup: false
+    validate: false
+    cutover: false
+    rollback: false
+    status: missing
+    blocker: not modeled yet
+  - provider: azure
+    service: App Gateway
+    resource_types:
+      - azurerm_application_gateway
+    discover: true
+    cost: false
+    provision: false
+    migrate: false
+    api_compat: false
+    env_dns: false
+    ha: false
+    backup: false
+    validate: false
+    cutover: false
+    rollback: false
+    status: mapped
+  - provider: azure
+    service: App Insights
+    resource_types: []
+    discover: false
+    cost: false
+    provision: false
+    migrate: false
+    api_compat: false
+    env_dns: false
+    ha: false
+    backup: false
+    validate: false
+    cutover: false
+    rollback: false
+    status: missing
+    blocker: not modeled yet
+  - provider: azure
+    service: App Service
+    resource_types:
+      - azurerm_app_service
+    discover: true
+    cost: false
+    provision: false
+    migrate: false
+    api_compat: false
+    env_dns: false
+    ha: false
+    backup: false
+    validate: false
+    cutover: false
+    rollback: false
+    status: mapped
+  - provider: azure
+    service: Azure AD B2C
+    resource_types:
+      - azurerm_aadb2c_directory
+    discover: true
+    cost: false
+    provision: false
+    migrate: false
+    api_compat: false
+    env_dns: false
+    ha: false
+    backup: false
+    validate: false
+    cutover: false
+    rollback: false
+    status: mapped
+  - provider: azure
+    service: Azure Cache
+    resource_types:
+      - azurerm_redis_cache
+    discover: true
+    cost: false
+    provision: false
+    migrate: false
+    api_compat: false
+    env_dns: false
+    ha: false
+    backup: false
+    validate: false
+    cutover: false
+    rollback: false
+    status: mapped
+  - provider: azure
+    service: Azure CDN
+    resource_types:
+      - azurerm_cdn_profile
+    discover: true
+    cost: false
+    provision: false
+    migrate: false
+    api_compat: false
+    env_dns: false
+    ha: false
+    backup: false
+    validate: false
+    cutover: false
+    rollback: false
+    status: mapped
+  - provider: azure
+    service: Azure DNS
+    resource_types:
+      - azurerm_dns_zone
+    discover: true
+    cost: false
+    provision: false
+    migrate: false
+    api_compat: false
+    env_dns: false
+    ha: false
+    backup: false
+    validate: false
+    cutover: false
+    rollback: false
+    status: mapped
+  - provider: azure
+    service: Azure Firewall
+    resource_types:
+      - azurerm_firewall
+    discover: true
+    cost: false
+    provision: false
+    migrate: false
+    api_compat: false
+    env_dns: false
+    ha: false
+    backup: false
+    validate: false
+    cutover: false
+    rollback: false
+    status: mapped
+  - provider: azure
+    service: Azure Functions
+    resource_types:
+      - azurerm_function_app
+    discover: true
+    cost: false
+    provision: false
+    migrate: false
+    api_compat: false
+    env_dns: false
+    ha: false
+    backup: false
+    validate: false
+    cutover: false
+    rollback: false
+    status: mapped
+  - provider: azure
+    service: Azure Load Balancer
+    resource_types:
+      - azurerm_lb
+    discover: true
+    cost: false
+    provision: false
+    migrate: false
+    api_compat: false
+    env_dns: false
+    ha: false
+    backup: false
+    validate: false
+    cutover: false
+    rollback: false
+    status: mapped
+  - provider: azure
+    service: Azure SQL
+    resource_types:
+      - azurerm_mssql_database
+    discover: true
+    cost: false
+    provision: false
+    migrate: false
+    api_compat: false
+    env_dns: false
+    ha: false
+    backup: false
+    validate: false
+    cutover: false
+    rollback: false
+    status: mapped
+  - provider: azure
+    service: Azure Storage
+    resource_types:
+      - azurerm_storage_container
+      - azurerm_storage_account
+      - azurerm_storage_share
+    discover: true
+    cost: false
+    provision: false
+    migrate: false
+    api_compat: false
+    env_dns: false
+    ha: false
+    backup: false
+    validate: false
+    cutover: false
+    rollback: false
+    status: mapped
+  - provider: azure
+    service: Azure VNet
+    resource_types:
+      - azurerm_virtual_network
+    discover: true
+    cost: false
+    provision: false
+    migrate: false
+    api_compat: false
+    env_dns: false
+    ha: false
+    backup: false
+    validate: false
+    cutover: false
+    rollback: false
+    status: mapped
+  - provider: azure
+    service: Azure VM
+    resource_types:
+      - azurerm_linux_virtual_machine
+      - azurerm_windows_virtual_machine
+    discover: true
+    cost: false
+    provision: false
+    migrate: false
+    api_compat: false
+    env_dns: false
+    ha: false
+    backup: false
+    validate: false
+    cutover: false
+    rollback: false
+    status: mapped
+  - provider: azure
+    service: Container Apps
+    resource_types: []
+    discover: false
+    cost: false
+    provision: false
+    migrate: false
+    api_compat: false
+    env_dns: false
+    ha: false
+    backup: false
+    validate: false
+    cutover: false
+    rollback: false
+    status: missing
+    blocker: not modeled yet
+  - provider: azure
+    service: Container Instances
+    resource_types:
+      - azurerm_container_group
+    discover: true
+    cost: false
+    provision: false
+    migrate: false
+    api_compat: false
+    env_dns: false
+    ha: false
+    backup: false
+    validate: false
+    cutover: false
+    rollback: false
+    status: mapped
+  - provider: azure
+    service: Container Registry
+    resource_types: []
+    discover: false
+    cost: false
+    provision: false
+    migrate: false
+    api_compat: false
+    env_dns: false
+    ha: false
+    backup: false
+    validate: false
+    cutover: false
+    rollback: false
+    status: missing
+    blocker: not modeled yet
+  - provider: azure
+    service: Cosmos DB
+    resource_types:
+      - azurerm_cosmosdb_account
+    discover: true
+    cost: false
+    provision: false
+    migrate: false
+    api_compat: false
+    env_dns: false
+    ha: false
+    backup: false
+    validate: false
+    cutover: false
+    rollback: false
+    status: mapped
+  - provider: azure
+    service: Data Factory
+    resource_types: []
+    discover: false
+    cost: false
+    provision: false
+    migrate: false
+    api_compat: false
+    env_dns: false
+    ha: false
+    backup: false
+    validate: false
+    cutover: false
+    rollback: false
+    status: missing
+    blocker: not modeled yet
+  - provider: azure
+    service: Databricks
+    resource_types: []
+    discover: false
+    cost: false
+    provision: false
+    migrate: false
+    api_compat: false
+    env_dns: false
+    ha: false
+    backup: false
+    validate: false
+    cutover: false
+    rollback: false
+    status: missing
+    blocker: not modeled yet
+  - provider: azure
+    service: Event Grid
+    resource_types:
+      - azurerm_eventgrid_topic
+    discover: true
+    cost: false
+    provision: false
+    migrate: false
+    api_compat: false
+    env_dns: false
+    ha: false
+    backup: false
+    validate: false
+    cutover: false
+    rollback: false
+    status: mapped
+  - provider: azure
+    service: Event Hubs
+    resource_types:
+      - azurerm_eventhub
+    discover: true
+    cost: false
+    provision: false
+    migrate: false
+    api_compat: false
+    env_dns: false
+    ha: false
+    backup: false
+    validate: false
+    cutover: false
+    rollback: false
+    status: mapped
+  - provider: azure
+    service: Foundry/OpenAI
+    resource_types: []
+    discover: false
+    cost: false
+    provision: false
+    migrate: false
+    api_compat: false
+    env_dns: false
+    ha: false
+    backup: false
+    validate: false
+    cutover: false
+    rollback: false
+    status: missing
+    blocker: not modeled yet
+  - provider: azure
+    service: Front Door
+    resource_types:
+      - azurerm_frontdoor
+    discover: true
+    cost: false
+    provision: false
+    migrate: false
+    api_compat: false
+    env_dns: false
+    ha: false
+    backup: false
+    validate: false
+    cutover: false
+    rollback: false
+    status: mapped
+  - provider: azure
+    service: IoT Hub
+    resource_types: []
+    discover: false
+    cost: false
+    provision: false
+    migrate: false
+    api_compat: false
+    env_dns: false
+    ha: false
+    backup: false
+    validate: false
+    cutover: false
+    rollback: false
+    status: missing
+    blocker: not modeled yet
+  - provider: azure
+    service: Key Vault
+    resource_types:
+      - azurerm_key_vault
+    discover: true
+    cost: false
+    provision: false
+    migrate: false
+    api_compat: false
+    env_dns: false
+    ha: false
+    backup: false
+    validate: false
+    cutover: false
+    rollback: false
+    status: mapped
+  - provider: azure
+    service: Log Analytics
+    resource_types: []
+    discover: false
+    cost: false
+    provision: false
+    migrate: false
+    api_compat: false
+    env_dns: false
+    ha: false
+    backup: false
+    validate: false
+    cutover: false
+    rollback: false
+    status: missing
+    blocker: not modeled yet
+  - provider: azure
+    service: Logic Apps
+    resource_types:
+      - azurerm_logic_app_workflow
+    discover: true
+    cost: false
+    provision: false
+    migrate: false
+    api_compat: false
+    env_dns: false
+    ha: false
+    backup: false
+    validate: false
+    cutover: false
+    rollback: false
+    status: mapped
+  - provider: azure
+    service: Managed Disk
+    resource_types:
+      - azurerm_managed_disk
+    discover: true
+    cost: false
+    provision: false
+    migrate: false
+    api_compat: false
+    env_dns: false
+    ha: false
+    backup: false
+    validate: false
+    cutover: false
+    rollback: false
+    status: mapped
+  - provider: azure
+    service: Monitor
+    resource_types: []
+    discover: false
+    cost: false
+    provision: false
+    migrate: false
+    api_compat: false
+    env_dns: false
+    ha: false
+    backup: false
+    validate: false
+    cutover: false
+    rollback: false
+    status: missing
+    blocker: not modeled yet
+  - provider: azure
+    service: MySQL
+    resource_types:
+      - azurerm_mysql_flexible_server
+    discover: true
+    cost: false
+    provision: false
+    migrate: false
+    api_compat: false
+    env_dns: false
+    ha: false
+    backup: false
+    validate: false
+    cutover: false
+    rollback: false
+    status: mapped
+  - provider: azure
+    service: PostgreSQL
+    resource_types:
+      - azurerm_postgresql_flexible_server
+    discover: true
+    cost: false
+    provision: false
+    migrate: false
+    api_compat: false
+    env_dns: false
+    ha: false
+    backup: false
+    validate: false
+    cutover: false
+    rollback: false
+    status: mapped
+  - provider: azure
+    service: Service Bus
+    resource_types:
+      - azurerm_servicebus_namespace
+      - azurerm_servicebus_queue
+    discover: true
+    cost: false
+    provision: false
+    migrate: false
+    api_compat: false
+    env_dns: false
+    ha: false
+    backup: false
+    validate: false
+    cutover: false
+    rollback: false
+    status: mapped
+  - provider: azure
+    service: SignalR
+    resource_types: []
+    discover: false
+    cost: false
+    provision: false
+    migrate: false
+    api_compat: false
+    env_dns: false
+    ha: false
+    backup: false
+    validate: false
+    cutover: false
+    rollback: false
+    status: missing
+    blocker: not modeled yet
+  - provider: azure
+    service: Synapse
+    resource_types: []
+    discover: false
+    cost: false
+    provision: false
+    migrate: false
+    api_compat: false
+    env_dns: false
+    ha: false
+    backup: false
+    validate: false
+    cutover: false
+    rollback: false
+    status: missing
+    blocker: not modeled yet
+  - provider: azure
+    service: VM Scale Sets
+    resource_types: []
+    discover: false
+    cost: false
+    provision: false
+    migrate: false
+    api_compat: false
+    env_dns: false
+    ha: false
+    backup: false
+    validate: false
+    cutover: false
+    rollback: false
+    status: missing
+    blocker: not modeled yet

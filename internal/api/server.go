@@ -13,6 +13,7 @@ import (
 	"github.com/homeport/homeport/internal/api/handlers"
 	"github.com/homeport/homeport/internal/app/backup"
 	"github.com/homeport/homeport/internal/app/cache"
+	"github.com/homeport/homeport/internal/app/compat"
 	"github.com/homeport/homeport/internal/app/docker"
 	"github.com/homeport/homeport/internal/app/identity"
 	"github.com/homeport/homeport/internal/app/logs"
@@ -58,6 +59,7 @@ type Server struct {
 	cutoverHandler   *handlers.CutoverHandler
 	providersHandler *handlers.ProvidersHandler
 	runbookHandler   *handlers.RunbookHandler
+	compatHandler    *handlers.CompatHandler
 }
 
 func NewServer(cfg Config) (*Server, error) {
@@ -146,6 +148,9 @@ func NewServer(cfg Config) (*Server, error) {
 
 	// Initialize Runbook handler
 	s.runbookHandler = handlers.NewRunbookHandler(apprunbook.NewService("."))
+
+	// Initialize compatibility gateway handler
+	s.compatHandler = handlers.NewCompatHandler(compat.NewDefaultRegistry())
 
 	// Initialize Providers handler
 	providersSvc := providers.NewService()
@@ -334,6 +339,11 @@ func (s *Server) setupRoutes() {
 		// Runbook routes
 		if s.runbookHandler != nil {
 			s.runbookHandler.RegisterRoutes(r)
+		}
+
+		// Compatibility gateway routes
+		if s.compatHandler != nil {
+			s.compatHandler.RegisterRoutes(r)
 		}
 
 		// Providers routes
