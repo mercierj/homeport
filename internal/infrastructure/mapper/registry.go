@@ -59,6 +59,7 @@ func (r *Registry) RegisterDefaults() {
 	r.Register(database.NewGlueMapper())
 	r.Register(database.NewOpenSearchMapper())
 	r.Register(database.NewRedshiftMapper())
+	r.Register(database.NewQuickSightMapper())
 
 	// AWS Compute mappers
 	r.Register(compute.NewEC2Mapper())

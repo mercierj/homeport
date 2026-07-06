@@ -503,6 +503,8 @@ func mapCFNTypeToResourceType(cfnType string) resource.Type {
 		"AWS::Redshift::Cluster":               resource.TypeRedshiftCluster,
 		"AWS::LakeFormation::Permissions":      resource.TypeLakeFormationPermissions,
 		"AWS::LakeFormation::DataLakeSettings": resource.TypeLakeFormationPermissions,
+		"AWS::QuickSight::Dashboard":           resource.TypeQuickSightDashboard,
+		"AWS::QuickSight::DataSource":          resource.TypeQuickSightDashboard,
 
 		// Networking
 		"AWS::ElasticLoadBalancingV2::LoadBalancer": resource.TypeALB,

@@ -115,6 +115,7 @@ var CategoryMapping = map[Type]Category{
 	TypeOpenSearchDomain:         CategoryNoSQLDatabase,
 	TypeRedshiftCluster:          CategorySQLDatabase,
 	TypeLakeFormationPermissions: CategorySecurity,
+	TypeQuickSightDashboard:      CategorySQLDatabase,
 
 	// AWS Networking
 	TypeALB:               CategoryLoadBalancer,

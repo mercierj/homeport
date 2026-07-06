@@ -39,6 +39,7 @@ const (
 	TypeOpenSearchDomain         Type = "aws_opensearch_domain"
 	TypeRedshiftCluster          Type = "aws_redshift_cluster"
 	TypeLakeFormationPermissions Type = "aws_lakeformation_permissions"
+	TypeQuickSightDashboard      Type = "aws_quicksight_dashboard"
 
 	// AWS Networking
 	TypeALB               Type = "aws_lb"

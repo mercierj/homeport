@@ -47,6 +47,7 @@ var ResourceMapping = map[resource.Type]StackType{
 	resource.TypeOpenSearchDomain:         StackTypeDatabase,    // Search indexes consolidate with datastore services
 	resource.TypeRedshiftCluster:          StackTypeDatabase,    // Warehouses consolidate with analytical datastores
 	resource.TypeLakeFormationPermissions: StackTypePassthrough, // Data governance policies stay explicit
+	resource.TypeQuickSightDashboard:      StackTypeDatabase,    // BI dashboards consolidate with analytical datastores
 
 	// AWS Networking (6 types) - All passthrough
 	resource.TypeALB:               StackTypePassthrough, // Load balancers stay individual

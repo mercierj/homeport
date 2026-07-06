@@ -326,6 +326,8 @@ func mapAWSTerraformType(tfType string) resource.Type {
 		"aws_redshift_cluster":                 resource.TypeRedshiftCluster,
 		"aws_lakeformation_permissions":        resource.TypeLakeFormationPermissions,
 		"aws_lakeformation_data_lake_settings": resource.TypeLakeFormationPermissions,
+		"aws_quicksight_dashboard":             resource.TypeQuickSightDashboard,
+		"aws_quicksight_data_source":           resource.TypeQuickSightDashboard,
 
 		// Networking
 		"aws_lb":                      resource.TypeALB,

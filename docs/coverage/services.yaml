@@ -827,13 +827,23 @@ services:
     service: QuickSight
     category: analytics/data
     source_api: quicksight
-    resource_types: []
+    resource_types: [aws_quicksight_dashboard]
     terraform_resource_types: [aws_quicksight_data_source, aws_quicksight_dashboard]
     target: Apache Superset
-    api_compatibility_strategy: export assets and rebuild dashboards against open BI targets
-    impossibility_notes: QuickSight dashboard/runtime APIs require guided replacement
-    status: missing
-    blocker: not modeled yet
+    api_compatibility_strategy: generated_patch
+    manual_steps_resolved: true
+    discover: true
+    cost: true
+    provision: true
+    migrate: true
+    api_compat: true
+    env_dns: true
+    ha: true
+    backup: true
+    validate: true
+    cutover: true
+    rollback: true
+    status: full
   - provider: aws
     service: MQ
     category: app/integration
