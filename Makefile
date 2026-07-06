@@ -1,4 +1,4 @@
-.PHONY: help build install clean test run deps version
+.PHONY: help build install clean test run deps version acceptance
 
 # Build variables
 BINARY_NAME=homeport
@@ -97,3 +97,6 @@ web-clean: ## Clean web build artifacts
 	rm -rf internal/api/static
 
 build-with-web: web-build build ## Build with embedded web frontend
+
+acceptance: test web-build ## Run full A-to-Z readiness checks
+	cd $(WEB_DIR) && npm run test:e2e -- --reporter=line

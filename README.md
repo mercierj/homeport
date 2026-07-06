@@ -63,6 +63,19 @@ cd web && npm install && npm run dev
 # Open http://localhost:5173
 ```
 
+### A-to-Z wizard readiness check
+
+Use Node 22.12.0+ or 20.19.0+ for the web build:
+
+```bash
+cd web
+nvm use
+cd ..
+make acceptance
+```
+
+The wizard is considered ready only when Go tests, the production web build, and the Playwright A-to-Z smoke test pass.
+
 ## Quick Start
 
 ```bash
