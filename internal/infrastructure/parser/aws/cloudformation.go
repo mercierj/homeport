@@ -487,6 +487,8 @@ func mapCFNTypeToResourceType(cfnType string) resource.Type {
 		"AWS::Textract::Adapter":                    resource.TypeTextractAdapter,
 		"AWS::Transcribe::Vocabulary":               resource.TypeTranscribeVocabulary,
 		"AWS::Transcribe::LanguageModel":            resource.TypeTranscribeVocabulary,
+		"AWS::Rekognition::Collection":              resource.TypeRekognitionCollection,
+		"AWS::Rekognition::Project":                 resource.TypeRekognitionCollection,
 
 		// Storage
 		"AWS::S3::Bucket":      resource.TypeS3Bucket,

@@ -97,6 +97,7 @@ var CategoryMapping = map[Type]Category{
 	TypeTextractAdapter:           CategoryCompute,
 	TypeTranscribeVocabulary:      CategoryCompute,
 	TypeTranslateText:             CategoryServerless,
+	TypeRekognitionCollection:     CategoryCompute,
 	TypeCodeBuild:                 CategoryDevOps,
 	TypeCodePipeline:              CategoryDevOps,
 	TypeCodeDeployApp:             CategoryDevOps,

@@ -21,6 +21,7 @@ const (
 	TypeTextractAdapter           Type = "aws_textract_adapter"
 	TypeTranscribeVocabulary      Type = "aws_transcribe_vocabulary"
 	TypeTranslateText             Type = "aws_translate_text"
+	TypeRekognitionCollection     Type = "aws_rekognition_collection"
 	TypeCodeBuild                 Type = "aws_codebuild_project"
 	TypeCodePipeline              Type = "aws_codepipeline"
 	TypeCodeDeployApp             Type = "aws_codedeploy_app"

@@ -72,6 +72,7 @@ func (r *Registry) RegisterDefaults() {
 	r.Register(compute.NewTextractMapper())
 	r.Register(compute.NewTranscribeMapper())
 	r.Register(compute.NewTranslateMapper())
+	r.Register(compute.NewRekognitionMapper())
 	r.Register(compute.NewECRMapper())
 	r.Register(devops.NewCodeBuildMapper())
 	r.Register(devops.NewCodePipelineMapper())
