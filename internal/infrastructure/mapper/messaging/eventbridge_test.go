@@ -2,10 +2,12 @@ package messaging
 
 import (
 	"context"
+	"strings"
 	"testing"
 
 	"github.com/homeport/homeport/internal/domain/mapper"
 	"github.com/homeport/homeport/internal/domain/resource"
+	domainrunbook "github.com/homeport/homeport/internal/domain/runbook"
 )
 
 func TestNewEventBridgeMapper(t *testing.T) {
@@ -16,6 +18,82 @@ func TestNewEventBridgeMapper(t *testing.T) {
 	if m.ResourceType() != resource.TypeEventBridge {
 		t.Errorf("ResourceType() = %v, want %v", m.ResourceType(), resource.TypeEventBridge)
 	}
+}
+
+func TestEventBridgeConformanceManagedAToZ(t *testing.T) {
+	result, err := NewEventBridgeMapper().Map(context.Background(), managedEventBridgeFixture())
+	if err != nil {
+		t.Fatal(err)
+	}
+	if len(result.ManualSteps) != 0 {
+		t.Fatalf("manual steps = %#v, want generated EventBridge routing migration", result.ManualSteps)
+	}
+	if result.DockerService.Deploy == nil || result.DockerService.Deploy.Replicas < 2 {
+		t.Fatalf("service does not provision HA n8n target: %#v", result.DockerService.Deploy)
+	}
+	for _, file := range []string{
+		"config/n8n/workflows/eventbridge_workflow.json",
+		"config/n8n/event_pattern.json",
+		"config/eventbridge/app-change.env",
+		"config/eventbridge/schedule.env",
+		"config/eventbridge/targets.json",
+	} {
+		if _, ok := result.Configs[file]; !ok {
+			t.Fatalf("missing config %s", file)
+		}
+	}
+	appEnv := string(result.Configs["config/eventbridge/app-change.env"])
+	for _, want := range []string{"SOURCE_RULE=orders-created", "TARGET_WEBHOOK=http://localhost:5678/webhook/orders-created", "APP_CHANGE_MODE=generated_patch"} {
+		if !strings.Contains(appEnv, want) {
+			t.Fatalf("app-change env missing %q:\n%s", want, appEnv)
+		}
+	}
+	for _, file := range []string{"setup_n8n.sh", "dispatch_eventbridge_event.sh", "backup_eventbridge_workflow.sh", "validate_eventbridge_route.sh"} {
+		if _, ok := result.Scripts[file]; !ok {
+			t.Fatalf("missing script %s", file)
+		}
+	}
+	for id, stepType := range map[string]domainrunbook.StepType{
+		"render-eventbridge-workflow":   domainrunbook.StepTypeCommand,
+		"provision-event-router":        domainrunbook.StepTypeCommand,
+		"dispatch-eventbridge-sample":   domainrunbook.StepTypeCommand,
+		"validate-eventbridge-route":    domainrunbook.StepTypeCommand,
+		"backup-eventbridge-workflow":   domainrunbook.StepTypeCommand,
+		"cutover-eventbridge-producers": domainrunbook.StepTypeAPICall,
+		"rollback-eventbridge-source":   domainrunbook.StepTypeRollback,
+	} {
+		if !hasEventBridgeRunbookStep(result, id, stepType) {
+			t.Fatalf("missing %s runbook step: %#v", id, result.RunbookSteps)
+		}
+	}
+}
+
+func managedEventBridgeFixture() *resource.AWSResource {
+	return &resource.AWSResource{
+		ID:   "orders-created",
+		Type: resource.TypeEventBridge,
+		Name: "orders-created",
+		Config: map[string]interface{}{
+			"name":                "orders-created",
+			"schedule_expression": "rate(1 hour)",
+			"event_pattern": map[string]interface{}{
+				"source":      []string{"orders"},
+				"detail-type": []string{"OrderCreated"},
+			},
+			"targets": []interface{}{
+				map[string]interface{}{"arn": "arn:aws:lambda:eu-west-1:123456789012:function:orders-handler"},
+			},
+		},
+	}
+}
+
+func hasEventBridgeRunbookStep(result *mapper.MappingResult, id string, stepType domainrunbook.StepType) bool {
+	for _, step := range result.RunbookSteps {
+		if step.ID == id && step.Type == stepType {
+			return true
+		}
+	}
+	return false
 }
 
 func TestEventBridgeMapper_ResourceType(t *testing.T) {
