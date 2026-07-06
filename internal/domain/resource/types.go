@@ -44,10 +44,11 @@ const (
 	TypeVPC               Type = "aws_vpc"
 
 	// AWS Security
-	TypeCognitoPool    Type = "aws_cognito_user_pool"
-	TypeSecretsManager Type = "aws_secretsmanager_secret"
-	TypeIAMRole        Type = "aws_iam_role"
-	TypeACMCertificate Type = "aws_acm_certificate"
+	TypeCognitoPool       Type = "aws_cognito_user_pool"
+	TypeSecretsManager    Type = "aws_secretsmanager_secret"
+	TypeIAMRole           Type = "aws_iam_role"
+	TypeACMCertificate    Type = "aws_acm_certificate"
+	TypeGuardDutyDetector Type = "aws_guardduty_detector"
 
 	// AWS Messaging
 	TypeSQSQueue    Type = "aws_sqs_queue"

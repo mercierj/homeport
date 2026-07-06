@@ -337,6 +337,7 @@ func mapAWSTerraformType(tfType string) resource.Type {
 		"aws_secretsmanager_secret": resource.TypeSecretsManager,
 		"aws_iam_role":              resource.TypeIAMRole,
 		"aws_acm_certificate":       resource.TypeACMCertificate,
+		"aws_guardduty_detector":    resource.TypeGuardDutyDetector,
 
 		// Messaging
 		"aws_sqs_queue":             resource.TypeSQSQueue,

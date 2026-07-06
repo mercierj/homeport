@@ -120,10 +120,11 @@ var CategoryMapping = map[Type]Category{
 	TypeVPC:               CategoryVPC,
 
 	// AWS Security
-	TypeCognitoPool:    CategoryAuth,
-	TypeSecretsManager: CategorySecrets,
-	TypeIAMRole:        CategoryIAM,
-	TypeACMCertificate: CategoryCertificate,
+	TypeCognitoPool:       CategoryAuth,
+	TypeSecretsManager:    CategorySecrets,
+	TypeIAMRole:           CategoryIAM,
+	TypeACMCertificate:    CategoryCertificate,
+	TypeGuardDutyDetector: CategorySecurity,
 
 	// AWS Messaging
 	TypeSQSQueue:    CategoryQueue,

@@ -45,6 +45,7 @@ The parser supports mapping for the following AWS resource types:
 - `aws_cognito_user_pool` - Cognito user pools
 - `aws_secretsmanager_secret` - Secrets Manager secrets
 - `aws_iam_role` - IAM roles
+- `aws_guardduty_detector` - GuardDuty detectors
 
 ### Messaging
 - `aws_sqs_queue` - SQS queues

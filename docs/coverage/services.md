@@ -22,7 +22,7 @@
 | aws | ElastiCache | full | aws_elasticache_cluster |
 | aws | EventBridge | full | aws_cloudwatch_event_rule |
 | aws | Glue | full | aws_glue_catalog_database |
-| aws | GuardDuty | missing |  |
+| aws | GuardDuty | full | aws_guardduty_detector |
 | aws | IAM | mapped | aws_iam_role |
 | aws | KMS | guided | aws_kms_key |
 | aws | Kinesis | guided | aws_kinesis_stream |
