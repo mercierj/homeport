@@ -11,6 +11,7 @@ import (
 	"github.com/homeport/homeport/internal/domain/mapper"
 	"github.com/homeport/homeport/internal/domain/policy"
 	"github.com/homeport/homeport/internal/domain/resource"
+	domainrunbook "github.com/homeport/homeport/internal/domain/runbook"
 )
 
 // SQSMapper converts AWS SQS queues to RabbitMQ.
@@ -57,10 +58,11 @@ func (m *SQSMapper) Map(ctx context.Context, res *resource.AWSResource) (*mapper
 	}
 	svc.Networks = []string{"homeport"}
 	svc.Labels = map[string]string{
-		"homeport.source":     "aws_sqs_queue",
-		"homeport.queue_name": queueName,
-		"traefik.enable":       "true",
-		"traefik.http.routers.rabbitmq.rule":                      "Host(`rabbitmq.localhost`)",
+		"homeport.source":                    "aws_sqs_queue",
+		"homeport.queue_name":                queueName,
+		"homeport.target":                    "rabbitmq",
+		"traefik.enable":                     "true",
+		"traefik.http.routers.rabbitmq.rule": "Host(`rabbitmq.localhost`)",
 		"traefik.http.services.rabbitmq.loadbalancer.server.port": "15672",
 	}
 	svc.HealthCheck = &mapper.HealthCheck{
@@ -69,6 +71,8 @@ func (m *SQSMapper) Map(ctx context.Context, res *resource.AWSResource) (*mapper
 		Timeout:  10 * time.Second,
 		Retries:  5,
 	}
+	svc.Deploy = &mapper.DeployConfig{Replicas: 3}
+	svc.Restart = "unless-stopped"
 
 	// Generate RabbitMQ definitions (queues, exchanges, bindings)
 	definitions := m.generateRabbitMQDefinitions(res, queueName)
@@ -77,16 +81,17 @@ func (m *SQSMapper) Map(ctx context.Context, res *resource.AWSResource) (*mapper
 	// Generate queue configuration
 	queueConfig := m.generateQueueConfig(queueName)
 	result.AddConfig("config/rabbitmq/rabbitmq.conf", []byte(queueConfig))
+	result.AddConfig("config/rabbitmq/app-change.env", []byte(m.generateAppChangeConfig(queueName)))
 
 	// Handle FIFO queue
 	if m.isFIFOQueue(queueName) || res.GetConfigBool("fifo_queue") {
-		result.AddWarning("FIFO queue detected. RabbitMQ doesn't guarantee strict FIFO ordering across multiple consumers. Consider using single active consumer pattern.")
-		result.AddManualStep("Review FIFO requirements and configure single active consumer if strict ordering is needed")
+		result.AddWarning("FIFO queue detected. Generated RabbitMQ single-active-consumer arguments for ordered delivery.")
+		result.AddConfig("config/rabbitmq/fifo-policy.json", []byte(m.generateFIFOPolicy(queueName)))
 	}
 
 	// Handle dead letter queue
 	if dlqArn := res.GetConfigString("redrive_policy"); dlqArn != "" || res.Config["redrive_policy"] != nil {
-		m.handleDeadLetterQueue(res, result, queueName)
+		m.handleDeadLetterQueue(result, queueName)
 	}
 
 	// Handle visibility timeout
@@ -105,18 +110,21 @@ func (m *SQSMapper) Map(ctx context.Context, res *resource.AWSResource) (*mapper
 	// Handle delay queue
 	delaySeconds := res.GetConfigInt("delay_seconds")
 	if delaySeconds > 0 {
-		result.AddWarning(fmt.Sprintf("Default delay is %d seconds. Use RabbitMQ delayed message plugin or TTL.", delaySeconds))
-		result.AddManualStep("Install RabbitMQ delayed message plugin: rabbitmq-plugins enable rabbitmq_delayed_message_exchange")
+		result.AddWarning(fmt.Sprintf("Default delay is %d seconds. Generated RabbitMQ delayed exchange plugin config.", delaySeconds))
+		result.AddConfig("config/rabbitmq/delay-policy.json", []byte(m.generateDelayPolicy(queueName, delaySeconds)))
 	}
 
 	// Generate setup script
 	setupScript := m.generateSetupScript(queueName)
 	result.AddScript("setup_rabbitmq.sh", []byte(setupScript))
-
-	result.AddManualStep("Access RabbitMQ management console at http://localhost:15672")
-	result.AddManualStep("Default credentials: guest/guest")
-	result.AddManualStep("Import queue definitions from config/rabbitmq/definitions.json")
-	result.AddManualStep("Update application code to use AMQP instead of SQS SDK")
+	result.AddScript("export_sqs_queue.sh", []byte(m.generateExportScript(queueName, res.Region)))
+	result.AddScript("migrate_sqs_messages.sh", []byte(m.generateMigrateScript(queueName)))
+	result.AddScript("validate_sqs_adapter.sh", []byte(m.generateValidateScript(queueName)))
+	result.AddScript("backup_sqs_config.sh", []byte(m.generateBackupScript(queueName)))
+	result.AddScript("cutover_sqs_adapter.sh", []byte(m.generateCutoverScript(queueName)))
+	for _, step := range sqsRunbook(queueName) {
+		result.AddRunbookStep(step)
+	}
 
 	return result, nil
 }
@@ -130,6 +138,18 @@ func (m *SQSMapper) generateRabbitMQDefinitions(res *resource.AWSResource, queue
 	if messageRetention := res.GetConfigInt("message_retention_seconds"); messageRetention > 0 {
 		queueArgs["x-message-ttl"] = messageRetention * 1000 // Convert to milliseconds
 	}
+	if m.isFIFOQueue(queueName) || res.GetConfigBool("fifo_queue") {
+		queueArgs["x-single-active-consumer"] = true
+	}
+	if dlqArn := res.GetConfigString("redrive_policy"); dlqArn != "" || res.Config["redrive_policy"] != nil {
+		queueArgs["x-dead-letter-exchange"] = "dlx"
+		queueArgs["x-dead-letter-routing-key"] = queueName + "-dlq"
+	}
+	if delaySeconds := res.GetConfigInt("delay_seconds"); delaySeconds > 0 {
+		queueArgs["x-message-ttl"] = delaySeconds * 1000
+		queueArgs["x-dead-letter-exchange"] = "amq.direct"
+		queueArgs["x-dead-letter-routing-key"] = queueName
+	}
 
 	queueDef := map[string]interface{}{
 		"name":        queueName,
@@ -139,9 +159,55 @@ func (m *SQSMapper) generateRabbitMQDefinitions(res *resource.AWSResource, queue
 		"arguments":   queueArgs,
 	}
 
+	queues := []map[string]interface{}{queueDef}
+	exchanges := []map[string]interface{}{
+		{
+			"name":        "amq.direct",
+			"vhost":       "/",
+			"type":        "direct",
+			"durable":     true,
+			"auto_delete": false,
+			"internal":    false,
+		},
+	}
+	bindings := []map[string]interface{}{
+		{
+			"source":           "amq.direct",
+			"vhost":            "/",
+			"destination":      queueName,
+			"destination_type": "queue",
+			"routing_key":      queueName,
+		},
+	}
+	if dlqArn := res.GetConfigString("redrive_policy"); dlqArn != "" || res.Config["redrive_policy"] != nil {
+		dlqName := queueName + "-dlq"
+		queues = append(queues, map[string]interface{}{
+			"name":        dlqName,
+			"vhost":       "/",
+			"durable":     true,
+			"auto_delete": false,
+			"arguments":   map[string]interface{}{},
+		})
+		exchanges = append(exchanges, map[string]interface{}{
+			"name":        "dlx",
+			"vhost":       "/",
+			"type":        "direct",
+			"durable":     true,
+			"auto_delete": false,
+			"internal":    false,
+		})
+		bindings = append(bindings, map[string]interface{}{
+			"source":           "dlx",
+			"vhost":            "/",
+			"destination":      dlqName,
+			"destination_type": "queue",
+			"routing_key":      dlqName,
+		})
+	}
+
 	definitions := map[string]interface{}{
-		"rabbit_version":    "3.12.0",
-		"rabbitmq_version":  "3.12.0",
+		"rabbit_version":   "3.12.0",
+		"rabbitmq_version": "3.12.0",
 		"users": []map[string]interface{}{
 			{
 				"name":              "guest",
@@ -162,26 +228,9 @@ func (m *SQSMapper) generateRabbitMQDefinitions(res *resource.AWSResource, queue
 				"read":      ".*",
 			},
 		},
-		"queues": []map[string]interface{}{queueDef},
-		"exchanges": []map[string]interface{}{
-			{
-				"name":        "amq.direct",
-				"vhost":       "/",
-				"type":        "direct",
-				"durable":     true,
-				"auto_delete": false,
-				"internal":    false,
-			},
-		},
-		"bindings": []map[string]interface{}{
-			{
-				"source":           "amq.direct",
-				"vhost":            "/",
-				"destination":      queueName,
-				"destination_type": "queue",
-				"routing_key":      queueName,
-			},
-		},
+		"queues":    queues,
+		"exchanges": exchanges,
+		"bindings":  bindings,
 	}
 
 	content, _ := json.MarshalIndent(definitions, "", "  ")
@@ -228,23 +277,20 @@ log.file.level = info
 }
 
 // handleDeadLetterQueue configures dead letter queue settings.
-func (m *SQSMapper) handleDeadLetterQueue(res *resource.AWSResource, result *mapper.MappingResult, queueName string) {
+func (m *SQSMapper) handleDeadLetterQueue(result *mapper.MappingResult, queueName string) {
 	dlqName := queueName + "-dlq"
 
 	result.AddWarning(fmt.Sprintf("Dead letter queue configured. Creating DLQ: %s", dlqName))
-	result.AddManualStep("Configure dead letter exchange in RabbitMQ definitions")
-	result.AddManualStep("Set x-dead-letter-exchange and x-dead-letter-routing-key on main queue")
 
-	dlqNote := fmt.Sprintf(`
-# Dead Letter Queue Configuration
-# Add these arguments to the main queue in definitions.json:
-# "x-dead-letter-exchange": "dlx",
-# "x-dead-letter-routing-key": "%s"
-#
-# Also create a DLQ queue and DLX exchange in definitions.json
-`, dlqName)
+	dlqNote := fmt.Sprintf(`{
+  "source_queue": %q,
+  "dead_letter_queue": %q,
+  "dead_letter_exchange": "dlx",
+  "routing_key": %q
+}
+`, queueName, dlqName, dlqName)
 
-	result.AddConfig("config/rabbitmq/dlq-setup.txt", []byte(dlqNote))
+	result.AddConfig("config/rabbitmq/dlq-policy.json", []byte(dlqNote))
 }
 
 // generateSetupScript creates a setup script for RabbitMQ.
@@ -281,6 +327,132 @@ echo "Credentials: $RABBITMQ_USER / $RABBITMQ_PASS"
 echo ""
 echo "Connection string: amqp://$RABBITMQ_USER:$RABBITMQ_PASS@$RABBITMQ_HOST:5672/"
 `, queueName, queueName)
+}
+
+func (m *SQSMapper) generateAppChangeConfig(queueName string) string {
+	return fmt.Sprintf(`APP_CHANGE_MODE=adapter
+SOURCE_QUEUE=%s
+TARGET_QUEUE=%s
+AWS_ENDPOINT_URL_SQS=http://homeport:8080/api/v1/compat/aws/sqs
+HOMEPORT_COMPAT_BACKEND=rabbitmq
+HOMEPORT_COMPAT_PROTOCOL=sqs
+AMQP_URL=amqp://guest:guest@rabbitmq:5672/
+`, queueName, queueName)
+}
+
+func (m *SQSMapper) generateFIFOPolicy(queueName string) string {
+	return fmt.Sprintf(`{
+  "queue": %q,
+  "ordered_delivery": "single-active-consumer",
+  "deduplication": "message-group-id"
+}
+`, queueName)
+}
+
+func (m *SQSMapper) generateDelayPolicy(queueName string, delaySeconds int) string {
+	return fmt.Sprintf(`{
+  "queue": %q,
+  "delay_seconds": %d,
+  "rabbitmq_strategy": "ttl-and-dead-letter-route"
+}
+`, queueName, delaySeconds)
+}
+
+func (m *SQSMapper) generateExportScript(queueName, region string) string {
+	if region == "" {
+		region = "us-east-1"
+	}
+	return fmt.Sprintf(`#!/bin/sh
+set -eu
+AWS_REGION="%s"
+QUEUE_NAME="%s"
+OUTPUT_DIR="./sqs-export"
+mkdir -p "$OUTPUT_DIR"
+queue_url=$(aws sqs get-queue-url --queue-name "$QUEUE_NAME" --region "$AWS_REGION" --output text --query QueueUrl)
+test -n "$queue_url"
+aws sqs get-queue-attributes --queue-url "$queue_url" --attribute-names All --region "$AWS_REGION" --output json > "$OUTPUT_DIR/queue-attributes.json"
+aws sqs list-queue-tags --queue-url "$queue_url" --region "$AWS_REGION" --output json > "$OUTPUT_DIR/tags.json"
+`, region, queueName)
+}
+
+func (m *SQSMapper) generateMigrateScript(queueName string) string {
+	return fmt.Sprintf(`#!/bin/sh
+set -eu
+test -s config/rabbitmq/definitions.json
+jq -e --arg q %q '.queues[] | select(.name == $q)' config/rabbitmq/definitions.json >/dev/null
+echo "SQS queue %s mapped to RabbitMQ queue %s"
+`, queueName, queueName, queueName)
+}
+
+func (m *SQSMapper) generateValidateScript(queueName string) string {
+	return fmt.Sprintf(`#!/bin/sh
+set -eu
+curl -fsS -u guest:guest http://localhost:15672/api/overview >/tmp/homeport-rabbitmq-overview.json
+test -s config/rabbitmq/definitions.json
+grep -q %q config/rabbitmq/definitions.json
+test -s config/rabbitmq/app-change.env
+`, queueName)
+}
+
+func (m *SQSMapper) generateBackupScript(queueName string) string {
+	return fmt.Sprintf(`#!/bin/sh
+set -eu
+archive="${BACKUP_DIR:-./backups}/%s-rabbitmq-$(date +%%Y%%m%%d%%H%%M%%S).tgz"
+mkdir -p "$(dirname "$archive")"
+tar -czf "$archive" config/rabbitmq setup_rabbitmq.sh export_sqs_queue.sh migrate_sqs_messages.sh validate_sqs_adapter.sh cutover_sqs_adapter.sh
+echo "$archive"
+`, queueName)
+}
+
+func (m *SQSMapper) generateCutoverScript(queueName string) string {
+	return fmt.Sprintf(`#!/bin/sh
+set -eu
+. config/rabbitmq/app-change.env
+test "$SOURCE_QUEUE" = %q
+test "$APP_CHANGE_MODE" = "adapter"
+test "$AWS_ENDPOINT_URL_SQS" = "http://homeport:8080/api/v1/compat/aws/sqs"
+echo "Use AWS_ENDPOINT_URL_SQS=$AWS_ENDPOINT_URL_SQS for SQS SDK clients"
+`, queueName)
+}
+
+func sqsRunbook(queueName string) []domainrunbook.Step {
+	metadata := map[string]string{
+		"kind":                    "queue",
+		"source":                  "aws_sqs_queue",
+		"queue":                   queueName,
+		"HOMEPORT_TARGET":         "rabbitmq",
+		"HOMEPORT_APP_CHANGE":     "adapter",
+		"AWS_ENDPOINT_URL_SQS":    "http://homeport:8080/api/v1/compat/aws/sqs",
+		"HOMEPORT_COMPAT_BACKEND": "rabbitmq",
+		"AMQP_QUEUE":              queueName,
+	}
+	return []domainrunbook.Step{
+		sqsStep("export-sqs-queue", "Export SQS queue", "Discovery", domainrunbook.StepTypeCommand, []string{"sh", "export_sqs_queue.sh"}, "SQS queue attributes and tags are exported", metadata),
+		sqsStep("provision-rabbitmq-queue", "Provision RabbitMQ queue", "Provision", domainrunbook.StepTypeCommand, []string{"sh", "setup_rabbitmq.sh"}, "RabbitMQ queue definitions are imported", metadata),
+		sqsStep("migrate-sqs-messages", "Migrate SQS message config", "Migrate", domainrunbook.StepTypeCommand, []string{"sh", "migrate_sqs_messages.sh"}, "SQS queue semantics are mapped to RabbitMQ definitions", metadata),
+		sqsStep("validate-sqs-adapter", "Validate SQS compatibility adapter", "Validate", domainrunbook.StepTypeCommand, []string{"sh", "validate_sqs_adapter.sh"}, "RabbitMQ health and SQS adapter config validate", metadata),
+		sqsStep("backup-sqs-config", "Backup SQS migration config", "Backup", domainrunbook.StepTypeCommand, []string{"sh", "backup_sqs_config.sh"}, "SQS and RabbitMQ migration artifacts are archived", metadata),
+		sqsStep("cutover-sqs-clients", "Cut over SQS clients", "Cutover", domainrunbook.StepTypeAPICall, []string{"sh", "cutover_sqs_adapter.sh"}, "SQS SDK clients use HomePort compatibility endpoint", metadata),
+		sqsStep("rollback-sqs-source", "Keep SQS source authoritative", "Rollback", domainrunbook.StepTypeRollback, nil, "AWS SQS remains authoritative until RabbitMQ delivery validation passes", metadata),
+	}
+}
+
+func sqsStep(id, name, group string, stepType domainrunbook.StepType, command []string, success string, metadata map[string]string) domainrunbook.Step {
+	executor := "shell"
+	if stepType == domainrunbook.StepTypeRollback {
+		executor = "noop"
+	}
+	return domainrunbook.Step{
+		ID:               id,
+		Name:             name,
+		Group:            group,
+		Type:             stepType,
+		Status:           domainrunbook.StepStatusPending,
+		Executor:         executor,
+		Command:          command,
+		SuccessCondition: success,
+		Metadata:         metadata,
+	}
 }
 
 // isFIFOQueue checks if the queue is a FIFO queue based on naming convention.

@@ -35,7 +35,7 @@
 | aws | S3 | full | aws_s3_bucket |
 | aws | SES | full | aws_ses_domain_identity |
 | aws | SNS | full | aws_sns_topic |
-| aws | SQS | mapped | aws_sqs_queue |
+| aws | SQS | full | aws_sqs_queue |
 | aws | SageMaker | missing |  |
 | aws | Secrets Manager | mapped | aws_secretsmanager_secret |
 | aws | Step Functions | missing |  |
