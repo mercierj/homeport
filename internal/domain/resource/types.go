@@ -19,6 +19,7 @@ const (
 	TypeBedrockModel   Type = "aws_bedrock_inference_profile"
 	TypeCodeBuild      Type = "aws_codebuild_project"
 	TypeCodePipeline   Type = "aws_codepipeline"
+	TypeECRRepository  Type = "aws_ecr_repository"
 
 	// AWS Storage
 	TypeS3Bucket  Type = "aws_s3_bucket"

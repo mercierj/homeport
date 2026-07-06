@@ -14,7 +14,7 @@
 | aws | DynamoDB | full | aws_dynamodb_table |
 | aws | EBS | full | aws_ebs_volume |
 | aws | EC2 | full | aws_instance |
-| aws | ECR | missing |  |
+| aws | ECR | full | aws_ecr_repository |
 | aws | ECS | mapped | aws_ecs_service, aws_ecs_task_definition |
 | aws | EFS | mapped | aws_efs_file_system |
 | aws | EKS | mapped | aws_eks_cluster |

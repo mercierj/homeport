@@ -505,6 +505,7 @@ func mapCFNTypeToResourceType(cfnType string) resource.Type {
 		"AWS::Route53::HostedZone":                  resource.TypeRoute53Zone,
 		"AWS::CloudFront::Distribution":             resource.TypeCloudFront,
 		"AWS::EC2::VPC":                             resource.TypeVPC,
+		"AWS::ECR::Repository":                      resource.TypeECRRepository,
 
 		// Security
 		"AWS::Cognito::UserPool":               resource.TypeCognitoPool,

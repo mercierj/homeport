@@ -21,6 +21,7 @@ The parser supports mapping for the following AWS resource types:
 - `aws_lambda_function` - Lambda functions
 - `aws_ecs_service` - ECS services
 - `aws_ecs_task_definition` - ECS task definitions
+- `aws_ecr_repository` - ECR repositories
 
 ### Storage
 - `aws_s3_bucket` - S3 buckets

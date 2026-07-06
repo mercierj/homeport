@@ -95,6 +95,7 @@ var CategoryMapping = map[Type]Category{
 	TypeBedrockModel:   CategoryServerless,
 	TypeCodeBuild:      CategoryDevOps,
 	TypeCodePipeline:   CategoryDevOps,
+	TypeECRRepository:  CategoryContainer,
 
 	// AWS Storage
 	TypeS3Bucket:  CategoryObjectStorage,

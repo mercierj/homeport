@@ -302,6 +302,8 @@ func mapAWSTerraformType(tfType string) resource.Type {
 		"aws_eks_cluster":                          resource.TypeEKSCluster,
 		"aws_bedrock_inference_profile":            resource.TypeBedrockModel,
 		"aws_bedrock_provisioned_model_throughput": resource.TypeBedrockModel,
+		"aws_ecr_repository":                       resource.TypeECRRepository,
+		"aws_ecrpublic_repository":                 resource.TypeECRRepository,
 
 		// Storage
 		"aws_s3_bucket":       resource.TypeS3Bucket,
