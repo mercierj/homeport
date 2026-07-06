@@ -15,8 +15,6 @@ import (
 	"github.com/aws/aws-sdk-go-v2/service/cloudwatch"
 	cloudwatchtypes "github.com/aws/aws-sdk-go-v2/service/cloudwatch/types"
 	"github.com/aws/aws-sdk-go-v2/service/cloudwatchlogs"
-	"github.com/aws/aws-sdk-go-v2/service/kms"
-	kmstypes "github.com/aws/aws-sdk-go-v2/service/kms/types"
 	"github.com/aws/aws-sdk-go-v2/service/cognitoidentityprovider"
 	"github.com/aws/aws-sdk-go-v2/service/dynamodb"
 	"github.com/aws/aws-sdk-go-v2/service/ec2"
@@ -29,6 +27,8 @@ import (
 	"github.com/aws/aws-sdk-go-v2/service/eventbridge"
 	"github.com/aws/aws-sdk-go-v2/service/iam"
 	"github.com/aws/aws-sdk-go-v2/service/kinesis"
+	"github.com/aws/aws-sdk-go-v2/service/kms"
+	kmstypes "github.com/aws/aws-sdk-go-v2/service/kms/types"
 	"github.com/aws/aws-sdk-go-v2/service/lambda"
 	"github.com/aws/aws-sdk-go-v2/service/rds"
 	"github.com/aws/aws-sdk-go-v2/service/route53"
@@ -1682,6 +1682,19 @@ func (p *APIParser) scanAPIGateway(ctx context.Context, cfg aws.Config, infra *r
 						var methods []string
 						for method := range r.ResourceMethods {
 							methods = append(methods, method)
+							integration, err := client.GetIntegration(ctx, &apigateway.GetIntegrationInput{
+								RestApiId:  api.Id,
+								ResourceId: r.Id,
+								HttpMethod: aws.String(method),
+							})
+							if err == nil && integration != nil {
+								resourceConfig["integration"] = appendIntegration(resourceConfig["integration"], map[string]interface{}{
+									"path":        aws.ToString(r.Path),
+									"http_method": method,
+									"type":        string(integration.Type),
+									"uri":         aws.ToString(integration.Uri),
+								})
+							}
 						}
 						resourceConfig["methods"] = methods
 					}
@@ -1695,6 +1708,16 @@ func (p *APIParser) scanAPIGateway(ctx context.Context, cfg aws.Config, infra *r
 	}
 
 	return nil
+}
+
+func appendIntegration(existing interface{}, integration map[string]interface{}) []map[string]interface{} {
+	if existing == nil {
+		return []map[string]interface{}{integration}
+	}
+	if integrations, ok := existing.([]map[string]interface{}); ok {
+		return append(integrations, integration)
+	}
+	return []map[string]interface{}{integration}
 }
 
 // scanEventBridge discovers EventBridge rules.

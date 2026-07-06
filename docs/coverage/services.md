@@ -2,7 +2,7 @@
 | --- | --- | --- | --- |
 | aws | ALB | full | aws_lb |
 | aws | ACM | full | aws_acm_certificate |
-| aws | API Gateway | mapped | aws_api_gateway_rest_api |
+| aws | API Gateway | full | aws_api_gateway_rest_api |
 | aws | AppSync | missing |  |
 | aws | Athena | missing |  |
 | aws | Bedrock | missing |  |

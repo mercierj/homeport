@@ -2,10 +2,12 @@ package networking
 
 import (
 	"context"
+	"strings"
 	"testing"
 
 	"github.com/homeport/homeport/internal/domain/mapper"
 	"github.com/homeport/homeport/internal/domain/resource"
+	domainrunbook "github.com/homeport/homeport/internal/domain/runbook"
 )
 
 func TestNewAPIGatewayMapper(t *testing.T) {
@@ -462,4 +464,94 @@ func TestAPIGatewayMapper_Map(t *testing.T) {
 			}
 		})
 	}
+}
+
+func TestAPIGatewayMapper_MapBuildsKongRoutesWhenIntegrationsAreKnown(t *testing.T) {
+	result, err := NewAPIGatewayMapper().Map(context.Background(), managedAPIGatewayFixture())
+	if err != nil {
+		t.Fatal(err)
+	}
+	if len(result.ManualSteps) != 0 {
+		t.Fatalf("manual steps = %#v, want none when routes and integrations are known", result.ManualSteps)
+	}
+	config := string(result.Configs["config/kong/kong.yml"])
+	for _, want := range []string{
+		"- name: shop-api-get-users",
+		"url: http://users:8080",
+		"- name: shop-api-get-users-route",
+		"- /users",
+		"- GET",
+	} {
+		if !strings.Contains(config, want) {
+			t.Fatalf("Kong config missing %q:\n%s", want, config)
+		}
+	}
+	if strings.Contains(config, "TODO") {
+		t.Fatalf("Kong config still contains TODO:\n%s", config)
+	}
+}
+
+func TestAPIGatewayConformanceManagedAToZ(t *testing.T) {
+	result, err := NewAPIGatewayMapper().Map(context.Background(), managedAPIGatewayFixture())
+	if err != nil {
+		t.Fatal(err)
+	}
+	if len(result.ManualSteps) != 0 {
+		t.Fatalf("manual steps = %#v, want fully generated API gateway migration", result.ManualSteps)
+	}
+	if result.DockerService.Image != "kong:3.5-alpine" || result.DockerService.Deploy == nil || result.DockerService.Deploy.Replicas < 2 {
+		t.Fatalf("service does not provision HA Kong: %#v", result.DockerService)
+	}
+	if result.DockerService.HealthCheck == nil {
+		t.Fatal("missing Kong health check")
+	}
+	for _, file := range []string{"kong-db-compose.yml", "config/kong/kong.yml"} {
+		if _, ok := result.Configs[file]; !ok {
+			t.Fatalf("missing %s", file)
+		}
+	}
+	if _, ok := result.Scripts["backup_apigateway_config.sh"]; !ok {
+		t.Fatal("missing backup script")
+	}
+	for id, stepType := range map[string]domainrunbook.StepType{
+		"render-traefik-routes":             domainrunbook.StepTypeCommand,
+		"validate-route-table":              domainrunbook.StepTypeCommand,
+		"backup-kong-config":                domainrunbook.StepTypeCommand,
+		"cutover-api-gateway-to-kong":       domainrunbook.StepTypeDNSCheck,
+		"rollback-routing-source-authority": domainrunbook.StepTypeRollback,
+	} {
+		if !hasAPIGatewayRunbookStep(result, id, stepType) {
+			t.Fatalf("missing %s runbook step: %#v", id, result.RunbookSteps)
+		}
+	}
+}
+
+func managedAPIGatewayFixture() *resource.AWSResource {
+	return &resource.AWSResource{
+		ID:   "abc123xyz",
+		Type: resource.TypeAPIGateway,
+		Name: "shop-api",
+		Config: map[string]interface{}{
+			"name":        "shop-api",
+			"domain_name": "api.example.com",
+			"integration": []interface{}{
+				map[string]interface{}{
+					"name":        "get-users",
+					"path":        "/users",
+					"http_method": "GET",
+					"type":        "HTTP_PROXY",
+					"uri":         "http://users:8080",
+				},
+			},
+		},
+	}
+}
+
+func hasAPIGatewayRunbookStep(result *mapper.MappingResult, id string, stepType domainrunbook.StepType) bool {
+	for _, step := range result.RunbookSteps {
+		if step.ID == id && step.Type == stepType {
+			return true
+		}
+	}
+	return false
 }

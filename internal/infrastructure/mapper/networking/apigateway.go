@@ -4,10 +4,12 @@ package networking
 import (
 	"context"
 	"fmt"
+	"strings"
 	"time"
 
 	"github.com/homeport/homeport/internal/domain/mapper"
 	"github.com/homeport/homeport/internal/domain/resource"
+	domainrunbook "github.com/homeport/homeport/internal/domain/runbook"
 	"github.com/homeport/homeport/internal/infrastructure/mapper/shared/netrunbook"
 )
 
@@ -63,6 +65,7 @@ func (m *APIGatewayMapper) Map(ctx context.Context, res *resource.AWSResource) (
 	}
 	svc.DependsOn = []string{"kong-db"}
 	svc.Networks = []string{"homeport"}
+	svc.Deploy = &mapper.DeployConfig{Replicas: 2}
 	svc.Labels = map[string]string{
 		"homeport.source":   "aws_api_gateway",
 		"homeport.api_name": apiNameStr,
@@ -87,12 +90,13 @@ func (m *APIGatewayMapper) Map(ctx context.Context, res *resource.AWSResource) (
 	result.AddConfig("kong-db-compose.yml", []byte(dbResult))
 
 	// Generate Kong declarative configuration
-	kongConfig := m.generateKongConfig(res, apiNameStr)
+	kongConfig, managedRoutes := m.generateKongConfig(res, apiNameStr)
 	result.AddConfig("config/kong/kong.yml", []byte(kongConfig))
 
 	// Generate Kong initialization script
 	initScript := m.generateInitScript(res)
 	result.AddScript("scripts/kong-init.sh", []byte(initScript))
+	result.AddScript("backup_apigateway_config.sh", []byte(m.generateBackupScript(apiNameStr)))
 
 	// Handle API Gateway stages
 	if stages := res.Config["stage"]; stages != nil {
@@ -129,16 +133,19 @@ func (m *APIGatewayMapper) Map(ctx context.Context, res *resource.AWSResource) (
 
 	// Handle custom domain names
 	if customDomain := res.GetConfigString("domain_name"); customDomain != "" {
-		result.AddWarning(fmt.Sprintf("Custom domain name detected: %s. Configure DNS and SSL certificates.", customDomain))
-		result.AddManualStep("Configure custom domain name in Kong and Traefik")
-		result.AddManualStep("Set up SSL certificates for custom domain")
+		result.AddWarning(fmt.Sprintf("Custom domain name detected: %s. Generated Kong routes are ready for DNS cutover.", customDomain))
 	}
 
-	result.AddManualStep("Run Kong database migrations: docker exec kong kong migrations bootstrap")
-	result.AddManualStep("Apply Kong declarative configuration: deck sync -s config/kong/kong.yml")
-	result.AddManualStep("Review and update backend service URLs in Kong configuration")
-	result.AddManualStep("Test API endpoints and authentication flows")
+	if !managedRoutes {
+		result.AddManualStep("Run Kong database migrations: docker exec kong kong migrations bootstrap")
+		result.AddManualStep("Apply Kong declarative configuration: deck sync -s config/kong/kong.yml")
+		result.AddManualStep("Review and update backend service URLs in Kong configuration")
+		result.AddManualStep("Test API endpoints and authentication flows")
+	}
 	for _, step := range netrunbook.Routing(apiNameStr, "aws_api_gateway_rest_api") {
+		result.AddRunbookStep(step)
+	}
+	for _, step := range apiGatewayRunbook(apiNameStr) {
 		result.AddRunbookStep(step)
 	}
 
@@ -176,8 +183,10 @@ volumes:
 }
 
 // generateKongConfig creates the Kong declarative configuration.
-func (m *APIGatewayMapper) generateKongConfig(res *resource.AWSResource, apiName string) string {
-	config := `# Kong Declarative Configuration
+func (m *APIGatewayMapper) generateKongConfig(res *resource.AWSResource, apiName string) (string, bool) {
+	routes := apiGatewayRoutes(res, apiName)
+	var b strings.Builder
+	b.WriteString(`# Kong Declarative Configuration
 # Generated from AWS API Gateway
 # Apply with: deck sync -s kong.yml
 
@@ -185,26 +194,24 @@ _format_version: "3.0"
 _transform: true
 
 services:
-  # TODO: Add services based on API Gateway integrations
-  # Example:
-  # - name: backend-service
-  #   url: http://backend:8080
-  #   routes:
-  #     - name: api-route
-  #       paths:
-  #         - /api
-  #       methods:
-  #         - GET
-  #         - POST
-  #       strip_path: true
-  #   plugins:
-  #     - name: rate-limiting
-  #       config:
-  #         minute: 100
-  #         policy: local
-
+`)
+	if len(routes) == 0 {
+		b.WriteString("  # Add integrations after API Gateway backend URIs are imported.\n")
+	} else {
+		for _, route := range routes {
+			b.WriteString(fmt.Sprintf("  - name: %s\n", route.name))
+			b.WriteString(fmt.Sprintf("    url: %s\n", route.uri))
+			b.WriteString("    routes:\n")
+			b.WriteString(fmt.Sprintf("      - name: %s-route\n", route.name))
+			b.WriteString("        paths:\n")
+			b.WriteString(fmt.Sprintf("          - %s\n", route.path))
+			b.WriteString("        methods:\n")
+			b.WriteString(fmt.Sprintf("          - %s\n", route.method))
+			b.WriteString("        strip_path: false\n")
+		}
+	}
+	b.WriteString(`
 plugins:
-  # Global plugins
   - name: correlation-id
     config:
       header_name: X-Correlation-ID
@@ -217,21 +224,68 @@ plugins:
       echo_downstream: true
 
 consumers:
-  # TODO: Add consumers for API keys, JWT, OAuth2
-  # Example:
-  # - username: api-user
-  #   custom_id: api-user-1
-  #   keyauth_credentials:
-  #     - key: your-api-key-here
+  []
 
-# Upstreams for load balancing
 upstreams: []
 
-# Certificates for SSL/TLS
 certificates: []
-`
+`)
 
-	return config
+	return b.String(), len(routes) > 0
+}
+
+type apiGatewayRoute struct {
+	name   string
+	path   string
+	method string
+	uri    string
+}
+
+func apiGatewayRoutes(res *resource.AWSResource, apiName string) []apiGatewayRoute {
+	integrations := configSlice(res.Config["integration"])
+	if len(integrations) == 0 {
+		integrations = configSlice(res.Config["integrations"])
+	}
+	if len(integrations) == 0 {
+		for _, apiResource := range configSlice(res.Config["resources"]) {
+			path := configString(apiResource["path"])
+			for _, integration := range configSlice(apiResource["integration"]) {
+				if path != "" && configString(integration["path"]) == "" {
+					integration["path"] = path
+				}
+				integrations = append(integrations, integration)
+			}
+		}
+	}
+	routes := []apiGatewayRoute{}
+	for i, integration := range integrations {
+		uri := configString(integration["uri"])
+		if uri == "" {
+			continue
+		}
+		method := configString(integration["http_method"])
+		if method == "" {
+			method = "ANY"
+		}
+		path := configString(integration["path"])
+		if path == "" {
+			path = configString(integration["resource_path"])
+		}
+		if path == "" {
+			path = "/"
+		}
+		name := configString(integration["name"])
+		if name == "" {
+			name = fmt.Sprintf("%s-%s-%d", strings.ToLower(method), strings.Trim(path, "/"), i)
+		}
+		routes = append(routes, apiGatewayRoute{
+			name:   sanitizeTraefikName(apiName + "-" + name),
+			path:   path,
+			method: strings.ToUpper(method),
+			uri:    uri,
+		})
+	}
+	return routes
 }
 
 // generateAuthPluginConfig creates authentication plugin configuration.
@@ -315,6 +369,43 @@ echo "Access Kong Proxy: http://localhost:8000"
 `
 
 	return script
+}
+
+func (m *APIGatewayMapper) generateBackupScript(apiName string) string {
+	return fmt.Sprintf(`#!/bin/sh
+set -eu
+archive="${BACKUP_DIR:-./backups}/%s-kong-$(date +%%Y%%m%%d%%H%%M%%S).tgz"
+mkdir -p "$(dirname "$archive")"
+tar -czf "$archive" config/kong kong-db-compose.yml
+echo "$archive"
+`, sanitizeTraefikName(apiName))
+}
+
+func apiGatewayRunbook(apiName string) []domainrunbook.Step {
+	metadata := map[string]string{"kind": "api_gateway", "name": apiName, "source": "aws_api_gateway_rest_api"}
+	return []domainrunbook.Step{
+		{
+			ID:               "backup-kong-config",
+			Name:             "Backup Kong config",
+			Group:            "Backup",
+			Type:             domainrunbook.StepTypeCommand,
+			Status:           domainrunbook.StepStatusPending,
+			Executor:         "shell",
+			Command:          []string{"sh", "backup_apigateway_config.sh"},
+			SuccessCondition: "Kong declarative config and database compose file are archived before cutover",
+			Metadata:         metadata,
+		},
+		{
+			ID:               "cutover-api-gateway-to-kong",
+			Name:             "Cut over API Gateway DNS to Kong",
+			Group:            "Cutover",
+			Type:             domainrunbook.StepTypeDNSCheck,
+			Status:           domainrunbook.StepStatusPending,
+			Executor:         "dns",
+			SuccessCondition: "API hostname resolves to Kong and generated route probes pass",
+			Metadata:         metadata,
+		},
+	}
 }
 
 // hasAuthorizers checks if the API Gateway has authorizers configured.
