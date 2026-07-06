@@ -3,6 +3,7 @@ import { ArrowLeft, ArrowRight, X, Upload, FolderSearch } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { buttonVariants } from '@/lib/button-variants';
 import { WizardProgress } from './WizardProgress';
+import { WizardSummary } from './WizardSummary';
 import {
   useWizardStore,
   SOURCE_WIZARD_STEPS,
@@ -119,6 +120,7 @@ export function WizardContainer({
             entryPoint={entryPoint}
             onStepClick={handleStepClick}
           />
+          <WizardSummary steps={steps} currentStep={currentStep} completedSteps={completedSteps} />
         </div>
       </div>
 

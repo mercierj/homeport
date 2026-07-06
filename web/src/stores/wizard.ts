@@ -10,7 +10,8 @@ export type WizardStep =
   | 'secrets'    // Step 3: Provide secrets
   | 'deploy'     // Step 4: Deploy to target
   | 'sync'       // Step 5: Sync data
-  | 'cutover';   // Step 6: DNS cutover
+  | 'cutover'    // Step 6: DNS cutover
+  | 'done';      // Step 7: Complete
 
 // Steps for source entry point (analyze -> export -> secrets -> ...)
 export const SOURCE_WIZARD_STEPS: WizardStep[] = [
@@ -20,6 +21,7 @@ export const SOURCE_WIZARD_STEPS: WizardStep[] = [
   'deploy',
   'sync',
   'cutover',
+  'done',
 ];
 
 // Steps for bundle entry point (upload -> secrets -> ...)
@@ -29,6 +31,7 @@ export const BUNDLE_WIZARD_STEPS: WizardStep[] = [
   'deploy',
   'sync',
   'cutover',
+  'done',
 ];
 
 // All possible steps (for type safety)
@@ -40,6 +43,7 @@ export const WIZARD_STEPS: WizardStep[] = [
   'deploy',
   'sync',
   'cutover',
+  'done',
 ];
 
 export const STEP_LABELS: Record<WizardStep, string> = {
@@ -50,6 +54,7 @@ export const STEP_LABELS: Record<WizardStep, string> = {
   deploy: 'Deploy',
   sync: 'Sync',
   cutover: 'Cutover',
+  done: 'Done',
 };
 
 export const STEP_DESCRIPTIONS: Record<WizardStep, string> = {
@@ -60,6 +65,7 @@ export const STEP_DESCRIPTIONS: Record<WizardStep, string> = {
   deploy: 'Deploy to target server',
   sync: 'Synchronize data',
   cutover: 'DNS cutover & validation',
+  done: 'Migration complete',
 };
 
 // Bundle manifest types
@@ -423,13 +429,11 @@ export const useWizardStore = create<WizardState>((set, get) => ({
   setSessionId: (sessionId) => set({ sessionId }),
 
   hydrateFromSession: (session) => {
-    const toWizardStep = (step: WizardSessionStep): WizardStep =>
-      step === 'done' ? 'cutover' : step;
+    const toWizardStep = (step: WizardSessionStep): WizardStep => step as WizardStep;
     set({
       sessionId: session.id,
       currentStep: toWizardStep(session.current_step),
       completedSteps: session.completed_steps
-        .filter((step) => step !== 'done')
         .map((step) => step as WizardStep),
       sourceProvider: (session.source_provider as WizardState['sourceProvider']) || null,
       bundleId: session.bundle_id || null,

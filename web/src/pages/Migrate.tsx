@@ -14,6 +14,7 @@ import { SecretsStep } from '@/components/MigrationWizard/steps/SecretsStep';
 import { DeployStep } from '@/components/MigrationWizard/steps/DeployStep';
 import { SyncStep } from '@/components/MigrationWizard/steps/SyncStep';
 import { CutoverStep } from '@/components/MigrationWizard/steps/CutoverStep';
+import { CompletionStep } from '@/components/MigrationWizard/steps/CompletionStep';
 import { createWizardSession, updateWizardSession, type WizardSessionStep } from '@/lib/wizard-session-api';
 
 export default function Migrate() {
@@ -137,6 +138,8 @@ export default function Migrate() {
         return <SyncStep />;
       case 'cutover':
         return <CutoverStep />;
+      case 'done':
+        return <CompletionStep />;
       default:
         return <AnalyzeStep />;
     }
@@ -146,7 +149,7 @@ export default function Migrate() {
   const canProceed = currentStep === 'upload' ? !!bundleManifest : true;
 
   // Steps that have their own navigation buttons (with custom validation/state)
-  const stepsWithOwnNavigation = ['analyze', 'export', 'secrets', 'deploy', 'sync', 'cutover'];
+  const stepsWithOwnNavigation = ['analyze', 'export', 'secrets', 'deploy', 'sync', 'cutover', 'done'];
   const hideNavigation = stepsWithOwnNavigation.includes(currentStep);
 
   return (
