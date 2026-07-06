@@ -398,11 +398,11 @@ services:
     cost: false
     provision: false
     migrate: false
-    api_compat: false
+    api_compat: true
     env_dns: false
     ha: false
     backup: false
-    validate: false
+    validate: true
     cutover: false
     rollback: false
     status: guided
@@ -609,12 +609,12 @@ services:
     discover: true
     cost: false
     provision: false
-    migrate: false
-    api_compat: false
+    migrate: true
+    api_compat: true
     env_dns: false
     ha: false
     backup: false
-    validate: false
+    validate: true
     cutover: false
     rollback: false
     status: mapped

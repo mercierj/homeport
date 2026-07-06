@@ -8,6 +8,7 @@ import (
 
 	"github.com/homeport/homeport/internal/domain/mapper"
 	"github.com/homeport/homeport/internal/domain/resource"
+	"github.com/homeport/homeport/internal/infrastructure/mapper/shared/securityrunbook"
 )
 
 // SecretsManagerMapper converts AWS Secrets Manager to HashiCorp Vault.
@@ -53,7 +54,7 @@ func (m *SecretsManagerMapper) Map(ctx context.Context, res *resource.AWSResourc
 	svc.Labels = map[string]string{
 		"homeport.source":      "aws_secretsmanager_secret",
 		"homeport.secret_name": secretName,
-		"traefik.enable":        "false",
+		"traefik.enable":       "false",
 	}
 	svc.Restart = "unless-stopped"
 
@@ -65,6 +66,9 @@ func (m *SecretsManagerMapper) Map(ctx context.Context, res *resource.AWSResourc
 
 	initScript := m.generateInitScript()
 	result.AddScript("init_vault.sh", []byte(initScript))
+	for _, step := range securityrunbook.SecretsManager(secretName) {
+		result.AddRunbookStep(step)
+	}
 
 	if m.hasRotationEnabled(res) {
 		result.AddWarning("Secret rotation enabled in AWS. Configure Vault rotation or cron job.")
@@ -80,7 +84,7 @@ func (m *SecretsManagerMapper) Map(ctx context.Context, res *resource.AWSResourc
 	result.AddManualStep("Initialize Vault using init_vault.sh")
 	result.AddManualStep("Migrate secrets using migrate_secrets.sh")
 
-	result.AddWarning("Secret values must be exported from AWS manually")
+	result.AddWarning("Secret values are imported with aws secretsmanager get-secret-value when credentials allow; use encrypted runbook input for unreadable values.")
 	result.AddWarning("Use Vault server mode (not dev) in production with proper TLS")
 
 	return result, nil

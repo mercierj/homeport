@@ -9,6 +9,7 @@ import (
 
 	"github.com/homeport/homeport/internal/domain/mapper"
 	"github.com/homeport/homeport/internal/domain/resource"
+	"github.com/homeport/homeport/internal/infrastructure/mapper/shared/securityrunbook"
 )
 
 // KMSMapper converts AWS KMS keys to HashiCorp Vault Transit secrets engine.
@@ -60,11 +61,11 @@ func (m *KMSMapper) Map(ctx context.Context, res *resource.AWSResource) (*mapper
 	}
 	svc.Networks = []string{"homeport"}
 	svc.Labels = map[string]string{
-		"homeport.source":    "aws_kms_key",
-		"homeport.key_id":    keyID,
-		"homeport.key_usage": keyUsage,
-		"traefik.enable":      "true",
-		"traefik.http.routers.vault.rule":                      "Host(`vault.localhost`)",
+		"homeport.source":                 "aws_kms_key",
+		"homeport.key_id":                 keyID,
+		"homeport.key_usage":              keyUsage,
+		"traefik.enable":                  "true",
+		"traefik.http.routers.vault.rule": "Host(`vault.localhost`)",
 		"traefik.http.services.vault.loadbalancer.server.port": "8200",
 	}
 	svc.Restart = "unless-stopped"
@@ -94,11 +95,39 @@ func (m *KMSMapper) Map(ctx context.Context, res *resource.AWSResource) (*mapper
 	// Generate encryption/decryption test script
 	testScript := m.generateTestScript(res)
 	result.AddScript("scripts/vault/test-transit.sh", []byte(testScript))
+	for _, step := range securityrunbook.KMSTransit(keyID) {
+		result.AddRunbookStep(step)
+	}
 
 	// Add warnings and manual steps based on key configuration
 	m.addMigrationWarnings(result, res, keyUsage, keySpec)
 
 	return result, nil
+}
+
+type KeyMaterialExportClassification struct {
+	Status string
+	Reason string
+}
+
+func KMSKeyMaterialExportStatus(res *resource.AWSResource) KeyMaterialExportClassification {
+	origin := res.GetConfigString("origin")
+	if origin == "" || origin == "AWS_KMS" {
+		return KeyMaterialExportClassification{
+			Status: "impossible",
+			Reason: "managed AWS KMS key material is non-exportable; create a new Vault Transit key and re-encrypt data",
+		}
+	}
+	if origin == "EXTERNAL" {
+		return KeyMaterialExportClassification{
+			Status: "guided",
+			Reason: "externally imported key material may exist outside AWS; import only from your original custody source",
+		}
+	}
+	return KeyMaterialExportClassification{
+		Status: "guided",
+		Reason: "key material export depends on the original key custody model",
+	}
 }
 
 func (m *KMSMapper) generateVaultConfig() string {
@@ -459,6 +488,9 @@ echo "============================================"
 }
 
 func (m *KMSMapper) addMigrationWarnings(result *mapper.MappingResult, res *resource.AWSResource, keyUsage, keySpec string) {
+	exportStatus := KMSKeyMaterialExportStatus(res)
+	result.AddWarning(fmt.Sprintf("Key material export status: %s - %s", exportStatus.Status, exportStatus.Reason))
+
 	// Key usage warnings
 	switch keyUsage {
 	case "ENCRYPT_DECRYPT":

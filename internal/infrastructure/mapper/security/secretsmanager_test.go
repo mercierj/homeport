@@ -2,6 +2,7 @@ package security
 
 import (
 	"context"
+	"strings"
 	"testing"
 
 	"github.com/homeport/homeport/internal/domain/mapper"
@@ -176,7 +177,7 @@ func TestSecretsManagerMapper_Map(t *testing.T) {
 				Type: resource.TypeSecretsManager,
 				Name: "rotating-secret",
 				Config: map[string]interface{}{
-					"name":            "rotating-secret",
+					"name":                "rotating-secret",
 					"rotation_lambda_arn": "arn:aws:lambda:us-east-1:123456789012:function:rotate-secret",
 					"rotation_rules": map[string]interface{}{
 						"automatically_after_days": float64(30),
@@ -246,4 +247,38 @@ func TestSecretsManagerMapper_Map(t *testing.T) {
 			}
 		})
 	}
+}
+
+func TestSecretsManagerMapper_ImportsSecretsThroughProviderAPI(t *testing.T) {
+	result, err := NewSecretsManagerMapper().Map(context.Background(), &resource.AWSResource{
+		ID:   "secret-1",
+		Type: resource.TypeSecretsManager,
+		Name: "app/db",
+		Config: map[string]interface{}{
+			"name": "app/db",
+		},
+	})
+	if err != nil {
+		t.Fatalf("Map() error = %v", err)
+	}
+
+	script := string(result.Scripts["migrate_secrets.sh"])
+	if !strings.Contains(script, "aws secretsmanager get-secret-value") {
+		t.Fatalf("migration script should call provider API, got:\n%s", script)
+	}
+	if !strings.Contains(script, "vault kv put") {
+		t.Fatalf("migration script should import into Vault, got:\n%s", script)
+	}
+	if !hasRunbookStep(result, "provide-unreadable-secret") {
+		t.Fatalf("missing encrypted input fallback step: %#v", result.RunbookSteps)
+	}
+}
+
+func hasRunbookStep(result *mapper.MappingResult, id string) bool {
+	for _, step := range result.RunbookSteps {
+		if step.ID == id {
+			return true
+		}
+	}
+	return false
 }

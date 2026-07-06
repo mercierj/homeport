@@ -37,6 +37,45 @@ func TestCognitoMapper_Dependencies(t *testing.T) {
 	}
 }
 
+func TestCognitoMapper_KeycloakRealmSnapshot(t *testing.T) {
+	m := NewCognitoMapper()
+	res := &resource.AWSResource{
+		ID:   "us-east-1_snapshot",
+		Type: resource.TypeCognitoPool,
+		Name: "Prod Pool",
+		Config: map[string]interface{}{
+			"name":                     "Prod Pool",
+			"auto_verified_attributes": []interface{}{"email"},
+		},
+	}
+
+	got := m.generateRealmConfig(res, "Prod Pool")
+	want := `{
+  "bruteForceProtected": true,
+  "displayName": "Prod Pool",
+  "duplicateEmailsAllowed": false,
+  "editUsernameAllowed": false,
+  "enabled": true,
+  "failureFactor": 30,
+  "loginWithEmailAllowed": true,
+  "maxDeltaTimeSeconds": 43200,
+  "maxFailureWaitSeconds": 900,
+  "minimumQuickLoginWaitSeconds": 60,
+  "permanentLockout": false,
+  "quickLoginCheckMilliSeconds": 1000,
+  "realm": "prod-pool",
+  "registrationAllowed": true,
+  "registrationEmailAsUsername": true,
+  "rememberMe": true,
+  "resetPasswordAllowed": true,
+  "verifyEmail": true,
+  "waitIncrementSeconds": 60
+}`
+	if got != want {
+		t.Fatalf("realm snapshot mismatch\nwant:\n%s\ngot:\n%s", want, got)
+	}
+}
+
 func TestCognitoMapper_Validate(t *testing.T) {
 	m := NewCognitoMapper()
 

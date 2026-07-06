@@ -61,6 +61,7 @@ func NewDefaultRegistry() *Registry {
 		compataws.NewSNSAdapter(),
 		compataws.NewKinesisAdapter(),
 		compataws.NewSecretsAdapter(),
+		compataws.NewKMSAdapter(),
 		compataws.NewCloudWatchLogsAdapter(),
 	} {
 		mustRegister(registry, adapter)
