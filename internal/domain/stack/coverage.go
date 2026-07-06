@@ -37,15 +37,16 @@ var ResourceMapping = map[resource.Type]StackType{
 	resource.TypeEFSVolume: StackTypeStorage,     // File storage consolidates
 
 	// AWS Database and analytics
-	resource.TypeRDSInstance:         StackTypeDatabase,    // SQL databases consolidate
-	resource.TypeRDSCluster:          StackTypeDatabase,    // Aurora clusters consolidate
-	resource.TypeDynamoDBTable:       StackTypeDatabase,    // NoSQL consolidates
-	resource.TypeElastiCache:         StackTypeCache,       // Cache consolidates
-	resource.TypeAthenaWorkgroup:     StackTypeDatabase,    // Query workgroups consolidate with data query engines
-	resource.TypeEMRCluster:          StackTypePassthrough, // Spark clusters stay individual
-	resource.TypeGlueCatalogDatabase: StackTypeDatabase,    // Catalog databases consolidate with metadata stores
-	resource.TypeOpenSearchDomain:    StackTypeDatabase,    // Search indexes consolidate with datastore services
-	resource.TypeRedshiftCluster:     StackTypeDatabase,    // Warehouses consolidate with analytical datastores
+	resource.TypeRDSInstance:              StackTypeDatabase,    // SQL databases consolidate
+	resource.TypeRDSCluster:               StackTypeDatabase,    // Aurora clusters consolidate
+	resource.TypeDynamoDBTable:            StackTypeDatabase,    // NoSQL consolidates
+	resource.TypeElastiCache:              StackTypeCache,       // Cache consolidates
+	resource.TypeAthenaWorkgroup:          StackTypeDatabase,    // Query workgroups consolidate with data query engines
+	resource.TypeEMRCluster:               StackTypePassthrough, // Spark clusters stay individual
+	resource.TypeGlueCatalogDatabase:      StackTypeDatabase,    // Catalog databases consolidate with metadata stores
+	resource.TypeOpenSearchDomain:         StackTypeDatabase,    // Search indexes consolidate with datastore services
+	resource.TypeRedshiftCluster:          StackTypeDatabase,    // Warehouses consolidate with analytical datastores
+	resource.TypeLakeFormationPermissions: StackTypePassthrough, // Data governance policies stay explicit
 
 	// AWS Networking (6 types) - All passthrough
 	resource.TypeALB:               StackTypePassthrough, // Load balancers stay individual

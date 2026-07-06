@@ -491,16 +491,18 @@ func mapCFNTypeToResourceType(cfnType string) resource.Type {
 		"AWS::EFS::FileSystem": resource.TypeEFSVolume,
 
 		// Database
-		"AWS::RDS::DBInstance":               resource.TypeRDSInstance,
-		"AWS::RDS::DBCluster":                resource.TypeRDSCluster,
-		"AWS::DynamoDB::Table":               resource.TypeDynamoDBTable,
-		"AWS::ElastiCache::CacheCluster":     resource.TypeElastiCache,
-		"AWS::ElastiCache::ReplicationGroup": resource.TypeElastiCache,
-		"AWS::EMR::Cluster":                  resource.TypeEMRCluster,
-		"AWS::Glue::Database":                resource.TypeGlueCatalogDatabase,
-		"AWS::OpenSearchService::Domain":     resource.TypeOpenSearchDomain,
-		"AWS::Elasticsearch::Domain":         resource.TypeOpenSearchDomain,
-		"AWS::Redshift::Cluster":             resource.TypeRedshiftCluster,
+		"AWS::RDS::DBInstance":                 resource.TypeRDSInstance,
+		"AWS::RDS::DBCluster":                  resource.TypeRDSCluster,
+		"AWS::DynamoDB::Table":                 resource.TypeDynamoDBTable,
+		"AWS::ElastiCache::CacheCluster":       resource.TypeElastiCache,
+		"AWS::ElastiCache::ReplicationGroup":   resource.TypeElastiCache,
+		"AWS::EMR::Cluster":                    resource.TypeEMRCluster,
+		"AWS::Glue::Database":                  resource.TypeGlueCatalogDatabase,
+		"AWS::OpenSearchService::Domain":       resource.TypeOpenSearchDomain,
+		"AWS::Elasticsearch::Domain":           resource.TypeOpenSearchDomain,
+		"AWS::Redshift::Cluster":               resource.TypeRedshiftCluster,
+		"AWS::LakeFormation::Permissions":      resource.TypeLakeFormationPermissions,
+		"AWS::LakeFormation::DataLakeSettings": resource.TypeLakeFormationPermissions,
 
 		// Networking
 		"AWS::ElasticLoadBalancingV2::LoadBalancer": resource.TypeALB,

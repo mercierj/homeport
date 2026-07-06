@@ -188,6 +188,8 @@ func mapTerraformTypeToResourceType(tfType string) resource.Type {
 		return resource.TypeRDSCluster
 	case "aws_dynamodb_table":
 		return resource.TypeDynamoDBTable
+	case "aws_lakeformation_permissions", "aws_lakeformation_data_lake_settings":
+		return resource.TypeLakeFormationPermissions
 	case "aws_athena_workgroup", "aws_athena_database":
 		return resource.TypeAthenaWorkgroup
 	case "aws_elasticache_cluster", "aws_elasticache_replication_group":

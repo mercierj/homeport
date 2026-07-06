@@ -29,15 +29,16 @@ const (
 	TypeEFSVolume Type = "aws_efs_file_system"
 
 	// AWS Database
-	TypeRDSInstance         Type = "aws_db_instance"
-	TypeRDSCluster          Type = "aws_rds_cluster"
-	TypeDynamoDBTable       Type = "aws_dynamodb_table"
-	TypeElastiCache         Type = "aws_elasticache_cluster"
-	TypeAthenaWorkgroup     Type = "aws_athena_workgroup"
-	TypeEMRCluster          Type = "aws_emr_cluster"
-	TypeGlueCatalogDatabase Type = "aws_glue_catalog_database"
-	TypeOpenSearchDomain    Type = "aws_opensearch_domain"
-	TypeRedshiftCluster     Type = "aws_redshift_cluster"
+	TypeRDSInstance              Type = "aws_db_instance"
+	TypeRDSCluster               Type = "aws_rds_cluster"
+	TypeDynamoDBTable            Type = "aws_dynamodb_table"
+	TypeElastiCache              Type = "aws_elasticache_cluster"
+	TypeAthenaWorkgroup          Type = "aws_athena_workgroup"
+	TypeEMRCluster               Type = "aws_emr_cluster"
+	TypeGlueCatalogDatabase      Type = "aws_glue_catalog_database"
+	TypeOpenSearchDomain         Type = "aws_opensearch_domain"
+	TypeRedshiftCluster          Type = "aws_redshift_cluster"
+	TypeLakeFormationPermissions Type = "aws_lakeformation_permissions"
 
 	// AWS Networking
 	TypeALB               Type = "aws_lb"
