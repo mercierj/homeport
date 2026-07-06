@@ -1,6 +1,8 @@
 import { API_BASE } from './config';
+import type { Resource, ExportTerraformConfig } from './migrate-api';
 
-export type DeployTarget = 'local' | 'ssh' | 'cloud';
+export type RuntimeDeployTarget = 'local' | 'ssh';
+export type DeployTarget = RuntimeDeployTarget | 'cloud';
 
 /** Container runtime: auto-detect, Docker, or Podman */
 export type ContainerRuntime = 'auto' | 'docker' | 'podman';
@@ -104,8 +106,22 @@ export type DeployEvent =
   | { type: 'complete'; data: CompleteEvent }
   | { type: 'error'; data: ErrorEvent };
 
+export interface CloudDeployRequest {
+  resources: Resource[];
+  config: ExportTerraformConfig;
+  apply: boolean;
+}
+
+export interface CloudDeployJob {
+  id: string;
+  status: 'pending' | 'running' | 'planned' | 'applied' | 'failed';
+  apply: boolean;
+  logs: string[];
+  error?: string;
+}
+
 export async function startDeployment(
-  target: DeployTarget,
+  target: RuntimeDeployTarget,
   config: DeployConfig
 ): Promise<StartDeploymentResponse> {
   const response = await fetch(`${API_BASE}/deploy/start`, {
@@ -118,6 +134,34 @@ export async function startDeployment(
   if (!response.ok) {
     const error = await response.text();
     throw new Error(error || 'Failed to start deployment');
+  }
+
+  return response.json();
+}
+
+export async function startCloudDeploy(request: CloudDeployRequest): Promise<CloudDeployJob> {
+  const response = await fetch(`${API_BASE}/cloud-deploy/start`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    credentials: 'include',
+    body: JSON.stringify(request),
+  });
+
+  if (!response.ok) {
+    const error = await response.text();
+    throw new Error(error || 'Failed to start cloud deploy');
+  }
+
+  return response.json();
+}
+
+export async function getCloudDeploy(id: string): Promise<CloudDeployJob> {
+  const response = await fetch(`${API_BASE}/cloud-deploy/${id}`, {
+    credentials: 'include',
+  });
+
+  if (!response.ok) {
+    throw new Error('Failed to get cloud deploy status');
   }
 
   return response.json();

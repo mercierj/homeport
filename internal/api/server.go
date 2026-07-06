@@ -13,6 +13,7 @@ import (
 	"github.com/homeport/homeport/internal/api/handlers"
 	"github.com/homeport/homeport/internal/app/backup"
 	"github.com/homeport/homeport/internal/app/cache"
+	"github.com/homeport/homeport/internal/app/clouddeploy"
 	"github.com/homeport/homeport/internal/app/compat"
 	"github.com/homeport/homeport/internal/app/docker"
 	"github.com/homeport/homeport/internal/app/identity"
@@ -36,32 +37,33 @@ type Config struct {
 }
 
 type Server struct {
-	config           Config
-	router           *chi.Mux
-	httpServer       *http.Server
-	dockerService    *docker.Service
-	dockerHandler    *handlers.DockerHandler
-	metricsHandler   *handlers.MetricsHandler
-	logsHandler      *handlers.LogsHandler
-	identityService  *identity.Service
-	identityHandler  *handlers.IdentityHandler
-	functionsHandler *handlers.FunctionsHandler
-	dnsHandler       *handlers.DNSHandler
-	queuesHandler    *handlers.QueuesHandler
-	cacheHandler     *handlers.CacheHandler
-	secretsHandler   *handlers.SecretsHandler
-	backupHandler    *handlers.BackupHandler
-	stacksHandler    *handlers.StacksHandler
-	terminalHandler  *handlers.TerminalHandler
-	policyHandler    *handlers.PolicyHandler
-	migrateHandler   *handlers.MigrateHandler
-	deployHandler    *handlers.DeployHandler
-	syncHandler      *handlers.SyncHandler
-	cutoverHandler   *handlers.CutoverHandler
-	providersHandler *handlers.ProvidersHandler
-	runbookHandler   *handlers.RunbookHandler
-	compatHandler    *handlers.CompatHandler
-	wizardHandler    *handlers.WizardHandler
+	config             Config
+	router             *chi.Mux
+	httpServer         *http.Server
+	dockerService      *docker.Service
+	dockerHandler      *handlers.DockerHandler
+	metricsHandler     *handlers.MetricsHandler
+	logsHandler        *handlers.LogsHandler
+	identityService    *identity.Service
+	identityHandler    *handlers.IdentityHandler
+	functionsHandler   *handlers.FunctionsHandler
+	dnsHandler         *handlers.DNSHandler
+	queuesHandler      *handlers.QueuesHandler
+	cacheHandler       *handlers.CacheHandler
+	secretsHandler     *handlers.SecretsHandler
+	backupHandler      *handlers.BackupHandler
+	stacksHandler      *handlers.StacksHandler
+	terminalHandler    *handlers.TerminalHandler
+	policyHandler      *handlers.PolicyHandler
+	migrateHandler     *handlers.MigrateHandler
+	deployHandler      *handlers.DeployHandler
+	syncHandler        *handlers.SyncHandler
+	cutoverHandler     *handlers.CutoverHandler
+	providersHandler   *handlers.ProvidersHandler
+	runbookHandler     *handlers.RunbookHandler
+	compatHandler      *handlers.CompatHandler
+	wizardHandler      *handlers.WizardHandler
+	cloudDeployHandler *handlers.CloudDeployHandler
 }
 
 func NewServer(cfg Config) (*Server, error) {
@@ -141,6 +143,7 @@ func NewServer(cfg Config) (*Server, error) {
 
 	// Initialize Deploy handler
 	s.deployHandler = handlers.NewDeployHandler()
+	s.cloudDeployHandler = handlers.NewCloudDeployHandler(clouddeploy.NewService(""), nil)
 
 	// Initialize Sync handler
 	s.syncHandler = handlers.NewSyncHandler()
@@ -329,6 +332,9 @@ func (s *Server) setupRoutes() {
 					r.Post("/retry", s.deployHandler.HandleRetry)
 				})
 			})
+		}
+		if s.cloudDeployHandler != nil {
+			s.cloudDeployHandler.RegisterRoutes(r)
 		}
 
 		// Sync routes

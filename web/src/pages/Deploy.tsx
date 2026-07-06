@@ -4,17 +4,63 @@ import { useNavigate } from 'react-router-dom';
 import { TargetSelector } from '../components/DeploymentWizard/TargetSelector';
 import { ConfigurationForm } from '../components/DeploymentWizard/ConfigurationForm';
 import { DeploymentExecution } from '../components/DeploymentWizard/DeploymentExecution';
+import { ProviderComparison } from '../components/DeploymentWizard/ProviderComparison';
+import { ProviderConfigForm } from '../components/DeploymentWizard/ProviderConfigForm';
+import { TerraformExport } from '../components/DeploymentWizard/TerraformExport';
 import { useDeploymentStore } from '../stores/deployment';
-import { startDeployment } from '../lib/deploy-api';
+import { useWizardStore } from '../stores/wizard';
+import { getCloudDeploy, startCloudDeploy, startDeployment, type CloudDeployJob } from '../lib/deploy-api';
+import { downloadStack } from '../lib/migrate-api';
 import { createPendingStack } from '../lib/stacks-api';
+import { buttonVariants } from '../lib/button-variants';
 import { toast } from 'sonner';
+import type { DeploymentOption } from '../components/DeploymentWizard/TargetSelector';
+import type { Provider } from '../lib/providers-api';
 
 type Step = 'target' | 'config' | 'deploy';
+type CloudStep = 'compare' | 'configure' | 'export';
+type CloudProvider = 'hetzner' | 'scaleway' | 'ovh';
+
+const isCloudProvider = (provider: Provider): provider is CloudProvider =>
+  provider === 'hetzner' || provider === 'scaleway' || provider === 'ovh';
+
+const saveBlob = (blob: Blob, filename: string) => {
+  const url = window.URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = filename;
+  document.body.appendChild(a);
+  a.click();
+  window.URL.revokeObjectURL(url);
+  document.body.removeChild(a);
+};
 
 export function Deploy() {
   const [step, setStep] = useState<Step>('target');
-  const { target, reset, setDeploymentId, getConfig, localConfig, sshConfig } = useDeploymentStore();
+  const [cloudStep, setCloudStep] = useState<CloudStep>('compare');
+  const [selectedCloudProvider, setSelectedCloudProvider] = useState<CloudProvider | null>(null);
+  const [selectedCloudBaseCost, setSelectedCloudBaseCost] = useState(0);
+  const [cloudJob, setCloudJob] = useState<CloudDeployJob | null>(null);
+  const {
+    target,
+    reset,
+    setTarget,
+    setCloudProvider,
+    setDeploymentId,
+    getConfig,
+    localConfig,
+    sshConfig,
+    cloudConfig,
+  } = useDeploymentStore();
+  const { analysisResult, selectedResources } = useWizardStore();
   const navigate = useNavigate();
+  const activeStep = step === 'config' && !target ? 'target' : step;
+  const cloudResources = selectedResources;
+  const cloudMappingResults = {
+    resources: cloudResources,
+    warnings: analysisResult?.warnings ?? [],
+    provider: analysisResult?.provider ?? 'unknown',
+  };
 
   const saveMutation = useMutation({
     mutationFn: async () => {
@@ -23,17 +69,16 @@ export function Deploy() {
         ? localConfig.projectName
         : target === 'ssh'
           ? sshConfig.projectName
-          : 'pending-deployment';
+          : cloudConfig.domain || `${cloudConfig.provider ?? 'cloud'}-deployment`;
 
       if (!stackName) {
         throw new Error('Project name is required');
       }
 
-      // Create deployment config - for local/SSH, we use 'self-hosted' as provider
       const deploymentConfig = {
-        provider: 'hetzner' as const, // Default to hetzner for pending saves
-        region: 'fsn1', // Default region
-        ha_level: 'none',
+        provider: cloudConfig.provider ?? 'hetzner',
+        region: cloudConfig.region?.id ?? 'fsn1',
+        ha_level: cloudConfig.haLevel,
       };
 
       return createPendingStack({
@@ -61,7 +106,7 @@ export function Deploy() {
   const deployMutation = useMutation({
     mutationFn: async () => {
       const config = getConfig();
-      if (!config || !target) {
+      if (!config || !target || target === 'cloud') {
         throw new Error('No deployment configuration');
       }
       return startDeployment(target, config);
@@ -77,7 +122,25 @@ export function Deploy() {
     },
   });
 
-  const handleTargetSelect = () => {
+  const handleTargetSelect = (selectedTarget: DeploymentOption) => {
+    if (selectedTarget === 'cloud') {
+      if (cloudResources.length === 0) {
+        toast.error('Select resources in Migrate before exporting cloud Terraform.');
+        return;
+      }
+      setTarget('cloud');
+      setCloudStep('compare');
+      setSelectedCloudProvider(null);
+      setStep('config');
+      return;
+    }
+
+    if (selectedTarget === 'export') {
+      void handleDockerExport();
+      return;
+    }
+
+    setTarget(selectedTarget);
     setStep('config');
   };
 
@@ -91,8 +154,104 @@ export function Deploy() {
 
   const handleReset = () => {
     reset();
+    setCloudStep('compare');
+    setSelectedCloudProvider(null);
+    setSelectedCloudBaseCost(0);
+    setCloudJob(null);
     setStep('target');
   };
+
+  const handleCloudProviderSelect = (provider: Provider, baseCost: number) => {
+    if (!isCloudProvider(provider)) {
+      return;
+    }
+
+    setCloudProvider(provider);
+    setSelectedCloudProvider(provider);
+    setSelectedCloudBaseCost(baseCost);
+    setCloudJob(null);
+    setCloudStep('configure');
+  };
+
+  const handleCloudExport = () => {
+    if (!cloudConfig.region) {
+      toast.error('Please select a cloud region before exporting.');
+      return;
+    }
+    if (cloudResources.length === 0) {
+      toast.error('Select resources in Migrate before exporting cloud Terraform.');
+      return;
+    }
+    setCloudStep('export');
+  };
+
+  const cloudProjectName = cloudConfig.domain || 'homeport-cloud';
+
+  const pollCloudJob = async (id: string): Promise<CloudDeployJob> => {
+    for (;;) {
+      const job = await getCloudDeploy(id);
+      setCloudJob(job);
+      if (job.status === 'planned' || job.status === 'applied' || job.status === 'failed') {
+        return job;
+      }
+      await new Promise((resolve) => setTimeout(resolve, 1000));
+    }
+  };
+
+  const cloudDeployMutation = useMutation({
+    mutationFn: async (apply: boolean) => {
+      if (!selectedCloudProvider || !cloudConfig.region) {
+        throw new Error('Cloud provider and region are required');
+      }
+      const job = await startCloudDeploy({
+        resources: cloudResources,
+        config: {
+          provider: selectedCloudProvider,
+          project_name: cloudProjectName,
+          domain: cloudConfig.domain,
+          region: cloudConfig.region.id,
+        },
+        apply,
+      });
+      setCloudJob(job);
+      return pollCloudJob(job.id);
+    },
+    onSuccess: (job) => {
+      setCloudJob(job);
+      if (job.status === 'failed') {
+        toast.error(job.error || 'Terraform job failed');
+      } else if (job.status === 'planned') {
+        toast.success('Terraform plan completed');
+      } else if (job.status === 'applied') {
+        toast.success('Terraform apply completed');
+      }
+    },
+    onError: (error: Error) => {
+      toast.error(error.message);
+    },
+  });
+
+  const handleDockerExport = async () => {
+    if (selectedResources.length === 0) {
+      toast.error('Select resources in Migrate before exporting Docker ZIP.');
+      return;
+    }
+    try {
+      const blob = await downloadStack(selectedResources, {
+        domain: cloudConfig.domain || 'homeport.local',
+        consolidate: true,
+        include_migration: true,
+        include_monitoring: true,
+        ha: false,
+      });
+      saveBlob(blob, 'homeport-docker-stack.zip');
+    } catch (error) {
+      toast.error(error instanceof Error ? error.message : 'Export failed');
+    }
+  };
+
+  const handleCloudPlan = () => cloudDeployMutation.mutate(false);
+  const handleCloudApply = () => cloudDeployMutation.mutate(true);
 
   const handleRetry = () => {
     deployMutation.mutate();
@@ -108,9 +267,9 @@ export function Deploy() {
       <div className="flex items-center justify-between">
         <div>
           <h1 className="text-2xl font-bold">Deploy</h1>
-          <p className="text-muted-foreground">Deploy your self-hosted stack to local Docker or remote servers</p>
+          <p className="text-muted-foreground">Deploy your self-hosted stack to local Docker, remote servers, or EU cloud providers</p>
         </div>
-        {step !== 'target' && (
+        {activeStep !== 'target' && (
           <button
             onClick={handleReset}
             className="text-sm text-muted-foreground hover:text-foreground"
@@ -122,22 +281,75 @@ export function Deploy() {
 
       {/* Progress Steps */}
       <div className="flex items-center gap-4 text-sm">
-        <div className={step === 'target' ? 'text-primary font-medium' : 'text-muted-foreground'}>
+        <div className={activeStep === 'target' ? 'text-primary font-medium' : 'text-muted-foreground'}>
           1. Select Target
         </div>
         <div className="h-px w-8 bg-border" />
-        <div className={step === 'config' ? 'text-primary font-medium' : 'text-muted-foreground'}>
+        <div className={activeStep === 'config' ? 'text-primary font-medium' : 'text-muted-foreground'}>
           2. Configure
         </div>
         <div className="h-px w-8 bg-border" />
-        <div className={step === 'deploy' ? 'text-primary font-medium' : 'text-muted-foreground'}>
+        <div className={activeStep === 'deploy' ? 'text-primary font-medium' : 'text-muted-foreground'}>
           3. Deploy
         </div>
       </div>
 
       {/* Step Content */}
-      {step === 'target' && <TargetSelector onSelect={handleTargetSelect} />}
-      {step === 'config' && target && (
+      {activeStep === 'target' && <TargetSelector onSelect={handleTargetSelect} />}
+      {activeStep === 'config' && target === 'cloud' && cloudStep === 'compare' && (
+        <ProviderComparison
+          mappingResults={cloudMappingResults}
+          onSelect={handleCloudProviderSelect}
+          onBack={() => setStep('target')}
+        />
+      )}
+      {activeStep === 'config' && target === 'cloud' && cloudStep === 'configure' && selectedCloudProvider && (
+        <>
+          <ProviderConfigForm
+            provider={selectedCloudProvider}
+            baseCost={selectedCloudBaseCost}
+            onBack={() => setCloudStep('compare')}
+            onDeploy={handleCloudPlan}
+            deployLabel={cloudDeployMutation.isPending ? 'Running Terraform...' : 'Plan Terraform Deploy'}
+          />
+          <div className="flex flex-wrap items-center gap-3 rounded-lg border p-4">
+            <button
+              onClick={handleCloudExport}
+              disabled={!cloudConfig.region}
+              className={buttonVariants({ variant: 'outline' })}
+            >
+              Download Terraform ZIP
+            </button>
+            {cloudJob?.status === 'planned' && (
+              <button
+                onClick={handleCloudApply}
+                disabled={cloudDeployMutation.isPending}
+                className={buttonVariants({ variant: 'primary' })}
+              >
+                Apply Terraform
+              </button>
+            )}
+            {cloudJob && (
+              <span className="text-sm text-muted-foreground">
+                Terraform job {cloudJob.status}{cloudJob.error ? `: ${cloudJob.error}` : ''}
+              </span>
+            )}
+          </div>
+        </>
+      )}
+      {activeStep === 'config' && target === 'cloud' && cloudStep === 'export' && selectedCloudProvider && cloudConfig.region && (
+        <TerraformExport
+          provider={selectedCloudProvider}
+          resources={cloudResources}
+          config={{
+            project_name: cloudProjectName,
+            domain: cloudConfig.domain,
+            region: cloudConfig.region.id,
+          }}
+          onBack={() => setCloudStep('configure')}
+        />
+      )}
+      {activeStep === 'config' && target !== 'cloud' && target && (
         <ConfigurationForm
           onBack={() => setStep('target')}
           onDeploy={handleDeploy}
@@ -146,7 +358,7 @@ export function Deploy() {
           isSaving={saveMutation.isPending}
         />
       )}
-      {step === 'deploy' && (
+      {activeStep === 'deploy' && (
         <DeploymentExecution
           onRetry={handleRetry}
           onComplete={handleComplete}

@@ -1,8 +1,10 @@
 import { Monitor, Server, Download, Cloud } from 'lucide-react';
 import type { DeployTarget } from '@/lib/deploy-api';
 
+export type DeploymentOption = DeployTarget | 'export';
+
 interface TargetSelectorProps {
-  onSelect: (target: DeployTarget | 'export') => void;
+  onSelect: (target: DeploymentOption) => void;
 }
 
 export function TargetSelector({ onSelect }: TargetSelectorProps) {
@@ -60,7 +62,7 @@ export function TargetSelector({ onSelect }: TargetSelectorProps) {
         >
           <Download className="h-5 w-5 text-gray-500" />
           <div className="text-left">
-            <div className="font-medium">Export ZIP</div>
+            <div className="font-medium">Export Docker ZIP</div>
             <div className="text-sm text-muted-foreground">
               Download configuration files for manual deployment
             </div>
