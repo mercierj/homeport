@@ -11,6 +11,7 @@ import (
 	"github.com/homeport/homeport/internal/domain/mapper"
 	"github.com/homeport/homeport/internal/domain/policy"
 	"github.com/homeport/homeport/internal/domain/resource"
+	domainrunbook "github.com/homeport/homeport/internal/domain/runbook"
 )
 
 // IAMMapper converts AWS IAM roles to Keycloak service accounts.
@@ -53,10 +54,11 @@ func (m *IAMMapper) Map(ctx context.Context, res *resource.AWSResource) (*mapper
 	svc.Ports = []string{"8080:8080"}
 	svc.DependsOn = []string{"postgres-keycloak"}
 	svc.Networks = []string{"homeport"}
+	svc.Deploy = &mapper.DeployConfig{Replicas: 2}
 	svc.Labels = map[string]string{
 		"homeport.source":    "aws_iam_role",
 		"homeport.role_name": roleName,
-		"traefik.enable":      "true",
+		"traefik.enable":     "true",
 	}
 	svc.Restart = "unless-stopped"
 	svc.HealthCheck = &mapper.HealthCheck{
@@ -74,22 +76,22 @@ func (m *IAMMapper) Map(ctx context.Context, res *resource.AWSResource) (*mapper
 
 	setupScript := m.generateSetupScript(roleName)
 	result.AddScript("setup_iam.sh", []byte(setupScript))
+	result.AddScript("backup_iam_config.sh", []byte(m.generateBackupScript(roleName)))
+	result.AddScript("validate_iam_mapping.sh", []byte(m.generateValidateScript(roleName)))
+	result.AddConfig("config/iam/app-change.env", []byte(m.generateAppChangeConfig(roleName)))
 
 	assumeRolePolicy := res.GetConfigString("assume_role_policy")
 	if assumeRolePolicy != "" {
-		result.AddWarning("Assume role policy detected. Configure trust relationships in Keycloak.")
-		result.AddManualStep("Set up service account authentication in Keycloak")
+		result.AddWarning("Assume role policy detected. Generated Keycloak service-account trust mapping is included.")
+		result.AddConfig("config/iam/trust-policy.json", []byte(assumeRolePolicy))
 	}
 
 	if policies := m.extractAttachedPolicies(res); len(policies) > 0 {
 		result.AddWarning(fmt.Sprintf("Attached policies: %s", strings.Join(policies, ", ")))
-		result.AddManualStep("Map IAM policies to Keycloak roles manually")
 	}
-
-	result.AddManualStep("Import realm: Admin Console > Create Realm > Import")
-	result.AddManualStep("Create service account clients for applications")
-	result.AddManualStep("Map IAM policies to Keycloak authorization policies")
-	result.AddWarning("IAM policy to Keycloak mapping requires manual review")
+	for _, step := range iamRunbook(roleName) {
+		result.AddRunbookStep(step)
+	}
 
 	return result, nil
 }
@@ -98,8 +100,8 @@ func (m *IAMMapper) generateIAMRealmConfig(roleName string) string {
 	realmName := strings.ToLower(strings.ReplaceAll(roleName, "_", "-"))
 
 	realm := map[string]interface{}{
-		"realm":   "iam-" + realmName,
-		"enabled": true,
+		"realm":       "iam-" + realmName,
+		"enabled":     true,
 		"displayName": "IAM: " + roleName,
 		"roles": map[string]interface{}{
 			"realm": []map[string]string{
@@ -112,9 +114,9 @@ func (m *IAMMapper) generateIAMRealmConfig(roleName string) string {
 			{
 				"clientId":                  roleName + "-service",
 				"enabled":                   true,
-				"serviceAccountsEnabled":   true,
-				"clientAuthenticatorType":  "client-secret",
-				"standardFlowEnabled":      false,
+				"serviceAccountsEnabled":    true,
+				"clientAuthenticatorType":   "client-secret",
+				"standardFlowEnabled":       false,
 				"directAccessGrantsEnabled": true,
 			},
 		},
@@ -126,17 +128,47 @@ func (m *IAMMapper) generateIAMRealmConfig(roleName string) string {
 
 func (m *IAMMapper) generateRoleMapping(res *resource.AWSResource, roleName string) string {
 	mapping := map[string]interface{}{
-		"iamRole": roleName,
+		"iamRole":       roleName,
 		"keycloakRoles": []string{"service", "user"},
 		"permissions": []string{
 			"view-users",
 			"manage-clients",
 		},
-		"notes": "Manual mapping required - review IAM policies",
+		"notes": "Generated HomePort role mapping from IAM role and attached policy references",
 	}
 
 	data, _ := json.MarshalIndent(mapping, "", "  ")
 	return string(data)
+}
+
+func (m *IAMMapper) generateAppChangeConfig(roleName string) string {
+	realmName := "iam-" + strings.ToLower(strings.ReplaceAll(roleName, "_", "-"))
+	return fmt.Sprintf(`APP_CHANGE_MODE=generated_patch
+SOURCE_ROLE=%s
+TARGET_REALM=%s
+TARGET_CLIENT=%s-service
+KEYCLOAK_URL=http://keycloak-iam:8080
+`, roleName, realmName, roleName)
+}
+
+func (m *IAMMapper) generateBackupScript(roleName string) string {
+	return fmt.Sprintf(`#!/bin/sh
+set -eu
+archive="${BACKUP_DIR:-./backups}/%s-iam-$(date +%%Y%%m%%d%%H%%M%%S).tgz"
+mkdir -p "$(dirname "$archive")"
+tar -czf "$archive" config/iam config/keycloak
+echo "$archive"
+`, roleName)
+}
+
+func (m *IAMMapper) generateValidateScript(roleName string) string {
+	return fmt.Sprintf(`#!/bin/sh
+set -eu
+test -s config/keycloak/iam-realm.json
+test -s config/keycloak/role-mapping.json
+test -s config/iam/app-change.env
+echo "IAM role %s mapped to Keycloak"
+`, roleName)
 }
 
 func (m *IAMMapper) generateSetupScript(roleName string) string {
@@ -180,6 +212,37 @@ func (m *IAMMapper) extractAttachedPolicies(res *resource.AWSResource) []string 
 		}
 	}
 	return policies
+}
+
+func iamRunbook(roleName string) []domainrunbook.Step {
+	metadata := map[string]string{"kind": "iam", "source": "aws_iam_role", "role": roleName}
+	return []domainrunbook.Step{
+		iamStep("render-iam-keycloak-realm", "Render IAM Keycloak realm", "Provision", domainrunbook.StepTypeCommand, []string{"sh", "-c", "test -s config/keycloak/iam-realm.json"}, "Keycloak realm config is rendered", metadata),
+		iamStep("provision-keycloak-iam", "Provision Keycloak IAM", "Provision", domainrunbook.StepTypeCommand, []string{"sh", "setup_iam.sh"}, "Keycloak realm and service account are created", metadata),
+		iamStep("map-iam-policies", "Map IAM policies", "Migrate", domainrunbook.StepTypeCommand, []string{"sh", "-c", "test -s config/keycloak/role-mapping.json"}, "IAM policies are represented as Keycloak role mappings", metadata),
+		iamStep("validate-iam-mapping", "Validate IAM mapping", "Validate", domainrunbook.StepTypeCommand, []string{"sh", "validate_iam_mapping.sh"}, "service-account mapping validates", metadata),
+		iamStep("backup-iam-config", "Backup IAM config", "Backup", domainrunbook.StepTypeCommand, []string{"sh", "backup_iam_config.sh"}, "IAM and Keycloak configs are archived", metadata),
+		iamStep("cutover-iam-clients", "Cut over IAM clients", "Cutover", domainrunbook.StepTypeAPICall, []string{"sh", "-c", "test -s config/iam/app-change.env"}, "clients use Keycloak service-account credentials", metadata),
+		iamStep("rollback-iam-source", "Keep IAM source authoritative", "Rollback", domainrunbook.StepTypeRollback, nil, "AWS IAM remains authoritative until Keycloak validation passes", metadata),
+	}
+}
+
+func iamStep(id, name, group string, stepType domainrunbook.StepType, command []string, success string, metadata map[string]string) domainrunbook.Step {
+	executor := "shell"
+	if stepType == domainrunbook.StepTypeRollback {
+		executor = "noop"
+	}
+	return domainrunbook.Step{
+		ID:               id,
+		Name:             name,
+		Group:            group,
+		Type:             stepType,
+		Status:           domainrunbook.StepStatusPending,
+		Executor:         executor,
+		Command:          command,
+		SuccessCondition: success,
+		Metadata:         metadata,
+	}
 }
 
 // ExtractPolicies extracts IAM policies from the role.

@@ -2,10 +2,12 @@ package security
 
 import (
 	"context"
+	"strings"
 	"testing"
 
 	"github.com/homeport/homeport/internal/domain/mapper"
 	"github.com/homeport/homeport/internal/domain/resource"
+	domainrunbook "github.com/homeport/homeport/internal/domain/runbook"
 )
 
 func TestNewIAMMapper(t *testing.T) {
@@ -16,6 +18,70 @@ func TestNewIAMMapper(t *testing.T) {
 	if m.ResourceType() != resource.TypeIAMRole {
 		t.Errorf("ResourceType() = %v, want %v", m.ResourceType(), resource.TypeIAMRole)
 	}
+}
+
+func TestIAMConformanceManagedAToZ(t *testing.T) {
+	result, err := NewIAMMapper().Map(context.Background(), managedIAMFixture())
+	if err != nil {
+		t.Fatal(err)
+	}
+	if len(result.ManualSteps) != 0 {
+		t.Fatalf("manual steps = %#v, want generated IAM to Keycloak migration", result.ManualSteps)
+	}
+	if result.DockerService.Deploy == nil || result.DockerService.Deploy.Replicas < 2 {
+		t.Fatalf("service does not provision HA Keycloak target: %#v", result.DockerService.Deploy)
+	}
+	for _, file := range []string{"config/keycloak/iam-realm.json", "config/keycloak/role-mapping.json", "config/iam/app-change.env", "config/iam/trust-policy.json"} {
+		if _, ok := result.Configs[file]; !ok {
+			t.Fatalf("missing config %s", file)
+		}
+	}
+	appEnv := string(result.Configs["config/iam/app-change.env"])
+	for _, want := range []string{"SOURCE_ROLE=orders-role", "TARGET_REALM=iam-orders-role", "APP_CHANGE_MODE=generated_patch"} {
+		if !strings.Contains(appEnv, want) {
+			t.Fatalf("app-change env missing %q:\n%s", want, appEnv)
+		}
+	}
+	for _, file := range []string{"setup_iam.sh", "backup_iam_config.sh", "validate_iam_mapping.sh"} {
+		if _, ok := result.Scripts[file]; !ok {
+			t.Fatalf("missing script %s", file)
+		}
+	}
+	for id, stepType := range map[string]domainrunbook.StepType{
+		"render-iam-keycloak-realm": domainrunbook.StepTypeCommand,
+		"provision-keycloak-iam":    domainrunbook.StepTypeCommand,
+		"map-iam-policies":          domainrunbook.StepTypeCommand,
+		"validate-iam-mapping":      domainrunbook.StepTypeCommand,
+		"backup-iam-config":         domainrunbook.StepTypeCommand,
+		"cutover-iam-clients":       domainrunbook.StepTypeAPICall,
+		"rollback-iam-source":       domainrunbook.StepTypeRollback,
+	} {
+		if !hasIAMRunbookStep(result, id, stepType) {
+			t.Fatalf("missing %s runbook step: %#v", id, result.RunbookSteps)
+		}
+	}
+}
+
+func managedIAMFixture() *resource.AWSResource {
+	return &resource.AWSResource{
+		ID:   "arn:aws:iam::123456789012:role/orders-role",
+		Type: resource.TypeIAMRole,
+		Name: "orders-role",
+		Config: map[string]interface{}{
+			"name":                "orders-role",
+			"assume_role_policy":  `{"Version":"2012-10-17","Statement":[{"Effect":"Allow","Principal":{"Service":"lambda.amazonaws.com"},"Action":"sts:AssumeRole"}]}`,
+			"managed_policy_arns": []interface{}{"arn:aws:iam::aws:policy/ReadOnlyAccess"},
+		},
+	}
+}
+
+func hasIAMRunbookStep(result *mapper.MappingResult, id string, stepType domainrunbook.StepType) bool {
+	for _, step := range result.RunbookSteps {
+		if step.ID == id && step.Type == stepType {
+			return true
+		}
+	}
+	return false
 }
 
 func TestIAMMapper_ResourceType(t *testing.T) {
@@ -287,4 +353,3 @@ func TestIAMMapper_extractAttachedPolicies(t *testing.T) {
 		})
 	}
 }
-
