@@ -3,7 +3,7 @@
 | aws | ALB | full | aws_lb |
 | aws | ACM | full | aws_acm_certificate |
 | aws | API Gateway | full | aws_api_gateway_rest_api |
-| aws | AppSync | missing |  |
+| aws | AppSync | full | aws_appsync_graphql_api |
 | aws | Athena | missing |  |
 | aws | Bedrock | missing |  |
 | aws | CloudFront | mapped | aws_cloudfront_distribution |

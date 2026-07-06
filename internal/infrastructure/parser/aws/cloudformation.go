@@ -358,22 +358,22 @@ func (p *CloudFormationParser) shouldIncludeType(t resource.Type, opts *parser.P
 
 // CloudFormationTemplate represents an AWS CloudFormation template.
 type CloudFormationTemplate struct {
-	AWSTemplateFormatVersion string                    `yaml:"AWSTemplateFormatVersion" json:"AWSTemplateFormatVersion"`
-	Description              string                    `yaml:"Description" json:"Description"`
-	Parameters               map[string]CFNParameter   `yaml:"Parameters" json:"Parameters"`
-	Mappings                 map[string]interface{}    `yaml:"Mappings" json:"Mappings"`
-	Conditions               map[string]interface{}    `yaml:"Conditions" json:"Conditions"`
-	Resources                map[string]CFNResource    `yaml:"Resources" json:"Resources"`
-	Outputs                  map[string]CFNOutput      `yaml:"Outputs" json:"Outputs"`
+	AWSTemplateFormatVersion string                  `yaml:"AWSTemplateFormatVersion" json:"AWSTemplateFormatVersion"`
+	Description              string                  `yaml:"Description" json:"Description"`
+	Parameters               map[string]CFNParameter `yaml:"Parameters" json:"Parameters"`
+	Mappings                 map[string]interface{}  `yaml:"Mappings" json:"Mappings"`
+	Conditions               map[string]interface{}  `yaml:"Conditions" json:"Conditions"`
+	Resources                map[string]CFNResource  `yaml:"Resources" json:"Resources"`
+	Outputs                  map[string]CFNOutput    `yaml:"Outputs" json:"Outputs"`
 }
 
 // CFNParameter represents a CloudFormation parameter.
 type CFNParameter struct {
-	Type          string      `yaml:"Type" json:"Type"`
-	Default       interface{} `yaml:"Default" json:"Default"`
-	Description   string      `yaml:"Description" json:"Description"`
-	AllowedValues []string    `yaml:"AllowedValues" json:"AllowedValues"`
-	ConstraintDescription string `yaml:"ConstraintDescription" json:"ConstraintDescription"`
+	Type                  string      `yaml:"Type" json:"Type"`
+	Default               interface{} `yaml:"Default" json:"Default"`
+	Description           string      `yaml:"Description" json:"Description"`
+	AllowedValues         []string    `yaml:"AllowedValues" json:"AllowedValues"`
+	ConstraintDescription string      `yaml:"ConstraintDescription" json:"ConstraintDescription"`
 }
 
 // CFNResource represents a CloudFormation resource.
@@ -476,42 +476,43 @@ func isActualCloudFormation(path string) bool {
 func mapCFNTypeToResourceType(cfnType string) resource.Type {
 	mapping := map[string]resource.Type{
 		// Compute
-		"AWS::EC2::Instance":                  resource.TypeEC2Instance,
-		"AWS::Lambda::Function":               resource.TypeLambdaFunction,
-		"AWS::ECS::Service":                   resource.TypeECSService,
-		"AWS::ECS::TaskDefinition":            resource.TypeECSTaskDef,
-		"AWS::EKS::Cluster":                   resource.TypeEKSCluster,
+		"AWS::EC2::Instance":       resource.TypeEC2Instance,
+		"AWS::Lambda::Function":    resource.TypeLambdaFunction,
+		"AWS::ECS::Service":        resource.TypeECSService,
+		"AWS::ECS::TaskDefinition": resource.TypeECSTaskDef,
+		"AWS::EKS::Cluster":        resource.TypeEKSCluster,
 
 		// Storage
-		"AWS::S3::Bucket":                     resource.TypeS3Bucket,
-		"AWS::EC2::Volume":                    resource.TypeEBSVolume,
-		"AWS::EFS::FileSystem":                resource.TypeEFSVolume,
+		"AWS::S3::Bucket":      resource.TypeS3Bucket,
+		"AWS::EC2::Volume":     resource.TypeEBSVolume,
+		"AWS::EFS::FileSystem": resource.TypeEFSVolume,
 
 		// Database
-		"AWS::RDS::DBInstance":                resource.TypeRDSInstance,
-		"AWS::RDS::DBCluster":                 resource.TypeRDSCluster,
-		"AWS::DynamoDB::Table":                resource.TypeDynamoDBTable,
-		"AWS::ElastiCache::CacheCluster":      resource.TypeElastiCache,
-		"AWS::ElastiCache::ReplicationGroup":  resource.TypeElastiCache,
+		"AWS::RDS::DBInstance":               resource.TypeRDSInstance,
+		"AWS::RDS::DBCluster":                resource.TypeRDSCluster,
+		"AWS::DynamoDB::Table":               resource.TypeDynamoDBTable,
+		"AWS::ElastiCache::CacheCluster":     resource.TypeElastiCache,
+		"AWS::ElastiCache::ReplicationGroup": resource.TypeElastiCache,
 
 		// Networking
 		"AWS::ElasticLoadBalancingV2::LoadBalancer": resource.TypeALB,
 		"AWS::ApiGateway::RestApi":                  resource.TypeAPIGateway,
+		"AWS::AppSync::GraphQLApi":                  resource.TypeAppSyncGraphQLAPI,
 		"AWS::Route53::HostedZone":                  resource.TypeRoute53Zone,
 		"AWS::CloudFront::Distribution":             resource.TypeCloudFront,
 		"AWS::EC2::VPC":                             resource.TypeVPC,
 
 		// Security
-		"AWS::Cognito::UserPool":              resource.TypeCognitoPool,
-		"AWS::SecretsManager::Secret":         resource.TypeSecretsManager,
-		"AWS::IAM::Role":                      resource.TypeIAMRole,
+		"AWS::Cognito::UserPool":               resource.TypeCognitoPool,
+		"AWS::SecretsManager::Secret":          resource.TypeSecretsManager,
+		"AWS::IAM::Role":                       resource.TypeIAMRole,
 		"AWS::CertificateManager::Certificate": resource.TypeACMCertificate,
 
 		// Messaging
-		"AWS::SQS::Queue":                     resource.TypeSQSQueue,
-		"AWS::SNS::Topic":                     resource.TypeSNSTopic,
-		"AWS::Events::Rule":                   resource.TypeEventBridge,
-		"AWS::Kinesis::Stream":                resource.TypeKinesis,
+		"AWS::SQS::Queue":      resource.TypeSQSQueue,
+		"AWS::SNS::Topic":      resource.TypeSNSTopic,
+		"AWS::Events::Rule":    resource.TypeEventBridge,
+		"AWS::Kinesis::Stream": resource.TypeKinesis,
 	}
 
 	if resType, ok := mapping[cfnType]; ok {

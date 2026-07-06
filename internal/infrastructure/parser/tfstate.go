@@ -11,29 +11,29 @@ import (
 
 // TerraformState represents the structure of a Terraform state file
 type TerraformState struct {
-	Version          int                `json:"version"`
-	TerraformVersion string             `json:"terraform_version"`
-	Resources        []StateResource    `json:"resources"`
-	Outputs          map[string]Output  `json:"outputs,omitempty"`
+	Version          int               `json:"version"`
+	TerraformVersion string            `json:"terraform_version"`
+	Resources        []StateResource   `json:"resources"`
+	Outputs          map[string]Output `json:"outputs,omitempty"`
 }
 
 // StateResource represents a resource in the Terraform state
 type StateResource struct {
-	Mode         string             `json:"mode"`
-	Type         string             `json:"type"`
-	Name         string             `json:"name"`
-	Provider     string             `json:"provider"`
-	Instances    []ResourceInstance `json:"instances"`
-	Module       string             `json:"module,omitempty"`
+	Mode      string             `json:"mode"`
+	Type      string             `json:"type"`
+	Name      string             `json:"name"`
+	Provider  string             `json:"provider"`
+	Instances []ResourceInstance `json:"instances"`
+	Module    string             `json:"module,omitempty"`
 }
 
 // ResourceInstance represents an instance of a resource
 type ResourceInstance struct {
-	SchemaVersion   int                    `json:"schema_version"`
-	Attributes      map[string]interface{} `json:"attributes"`
-	Dependencies    []string               `json:"dependencies,omitempty"`
-	Private         string                 `json:"private,omitempty"`
-	IndexKey        interface{}            `json:"index_key,omitempty"`
+	SchemaVersion int                    `json:"schema_version"`
+	Attributes    map[string]interface{} `json:"attributes"`
+	Dependencies  []string               `json:"dependencies,omitempty"`
+	Private       string                 `json:"private,omitempty"`
+	IndexKey      interface{}            `json:"index_key,omitempty"`
 }
 
 // Output represents a Terraform output value
@@ -192,6 +192,8 @@ func mapTerraformTypeToResourceType(tfType string) resource.Type {
 		return resource.TypeALB
 	case "aws_api_gateway_rest_api", "aws_apigatewayv2_api":
 		return resource.TypeAPIGateway
+	case "aws_appsync_graphql_api":
+		return resource.TypeAppSyncGraphQLAPI
 	case "aws_route53_zone":
 		return resource.TypeRoute53Zone
 	case "aws_cloudfront_distribution":

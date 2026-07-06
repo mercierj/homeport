@@ -29,11 +29,12 @@ const (
 	TypeElastiCache   Type = "aws_elasticache_cluster"
 
 	// AWS Networking
-	TypeALB         Type = "aws_lb"
-	TypeAPIGateway  Type = "aws_api_gateway_rest_api"
-	TypeRoute53Zone Type = "aws_route53_zone"
-	TypeCloudFront  Type = "aws_cloudfront_distribution"
-	TypeVPC         Type = "aws_vpc"
+	TypeALB               Type = "aws_lb"
+	TypeAPIGateway        Type = "aws_api_gateway_rest_api"
+	TypeAppSyncGraphQLAPI Type = "aws_appsync_graphql_api"
+	TypeRoute53Zone       Type = "aws_route53_zone"
+	TypeCloudFront        Type = "aws_cloudfront_distribution"
+	TypeVPC               Type = "aws_vpc"
 
 	// AWS Security
 	TypeCognitoPool    Type = "aws_cognito_user_pool"
@@ -80,11 +81,11 @@ const (
 	TypeSpanner     Type = "google_spanner_instance"
 
 	// GCP Networking
-	TypeCloudLB        Type = "google_compute_backend_service"
-	TypeCloudDNS       Type = "google_dns_managed_zone"
-	TypeCloudCDN       Type = "google_compute_backend_bucket"
-	TypeCloudArmor     Type = "google_compute_security_policy"
-	TypeGCPVPCNetwork  Type = "google_compute_network"
+	TypeCloudLB       Type = "google_compute_backend_service"
+	TypeCloudDNS      Type = "google_dns_managed_zone"
+	TypeCloudCDN      Type = "google_compute_backend_bucket"
+	TypeCloudArmor    Type = "google_compute_security_policy"
+	TypeGCPVPCNetwork Type = "google_compute_network"
 
 	// GCP Security
 	TypeIdentityPlatform Type = "google_identity_platform_config"
@@ -110,37 +111,37 @@ const (
 	TypeAppService        Type = "azurerm_app_service"
 
 	// Azure Storage
-	TypeBlobStorage       Type = "azurerm_storage_container"
-	TypeAzureStorageAcct  Type = "azurerm_storage_account"
-	TypeManagedDisk       Type = "azurerm_managed_disk"
-	TypeAzureFiles        Type = "azurerm_storage_share"
+	TypeBlobStorage      Type = "azurerm_storage_container"
+	TypeAzureStorageAcct Type = "azurerm_storage_account"
+	TypeManagedDisk      Type = "azurerm_managed_disk"
+	TypeAzureFiles       Type = "azurerm_storage_share"
 
 	// Azure Database
-	TypeAzureSQL          Type = "azurerm_mssql_database"
-	TypeAzurePostgres     Type = "azurerm_postgresql_flexible_server"
-	TypeAzureMySQL        Type = "azurerm_mysql_flexible_server"
-	TypeCosmosDB          Type = "azurerm_cosmosdb_account"
-	TypeAzureCache        Type = "azurerm_redis_cache"
+	TypeAzureSQL      Type = "azurerm_mssql_database"
+	TypeAzurePostgres Type = "azurerm_postgresql_flexible_server"
+	TypeAzureMySQL    Type = "azurerm_mysql_flexible_server"
+	TypeCosmosDB      Type = "azurerm_cosmosdb_account"
+	TypeAzureCache    Type = "azurerm_redis_cache"
 
 	// Azure Networking
-	TypeAzureLB           Type = "azurerm_lb"
-	TypeAppGateway        Type = "azurerm_application_gateway"
-	TypeAzureDNS          Type = "azurerm_dns_zone"
-	TypeAzureCDN          Type = "azurerm_cdn_profile"
-	TypeFrontDoor         Type = "azurerm_frontdoor"
-	TypeAzureVNet         Type = "azurerm_virtual_network"
+	TypeAzureLB    Type = "azurerm_lb"
+	TypeAppGateway Type = "azurerm_application_gateway"
+	TypeAzureDNS   Type = "azurerm_dns_zone"
+	TypeAzureCDN   Type = "azurerm_cdn_profile"
+	TypeFrontDoor  Type = "azurerm_frontdoor"
+	TypeAzureVNet  Type = "azurerm_virtual_network"
 
 	// Azure Security
-	TypeAzureADB2C        Type = "azurerm_aadb2c_directory"
-	TypeKeyVault          Type = "azurerm_key_vault"
-	TypeAzureFirewall     Type = "azurerm_firewall"
+	TypeAzureADB2C    Type = "azurerm_aadb2c_directory"
+	TypeKeyVault      Type = "azurerm_key_vault"
+	TypeAzureFirewall Type = "azurerm_firewall"
 
 	// Azure Messaging
-	TypeServiceBus        Type = "azurerm_servicebus_namespace"
-	TypeServiceBusQueue   Type = "azurerm_servicebus_queue"
-	TypeEventHub          Type = "azurerm_eventhub"
-	TypeEventGrid         Type = "azurerm_eventgrid_topic"
-	TypeLogicApp          Type = "azurerm_logic_app_workflow"
+	TypeServiceBus      Type = "azurerm_servicebus_namespace"
+	TypeServiceBusQueue Type = "azurerm_servicebus_queue"
+	TypeEventHub        Type = "azurerm_eventhub"
+	TypeEventGrid       Type = "azurerm_eventgrid_topic"
+	TypeLogicApp        Type = "azurerm_logic_app_workflow"
 )
 
 // String returns the string representation of the resource type.

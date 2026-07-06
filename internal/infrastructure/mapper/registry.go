@@ -64,6 +64,7 @@ func (r *Registry) RegisterDefaults() {
 	// AWS Networking mappers
 	r.Register(networking.NewALBMapper())
 	r.Register(networking.NewAPIGatewayMapper())
+	r.Register(networking.NewAppSyncMapper())
 	r.Register(networking.NewCloudFrontMapper())
 	r.Register(networking.NewRoute53Mapper())
 	r.Register(networking.NewVPCMapper())

@@ -35,10 +35,10 @@ const (
 	CategoryVPC          Category = "vpc"           // VPC, VPC Network, VNet
 
 	// Security categories
-	CategoryAuth       Category = "auth"        // Cognito, Identity Platform, Azure AD B2C
-	CategorySecrets    Category = "secrets"     // Secrets Manager, Secret Manager, Key Vault
-	CategoryIAM        Category = "iam"         // IAM roles/policies
-	CategoryFirewall   Category = "firewall"    // Security Groups, Cloud Armor, Azure Firewall
+	CategoryAuth        Category = "auth"        // Cognito, Identity Platform, Azure AD B2C
+	CategorySecrets     Category = "secrets"     // Secrets Manager, Secret Manager, Key Vault
+	CategoryIAM         Category = "iam"         // IAM roles/policies
+	CategoryFirewall    Category = "firewall"    // Security Groups, Cloud Armor, Azure Firewall
 	CategoryCertificate Category = "certificate" // ACM, Certificate Manager, App Service Certificates
 
 	// Monitoring categories
@@ -104,11 +104,12 @@ var CategoryMapping = map[Type]Category{
 	TypeElastiCache:   CategoryCache,
 
 	// AWS Networking
-	TypeALB:         CategoryLoadBalancer,
-	TypeAPIGateway:  CategoryAPIGateway,
-	TypeRoute53Zone: CategoryDNS,
-	TypeCloudFront:  CategoryCDN,
-	TypeVPC:         CategoryVPC,
+	TypeALB:               CategoryLoadBalancer,
+	TypeAPIGateway:        CategoryAPIGateway,
+	TypeAppSyncGraphQLAPI: CategoryAPIGateway,
+	TypeRoute53Zone:       CategoryDNS,
+	TypeCloudFront:        CategoryCDN,
+	TypeVPC:               CategoryVPC,
 
 	// AWS Security
 	TypeCognitoPool:    CategoryAuth,
@@ -198,12 +199,12 @@ var CategoryMapping = map[Type]Category{
 	TypeAzureCache:    CategoryCache,
 
 	// Azure Networking
-	TypeAzureLB:      CategoryLoadBalancer,
-	TypeAppGateway:   CategoryLoadBalancer,
-	TypeAzureDNS:     CategoryDNS,
-	TypeAzureCDN:     CategoryCDN,
-	TypeFrontDoor:    CategoryCDN,
-	TypeAzureVNet:    CategoryVPC,
+	TypeAzureLB:       CategoryLoadBalancer,
+	TypeAppGateway:    CategoryLoadBalancer,
+	TypeAzureDNS:      CategoryDNS,
+	TypeAzureCDN:      CategoryCDN,
+	TypeFrontDoor:     CategoryCDN,
+	TypeAzureVNet:     CategoryVPC,
 	TypeAzureFirewall: CategoryFirewall,
 
 	// Azure Security

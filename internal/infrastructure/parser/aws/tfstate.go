@@ -307,27 +307,28 @@ func mapAWSTerraformType(tfType string) resource.Type {
 		"aws_efs_file_system": resource.TypeEFSVolume,
 
 		// Database
-		"aws_db_instance":                 resource.TypeRDSInstance,
-		"aws_rds_cluster":                 resource.TypeRDSCluster,
-		"aws_dynamodb_table":              resource.TypeDynamoDBTable,
-		"aws_elasticache_cluster":         resource.TypeElastiCache,
+		"aws_db_instance":                   resource.TypeRDSInstance,
+		"aws_rds_cluster":                   resource.TypeRDSCluster,
+		"aws_dynamodb_table":                resource.TypeDynamoDBTable,
+		"aws_elasticache_cluster":           resource.TypeElastiCache,
 		"aws_elasticache_replication_group": resource.TypeElastiCache,
 
 		// Networking
-		"aws_lb":                    resource.TypeALB,
-		"aws_alb":                   resource.TypeALB,
-		"aws_elb":                   resource.TypeALB,
-		"aws_api_gateway_rest_api":  resource.TypeAPIGateway,
-		"aws_apigatewayv2_api":      resource.TypeAPIGateway,
-		"aws_route53_zone":          resource.TypeRoute53Zone,
+		"aws_lb":                      resource.TypeALB,
+		"aws_alb":                     resource.TypeALB,
+		"aws_elb":                     resource.TypeALB,
+		"aws_api_gateway_rest_api":    resource.TypeAPIGateway,
+		"aws_apigatewayv2_api":        resource.TypeAPIGateway,
+		"aws_appsync_graphql_api":     resource.TypeAppSyncGraphQLAPI,
+		"aws_route53_zone":            resource.TypeRoute53Zone,
 		"aws_cloudfront_distribution": resource.TypeCloudFront,
-		"aws_vpc":                   resource.TypeVPC,
+		"aws_vpc":                     resource.TypeVPC,
 
 		// Security
-		"aws_cognito_user_pool":    resource.TypeCognitoPool,
+		"aws_cognito_user_pool":     resource.TypeCognitoPool,
 		"aws_secretsmanager_secret": resource.TypeSecretsManager,
-		"aws_iam_role":             resource.TypeIAMRole,
-		"aws_acm_certificate":      resource.TypeACMCertificate,
+		"aws_iam_role":              resource.TypeIAMRole,
+		"aws_acm_certificate":       resource.TypeACMCertificate,
 
 		// Messaging
 		"aws_sqs_queue":             resource.TypeSQSQueue,
@@ -345,9 +346,9 @@ func mapAWSTerraformType(tfType string) resource.Type {
 
 // TerraformState represents a Terraform state file.
 type TerraformState struct {
-	Version          int                   `json:"version"`
-	TerraformVersion string                `json:"terraform_version"`
-	Resources        []StateResource       `json:"resources"`
+	Version          int                    `json:"version"`
+	TerraformVersion string                 `json:"terraform_version"`
+	Resources        []StateResource        `json:"resources"`
 	Outputs          map[string]StateOutput `json:"outputs,omitempty"`
 }
 
