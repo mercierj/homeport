@@ -33,6 +33,7 @@ func RegisterAll(registry MapperRegistrar) {
 	registry.Register(database.NewBigtableMapper())
 	registry.Register(database.NewMemorystoreMapper())
 	registry.Register(database.NewSpannerMapper())
+	registry.Register(database.NewBigQueryMapper())
 
 	// Storage mappers
 	registry.Register(storage.NewGCSMapper())

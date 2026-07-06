@@ -62,7 +62,7 @@
 | gcp | Apigee | full | google_apigee_organization |
 | gcp | App Engine | full | google_app_engine_application |
 | gcp | Artifact Registry | full | google_artifact_registry_repository |
-| gcp | BigQuery | missing |  |
+| gcp | BigQuery | full | google_bigquery_dataset |
 | gcp | Bigtable | guided | google_bigtable_instance |
 | gcp | Cloud Armor | mapped | google_compute_security_policy |
 | gcp | Cloud Build | missing |  |

@@ -98,7 +98,7 @@ var ResourceMapping = map[resource.Type]StackType{
 	resource.TypeXRaySamplingRule:      StackTypeObservability, // Tracing consolidates
 
 	// ─────────────────────────────────────────────────────
-	// GCP Resource Types (27 types)
+	// GCP Resource Types (28 types)
 	// ─────────────────────────────────────────────────────
 
 	// GCP Compute (5 types) - Passthrough except serverless
@@ -114,12 +114,13 @@ var ResourceMapping = map[resource.Type]StackType{
 	resource.TypePersistentDisk: StackTypePassthrough, // Block storage stays with VMs
 	resource.TypeFilestore:      StackTypeStorage,     // File storage consolidates
 
-	// GCP Database (5 types)
+	// GCP Database (6 types)
 	resource.TypeCloudSQL:    StackTypeDatabase, // SQL databases consolidate
 	resource.TypeFirestore:   StackTypeDatabase, // NoSQL consolidates
 	resource.TypeBigtable:    StackTypeDatabase, // Wide-column consolidates
 	resource.TypeMemorystore: StackTypeCache,    // Cache consolidates
 	resource.TypeSpanner:     StackTypeDatabase, // Distributed SQL consolidates
+	resource.TypeBigQuery:    StackTypeDatabase, // Analytical SQL consolidates
 
 	// GCP Networking (6 types) - All passthrough
 	resource.TypeCloudLB:            StackTypePassthrough, // Load balancers stay individual

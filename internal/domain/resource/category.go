@@ -188,6 +188,7 @@ var CategoryMapping = map[Type]Category{
 	TypeBigtable:    CategoryNoSQLDatabase,
 	TypeMemorystore: CategoryCache,
 	TypeSpanner:     CategorySQLDatabase,
+	TypeBigQuery:    CategorySQLDatabase,
 
 	// GCP Networking
 	TypeCloudLB:            CategoryLoadBalancer,

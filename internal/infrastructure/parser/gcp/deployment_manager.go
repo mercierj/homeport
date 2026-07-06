@@ -331,6 +331,7 @@ func mapDMTypeToResourceType(dmType string) resource.Type {
 		"sqladmin.v1.instance":      resource.TypeCloudSQL,
 		"spanner.v1.instance":       resource.TypeSpanner,
 		"redis.v1.instance":         resource.TypeMemorystore,
+		"bigquery.v2.dataset":       resource.TypeBigQuery,
 
 		// Networking
 		"compute.v1.network":        resource.TypeGCPVPCNetwork,
