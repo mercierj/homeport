@@ -61,6 +61,7 @@ var ResourceMapping = map[resource.Type]StackType{
 	resource.TypeIAMRole:           StackTypePassthrough, // IAM doesn't map to self-hosted
 	resource.TypeACMCertificate:    StackTypePassthrough, // Certificates handled separately
 	resource.TypeGuardDutyDetector: StackTypePassthrough, // Security detections stay explicit
+	resource.TypeWAFWebACL:         StackTypePassthrough, // WAF policies stay explicit edge controls
 
 	// AWS Messaging (6 types)
 	resource.TypeSQSQueue:    StackTypeMessaging, // Queue consolidates

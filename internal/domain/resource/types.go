@@ -53,6 +53,7 @@ const (
 	TypeIAMRole           Type = "aws_iam_role"
 	TypeACMCertificate    Type = "aws_acm_certificate"
 	TypeGuardDutyDetector Type = "aws_guardduty_detector"
+	TypeWAFWebACL         Type = "aws_wafv2_web_acl"
 
 	// AWS Messaging
 	TypeSQSQueue    Type = "aws_sqs_queue"

@@ -519,6 +519,8 @@ func mapCFNTypeToResourceType(cfnType string) resource.Type {
 		"AWS::IAM::Role":                       resource.TypeIAMRole,
 		"AWS::CertificateManager::Certificate": resource.TypeACMCertificate,
 		"AWS::GuardDuty::Detector":             resource.TypeGuardDutyDetector,
+		"AWS::WAFv2::WebACL":                   resource.TypeWAFWebACL,
+		"AWS::WAF::WebACL":                     resource.TypeWAFWebACL,
 
 		// Messaging
 		"AWS::SQS::Queue":             resource.TypeSQSQueue,

@@ -342,6 +342,8 @@ func mapAWSTerraformType(tfType string) resource.Type {
 		"aws_iam_role":              resource.TypeIAMRole,
 		"aws_acm_certificate":       resource.TypeACMCertificate,
 		"aws_guardduty_detector":    resource.TypeGuardDutyDetector,
+		"aws_wafv2_web_acl":         resource.TypeWAFWebACL,
+		"aws_waf_web_acl":           resource.TypeWAFWebACL,
 
 		// Messaging
 		"aws_sqs_queue":              resource.TypeSQSQueue,

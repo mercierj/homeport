@@ -212,6 +212,8 @@ func mapTerraformTypeToResourceType(tfType string) resource.Type {
 		return resource.TypeSecretsManager
 	case "aws_iam_role":
 		return resource.TypeIAMRole
+	case "aws_wafv2_web_acl", "aws_waf_web_acl":
+		return resource.TypeWAFWebACL
 
 	// Messaging
 	case "aws_sqs_queue":
