@@ -498,6 +498,8 @@ func mapCFNTypeToResourceType(cfnType string) resource.Type {
 		"AWS::ElasticLoadBalancingV2::LoadBalancer": resource.TypeALB,
 		"AWS::ApiGateway::RestApi":                  resource.TypeAPIGateway,
 		"AWS::AppSync::GraphQLApi":                  resource.TypeAppSyncGraphQLAPI,
+		"AWS::Athena::WorkGroup":                    resource.TypeAthenaWorkgroup,
+		"AWS::Athena::NamedQuery":                   resource.TypeAthenaWorkgroup,
 		"AWS::Route53::HostedZone":                  resource.TypeRoute53Zone,
 		"AWS::CloudFront::Distribution":             resource.TypeCloudFront,
 		"AWS::EC2::VPC":                             resource.TypeVPC,

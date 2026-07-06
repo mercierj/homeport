@@ -4,7 +4,7 @@
 | aws | ACM | full | aws_acm_certificate |
 | aws | API Gateway | full | aws_api_gateway_rest_api |
 | aws | AppSync | full | aws_appsync_graphql_api |
-| aws | Athena | missing |  |
+| aws | Athena | full | aws_athena_workgroup |
 | aws | Bedrock | missing |  |
 | aws | CloudFront | mapped | aws_cloudfront_distribution |
 | aws | CloudWatch | mapped | aws_cloudwatch_metric_alarm, aws_cloudwatch_log_group, aws_cloudwatch_dashboard |

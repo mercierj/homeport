@@ -312,6 +312,8 @@ func mapAWSTerraformType(tfType string) resource.Type {
 		"aws_dynamodb_table":                resource.TypeDynamoDBTable,
 		"aws_elasticache_cluster":           resource.TypeElastiCache,
 		"aws_elasticache_replication_group": resource.TypeElastiCache,
+		"aws_athena_workgroup":              resource.TypeAthenaWorkgroup,
+		"aws_athena_database":               resource.TypeAthenaWorkgroup,
 
 		// Networking
 		"aws_lb":                      resource.TypeALB,
