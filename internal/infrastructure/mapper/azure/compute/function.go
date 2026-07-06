@@ -9,6 +9,7 @@ import (
 
 	"github.com/homeport/homeport/internal/domain/mapper"
 	"github.com/homeport/homeport/internal/domain/resource"
+	"github.com/homeport/homeport/internal/infrastructure/mapper/shared/computeruntime"
 )
 
 // FunctionMapper converts Azure Functions to Docker/OpenFaaS.
@@ -71,7 +72,7 @@ func (m *FunctionMapper) Map(ctx context.Context, res *resource.AWSResource) (*m
 		"homeport.source":        "azurerm_function_app",
 		"homeport.function_name": functionName,
 		"homeport.runtime":       runtime,
-		"traefik.enable":          "true",
+		"traefik.enable":         "true",
 		"traefik.http.routers." + m.sanitizeName(functionName) + ".rule": fmt.Sprintf("Host(`%s.localhost`)", m.sanitizeName(functionName)),
 	}
 
@@ -97,6 +98,7 @@ func (m *FunctionMapper) Map(ctx context.Context, res *resource.AWSResource) (*m
 	// Generate Dockerfile
 	dockerfile := m.generateDockerfile(runtime, runtimeVersion, functionName)
 	result.AddConfig(fmt.Sprintf("functions/%s/Dockerfile", functionName), []byte(dockerfile))
+	svc.Build = &mapper.DockerBuild{Context: fmt.Sprintf("./functions/%s", functionName), Dockerfile: "Dockerfile"}
 
 	// Generate sample function
 	sampleFunc := m.generateSampleFunction(runtime, functionName)
@@ -106,8 +108,12 @@ func (m *FunctionMapper) Map(ctx context.Context, res *resource.AWSResource) (*m
 	hostJson := m.generateHostJson()
 	result.AddConfig(fmt.Sprintf("functions/%s/host.json", functionName), []byte(hostJson))
 
-	result.AddManualStep("Build function: docker build -t " + m.sanitizeName(functionName) + " ./functions/" + functionName)
 	result.AddManualStep("Access at: http://" + m.sanitizeName(functionName) + ".localhost/api/<function>")
+	appUnit := computeruntime.FromDockerService("azurerm_function_app", svc)
+	result.AddAppUnit(appUnit)
+	for _, step := range computeruntime.ServerlessFunction(appUnit, "") {
+		result.AddRunbookStep(step)
+	}
 
 	return result, nil
 }

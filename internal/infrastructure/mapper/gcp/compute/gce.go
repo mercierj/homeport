@@ -9,6 +9,7 @@ import (
 
 	"github.com/homeport/homeport/internal/domain/mapper"
 	"github.com/homeport/homeport/internal/domain/resource"
+	"github.com/homeport/homeport/internal/infrastructure/mapper/shared/computeruntime"
 )
 
 // GCEMapper converts GCP Compute Engine instances to Docker containers.
@@ -90,7 +91,14 @@ func (m *GCEMapper) Map(ctx context.Context, res *resource.AWSResource) (*mapper
 
 	// Generate Dockerfile
 	dockerfile := m.generateDockerfile(baseImage, instanceName)
-	result.AddConfig(fmt.Sprintf("Dockerfile.%s", instanceName), []byte(dockerfile))
+	dockerfilePath := fmt.Sprintf("Dockerfile.%s", instanceName)
+	result.AddConfig(dockerfilePath, []byte(dockerfile))
+	svc.Build = &mapper.DockerBuild{Context: ".", Dockerfile: dockerfilePath}
+	appUnit := computeruntime.FromDockerService("google_compute_instance", svc)
+	result.AddAppUnit(appUnit)
+	for _, step := range computeruntime.ContainerApp(appUnit, "") {
+		result.AddRunbookStep(step)
+	}
 
 	result.AddManualStep("Review generated Dockerfile and customize for your application")
 	result.AddManualStep("Configure environment variables as needed")

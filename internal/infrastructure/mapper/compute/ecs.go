@@ -9,6 +9,7 @@ import (
 
 	"github.com/homeport/homeport/internal/domain/mapper"
 	"github.com/homeport/homeport/internal/domain/resource"
+	"github.com/homeport/homeport/internal/infrastructure/mapper/shared/computeruntime"
 )
 
 // ECSMapper converts AWS ECS services and task definitions to Docker Compose.
@@ -106,6 +107,11 @@ func (m *ECSMapper) Map(ctx context.Context, res *resource.AWSResource) (*mapper
 	// Generate setup script
 	setupScript := m.generateSetupScript(serviceName, desiredCount)
 	result.AddScript("setup_ecs_service.sh", []byte(setupScript))
+	appUnit := computeruntime.FromDockerService("aws_ecs_service", svc)
+	result.AddAppUnit(appUnit)
+	for _, step := range computeruntime.ContainerApp(appUnit, "setup_ecs_service.sh") {
+		result.AddRunbookStep(step)
+	}
 
 	result.AddManualStep("Review container image and update if needed")
 	result.AddManualStep("Configure environment variables with actual values")
@@ -433,6 +439,11 @@ func (m *ECSTaskDefMapper) Map(ctx context.Context, res *resource.AWSResource) (
 	requiresCompatibilities := res.GetConfigString("requires_compatibilities")
 	if strings.Contains(requiresCompatibilities, "FARGATE") {
 		result.AddWarning("Task uses Fargate compatibility. Resource limits have been configured for Docker.")
+	}
+	appUnit := computeruntime.FromDockerService("aws_ecs_task_definition", svc)
+	result.AddAppUnit(appUnit)
+	for _, step := range computeruntime.ContainerApp(appUnit, "") {
+		result.AddRunbookStep(step)
 	}
 
 	return result, nil

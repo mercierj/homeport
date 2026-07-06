@@ -8,6 +8,7 @@ import (
 
 	"github.com/homeport/homeport/internal/domain/mapper"
 	"github.com/homeport/homeport/internal/domain/resource"
+	"github.com/homeport/homeport/internal/infrastructure/mapper/shared/computeruntime"
 )
 
 // GKEMapper converts GCP GKE clusters to K3s.
@@ -103,6 +104,9 @@ func (m *GKEMapper) Map(ctx context.Context, res *resource.AWSResource) (*mapper
 	// Generate setup script
 	setupScript := m.generateSetupScript(clusterName)
 	result.AddScript("setup_k3s.sh", []byte(setupScript))
+	for _, step := range computeruntime.KubernetesCluster(clusterName, "setup_k3s.sh") {
+		result.AddRunbookStep(step)
+	}
 
 	result.AddVolume(mapper.Volume{
 		Name:   "k3s-server",

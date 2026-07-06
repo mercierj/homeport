@@ -9,6 +9,7 @@ import (
 
 	"github.com/homeport/homeport/internal/domain/mapper"
 	"github.com/homeport/homeport/internal/domain/resource"
+	"github.com/homeport/homeport/internal/infrastructure/mapper/shared/computeruntime"
 )
 
 // CloudRunMapper converts GCP Cloud Run services to Docker containers.
@@ -56,8 +57,8 @@ func (m *CloudRunMapper) Map(ctx context.Context, res *resource.AWSResource) (*m
 	svc.Labels = map[string]string{
 		"homeport.source":       "google_cloud_run_service",
 		"homeport.service_name": serviceName,
-		"traefik.enable":         "true",
-		"traefik.http.routers." + m.sanitizeName(serviceName) + ".rule": fmt.Sprintf("Host(`%s.localhost`)", m.sanitizeName(serviceName)),
+		"traefik.enable":        "true",
+		"traefik.http.routers." + m.sanitizeName(serviceName) + ".rule":                      fmt.Sprintf("Host(`%s.localhost`)", m.sanitizeName(serviceName)),
 		"traefik.http.services." + m.sanitizeName(serviceName) + ".loadbalancer.server.port": fmt.Sprintf("%d", containerPort),
 	}
 
@@ -86,6 +87,11 @@ func (m *CloudRunMapper) Map(ctx context.Context, res *resource.AWSResource) (*m
 	// Handle VPC connector
 	if vpcAccess := res.Config["vpc_access"]; vpcAccess != nil {
 		result.AddWarning("VPC Access Connector is configured. Configure Docker networks accordingly.")
+	}
+	appUnit := computeruntime.FromDockerService("google_cloud_run_service", svc)
+	result.AddAppUnit(appUnit)
+	for _, step := range computeruntime.ContainerApp(appUnit, "") {
+		result.AddRunbookStep(step)
 	}
 
 	result.AddManualStep(fmt.Sprintf("Access service at: http://%s.localhost (requires Traefik)", m.sanitizeName(serviceName)))

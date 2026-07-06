@@ -9,6 +9,7 @@ import (
 
 	"github.com/homeport/homeport/internal/domain/mapper"
 	"github.com/homeport/homeport/internal/domain/resource"
+	"github.com/homeport/homeport/internal/infrastructure/mapper/shared/computeruntime"
 )
 
 // LambdaMapper converts AWS Lambda functions to OpenFaaS or Docker containers.
@@ -98,6 +99,11 @@ func (m *LambdaMapper) Map(ctx context.Context, res *resource.AWSResource) (*map
 	deployScriptName := fmt.Sprintf("deploy_%s.sh", sanitizedName)
 	deployScriptContent := m.generateDeploymentScriptContent(sanitizedName, runtime)
 	result.AddScript(deployScriptName, []byte(deployScriptContent))
+	appUnit := computeruntime.FromDockerService("aws_lambda_function", result.DockerService)
+	result.AddAppUnit(appUnit)
+	for _, step := range computeruntime.ServerlessFunction(appUnit, deployScriptName) {
+		result.AddRunbookStep(step)
+	}
 
 	return result, nil
 }
@@ -138,8 +144,8 @@ func (m *LambdaMapper) configureOpenFaaSService(service *mapper.DockerService, r
 		"homeport.source":        "aws_lambda_function",
 		"homeport.function_name": functionName,
 		"homeport.runtime":       runtime,
-		"openfaas.scale.min":      "1",
-		"openfaas.scale.max":      "5",
+		"openfaas.scale.min":     "1",
+		"openfaas.scale.max":     "5",
 	}
 	service.Restart = "unless-stopped"
 

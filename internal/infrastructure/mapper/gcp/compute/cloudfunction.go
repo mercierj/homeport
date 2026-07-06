@@ -9,6 +9,7 @@ import (
 
 	"github.com/homeport/homeport/internal/domain/mapper"
 	"github.com/homeport/homeport/internal/domain/resource"
+	"github.com/homeport/homeport/internal/infrastructure/mapper/shared/computeruntime"
 )
 
 // CloudFunctionMapper converts GCP Cloud Functions to Docker/OpenFaaS.
@@ -82,7 +83,7 @@ func (m *CloudFunctionMapper) Map(ctx context.Context, res *resource.AWSResource
 		"homeport.source":        "google_cloudfunctions_function",
 		"homeport.function_name": functionName,
 		"homeport.runtime":       runtime,
-		"traefik.enable":          "true",
+		"traefik.enable":         "true",
 		"traefik.http.routers." + m.sanitizeName(functionName) + ".rule": fmt.Sprintf("Host(`%s.localhost`)", m.sanitizeName(functionName)),
 	}
 
@@ -97,6 +98,7 @@ func (m *CloudFunctionMapper) Map(ctx context.Context, res *resource.AWSResource
 	// Generate Dockerfile
 	dockerfile := m.generateDockerfile(runtime, entryPoint, functionName)
 	result.AddConfig(fmt.Sprintf("functions/%s/Dockerfile", functionName), []byte(dockerfile))
+	svc.Build = &mapper.DockerBuild{Context: fmt.Sprintf("./functions/%s", functionName), Dockerfile: "Dockerfile"}
 
 	// Generate handler template
 	handlerPath, handlerContent := m.generateHandler(runtime, entryPoint, functionName)
@@ -123,8 +125,12 @@ func (m *CloudFunctionMapper) Map(ctx context.Context, res *resource.AWSResource
 		result.AddManualStep("Set up secret environment variables from your secrets manager")
 	}
 
-	result.AddManualStep("Build function Docker image: docker build -t " + m.sanitizeName(functionName) + " ./functions/" + functionName)
 	result.AddManualStep("Configure event triggers manually if using pub/sub or storage events")
+	appUnit := computeruntime.FromDockerService("google_cloudfunctions_function", svc)
+	result.AddAppUnit(appUnit)
+	for _, step := range computeruntime.ServerlessFunction(appUnit, "") {
+		result.AddRunbookStep(step)
+	}
 
 	return result, nil
 }

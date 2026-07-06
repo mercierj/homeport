@@ -8,6 +8,7 @@ import (
 
 	"github.com/homeport/homeport/internal/domain/mapper"
 	"github.com/homeport/homeport/internal/domain/resource"
+	"github.com/homeport/homeport/internal/infrastructure/mapper/shared/computeruntime"
 )
 
 // ContainerInstanceMapper converts Azure Container Instance (Container Group) to Docker Compose.
@@ -150,6 +151,11 @@ func (m *ContainerInstanceMapper) Map(ctx context.Context, res *resource.AWSReso
 	// Create additional services for multi-container groups
 	if len(containers) > 1 {
 		m.handleMultiContainerGroup(containers[1:], groupName, result)
+	}
+	appUnit := computeruntime.FromDockerService("azurerm_container_group", svc)
+	result.AddAppUnit(appUnit)
+	for _, step := range computeruntime.ContainerApp(appUnit, "") {
+		result.AddRunbookStep(step)
 	}
 
 	// Add manual steps

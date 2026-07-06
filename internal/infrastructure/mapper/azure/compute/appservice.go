@@ -9,6 +9,7 @@ import (
 
 	"github.com/homeport/homeport/internal/domain/mapper"
 	"github.com/homeport/homeport/internal/domain/resource"
+	"github.com/homeport/homeport/internal/infrastructure/mapper/shared/computeruntime"
 )
 
 // AppServiceMapper converts Azure App Service to Docker containers.
@@ -46,10 +47,10 @@ func (m *AppServiceMapper) Map(ctx context.Context, res *resource.AWSResource) (
 
 	// Configure environment
 	svc.Environment = map[string]string{
-		"WEBSITES_PORT":           "80",
-		"WEBSITE_HOSTNAME":        "localhost",
-		"ASPNETCORE_URLS":         "http://+:80",
-		"ASPNETCORE_ENVIRONMENT":  "Production",
+		"WEBSITES_PORT":          "80",
+		"WEBSITE_HOSTNAME":       "localhost",
+		"ASPNETCORE_URLS":        "http://+:80",
+		"ASPNETCORE_ENVIRONMENT": "Production",
 	}
 
 	// Add app settings
@@ -81,7 +82,7 @@ func (m *AppServiceMapper) Map(ctx context.Context, res *resource.AWSResource) (
 		"homeport.source":   "azurerm_app_service",
 		"homeport.app_name": appName,
 		"homeport.runtime":  runtime,
-		"traefik.enable":     "true",
+		"traefik.enable":    "true",
 		"traefik.http.routers." + m.sanitizeName(appName) + ".rule": fmt.Sprintf("Host(`%s.localhost`)", m.sanitizeName(appName)),
 	}
 
@@ -121,8 +122,16 @@ func (m *AppServiceMapper) Map(ctx context.Context, res *resource.AWSResource) (
 	// Generate docker-compose override for the app
 	composeOverride := m.generateComposeOverride(appName, runtime)
 	result.AddConfig(fmt.Sprintf("apps/%s/docker-compose.override.yml", appName), []byte(composeOverride))
+	svc.Build = &mapper.DockerBuild{
+		Context:    fmt.Sprintf("./apps/%s", appName),
+		Dockerfile: "Dockerfile",
+	}
+	appUnit := computeruntime.FromDockerService("azurerm_app_service", svc)
+	result.AddAppUnit(appUnit)
+	for _, step := range computeruntime.ContainerApp(appUnit, "") {
+		result.AddRunbookStep(step)
+	}
 
-	result.AddManualStep("Build app: docker build -t " + m.sanitizeName(appName) + " ./apps/" + appName)
 	result.AddManualStep("Access at: http://" + m.sanitizeName(appName) + ".localhost")
 
 	return result, nil

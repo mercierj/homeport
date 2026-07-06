@@ -9,6 +9,7 @@ import (
 
 	"github.com/homeport/homeport/internal/domain/mapper"
 	"github.com/homeport/homeport/internal/domain/resource"
+	"github.com/homeport/homeport/internal/infrastructure/mapper/shared/computeruntime"
 )
 
 // VMMapper converts Azure Virtual Machines to Docker containers.
@@ -101,7 +102,14 @@ func (m *VMMapper) Map(ctx context.Context, res *resource.AWSResource) (*mapper.
 
 	// Generate Dockerfile
 	dockerfile := m.generateDockerfile(baseImage, vmName, isWindows)
-	result.AddConfig(fmt.Sprintf("Dockerfile.%s", vmName), []byte(dockerfile))
+	dockerfilePath := fmt.Sprintf("Dockerfile.%s", vmName)
+	result.AddConfig(dockerfilePath, []byte(dockerfile))
+	svc.Build = &mapper.DockerBuild{Context: ".", Dockerfile: dockerfilePath}
+	appUnit := computeruntime.FromDockerService(svc.Labels["homeport.source"], svc)
+	result.AddAppUnit(appUnit)
+	for _, step := range computeruntime.ContainerApp(appUnit, "") {
+		result.AddRunbookStep(step)
+	}
 
 	result.AddManualStep("Review Dockerfile and customize for your application")
 	result.AddManualStep("Configure required ports and environment variables")

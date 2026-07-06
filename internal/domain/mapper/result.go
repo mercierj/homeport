@@ -38,6 +38,9 @@ type MappingResult struct {
 	// RunbookSteps contains executable migration steps emitted by mappers.
 	RunbookSteps []domainrunbook.Step
 
+	// AppUnits contains normalized compute applications derived from cloud runtimes.
+	AppUnits []AppUnit
+
 	// Policies contains IAM and resource policies extracted from the source
 	Policies []*policy.Policy
 
@@ -243,6 +246,24 @@ type Ulimit struct {
 	Hard int
 }
 
+// AppUnit is the normalized shape used by compute mappers before target generators render Compose, Kubernetes, or provider-specific deployment files.
+type AppUnit struct {
+	Name           string
+	Source         string
+	Image          string
+	SourcePath     string
+	Runtime        string
+	Command        []string
+	Environment    map[string]string
+	Secrets        map[string]string
+	Ports          []string
+	Volumes        []string
+	HealthCheck    *HealthCheck
+	Replicas       int
+	ServiceAccount string
+	Ingress        string
+}
+
 // NewMappingResult creates a new mapping result with initialized maps.
 func NewMappingResult(serviceName string) *MappingResult {
 	return &MappingResult{
@@ -262,6 +283,7 @@ func NewMappingResult(serviceName string) *MappingResult {
 		Warnings:           make([]string, 0),
 		ManualSteps:        make([]string, 0),
 		RunbookSteps:       make([]domainrunbook.Step, 0),
+		AppUnits:           make([]AppUnit, 0),
 		Policies:           make([]*policy.Policy, 0),
 	}
 }
@@ -291,6 +313,11 @@ func (r *MappingResult) AddManualStep(step string) {
 // AddRunbookStep adds an executable migration step to the result.
 func (r *MappingResult) AddRunbookStep(step domainrunbook.Step) {
 	r.RunbookSteps = append(r.RunbookSteps, step)
+}
+
+// AddAppUnit adds a normalized compute application to the result.
+func (r *MappingResult) AddAppUnit(unit AppUnit) {
+	r.AppUnits = append(r.AppUnits, unit)
 }
 
 // AddConfig adds a configuration file to the result.

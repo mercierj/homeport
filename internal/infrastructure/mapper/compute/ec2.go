@@ -9,6 +9,7 @@ import (
 
 	"github.com/homeport/homeport/internal/domain/mapper"
 	"github.com/homeport/homeport/internal/domain/resource"
+	"github.com/homeport/homeport/internal/infrastructure/mapper/shared/computeruntime"
 )
 
 // EC2Mapper converts AWS EC2 instances to Docker containers.
@@ -95,13 +96,18 @@ func (m *EC2Mapper) Map(ctx context.Context, res *resource.AWSResource) (*mapper
 
 		// Update service to use custom image
 		result.DockerService.Image = fmt.Sprintf("%s:latest", instanceName)
-		result.AddManualStep(fmt.Sprintf("Build custom image: docker build -f %s -t %s:latest .", dockerfilePath, instanceName))
+		result.DockerService.Build = &mapper.DockerBuild{Context: ".", Dockerfile: dockerfilePath}
 	}
 
 	// Create setup script
 	setupScriptName := fmt.Sprintf("setup_%s.sh", instanceName)
 	setupScriptContent := m.generateSetupScriptContent(res, instanceName, userData)
 	result.AddScript(setupScriptName, []byte(setupScriptContent))
+	appUnit := computeruntime.FromDockerService("aws_instance", result.DockerService)
+	result.AddAppUnit(appUnit)
+	for _, step := range computeruntime.ContainerApp(appUnit, setupScriptName) {
+		result.AddRunbookStep(step)
+	}
 
 	// Add tags as environment variables
 	for key, value := range res.Tags {

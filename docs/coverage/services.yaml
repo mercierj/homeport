@@ -219,12 +219,12 @@ services:
     discover: true
     cost: false
     provision: false
-    migrate: false
+    migrate: true
     api_compat: false
     env_dns: false
     ha: false
     backup: false
-    validate: false
+    validate: true
     cutover: false
     rollback: false
     status: mapped
@@ -252,12 +252,12 @@ services:
     discover: true
     cost: false
     provision: false
-    migrate: false
+    migrate: true
     api_compat: false
     env_dns: false
     ha: false
     backup: false
-    validate: false
+    validate: true
     cutover: false
     rollback: false
     status: mapped
@@ -284,12 +284,12 @@ services:
     discover: true
     cost: false
     provision: false
-    migrate: false
+    migrate: true
     api_compat: false
     env_dns: false
     ha: false
     backup: false
-    validate: false
+    validate: true
     cutover: false
     rollback: false
     status: mapped
@@ -431,12 +431,12 @@ services:
     discover: true
     cost: false
     provision: false
-    migrate: false
+    migrate: true
     api_compat: false
     env_dns: false
     ha: false
     backup: false
-    validate: false
+    validate: true
     cutover: false
     rollback: false
     status: mapped
@@ -836,12 +836,12 @@ services:
     discover: true
     cost: false
     provision: false
-    migrate: false
+    migrate: true
     api_compat: false
     env_dns: false
     ha: false
     backup: false
-    validate: false
+    validate: true
     cutover: false
     rollback: false
     status: mapped
@@ -868,12 +868,12 @@ services:
     discover: true
     cost: false
     provision: false
-    migrate: false
+    migrate: true
     api_compat: false
     env_dns: false
     ha: false
     backup: false
-    validate: false
+    validate: true
     cutover: false
     rollback: false
     status: mapped
@@ -951,12 +951,12 @@ services:
     discover: true
     cost: false
     provision: false
-    migrate: false
+    migrate: true
     api_compat: false
     env_dns: false
     ha: false
     backup: false
-    validate: false
+    validate: true
     cutover: false
     rollback: false
     status: mapped
@@ -1064,12 +1064,12 @@ services:
     discover: true
     cost: false
     provision: false
-    migrate: false
+    migrate: true
     api_compat: false
     env_dns: false
     ha: false
     backup: false
-    validate: false
+    validate: true
     cutover: false
     rollback: false
     status: mapped
@@ -1309,12 +1309,12 @@ services:
     discover: true
     cost: false
     provision: false
-    migrate: false
+    migrate: true
     api_compat: false
     env_dns: false
     ha: false
     backup: false
-    validate: false
+    validate: true
     cutover: false
     rollback: false
     status: mapped
@@ -1373,12 +1373,12 @@ services:
     discover: true
     cost: false
     provision: false
-    migrate: false
+    migrate: true
     api_compat: false
     env_dns: false
     ha: false
     backup: false
-    validate: false
+    validate: true
     cutover: false
     rollback: false
     status: mapped
@@ -1469,12 +1469,12 @@ services:
     discover: true
     cost: false
     provision: false
-    migrate: false
+    migrate: true
     api_compat: false
     env_dns: false
     ha: false
     backup: false
-    validate: false
+    validate: true
     cutover: false
     rollback: false
     status: mapped
@@ -1553,12 +1553,12 @@ services:
     discover: true
     cost: false
     provision: false
-    migrate: false
+    migrate: true
     api_compat: false
     env_dns: false
     ha: false
     backup: false
-    validate: false
+    validate: true
     cutover: false
     rollback: false
     status: mapped
@@ -1585,12 +1585,12 @@ services:
     discover: true
     cost: false
     provision: false
-    migrate: false
+    migrate: true
     api_compat: false
     env_dns: false
     ha: false
     backup: false
-    validate: false
+    validate: true
     cutover: false
     rollback: false
     status: mapped

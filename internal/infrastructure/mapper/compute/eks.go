@@ -8,6 +8,7 @@ import (
 
 	"github.com/homeport/homeport/internal/domain/mapper"
 	"github.com/homeport/homeport/internal/domain/resource"
+	"github.com/homeport/homeport/internal/infrastructure/mapper/shared/computeruntime"
 )
 
 // EKSMapper converts AWS EKS clusters to K3s.
@@ -48,10 +49,10 @@ func (m *EKSMapper) Map(ctx context.Context, res *resource.AWSResource) (*mapper
 		"--tls-san=k3s-server",
 	}
 	svc.Environment = map[string]string{
-		"K3S_TOKEN":                    "homeport-cluster-token",
-		"K3S_KUBECONFIG_OUTPUT":        "/output/kubeconfig.yaml",
-		"K3S_KUBECONFIG_MODE":          "666",
-		"KUBERNETES_CLUSTER_NAME":      clusterName,
+		"K3S_TOKEN":               "homeport-cluster-token",
+		"K3S_KUBECONFIG_OUTPUT":   "/output/kubeconfig.yaml",
+		"K3S_KUBECONFIG_MODE":     "666",
+		"KUBERNETES_CLUSTER_NAME": clusterName,
 	}
 	svc.Ports = []string{
 		"6443:6443", // Kubernetes API
@@ -84,6 +85,9 @@ func (m *EKSMapper) Map(ctx context.Context, res *resource.AWSResource) (*mapper
 	// Generate cluster info
 	clusterInfoScript := m.generateClusterInfoScript(clusterName, k8sVersion)
 	result.AddScript("cluster_info.sh", []byte(clusterInfoScript))
+	for _, step := range computeruntime.KubernetesCluster(clusterName, "setup_kubeconfig.sh") {
+		result.AddRunbookStep(step)
+	}
 
 	// Handle node groups
 	if nodeGroups := res.Config["node_groups"]; nodeGroups != nil {
