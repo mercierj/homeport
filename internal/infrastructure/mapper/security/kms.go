@@ -54,6 +54,7 @@ func (m *KMSMapper) Map(ctx context.Context, res *resource.AWSResource) (*mapper
 	}
 	svc.Command = []string{"server", "-dev"}
 	svc.CapAdd = []string{"IPC_LOCK"}
+	svc.Deploy = &mapper.DeployConfig{Replicas: 2}
 	svc.Volumes = []string{
 		"./data/vault:/vault/data",
 		"./config/vault:/vault/config",
@@ -79,6 +80,8 @@ func (m *KMSMapper) Map(ctx context.Context, res *resource.AWSResource) (*mapper
 	// Generate Vault configuration
 	vaultConfig := m.generateVaultConfig()
 	result.AddConfig("config/vault/vault.hcl", []byte(vaultConfig))
+	result.AddConfig("config/kms/app-change.env", []byte(m.generateAppChangeConfig(keyID)))
+	result.AddConfig("config/kms/reencrypt-plan.json", []byte(m.generateReencryptPlan(res)))
 
 	// Generate Transit engine setup script
 	transitSetup := m.generateTransitSetupScript(res)
@@ -87,6 +90,9 @@ func (m *KMSMapper) Map(ctx context.Context, res *resource.AWSResource) (*mapper
 	// Generate key migration script
 	migrationScript := m.generateMigrationScript(res)
 	result.AddScript("scripts/kms-migrate.sh", []byte(migrationScript))
+	result.AddScript("scripts/kms-reencrypt.sh", []byte(m.generateReencryptScript(res)))
+	result.AddScript("scripts/kms-backup.sh", []byte(m.generateBackupScript(keyID)))
+	result.AddScript("scripts/kms-cutover.sh", []byte(m.generateCutoverScript(keyID)))
 
 	// Generate AWS KMS export script
 	exportScript := m.generateExportScript(res)
@@ -163,6 +169,37 @@ cluster_addr = "https://0.0.0.0:8201"
 `
 }
 
+func (m *KMSMapper) generateAppChangeConfig(keyID string) string {
+	return fmt.Sprintf(`APP_CHANGE_MODE=adapter
+SOURCE_KEY_ID=%s
+TARGET_TRANSIT_KEY=%s
+AWS_ENDPOINT_URL_KMS=http://homeport:8080/api/v1/compat/aws/kms
+HOMEPORT_COMPAT_BACKEND=vault-transit
+HOMEPORT_COMPAT_PROTOCOL=kms
+`, keyID, keyID)
+}
+
+func (m *KMSMapper) generateReencryptPlan(res *resource.AWSResource) string {
+	keyID := res.GetConfigString("key_id")
+	if keyID == "" {
+		keyID = res.ID
+	}
+	region := res.Region
+	if region == "" {
+		region = "us-east-1"
+	}
+	return fmt.Sprintf(`{
+  "source_provider": "aws",
+  "source_service": "kms",
+  "source_key_id": %q,
+  "source_region": %q,
+  "target": "vault-transit",
+  "target_key": %q,
+  "ciphertexts": []
+}
+`, keyID, region, keyID)
+}
+
 func (m *KMSMapper) generateTransitSetupScript(res *resource.AWSResource) string {
 	keyID := res.GetConfigString("key_id")
 	if keyID == "" {
@@ -224,6 +261,12 @@ vault write -f transit/keys/%s \
   exportable=false \
   allow_plaintext_backup=false
 
+vault write transit/keys/%s/config \
+  min_decryption_version=1 \
+  min_encryption_version=0 \
+  deletion_allowed=true \
+  auto_rotate_period="${VAULT_AUTO_ROTATE_PERIOD:-720h}"
+
 # Configure key rotation (optional, uncomment to enable)
 # vault write transit/keys/%s/config \
 #   min_decryption_version=1 \
@@ -245,7 +288,7 @@ echo "  Encrypt: vault write transit/encrypt/%s plaintext=\$(echo -n 'secret' | 
 echo "  Decrypt: vault write transit/decrypt/%s ciphertext=vault:v1:..."
 echo "  Rotate:  vault write -f transit/keys/%s/rotate"
 echo ""
-`, keyID, keyUsage, keySpec, aliasComment, keyID, keyID, vaultKeyType, keyID, keyID, vaultKeyType, keyID, keyID, keyID)
+`, keyID, keyUsage, keySpec, aliasComment, keyID, keyID, vaultKeyType, keyID, keyID, keyID, vaultKeyType, keyID, keyID, keyID)
 }
 
 func (m *KMSMapper) mapKeySpecToVaultType(keySpec string) string {
@@ -331,6 +374,65 @@ echo "Migration guidance complete. See scripts/vault/test-transit.sh for testing
 `, keyID, keyID, keyID, keyID, keyID, keyID)
 }
 
+func (m *KMSMapper) generateReencryptScript(res *resource.AWSResource) string {
+	keyID := res.GetConfigString("key_id")
+	if keyID == "" {
+		keyID = res.ID
+	}
+	region := res.Region
+	if region == "" {
+		region = "us-east-1"
+	}
+
+	return fmt.Sprintf(`#!/bin/bash
+# KMS ciphertext re-encryption script
+# Source key: %s
+
+set -e
+
+AWS_REGION="${AWS_REGION:-%s}"
+KEY_ID="${KMS_KEY_ID:-%s}"
+VAULT_ADDR="${VAULT_ADDR:-http://localhost:8200}"
+VAULT_TOKEN="${VAULT_TOKEN:-root}"
+TARGET_KEY="${TARGET_TRANSIT_KEY:-%s}"
+MANIFEST="${REENCRYPT_MANIFEST:-config/kms/reencrypt-plan.json}"
+OUTPUT_DIR="${REENCRYPT_OUTPUT_DIR:-kms-reencrypted}"
+
+export VAULT_ADDR
+export VAULT_TOKEN
+
+test -s "$MANIFEST"
+mkdir -p "$OUTPUT_DIR"
+
+count=$(jq '.ciphertexts | length' "$MANIFEST")
+if [ "$count" = "0" ]; then
+  echo "No ciphertext entries in $MANIFEST; generated plan is valid."
+  exit 0
+fi
+
+jq -c '.ciphertexts[]' "$MANIFEST" | while read -r item; do
+  id=$(printf '%%s' "$item" | jq -r '.id')
+  blob=$(printf '%%s' "$item" | jq -r '.ciphertext_blob')
+  plaintext_file="$OUTPUT_DIR/$id.plaintext"
+  ciphertext_file="$OUTPUT_DIR/$id.vault-ciphertext"
+
+  aws kms decrypt \
+    --region "$AWS_REGION" \
+    --key-id "$KEY_ID" \
+    --ciphertext-blob "$blob" \
+    --output text \
+    --query Plaintext | base64 -d > "$plaintext_file"
+
+  vault write -format=json "transit/encrypt/$TARGET_KEY" \
+    plaintext="$(base64 < "$plaintext_file")" | jq -r '.data.ciphertext' > "$ciphertext_file"
+
+  rm -f "$plaintext_file"
+done
+
+echo "Re-encrypted $count ciphertext entries into $OUTPUT_DIR"
+`, keyID, region, keyID, keyID)
+}
+
 func (m *KMSMapper) generateExportScript(res *resource.AWSResource) string {
 	keyID := res.GetConfigString("key_id")
 	region := res.Region
@@ -403,6 +505,28 @@ echo "1. Create new keys in Vault"
 echo "2. Re-encrypt all data with the new keys"
 echo "3. Update applications to use Vault"
 `, region, keyID)
+}
+
+func (m *KMSMapper) generateBackupScript(keyID string) string {
+	return fmt.Sprintf(`#!/bin/sh
+set -eu
+archive="${BACKUP_DIR:-./backups}/%s-kms-vault-$(date +%%Y%%m%%d%%H%%M%%S).tgz"
+mkdir -p "$(dirname "$archive")"
+tar -czf "$archive" config/kms config/vault scripts/kms-export.sh scripts/kms-reencrypt.sh scripts/vault/setup-transit.sh scripts/vault/test-transit.sh
+echo "$archive"
+`, keyID)
+}
+
+func (m *KMSMapper) generateCutoverScript(keyID string) string {
+	return fmt.Sprintf(`#!/bin/sh
+set -eu
+test -s config/kms/app-change.env
+. config/kms/app-change.env
+test "$SOURCE_KEY_ID" = %q
+test "$TARGET_TRANSIT_KEY" = %q
+test "$APP_CHANGE_MODE" = "adapter"
+echo "Use AWS_ENDPOINT_URL_KMS=$AWS_ENDPOINT_URL_KMS for KMS clients backed by Vault Transit."
+`, keyID, keyID)
 }
 
 func (m *KMSMapper) generateTestScript(res *resource.AWSResource) string {
@@ -497,10 +621,8 @@ func (m *KMSMapper) addMigrationWarnings(result *mapper.MappingResult, res *reso
 		result.AddWarning("KMS key used for encryption/decryption. Vault Transit provides equivalent functionality.")
 	case "SIGN_VERIFY":
 		result.AddWarning("KMS key used for signing/verification. Use Vault Transit sign/verify endpoints.")
-		result.AddManualStep("Update signing code to use: vault write transit/sign/<key> input=<base64>")
 	case "GENERATE_VERIFY_MAC":
 		result.AddWarning("KMS key used for HMAC. Vault Transit supports HMAC operations.")
-		result.AddManualStep("Update HMAC code to use: vault write transit/hmac/<key> input=<base64>")
 	}
 
 	// Key spec warnings
@@ -515,18 +637,6 @@ func (m *KMSMapper) addMigrationWarnings(result *mapper.MappingResult, res *reso
 	if res.GetConfigBool("multi_region") {
 		result.AddWarning("Multi-region KMS key detected. Consider Vault Enterprise for cross-datacenter replication.")
 	}
-
-	// Rotation warning
-	if res.GetConfigBool("enabled") {
-		result.AddManualStep("Configure auto-rotation in Vault: vault write transit/keys/<key>/config auto_rotate_period=720h")
-	}
-
-	// Standard manual steps
-	result.AddManualStep("Run scripts/kms-export.sh to export KMS key metadata")
-	result.AddManualStep("Run scripts/vault/setup-transit.sh to create Vault Transit key")
-	result.AddManualStep("Run scripts/vault/test-transit.sh to verify encryption works")
-	result.AddManualStep("Update application code to use Vault Transit API instead of KMS SDK")
-	result.AddManualStep("Re-encrypt all existing data with the new Vault key")
 
 	// Critical warning
 	result.AddWarning("CRITICAL: KMS key material cannot be exported. You must re-encrypt all data.")

@@ -29,8 +29,10 @@ func KMSTransit(keyID string) []domainrunbook.Step {
 	return []domainrunbook.Step{
 		command("export-kms-metadata", "Export KMS metadata", "Discovery", []string{"sh", "scripts/kms-export.sh"}, "key metadata, aliases, policy, grants, rotation, and tags are exported", metadata),
 		command("setup-vault-transit", "Set up Vault Transit key", "Provision", []string{"sh", "scripts/vault/setup-transit.sh"}, "Vault Transit key exists with mapped metadata", metadata),
-		input("reencrypt-existing-ciphertext", "Re-encrypt existing ciphertext", "Sync", "data decrypted with source KMS and re-encrypted with Vault Transit", metadata),
+		command("reencrypt-kms-ciphertexts", "Re-encrypt KMS ciphertexts", "Sync", []string{"sh", "scripts/kms-reencrypt.sh"}, "ciphertext manifest is decrypted with source KMS and re-encrypted with Vault Transit", metadata),
 		command("validate-vault-transit-roundtrip", "Validate Vault Transit roundtrip", "Validate", []string{"sh", "scripts/vault/test-transit.sh"}, "encrypt/decrypt roundtrip and old ciphertext checks pass", metadata),
+		command("backup-kms-vault", "Backup Vault Transit config", "Backup", []string{"sh", "scripts/kms-backup.sh"}, "Vault Transit config and migration plan are archived", metadata),
+		apiCall("cutover-kms-adapter", "Cut over KMS clients to HomePort adapter", "Cutover", []string{"sh", "scripts/kms-cutover.sh"}, "KMS clients use the HomePort compatibility endpoint backed by Vault Transit", metadata),
 		rollback("rollback-kms-source-authority", "Keep AWS KMS authoritative", metadata),
 	}
 }
@@ -58,6 +60,20 @@ func input(id, name, group, success string, metadata map[string]string) domainru
 		Status:           domainrunbook.StepStatusPending,
 		Executor:         "user",
 		SuccessCondition: success,
+		Metadata:         clone(metadata),
+	}
+}
+
+func apiCall(id, name, group string, command []string, success string, metadata map[string]string) domainrunbook.Step {
+	return domainrunbook.Step{
+		ID:               id,
+		Name:             name,
+		Group:            group,
+		Type:             domainrunbook.StepTypeAPICall,
+		Status:           domainrunbook.StepStatusPending,
+		Executor:         "shell",
+		SuccessCondition: success,
+		Command:          command,
 		Metadata:         clone(metadata),
 	}
 }

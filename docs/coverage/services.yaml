@@ -463,19 +463,21 @@ services:
     service: KMS
     resource_types:
       - aws_kms_key
+    target: Vault Transit
+    api_compatibility_strategy: adapter
+    manual_steps_resolved: true
     discover: true
-    cost: false
-    provision: false
-    migrate: false
+    cost: true
+    provision: true
+    migrate: true
     api_compat: true
-    env_dns: false
-    ha: false
-    backup: false
+    env_dns: true
+    ha: true
+    backup: true
     validate: true
-    cutover: false
-    rollback: false
-    status: guided
-    blocker: managed KMS key material cannot be exported; create a new Vault transit key and re-encrypt data
+    cutover: true
+    rollback: true
+    status: full
   - provider: aws
     service: Kinesis
     resource_types:
