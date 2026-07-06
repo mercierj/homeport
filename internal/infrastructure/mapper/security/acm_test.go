@@ -2,10 +2,12 @@ package security
 
 import (
 	"context"
+	"strings"
 	"testing"
 
 	"github.com/homeport/homeport/internal/domain/mapper"
 	"github.com/homeport/homeport/internal/domain/resource"
+	domainrunbook "github.com/homeport/homeport/internal/domain/runbook"
 )
 
 func TestNewACMMapper(t *testing.T) {
@@ -267,4 +269,99 @@ func TestACMMapper_extractSANs(t *testing.T) {
 			}
 		})
 	}
+}
+
+func TestACMMapper_MapBuildsManagedDNSChallengeWhenProviderIsKnown(t *testing.T) {
+	result, err := NewACMMapper().Map(context.Background(), managedACMFixture())
+	if err != nil {
+		t.Fatal(err)
+	}
+	if len(result.ManualSteps) != 0 {
+		t.Fatalf("manual steps = %#v, want none when DNS challenge provider is known", result.ManualSteps)
+	}
+	static := string(result.Configs["config/traefik/traefik.yml"])
+	for _, want := range []string{
+		"email: ops@example.com",
+		"dnsChallenge:",
+		"provider: route53",
+	} {
+		if !strings.Contains(static, want) {
+			t.Fatalf("static config missing %q:\n%s", want, static)
+		}
+	}
+	dynamic := string(result.Configs["config/traefik/dynamic.yml"])
+	for _, want := range []string{
+		"main: \"example.com\"",
+		"www.example.com",
+		"api.example.com",
+	} {
+		if !strings.Contains(dynamic, want) {
+			t.Fatalf("dynamic config missing %q:\n%s", want, dynamic)
+		}
+	}
+}
+
+func TestACMConformanceManagedAToZ(t *testing.T) {
+	result, err := NewACMMapper().Map(context.Background(), managedACMFixture())
+	if err != nil {
+		t.Fatal(err)
+	}
+	if len(result.ManualSteps) != 0 {
+		t.Fatalf("manual steps = %#v, want fully generated certificate migration", result.ManualSteps)
+	}
+	if result.DockerService.Image != "traefik:v3.0" || result.DockerService.Deploy == nil || result.DockerService.Deploy.Replicas < 2 {
+		t.Fatalf("service does not provision HA certificate proxy: %#v", result.DockerService)
+	}
+	if result.DockerService.HealthCheck == nil {
+		t.Fatal("missing Traefik health check")
+	}
+	for _, file := range []string{"config/traefik/traefik.yml", "config/traefik/dynamic.yml"} {
+		if _, ok := result.Configs[file]; !ok {
+			t.Fatalf("missing %s", file)
+		}
+	}
+	if _, ok := result.Scripts["setup_certificates.sh"]; !ok {
+		t.Fatal("missing setup script")
+	}
+	if _, ok := result.Scripts["backup_acm_config.sh"]; !ok {
+		t.Fatal("missing backup script")
+	}
+	for id, stepType := range map[string]domainrunbook.StepType{
+		"provision-acme-dns-challenge":          domainrunbook.StepTypeCommand,
+		"validate-certificate-renewal":          domainrunbook.StepTypeCommand,
+		"backup-certificate-config":             domainrunbook.StepTypeCommand,
+		"cutover-tls-termination-to-traefik":    domainrunbook.StepTypeDNSCheck,
+		"rollback-certificate-source-authority": domainrunbook.StepTypeRollback,
+	} {
+		if !hasACMRunbookStep(result, id, stepType) {
+			t.Fatalf("missing %s runbook step: %#v", id, result.RunbookSteps)
+		}
+	}
+}
+
+func managedACMFixture() *resource.AWSResource {
+	return &resource.AWSResource{
+		ID:   "arn:aws:acm:us-east-1:123456789012:certificate/abc-123",
+		Type: resource.TypeACMCertificate,
+		Name: "example.com",
+		Config: map[string]interface{}{
+			"domain_name":            "example.com",
+			"acme_email":             "ops@example.com",
+			"dns_challenge_provider": "route53",
+			"validation_method":      "DNS",
+			"subject_alternative_names": []interface{}{
+				"www.example.com",
+				"api.example.com",
+			},
+		},
+	}
+}
+
+func hasACMRunbookStep(result *mapper.MappingResult, id string, stepType domainrunbook.StepType) bool {
+	for _, step := range result.RunbookSteps {
+		if step.ID == id && step.Type == stepType {
+			return true
+		}
+	}
+	return false
 }
