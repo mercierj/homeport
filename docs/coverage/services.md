@@ -60,7 +60,7 @@
 | aws | Rekognition | full | aws_rekognition_collection |
 | aws | Comprehend | full | aws_comprehend_document_classifier |
 | gcp | Apigee | full | google_apigee_organization |
-| gcp | App Engine | mapped | google_app_engine_application |
+| gcp | App Engine | full | google_app_engine_application |
 | gcp | Artifact Registry | missing |  |
 | gcp | BigQuery | missing |  |
 | gcp | Bigtable | guided | google_bigtable_instance |
