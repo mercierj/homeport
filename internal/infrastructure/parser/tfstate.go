@@ -208,6 +208,8 @@ func mapTerraformTypeToResourceType(tfType string) resource.Type {
 		return resource.TypeRoute53Zone
 	case "aws_cloudfront_distribution":
 		return resource.TypeCloudFront
+	case "aws_appmesh_mesh", "aws_appmesh_virtual_node":
+		return resource.TypeAppMeshMesh
 
 	// Security
 	case "aws_cognito_user_pool":

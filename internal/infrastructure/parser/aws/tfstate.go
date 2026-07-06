@@ -339,6 +339,8 @@ func mapAWSTerraformType(tfType string) resource.Type {
 		"aws_route53_zone":            resource.TypeRoute53Zone,
 		"aws_cloudfront_distribution": resource.TypeCloudFront,
 		"aws_vpc":                     resource.TypeVPC,
+		"aws_appmesh_mesh":            resource.TypeAppMeshMesh,
+		"aws_appmesh_virtual_node":    resource.TypeAppMeshMesh,
 
 		// Security
 		"aws_cognito_user_pool":     resource.TypeCognitoPool,

@@ -124,6 +124,7 @@ var CategoryMapping = map[Type]Category{
 	TypeRoute53Zone:       CategoryDNS,
 	TypeCloudFront:        CategoryCDN,
 	TypeVPC:               CategoryVPC,
+	TypeAppMeshMesh:       CategoryNetworking,
 
 	// AWS Security
 	TypeCognitoPool:       CategoryAuth,

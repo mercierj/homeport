@@ -890,13 +890,23 @@ services:
     service: App Mesh
     category: app/integration
     source_api: appmesh
-    resource_types: []
+    resource_types: [aws_appmesh_mesh]
     terraform_resource_types: [aws_appmesh_mesh, aws_appmesh_virtual_node]
-    target: Istio or Linkerd
-    api_compatibility_strategy: translate mesh topology into Kubernetes service mesh manifests
-    impossibility_notes: App Mesh control-plane API compatibility is not available
-    status: missing
-    blocker: not modeled yet
+    target: Istio
+    api_compatibility_strategy: generated_patch
+    manual_steps_resolved: true
+    discover: true
+    cost: true
+    provision: true
+    migrate: true
+    api_compat: true
+    env_dns: true
+    ha: true
+    backup: true
+    validate: true
+    cutover: true
+    rollback: true
+    status: full
   - provider: aws
     service: CodeDeploy
     category: devops

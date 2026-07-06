@@ -56,6 +56,7 @@ var ResourceMapping = map[resource.Type]StackType{
 	resource.TypeRoute53Zone:       StackTypePassthrough, // DNS stays individual
 	resource.TypeCloudFront:        StackTypePassthrough, // CDN stays individual
 	resource.TypeVPC:               StackTypePassthrough, // VPC stays individual
+	resource.TypeAppMeshMesh:       StackTypePassthrough, // Service mesh topology stays explicit
 
 	// AWS Security (5 types)
 	resource.TypeCognitoPool:       StackTypeAuth,        // Auth consolidates

@@ -80,6 +80,7 @@ func (r *Registry) RegisterDefaults() {
 	r.Register(networking.NewCloudFrontMapper())
 	r.Register(networking.NewRoute53Mapper())
 	r.Register(networking.NewVPCMapper())
+	r.Register(networking.NewAppMeshMapper())
 
 	// AWS Security mappers
 	r.Register(security.NewCognitoMapper())

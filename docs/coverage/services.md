@@ -46,7 +46,7 @@
 | aws | QuickSight | full | aws_quicksight_dashboard |
 | aws | MQ | full | aws_mq_broker |
 | aws | IoT Core | full | aws_iot_thing |
-| aws | App Mesh | missing | aws_appmesh_mesh, aws_appmesh_virtual_node |
+| aws | App Mesh | full | aws_appmesh_mesh |
 | aws | CodeDeploy | missing | aws_codedeploy_app, aws_codedeploy_deployment_group |
 | aws | CloudFormation full import | missing | aws_cloudformation_stack |
 | aws | Shield | missing | aws_shield_protection |

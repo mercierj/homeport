@@ -515,6 +515,8 @@ func mapCFNTypeToResourceType(cfnType string) resource.Type {
 		"AWS::Route53::HostedZone":                  resource.TypeRoute53Zone,
 		"AWS::CloudFront::Distribution":             resource.TypeCloudFront,
 		"AWS::EC2::VPC":                             resource.TypeVPC,
+		"AWS::AppMesh::Mesh":                        resource.TypeAppMeshMesh,
+		"AWS::AppMesh::VirtualNode":                 resource.TypeAppMeshMesh,
 		"AWS::ECR::Repository":                      resource.TypeECRRepository,
 
 		// Security

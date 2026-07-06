@@ -48,6 +48,7 @@ const (
 	TypeRoute53Zone       Type = "aws_route53_zone"
 	TypeCloudFront        Type = "aws_cloudfront_distribution"
 	TypeVPC               Type = "aws_vpc"
+	TypeAppMeshMesh       Type = "aws_appmesh_mesh"
 
 	// AWS Security
 	TypeCognitoPool       Type = "aws_cognito_user_pool"
