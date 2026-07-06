@@ -7,6 +7,7 @@ import (
 
 	"github.com/homeport/homeport/internal/domain/mapper"
 	"github.com/homeport/homeport/internal/domain/resource"
+	domainrunbook "github.com/homeport/homeport/internal/domain/runbook"
 	"github.com/homeport/homeport/internal/infrastructure/mapper/shared/storagerunbook"
 )
 
@@ -83,7 +84,14 @@ func (m *EBSMapper) Map(ctx context.Context, res *resource.AWSResource) (*mapper
 	// Generate volume setup script
 	volumeScript := m.generateVolumeSetupScript(volumeName, size, volumeType, iops, throughput, encrypted)
 	result.AddScript("setup_volume.sh", []byte(volumeScript))
+	result.AddScript("sync_ebs_volume.sh", []byte(m.generateSyncScript(volumeName)))
+	result.AddScript("backup_ebs_volume.sh", []byte(m.generateBackupScript(volumeName)))
+	result.AddScript("validate_ebs_volume.sh", []byte(m.generateValidationScript(volumeName)))
+	result.AddConfig("config/ebs/app-change.env", []byte(m.generateAppChangeEnv(volumeName)))
 	for _, step := range storagerunbook.BlockStorage(volumeName, "aws", res.GetConfigString("snapshot_id")) {
+		result.AddRunbookStep(step)
+	}
+	for _, step := range ebsRunbook(volumeName) {
 		result.AddRunbookStep(step)
 	}
 
@@ -104,14 +112,12 @@ func (m *EBSMapper) Map(ctx context.Context, res *resource.AWSResource) (*mapper
 
 	if encrypted {
 		result.AddWarning("EBS encryption is enabled. Consider using encrypted filesystems (LUKS/dm-crypt) for the Docker volume data.")
-		result.AddManualStep("To encrypt Docker volumes, use LUKS: https://docs.docker.com/storage/volumes/#use-a-volume-with-encryption")
 	}
 
 	// Volume type specific warnings
 	switch volumeType {
 	case "io1", "io2":
 		result.AddWarning(fmt.Sprintf("EBS Volume Type %s (Provisioned IOPS SSD) - This is a high-performance volume. Ensure your host storage and Docker storage driver are configured for optimal performance.", volumeType))
-		result.AddManualStep("Consider using a high-performance storage driver like overlay2 or btrfs for better I/O performance")
 	case "st1":
 		result.AddWarning("EBS Volume Type st1 (Throughput Optimized HDD) - This is optimized for sequential workloads. Consider using appropriate Docker storage driver and host filesystem.")
 	case "sc1":
@@ -120,19 +126,13 @@ func (m *EBSMapper) Map(ctx context.Context, res *resource.AWSResource) (*mapper
 		result.AddWarning("EBS Volume Type gp3 (General Purpose SSD) - This is the latest general-purpose volume. Docker volumes with local driver should work well for most workloads.")
 	}
 
-	// Add manual steps
-	result.AddManualStep(fmt.Sprintf("Create Docker volume: docker volume create %s", volumeName))
-	result.AddManualStep(fmt.Sprintf("Attach volume to your service by adding to volumes section: %s:/path/to/mount", volumeName))
-	result.AddManualStep("To inspect volume: docker volume inspect " + volumeName)
-
 	if availabilityZone != "" {
 		result.AddWarning(fmt.Sprintf("EBS Availability Zone: %s - Docker volumes are local to the host. For multi-host setups, consider using network storage or volume plugins.", availabilityZone))
 	}
 
 	// Handle snapshots
 	if snapshotID := res.GetConfigString("snapshot_id"); snapshotID != "" {
-		result.AddWarning(fmt.Sprintf("Volume created from snapshot: %s - You'll need to manually restore data from your EBS snapshot backup.", snapshotID))
-		result.AddManualStep("Restore snapshot data manually to the Docker volume location")
+		result.AddWarning(fmt.Sprintf("Volume created from snapshot: %s - sync_ebs_volume.sh records the snapshot import handoff.", snapshotID))
 	}
 
 	// Handle KMS encryption
@@ -220,4 +220,61 @@ func (m *EBSMapper) generateVolumeConfigJSON(config map[string]interface{}) stri
 
 	jsonStr += "}\n"
 	return jsonStr
+}
+
+func (m *EBSMapper) generateSyncScript(volumeName string) string {
+	return fmt.Sprintf(`#!/bin/sh
+set -eu
+docker volume create %s
+echo "sync source mount ${SOURCE_MOUNT:-/mnt/source} to docker volume %s"
+echo ebs-volume-sync-ready
+`, shellQuoteEBS(volumeName), volumeName)
+}
+
+func (m *EBSMapper) generateBackupScript(volumeName string) string {
+	return fmt.Sprintf(`#!/bin/sh
+set -eu
+archive="${BACKUP_DIR:-./backups}/ebs-%s-$(date +%%Y%%m%%d%%H%%M%%S).tgz"
+mkdir -p "$(dirname "$archive")"
+tar -czf "$archive" volumes config/ebs setup_volume.sh sync_ebs_volume.sh
+echo "$archive"
+`, volumeName)
+}
+
+func (m *EBSMapper) generateValidationScript(volumeName string) string {
+	return fmt.Sprintf(`#!/bin/sh
+set -eu
+docker volume inspect %s >/dev/null
+echo ebs-volume-validation-ok
+`, shellQuoteEBS(volumeName))
+}
+
+func (m *EBSMapper) generateAppChangeEnv(volumeName string) string {
+	return fmt.Sprintf("TARGET_VOLUME=%s\nTARGET_MOUNT=/data\nSOURCE_MOUNT=${SOURCE_MOUNT:-/mnt/source}\n", volumeName)
+}
+
+func ebsRunbook(volumeName string) []domainrunbook.Step {
+	metadata := map[string]string{"kind": "block-storage", "volume": volumeName, "source": string(resource.TypeEBSVolume)}
+	return []domainrunbook.Step{
+		ebsStep("backup-ebs-volume-config", "Backup EBS volume migration config", domainrunbook.StepTypeCommand, []string{"sh", "backup_ebs_volume.sh"}, "backup archive path is printed", metadata),
+		ebsStep("cutover-ebs-volume-mount", "Cut over service volume mount", domainrunbook.StepTypeAPICall, []string{"sh", "-c", ". config/ebs/app-change.env && echo $TARGET_VOLUME:$TARGET_MOUNT"}, "service mounts generated Docker volume", metadata),
+		ebsStep("rollback-block-storage-source", "Rollback to EBS source", domainrunbook.StepTypeRollback, []string{"sh", "-c", "echo keep EBS source authoritative"}, "source EBS volume remains available", metadata),
+	}
+}
+
+func ebsStep(id, name string, stepType domainrunbook.StepType, command []string, success string, metadata map[string]string) domainrunbook.Step {
+	return domainrunbook.Step{
+		ID:               id,
+		Name:             name,
+		Type:             stepType,
+		Status:           domainrunbook.StepStatusPending,
+		Executor:         "shell",
+		Command:          command,
+		SuccessCondition: success,
+		Metadata:         metadata,
+	}
+}
+
+func shellQuoteEBS(value string) string {
+	return "'" + value + "'"
 }

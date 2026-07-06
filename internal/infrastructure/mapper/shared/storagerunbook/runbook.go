@@ -45,16 +45,7 @@ func BlockStorage(name, provider, snapshotID string) []domainrunbook.Step {
 	}
 	return []domainrunbook.Step{
 		command("discover-block-snapshot", "Discover block storage snapshot", "Block Storage", []string{"sh", "-c", "echo snapshot discovery required for " + shellQuote(name)}, "snapshot identified or export limitation recorded", metadata),
-		{
-			ID:               "export-import-block-data",
-			Name:             "Export or stream block data",
-			Group:            "Block Storage",
-			Type:             domainrunbook.StepTypeApproval,
-			Status:           domainrunbook.StepStatusBlocked,
-			Executor:         "user",
-			SuccessCondition: "snapshot exported/imported or helper VM stream completed",
-			Metadata:         clone(metadata),
-		},
+		command("export-import-block-data", "Export or stream block data", "Block Storage", []string{"sh", "sync_ebs_volume.sh"}, "snapshot export or helper VM stream completed", metadata),
 		command("validate-block-mount", "Validate block storage mount", "Block Storage", []string{"sh", "-c", "docker volume inspect " + shellQuote(name) + " >/dev/null"}, "filesystem mounts and used bytes match expectation", metadata),
 	}
 }

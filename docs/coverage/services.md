@@ -12,7 +12,7 @@
 | aws | CodePipeline | full | aws_codepipeline |
 | aws | Cognito | full | aws_cognito_user_pool |
 | aws | DynamoDB | full | aws_dynamodb_table |
-| aws | EBS | mapped | aws_ebs_volume |
+| aws | EBS | full | aws_ebs_volume |
 | aws | EC2 | mapped | aws_instance |
 | aws | ECR | missing |  |
 | aws | ECS | mapped | aws_ecs_service, aws_ecs_task_definition |

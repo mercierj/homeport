@@ -2,10 +2,12 @@ package storage
 
 import (
 	"context"
+	"strings"
 	"testing"
 
 	"github.com/homeport/homeport/internal/domain/mapper"
 	"github.com/homeport/homeport/internal/domain/resource"
+	domainrunbook "github.com/homeport/homeport/internal/domain/runbook"
 )
 
 func TestNewEBSMapper(t *testing.T) {
@@ -16,6 +18,70 @@ func TestNewEBSMapper(t *testing.T) {
 	if m.ResourceType() != resource.TypeEBSVolume {
 		t.Errorf("ResourceType() = %v, want %v", m.ResourceType(), resource.TypeEBSVolume)
 	}
+}
+
+func TestEBSConformanceManagedAToZ(t *testing.T) {
+	result, err := NewEBSMapper().Map(context.Background(), managedEBSFixture())
+	if err != nil {
+		t.Fatal(err)
+	}
+	if len(result.ManualSteps) != 0 {
+		t.Fatalf("manual steps = %#v, want generated block storage migration", result.ManualSteps)
+	}
+	for _, file := range []string{"volumes/orders-data.json", "config/ebs/app-change.env"} {
+		if _, ok := result.Configs[file]; !ok {
+			t.Fatalf("missing config %s", file)
+		}
+	}
+	appEnv := string(result.Configs["config/ebs/app-change.env"])
+	if !strings.Contains(appEnv, "TARGET_VOLUME=orders-data") {
+		t.Fatalf("app-change env missing target volume:\n%s", appEnv)
+	}
+	for _, file := range []string{"setup_volume.sh", "sync_ebs_volume.sh", "backup_ebs_volume.sh", "validate_ebs_volume.sh"} {
+		if _, ok := result.Scripts[file]; !ok {
+			t.Fatalf("missing script %s", file)
+		}
+	}
+	for id, stepType := range map[string]domainrunbook.StepType{
+		"discover-block-snapshot":       domainrunbook.StepTypeCommand,
+		"export-import-block-data":      domainrunbook.StepTypeCommand,
+		"validate-block-mount":          domainrunbook.StepTypeCommand,
+		"backup-ebs-volume-config":      domainrunbook.StepTypeCommand,
+		"cutover-ebs-volume-mount":      domainrunbook.StepTypeAPICall,
+		"rollback-block-storage-source": domainrunbook.StepTypeRollback,
+	} {
+		if !hasEBSRunbookStep(result, id, stepType) {
+			t.Fatalf("missing %s runbook step: %#v", id, result.RunbookSteps)
+		}
+	}
+	for _, step := range result.RunbookSteps {
+		if step.Status == domainrunbook.StepStatusBlocked {
+			t.Fatalf("blocked runbook step = %#v, want generated migration", step)
+		}
+	}
+}
+
+func managedEBSFixture() *resource.AWSResource {
+	return &resource.AWSResource{
+		ID:   "vol-123",
+		Type: resource.TypeEBSVolume,
+		Name: "orders-data",
+		Config: map[string]interface{}{
+			"size":        float64(100),
+			"type":        "gp3",
+			"encrypted":   true,
+			"snapshot_id": "snap-123",
+		},
+	}
+}
+
+func hasEBSRunbookStep(result *mapper.MappingResult, id string, stepType domainrunbook.StepType) bool {
+	for _, step := range result.RunbookSteps {
+		if step.ID == id && step.Type == stepType {
+			return true
+		}
+	}
+	return false
 }
 
 func TestEBSMapper_ResourceType(t *testing.T) {
