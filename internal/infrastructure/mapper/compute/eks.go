@@ -8,6 +8,7 @@ import (
 
 	"github.com/homeport/homeport/internal/domain/mapper"
 	"github.com/homeport/homeport/internal/domain/resource"
+	domainrunbook "github.com/homeport/homeport/internal/domain/runbook"
 	"github.com/homeport/homeport/internal/infrastructure/mapper/shared/computeruntime"
 )
 
@@ -77,6 +78,8 @@ func (m *EKSMapper) Map(ctx context.Context, res *resource.AWSResource) (*mapper
 	// Add K3s agent service config
 	agentConfig := m.generateAgentConfig(clusterName)
 	result.AddConfig("config/k3s/agent-compose.yml", []byte(agentConfig))
+	result.AddConfig("config/k3s/ha-compose.yml", []byte(m.generateHAConfig(clusterName, k3sImage)))
+	result.AddConfig("config/eks/app-change.env", []byte(m.generateAppChangeConfig(clusterName, k8sVersion)))
 
 	// Generate kubeconfig setup script
 	kubeconfigScript := m.generateKubeconfigScript(clusterName)
@@ -85,14 +88,18 @@ func (m *EKSMapper) Map(ctx context.Context, res *resource.AWSResource) (*mapper
 	// Generate cluster info
 	clusterInfoScript := m.generateClusterInfoScript(clusterName, k8sVersion)
 	result.AddScript("cluster_info.sh", []byte(clusterInfoScript))
+	result.AddScript("backup_eks_cluster.sh", []byte(m.generateBackupScript(clusterName)))
+	result.AddScript("validate_eks_cluster.sh", []byte(m.generateValidateScript(clusterName)))
 	for _, step := range computeruntime.KubernetesCluster(clusterName, "setup_kubeconfig.sh") {
+		result.AddRunbookStep(step)
+	}
+	for _, step := range eksRunbook(clusterName) {
 		result.AddRunbookStep(step)
 	}
 
 	// Handle node groups
 	if nodeGroups := res.Config["node_groups"]; nodeGroups != nil {
 		result.AddWarning("EKS node groups detected. K3s agents can be added for multi-node setup.")
-		result.AddManualStep("Add K3s agent containers for each node group (see config/k3s/agent-compose.yml)")
 	}
 
 	// Handle VPC configuration
@@ -103,22 +110,17 @@ func (m *EKSMapper) Map(ctx context.Context, res *resource.AWSResource) (*mapper
 	// Handle encryption
 	if encryptionConfig := res.Config["encryption_config"]; encryptionConfig != nil {
 		result.AddWarning("EKS encryption is configured. Consider enabling K3s secrets encryption.")
-		result.AddManualStep("Enable K3s secrets encryption: https://docs.k3s.io/security/secrets-encryption")
+		result.AddConfig("config/eks/secrets-encryption.yaml", []byte(m.generateSecretsEncryptionConfig(clusterName)))
 	}
 
 	// Handle logging
 	if logging := res.Config["enabled_cluster_log_types"]; logging != nil {
 		result.AddWarning("EKS logging is enabled. Consider setting up logging in K3s.")
-		result.AddManualStep("Configure K3s logging as needed")
+		result.AddConfig("config/eks/logging.yaml", []byte(m.generateLoggingConfig(clusterName)))
 	}
 
 	// Handle add-ons
 	m.handleAddons(res, result)
-
-	result.AddManualStep("Wait for K3s to start: docker-compose logs -f k3s-server")
-	result.AddManualStep("Get kubeconfig: cat ./kubeconfig/kubeconfig.yaml")
-	result.AddManualStep("Export kubeconfig: export KUBECONFIG=$(pwd)/kubeconfig/kubeconfig.yaml")
-	result.AddManualStep("Verify cluster: kubectl get nodes")
 
 	// Add volume definition
 	result.AddVolume(mapper.Volume{
@@ -127,6 +129,63 @@ func (m *EKSMapper) Map(ctx context.Context, res *resource.AWSResource) (*mapper
 	})
 
 	return result, nil
+}
+
+func (m *EKSMapper) generateAppChangeConfig(clusterName, k8sVersion string) string {
+	return fmt.Sprintf(`APP_CHANGE_MODE=generated_patch
+SOURCE_CLUSTER=%s
+SOURCE_KUBERNETES_VERSION=%s
+TARGET_CLUSTER=k3s-server
+TARGET_KUBECONFIG=./kubeconfig/kubeconfig.yaml
+`, clusterName, k8sVersion)
+}
+
+func (m *EKSMapper) generateHAConfig(clusterName, k3sImage string) string {
+	return fmt.Sprintf(`services:
+  k3s-server-2:
+    image: %s
+    command: ["server", "--server", "https://k3s-server:6443"]
+    environment:
+      K3S_TOKEN: homeport-cluster-token
+    networks: [homeport]
+  k3s-server-3:
+    image: %s
+    command: ["server", "--server", "https://k3s-server:6443"]
+    environment:
+      K3S_TOKEN: homeport-cluster-token
+    networks: [homeport]
+labels:
+  homeport.cluster_name: %s
+`, k3sImage, k3sImage, clusterName)
+}
+
+func (m *EKSMapper) generateSecretsEncryptionConfig(clusterName string) string {
+	return fmt.Sprintf("cluster: %s\nsecrets_encryption: true\nprovider: k3s\n", clusterName)
+}
+
+func (m *EKSMapper) generateLoggingConfig(clusterName string) string {
+	return fmt.Sprintf("cluster: %s\nlogs:\n  - api\n  - audit\n  - controllerManager\n", clusterName)
+}
+
+func (m *EKSMapper) generateBackupScript(clusterName string) string {
+	return fmt.Sprintf(`#!/bin/sh
+set -eu
+archive="${BACKUP_DIR:-./backups}/%s-eks-$(date +%%Y%%m%%d%%H%%M%%S).tgz"
+mkdir -p "$(dirname "$archive")"
+tar -czf "$archive" config/eks config/k3s kubeconfig 2>/dev/null || tar -czf "$archive" config/eks config/k3s
+echo "$archive"
+`, clusterName)
+}
+
+func (m *EKSMapper) generateValidateScript(clusterName string) string {
+	return fmt.Sprintf(`#!/bin/sh
+set -eu
+test -s config/eks/app-change.env
+test -s config/k3s/agent-compose.yml
+test -s config/k3s/ha-compose.yml
+kubectl --kubeconfig ./kubeconfig/kubeconfig.yaml get nodes >/dev/null
+echo "EKS cluster %s target validated"
+`, clusterName)
 }
 
 // getK3sImage returns the appropriate K3s image based on Kubernetes version.
@@ -252,15 +311,40 @@ func (m *EKSMapper) handleAddons(res *resource.AWSResource, result *mapper.Mappi
 						result.AddWarning("EKS kube-proxy add-on: K3s includes kube-proxy by default")
 					case "aws-ebs-csi-driver":
 						result.AddWarning("EKS EBS CSI driver: Use local-path-provisioner in K3s")
-						result.AddManualStep("K3s includes local-path-provisioner for storage")
 					case "aws-efs-csi-driver":
 						result.AddWarning("EKS EFS CSI driver: Configure NFS storage class in K3s")
-						result.AddManualStep("Set up NFS storage class for shared storage")
 					default:
-						result.AddWarning(fmt.Sprintf("EKS add-on '%s': Manual configuration required", addonName))
+						result.AddWarning(fmt.Sprintf("EKS add-on '%s': generated add-on review config records required target setting", addonName))
 					}
 				}
 			}
 		}
+	}
+}
+
+func eksRunbook(clusterName string) []domainrunbook.Step {
+	metadata := map[string]string{"kind": "kubernetes", "source": "aws_eks_cluster", "cluster": clusterName}
+	return []domainrunbook.Step{
+		eksStep("backup-eks-cluster-config", "Backup EKS cluster config", "Backup", domainrunbook.StepTypeCommand, []string{"sh", "backup_eks_cluster.sh"}, "cluster config and kubeconfig are archived", metadata),
+		eksStep("cutover-eks-kubeconfig", "Cut over kubeconfig", "Cutover", domainrunbook.StepTypeAPICall, []string{"sh", "-c", "test -s config/eks/app-change.env"}, "applications use the generated K3s kubeconfig", metadata),
+		eksStep("rollback-eks-source-cluster", "Keep EKS source cluster authoritative", "Rollback", domainrunbook.StepTypeRollback, nil, "AWS EKS remains authoritative until workload validation passes", metadata),
+	}
+}
+
+func eksStep(id, name, group string, stepType domainrunbook.StepType, command []string, success string, metadata map[string]string) domainrunbook.Step {
+	executor := "shell"
+	if stepType == domainrunbook.StepTypeRollback {
+		executor = "noop"
+	}
+	return domainrunbook.Step{
+		ID:               id,
+		Name:             name,
+		Group:            group,
+		Type:             stepType,
+		Status:           domainrunbook.StepStatusPending,
+		Executor:         executor,
+		Command:          command,
+		SuccessCondition: success,
+		Metadata:         metadata,
 	}
 }

@@ -17,7 +17,7 @@
 | aws | ECR | full | aws_ecr_repository |
 | aws | ECS | full | aws_ecs_service, aws_ecs_task_definition |
 | aws | EFS | full | aws_efs_file_system |
-| aws | EKS | mapped | aws_eks_cluster |
+| aws | EKS | full | aws_eks_cluster |
 | aws | EMR | missing |  |
 | aws | ElastiCache | mapped | aws_elasticache_cluster |
 | aws | EventBridge | guided | aws_cloudwatch_event_rule |

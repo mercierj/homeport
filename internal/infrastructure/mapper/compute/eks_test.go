@@ -2,10 +2,12 @@ package compute
 
 import (
 	"context"
+	"strings"
 	"testing"
 
 	"github.com/homeport/homeport/internal/domain/mapper"
 	"github.com/homeport/homeport/internal/domain/resource"
+	domainrunbook "github.com/homeport/homeport/internal/domain/runbook"
 )
 
 func TestNewEKSMapper(t *testing.T) {
@@ -16,6 +18,82 @@ func TestNewEKSMapper(t *testing.T) {
 	if m.ResourceType() != resource.TypeEKSCluster {
 		t.Errorf("ResourceType() = %v, want %v", m.ResourceType(), resource.TypeEKSCluster)
 	}
+}
+
+func TestEKSConformanceManagedAToZ(t *testing.T) {
+	result, err := NewEKSMapper().Map(context.Background(), managedEKSFixture())
+	if err != nil {
+		t.Fatal(err)
+	}
+	if len(result.ManualSteps) != 0 {
+		t.Fatalf("manual steps = %#v, want generated EKS to K3s migration", result.ManualSteps)
+	}
+	for _, file := range []string{
+		"config/k3s/agent-compose.yml",
+		"config/k3s/ha-compose.yml",
+		"config/eks/app-change.env",
+		"config/eks/secrets-encryption.yaml",
+		"config/eks/logging.yaml",
+	} {
+		if _, ok := result.Configs[file]; !ok {
+			t.Fatalf("missing config %s", file)
+		}
+	}
+	appEnv := string(result.Configs["config/eks/app-change.env"])
+	for _, want := range []string{"SOURCE_CLUSTER=orders", "TARGET_CLUSTER=k3s-server", "APP_CHANGE_MODE=generated_patch"} {
+		if !strings.Contains(appEnv, want) {
+			t.Fatalf("app-change env missing %q:\n%s", want, appEnv)
+		}
+	}
+	for _, file := range []string{"setup_kubeconfig.sh", "cluster_info.sh", "backup_eks_cluster.sh", "validate_eks_cluster.sh"} {
+		if _, ok := result.Scripts[file]; !ok {
+			t.Fatalf("missing script %s", file)
+		}
+	}
+	for id, stepType := range map[string]domainrunbook.StepType{
+		"export-kubernetes-workloads":   domainrunbook.StepTypeCommand,
+		"provision-k3s-cluster":         domainrunbook.StepTypeCommand,
+		"apply-kubernetes-workloads":    domainrunbook.StepTypeCommand,
+		"validate-kubernetes-workloads": domainrunbook.StepTypeCommand,
+		"backup-eks-cluster-config":     domainrunbook.StepTypeCommand,
+		"cutover-eks-kubeconfig":        domainrunbook.StepTypeAPICall,
+		"rollback-eks-source-cluster":   domainrunbook.StepTypeRollback,
+	} {
+		if !hasEKSRunbookStep(result, id, stepType) {
+			t.Fatalf("missing %s runbook step: %#v", id, result.RunbookSteps)
+		}
+	}
+}
+
+func managedEKSFixture() *resource.AWSResource {
+	return &resource.AWSResource{
+		ID:   "arn:aws:eks:eu-west-1:123456789012:cluster/orders",
+		Type: resource.TypeEKSCluster,
+		Name: "orders",
+		Config: map[string]interface{}{
+			"name":                      "orders",
+			"version":                   "1.28",
+			"enabled_cluster_log_types": []string{"api", "audit"},
+			"vpc_config":                map[string]interface{}{"subnet_ids": []string{"subnet-1", "subnet-2"}},
+			"encryption_config":         map[string]interface{}{"provider": map[string]interface{}{"key_arn": "arn:aws:kms:eu-west-1:123456789012:key/1234"}},
+			"node_groups": []interface{}{
+				map[string]interface{}{"name": "workers", "instance_type": "t3.medium"},
+			},
+			"addon": []interface{}{
+				map[string]interface{}{"addon_name": "aws-ebs-csi-driver"},
+				map[string]interface{}{"addon_name": "aws-efs-csi-driver"},
+			},
+		},
+	}
+}
+
+func hasEKSRunbookStep(result *mapper.MappingResult, id string, stepType domainrunbook.StepType) bool {
+	for _, step := range result.RunbookSteps {
+		if step.ID == id && step.Type == stepType {
+			return true
+		}
+	}
+	return false
 }
 
 func TestEKSMapper_ResourceType(t *testing.T) {
