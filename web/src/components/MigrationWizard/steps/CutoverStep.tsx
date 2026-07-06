@@ -208,9 +208,9 @@ export function CutoverStep() {
   };
 
   const handleCutoverComplete = (event: CutoverEvent) => {
-    addLog(`Cutover ${event.status === 'completed' ? 'completed successfully' : 'rolled back'}`);
+    addLog(`${event.dry_run ? 'Dry run' : 'Cutover'} ${event.status === 'completed' ? 'completed successfully' : 'rolled back'}`);
     setIsCuttingOver(false);
-    if (event.status === 'completed') {
+    if (event.status === 'completed' && !event.dry_run) {
       setCutoverComplete(true);
       setCurrentPhase('done');
     }

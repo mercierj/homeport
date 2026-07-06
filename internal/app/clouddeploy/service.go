@@ -76,6 +76,25 @@ func (s *Service) Get(id string) (*Job, error) {
 	return job, nil
 }
 
+func (s *Service) Apply(ctx context.Context, id string) (*Job, error) {
+	s.mu.Lock()
+	job := s.jobs[id]
+	if job == nil {
+		s.mu.Unlock()
+		return nil, fmt.Errorf("cloud deploy job not found: %s", id)
+	}
+	if job.Status != StatusPlanned {
+		s.mu.Unlock()
+		return nil, fmt.Errorf("cloud deploy job %s is not planned", id)
+	}
+	job.Apply = true
+	job.Status = StatusRunning
+	job.Error = ""
+	s.mu.Unlock()
+	go s.apply(context.Background(), job)
+	return job, nil
+}
+
 func (s *Service) run(ctx context.Context, job *Job) {
 	s.set(job, StatusRunning, "")
 	if !s.command(ctx, job, "terraform", "init", "-input=false") {
@@ -88,6 +107,14 @@ func (s *Service) run(ctx context.Context, job *Job) {
 		s.set(job, StatusPlanned, "")
 		return
 	}
+	if !s.command(ctx, job, "terraform", "apply", "-input=false", "-auto-approve", "tfplan") {
+		return
+	}
+	s.set(job, StatusApplied, "")
+}
+
+func (s *Service) apply(ctx context.Context, job *Job) {
+	s.set(job, StatusRunning, "")
 	if !s.command(ctx, job, "terraform", "apply", "-input=false", "-auto-approve", "tfplan") {
 		return
 	}

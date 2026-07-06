@@ -65,6 +65,7 @@ export interface CutoverEvent {
   step_type?: string;
   description?: string;
   status?: string;
+  dry_run?: boolean;
   error?: string;
   message?: string;
 }

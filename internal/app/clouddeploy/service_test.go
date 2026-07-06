@@ -77,6 +77,68 @@ func TestStartContinuesAfterCallerContextCancelled(t *testing.T) {
 	}
 }
 
+func TestApplyUsesExistingPlanWithoutReplanning(t *testing.T) {
+	binDir := t.TempDir()
+	callsPath := filepath.Join(t.TempDir(), "terraform-calls.log")
+	terraformPath := filepath.Join(binDir, "terraform")
+	if err := os.WriteFile(terraformPath, []byte("#!/bin/sh\nprintf '%s\\n' \"$*\" >> \"$TERRAFORM_CALLS\"\n"), 0o755); err != nil {
+		t.Fatal(err)
+	}
+	t.Setenv("PATH", binDir+string(os.PathListSeparator)+os.Getenv("PATH"))
+	t.Setenv("TERRAFORM_CALLS", callsPath)
+
+	service := NewService(t.TempDir())
+	job, err := service.Start(context.Background(), "job-1", terraformZip(t), false)
+	if err != nil {
+		t.Fatal(err)
+	}
+	job = waitForCloudStatus(t, service, job.ID, StatusPlanned, StatusFailed)
+	if job.Status != StatusPlanned {
+		t.Fatalf("status = %q, error = %q, want %q", job.Status, job.Error, StatusPlanned)
+	}
+
+	if _, err := service.Apply(context.Background(), job.ID); err != nil {
+		t.Fatal(err)
+	}
+	job = waitForCloudStatus(t, service, job.ID, StatusApplied, StatusFailed)
+	if job.Status != StatusApplied {
+		t.Fatalf("status = %q, error = %q, want %q", job.Status, job.Error, StatusApplied)
+	}
+	calls, err := os.ReadFile(callsPath)
+	if err != nil {
+		t.Fatal(err)
+	}
+	got := string(calls)
+	if strings.Count(got, "plan -input=false -out=tfplan") != 1 {
+		t.Fatalf("terraform calls replanned: %q", got)
+	}
+	if !strings.Contains(got, "apply -input=false -auto-approve tfplan") {
+		t.Fatalf("terraform calls missing apply: %q", got)
+	}
+}
+
+func waitForCloudStatus(t *testing.T, service *Service, id string, statuses ...Status) *Job {
+	t.Helper()
+	deadline := time.Now().Add(2 * time.Second)
+	for time.Now().Before(deadline) {
+		job, err := service.Get(id)
+		if err != nil {
+			t.Fatal(err)
+		}
+		for _, status := range statuses {
+			if job.Status == status {
+				return job
+			}
+		}
+		time.Sleep(10 * time.Millisecond)
+	}
+	job, err := service.Get(id)
+	if err != nil {
+		t.Fatal(err)
+	}
+	return job
+}
+
 func terraformZip(t *testing.T) []byte {
 	t.Helper()
 	var buf bytes.Buffer

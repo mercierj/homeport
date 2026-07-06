@@ -9,7 +9,7 @@ import { ProviderConfigForm } from '../components/DeploymentWizard/ProviderConfi
 import { TerraformExport } from '../components/DeploymentWizard/TerraformExport';
 import { useDeploymentStore } from '../stores/deployment';
 import { useWizardStore } from '../stores/wizard';
-import { getCloudDeploy, startCloudDeploy, startDeployment, type CloudDeployJob } from '../lib/deploy-api';
+import { applyCloudDeploy, getCloudDeploy, startCloudDeploy, startDeployment, type CloudDeployJob } from '../lib/deploy-api';
 import { downloadStack } from '../lib/migrate-api';
 import { createPendingStack } from '../lib/stacks-api';
 import { buttonVariants } from '../lib/button-variants';
@@ -251,7 +251,20 @@ export function Deploy() {
   };
 
   const handleCloudPlan = () => cloudDeployMutation.mutate(false);
-  const handleCloudApply = () => cloudDeployMutation.mutate(true);
+  const handleCloudApply = async () => {
+    if (!cloudJob?.id) return;
+    try {
+      setCloudJob(await applyCloudDeploy(cloudJob.id));
+      const job = await pollCloudJob(cloudJob.id);
+      if (job.status === 'applied') {
+        toast.success('Terraform apply completed');
+      } else if (job.status === 'failed') {
+        toast.error(job.error || 'Terraform job failed');
+      }
+    } catch (error) {
+      toast.error(error instanceof Error ? error.message : 'Terraform apply failed');
+    }
+  };
 
   const handleRetry = () => {
     deployMutation.mutate();

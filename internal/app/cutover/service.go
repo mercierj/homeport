@@ -37,13 +37,13 @@ func NewService() *Service {
 
 // CreatePlanRequest contains the data needed to create a cutover plan.
 type CreatePlanRequest struct {
-	BundleID    string                        `json:"bundle_id"`
-	Name        string                        `json:"name"`
-	PreChecks   []*domaincutover.HealthCheck  `json:"pre_checks"`
-	DNSChanges  []*domaincutover.DNSChange    `json:"dns_changes"`
-	PostChecks  []*domaincutover.HealthCheck  `json:"post_checks"`
-	DryRun      bool                          `json:"dry_run"`
-	DNSProvider string                        `json:"dns_provider"`
+	BundleID    string                       `json:"bundle_id"`
+	Name        string                       `json:"name"`
+	PreChecks   []*domaincutover.HealthCheck `json:"pre_checks"`
+	DNSChanges  []*domaincutover.DNSChange   `json:"dns_changes"`
+	PostChecks  []*domaincutover.HealthCheck `json:"post_checks"`
+	DryRun      bool                         `json:"dry_run"`
+	DNSProvider string                       `json:"dns_provider"`
 }
 
 // CreatePlan creates a new cutover plan.
@@ -101,6 +101,7 @@ type CutoverEvent struct {
 	StepType    string `json:"step_type,omitempty"`
 	Description string `json:"description,omitempty"`
 	Status      string `json:"status,omitempty"`
+	DryRun      bool   `json:"dry_run,omitempty"`
 	Error       string `json:"error,omitempty"`
 	Message     string `json:"message,omitempty"`
 }
@@ -119,7 +120,7 @@ func (s *Service) Execute(ctx context.Context, planID string, callback CutoverCa
 		return fmt.Errorf("cutover already running")
 	}
 
-	ctx, cancel := context.WithCancel(ctx)
+	ctx, cancel := context.WithCancel(context.Background())
 	exec.cancel = cancel
 	now := time.Now()
 	exec.StartedAt = &now
@@ -293,6 +294,7 @@ func (s *Service) executePlan(ctx context.Context, exec *CutoverExecution, callb
 			Type:    "complete",
 			PlanID:  plan.ID,
 			Status:  "completed",
+			DryRun:  plan.DryRun,
 			Message: "Cutover completed successfully",
 		})
 	}

@@ -34,6 +34,7 @@ func NewCloudDeployHandler(cloudService *clouddeploy.Service, migrateService *mi
 func (h *CloudDeployHandler) RegisterRoutes(r chi.Router) {
 	r.Post("/cloud-deploy/start", h.Start)
 	r.Get("/cloud-deploy/{id}", h.Get)
+	r.Post("/cloud-deploy/{id}/apply", h.Apply)
 }
 
 func (h *CloudDeployHandler) Start(w http.ResponseWriter, r *http.Request) {
@@ -62,6 +63,15 @@ func (h *CloudDeployHandler) Get(w http.ResponseWriter, r *http.Request) {
 	job, err := h.cloudService.Get(chi.URLParam(r, "id"))
 	if err != nil {
 		respondError(w, r, http.StatusNotFound, err.Error())
+		return
+	}
+	render.JSON(w, r, job)
+}
+
+func (h *CloudDeployHandler) Apply(w http.ResponseWriter, r *http.Request) {
+	job, err := h.cloudService.Apply(r.Context(), chi.URLParam(r, "id"))
+	if err != nil {
+		respondError(w, r, http.StatusBadRequest, err.Error())
 		return
 	}
 	render.JSON(w, r, job)

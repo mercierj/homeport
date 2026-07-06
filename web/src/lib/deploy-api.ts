@@ -167,6 +167,20 @@ export async function getCloudDeploy(id: string): Promise<CloudDeployJob> {
   return response.json();
 }
 
+export async function applyCloudDeploy(id: string): Promise<CloudDeployJob> {
+  const response = await fetch(`${API_BASE}/cloud-deploy/${id}/apply`, {
+    method: 'POST',
+    credentials: 'include',
+  });
+
+  if (!response.ok) {
+    const error = await response.text();
+    throw new Error(error || 'Failed to apply cloud deploy');
+  }
+
+  return response.json();
+}
+
 export async function getDeploymentStatus(id: string): Promise<DeploymentStatus> {
   const response = await fetch(`${API_BASE}/deploy/${id}/status`, {
     credentials: 'include',
