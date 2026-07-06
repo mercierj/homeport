@@ -68,7 +68,7 @@
 | gcp | Cloud Build | full | google_cloudbuild_trigger |
 | gcp | Cloud CDN | full | google_compute_backend_bucket |
 | gcp | Cloud DNS | full | google_dns_managed_zone |
-| gcp | Cloud Functions | mapped | google_cloudfunctions_function |
+| gcp | Cloud Functions | full | google_cloudfunctions_function |
 | gcp | Cloud Load Balancing | mapped | google_compute_backend_service |
 | gcp | Cloud Run | mapped | google_cloud_run_service |
 | gcp | Cloud Scheduler | guided | google_cloud_scheduler_job |

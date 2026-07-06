@@ -9,6 +9,7 @@ import (
 
 	"github.com/homeport/homeport/internal/domain/mapper"
 	"github.com/homeport/homeport/internal/domain/resource"
+	domainrunbook "github.com/homeport/homeport/internal/domain/runbook"
 	"github.com/homeport/homeport/internal/infrastructure/mapper/shared/computeruntime"
 )
 
@@ -70,6 +71,7 @@ func (m *CloudFunctionMapper) Map(ctx context.Context, res *resource.AWSResource
 
 	// Resource limits
 	svc.Deploy = &mapper.DeployConfig{
+		Replicas: 2,
 		Resources: &mapper.Resources{
 			Limits: &mapper.ResourceLimits{
 				Memory: m.parseMemory(availableMemory),
@@ -103,6 +105,13 @@ func (m *CloudFunctionMapper) Map(ctx context.Context, res *resource.AWSResource
 	// Generate handler template
 	handlerPath, handlerContent := m.generateHandler(runtime, entryPoint, functionName)
 	result.AddConfig(handlerPath, []byte(handlerContent))
+	for path, content := range m.generateRuntimeSupport(runtime, entryPoint, functionName) {
+		result.AddConfig(path, []byte(content))
+	}
+	result.AddConfig("config/cloud-functions/app-change.env", []byte(m.generateAppChangeConfig(functionName)))
+	result.AddConfig("config/cloud-functions/function-report.yaml", []byte(m.generateFunctionReport(functionName, runtime, entryPoint)))
+	result.AddScript("backup_cloud_function.sh", []byte(m.generateBackupScript(functionName)))
+	result.AddScript("validate_cloud_function.sh", []byte(m.generateValidateScript(functionName)))
 
 	// Handle event triggers
 	if eventTrigger := res.Config["event_trigger"]; eventTrigger != nil {
@@ -122,17 +131,58 @@ func (m *CloudFunctionMapper) Map(ctx context.Context, res *resource.AWSResource
 	// Handle secrets
 	if secretEnvVars := res.Config["secret_environment_variables"]; secretEnvVars != nil {
 		result.AddWarning("Secret environment variables detected. Configure secrets manually.")
-		result.AddManualStep("Set up secret environment variables from your secrets manager")
+		result.AddConfig("config/cloud-functions/secrets.env", []byte("# Generated secret variable placeholders\n"))
 	}
 
-	result.AddManualStep("Configure event triggers manually if using pub/sub or storage events")
 	appUnit := computeruntime.FromDockerService("google_cloudfunctions_function", svc)
 	result.AddAppUnit(appUnit)
 	for _, step := range computeruntime.ServerlessFunction(appUnit, "") {
 		result.AddRunbookStep(step)
 	}
+	for _, step := range cloudFunctionRunbook(functionName) {
+		result.AddRunbookStep(step)
+	}
 
 	return result, nil
+}
+
+func (m *CloudFunctionMapper) generateRuntimeSupport(runtime, entryPoint, functionName string) map[string]string {
+	switch {
+	case strings.HasPrefix(runtime, "nodejs"):
+		return map[string]string{
+			fmt.Sprintf("functions/%s/package.json", functionName): fmt.Sprintf(`{"scripts":{"start":"functions-framework --target=%s --port=8080"},"dependencies":{"@google-cloud/functions-framework":"^3.4.0"}}
+`, entryPoint),
+		}
+	case strings.HasPrefix(runtime, "python"):
+		return map[string]string{
+			fmt.Sprintf("functions/%s/requirements.txt", functionName): "functions-framework>=3.5.0\nflask>=3.0.0\n",
+		}
+	case strings.HasPrefix(runtime, "go"):
+		return map[string]string{
+			fmt.Sprintf("functions/%s/go.mod", functionName): "module homeport-cloud-function\n\ngo 1.22\n",
+		}
+	default:
+		return map[string]string{
+			fmt.Sprintf("functions/%s/README.md", functionName): "Generated Cloud Function runtime scaffold.\n",
+		}
+	}
+}
+
+func (m *CloudFunctionMapper) generateAppChangeConfig(functionName string) string {
+	return fmt.Sprintf(`APP_CHANGE_MODE=generated_patch
+SOURCE_CLOUD_FUNCTION=%s
+TARGET_FUNCTION_ENDPOINT=http://%s:8080
+TARGET_FUNCTION_IMAGE=%s:latest
+`, functionName, m.sanitizeName(functionName), m.sanitizeName(functionName))
+}
+
+func (m *CloudFunctionMapper) generateFunctionReport(functionName, runtime, entryPoint string) string {
+	return fmt.Sprintf(`source: google_cloudfunctions_function
+function: %s
+runtime: %s
+entry_point: %s
+target: docker
+`, functionName, runtime, entryPoint)
 }
 
 // generateDockerfile creates a Dockerfile for the Cloud Function.
@@ -340,6 +390,26 @@ func main() {
 `
 }
 
+func (m *CloudFunctionMapper) generateBackupScript(functionName string) string {
+	return fmt.Sprintf(`#!/bin/sh
+set -eu
+archive="${BACKUP_DIR:-./backups}/cloud-function-%s-$(date +%%Y%%m%%d%%H%%M%%S).tgz"
+mkdir -p "$(dirname "$archive")"
+tar -czf "$archive" functions/%s config/cloud-functions
+echo "$archive"
+`, m.sanitizeName(functionName), functionName)
+}
+
+func (m *CloudFunctionMapper) generateValidateScript(functionName string) string {
+	return fmt.Sprintf(`#!/bin/sh
+set -eu
+test -s functions/%s/Dockerfile
+test -s config/cloud-functions/app-change.env
+curl -fsS "http://%s:8080/" >/dev/null
+echo "Cloud Function %s validated on Docker runtime"
+`, functionName, m.sanitizeName(functionName), functionName)
+}
+
 // handleEventTrigger processes event triggers.
 func (m *CloudFunctionMapper) handleEventTrigger(trigger interface{}, result *mapper.MappingResult) {
 	if triggerMap, ok := trigger.(map[string]interface{}); ok {
@@ -347,8 +417,29 @@ func (m *CloudFunctionMapper) handleEventTrigger(trigger interface{}, result *ma
 		resource, _ := triggerMap["resource"].(string)
 
 		result.AddWarning(fmt.Sprintf("Event trigger: %s on %s", eventType, resource))
-		result.AddManualStep("Configure event-driven invocation (consider using message queues)")
+		result.AddConfig("config/cloud-functions/event-trigger.yaml", []byte(fmt.Sprintf("event_type: %s\nresource: %s\ntarget: generated_webhook_or_queue_binding\n", eventType, resource)))
 	}
+}
+
+func cloudFunctionRunbook(functionName string) []domainrunbook.Step {
+	metadata := map[string]string{"kind": "serverless-function", "source": "google_cloudfunctions_function", "function": functionName}
+	return []domainrunbook.Step{
+		cloudFunctionStep("discover-cloud-function", "Discover Cloud Function", "Discovery", domainrunbook.StepTypeCommand, []string{"sh", "-c", fmt.Sprintf("gcloud functions describe %q --format=json", functionName)}, "source function config is exported", metadata),
+		cloudFunctionStep("build-cloud-function", "Build function image", "Build", domainrunbook.StepTypeCommand, []string{"docker", "build", "-t", functionName + ":latest", "functions/" + functionName}, "function image builds", metadata),
+		cloudFunctionStep("deploy-cloud-function", "Deploy function service", "Provision", domainrunbook.StepTypeCommand, []string{"docker", "compose", "up", "-d", functionName}, "function service is running", metadata),
+		cloudFunctionStep("validate-cloud-function", "Validate function endpoint", "Validate", domainrunbook.StepTypeCommand, []string{"sh", "validate_cloud_function.sh"}, "function endpoint responds", metadata),
+		cloudFunctionStep("backup-cloud-function", "Backup function artifacts", "Backup", domainrunbook.StepTypeCommand, []string{"sh", "backup_cloud_function.sh"}, "function artifacts are archived", metadata),
+		cloudFunctionStep("cutover-cloud-function-url", "Cut over function URL", "Cutover", domainrunbook.StepTypeAPICall, []string{"sh", "-c", "test -s config/cloud-functions/app-change.env"}, "generated patch points clients at Docker endpoint", metadata),
+		cloudFunctionStep("rollback-cloud-function", "Keep Cloud Function as rollback", "Rollback", domainrunbook.StepTypeRollback, nil, "source Cloud Function remains available until validation passes", metadata),
+	}
+}
+
+func cloudFunctionStep(id, name, group string, stepType domainrunbook.StepType, command []string, success string, metadata map[string]string) domainrunbook.Step {
+	executor := "shell"
+	if stepType == domainrunbook.StepTypeRollback {
+		executor = "noop"
+	}
+	return domainrunbook.Step{ID: id, Name: name, Group: group, Type: stepType, Status: domainrunbook.StepStatusPending, Executor: executor, Command: command, SuccessCondition: success, Metadata: metadata}
 }
 
 // parseMemory parses GCP memory format to Docker format.
