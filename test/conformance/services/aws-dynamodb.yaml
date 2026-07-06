@@ -1,0 +1,17 @@
+provider: aws
+service: DynamoDB
+checks:
+    api_compat: go test ./test/compat
+    backup: go test ./internal/app/backup
+    cost: go test ./internal/domain/coverage ./internal/app/coverage
+    cutover: go test ./internal/app/cutover
+    discover: go test ./test/integration/aws
+    env_dns: go test ./internal/app/cutover
+    ha: go test ./internal/domain/provider
+    migrate: go test ./internal/app/datamigration
+    provision: go test ./internal/infrastructure/mapper/...
+    rollback: go test ./internal/app/backup
+    validate: go test ./internal/app/metrics
+evidence:
+    app_change_mode: adapter_or_generated_report
+    target: HomePort managed replacement

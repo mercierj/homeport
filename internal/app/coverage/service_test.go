@@ -3,6 +3,7 @@ package coverage
 import (
 	"bytes"
 	"encoding/json"
+	"fmt"
 	"os"
 	"path/filepath"
 	"slices"
@@ -166,6 +167,20 @@ func TestPromoteRejectsFullUntilManualStepsResolved(t *testing.T) {
 	}
 }
 
+func TestPromoteRejectsFullWithoutConformanceManifest(t *testing.T) {
+	withConformanceDir(t, t.TempDir())
+	catalog := Catalog{Services: []domaincoverage.ServiceCoverage{{
+		Provider: "aws", Service: "S3", Status: domaincoverage.StatusMapped, ManualStepsResolved: true,
+		Discover: true, Cost: true, Provision: true, Migrate: true, APICompat: true,
+		EnvDNS: true, HA: true, Backup: true, Validate: true, Cutover: true, Rollback: true,
+	}}}
+
+	err := catalog.Promote("aws", "S3", domaincoverage.StatusFull)
+	if err == nil || !strings.Contains(err.Error(), "conformance manifest") {
+		t.Fatalf("expected conformance manifest guard, got %v", err)
+	}
+}
+
 func TestPromoteRejectsFullWhenManualStepsOnlyProvidedAsFlag(t *testing.T) {
 	catalog := Catalog{Services: []domaincoverage.ServiceCoverage{
 		{
@@ -195,6 +210,7 @@ func TestPromoteRecordsManualStepsResolved(t *testing.T) {
 }
 
 func TestPromoteAllowsFullWhenManualStepsResolved(t *testing.T) {
+	withConformanceManifest(t, "aws", "S3")
 	catalog := Catalog{Services: []domaincoverage.ServiceCoverage{
 		{
 			Provider: "aws", Service: "S3", Status: domaincoverage.StatusMapped, ManualStepsResolved: true,
@@ -208,6 +224,41 @@ func TestPromoteAllowsFullWhenManualStepsResolved(t *testing.T) {
 	}
 	if got := catalog.Services[0].Status; got != domaincoverage.StatusFull {
 		t.Fatalf("status = %q, want full", got)
+	}
+}
+
+func withConformanceDir(t *testing.T, dir string) {
+	t.Helper()
+	original := ConformanceDir
+	ConformanceDir = dir
+	t.Cleanup(func() { ConformanceDir = original })
+}
+
+func withConformanceManifest(t *testing.T, provider, service string) {
+	t.Helper()
+	dir := t.TempDir()
+	withConformanceDir(t, dir)
+	data := fmt.Sprintf(`
+provider: %s
+service: %s
+checks:
+  discover: go test ./test/integration/%s
+  cost: go test ./internal/domain/coverage
+  provision: go test ./internal/infrastructure/mapper/...
+  migrate: go test ./internal/app/datamigration
+  api_compat: go test ./test/compat
+  env_dns: go test ./internal/app/cutover
+  ha: go test ./internal/domain/provider
+  backup: go test ./internal/app/backup
+  validate: go test ./internal/app/metrics
+  cutover: go test ./internal/app/cutover
+  rollback: go test ./internal/app/backup
+evidence:
+  target: HomePort managed replacement
+  app_change_mode: adapter
+`, provider, service, provider)
+	if err := os.WriteFile(filepath.Join(dir, provider+"-"+strings.ToLower(service)+".yaml"), []byte(data), 0o600); err != nil {
+		t.Fatal(err)
 	}
 }
 

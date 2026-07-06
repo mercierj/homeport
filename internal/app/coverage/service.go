@@ -4,9 +4,11 @@ import (
 	_ "embed"
 	"fmt"
 	"os"
+	"path/filepath"
 	"sort"
 	"strings"
 
+	appconformance "github.com/homeport/homeport/internal/app/conformance"
 	datamigration "github.com/homeport/homeport/internal/app/datamigration"
 	domaincoverage "github.com/homeport/homeport/internal/domain/coverage"
 	mapperregistry "github.com/homeport/homeport/internal/infrastructure/mapper"
@@ -15,6 +17,8 @@ import (
 
 //go:embed services.yaml
 var defaultCatalogData []byte
+
+var ConformanceDir = filepath.Join("test", "conformance", "services")
 
 type Catalog struct {
 	Services []domaincoverage.ServiceCoverage `yaml:"services" json:"services"`
@@ -101,6 +105,13 @@ func (c *Catalog) Promote(provider, service string, status domaincoverage.Status
 			}
 			if !row.ManualStepsResolved {
 				return fmt.Errorf("cannot promote %s/%s to full until manual steps are resolved", provider, service)
+			}
+			manifest, err := appconformance.NewService(ConformanceDir).Load(provider, row.Service)
+			if err != nil {
+				return fmt.Errorf("conformance manifest for %s/%s: %w", provider, service, err)
+			}
+			if missing := manifest.MissingChecks(); len(missing) > 0 {
+				return fmt.Errorf("conformance manifest for %s/%s missing checks: %v", provider, service, missing)
 			}
 		}
 		if len(manualStepsResolved) > 0 && manualStepsResolved[0] {
