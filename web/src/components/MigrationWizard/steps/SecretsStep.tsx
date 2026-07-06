@@ -18,6 +18,7 @@ import { cn } from '@/lib/utils';
 import { buttonVariants } from '@/lib/button-variants';
 import { useWizardStore } from '@/stores/wizard';
 import { provideSecrets, pullSecrets, type PullSecretsRequest } from '@/lib/bundle-api';
+import { updateWizardSession } from '@/lib/wizard-session-api';
 
 // Secret source icons
 const SOURCE_ICONS: Record<string, React.ElementType> = {
@@ -43,6 +44,7 @@ const SOURCE_LABELS: Record<string, string> = {
 export function SecretsStep() {
   const {
     bundleId,
+    sessionId,
     secretRefs: rawSecretRefs,
     secretValues,
     setSecretValue,
@@ -181,11 +183,6 @@ export function SecretsStep() {
   );
   const allRequiredProvided = providedRequiredSecrets.length === requiredSecrets.length;
 
-  // Debug: log what's happening
-  console.log('[SecretsStep] Required:', requiredSecrets.length, 'Provided:', providedRequiredSecrets.length);
-  console.log('[SecretsStep] secretValues keys:', Object.keys(secretValues));
-  console.log('[SecretsStep] secretRefs names:', secretRefs.map(s => s.name));
-
   // Handle submit secrets
   const handleSubmit = async () => {
     if (!bundleId) {
@@ -202,6 +199,12 @@ export function SecretsStep() {
       const result = await provideSecrets(bundleId, {
         secrets: secretValues,
       });
+      if (sessionId) {
+        await updateWizardSession(sessionId, {
+          secrets_resolved: result.success,
+          current_step: result.success ? 'deploy' : 'secrets',
+        });
+      }
 
       const missing = result.missing ?? [];
       if (missing.length > 0) {

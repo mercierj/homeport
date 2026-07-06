@@ -19,6 +19,7 @@ import (
 	"github.com/go-chi/render"
 	"github.com/google/uuid"
 	apprunbook "github.com/homeport/homeport/internal/app/runbook"
+	appsecrets "github.com/homeport/homeport/internal/app/secrets"
 	"github.com/homeport/homeport/internal/domain/bundle"
 	"github.com/homeport/homeport/internal/domain/resource"
 	domainrunbook "github.com/homeport/homeport/internal/domain/runbook"
@@ -41,12 +42,11 @@ func respondError(w http.ResponseWriter, r *http.Request, status int, message st
 // BundleHandler handles bundle-related API requests
 type BundleHandler struct {
 	// In-memory storage for bundles (in production, use persistent storage)
-	bundles      map[string]*BundleInfo
-	bundlesMu    sync.RWMutex
-	tempDir      string
-	exporterVer  string
-	secretValues map[string]map[string]string // bundleID -> secretName -> value
-	secretsMu    sync.RWMutex
+	bundles     map[string]*BundleInfo
+	bundlesMu   sync.RWMutex
+	tempDir     string
+	exporterVer string
+	secretStore *appsecrets.Store
 }
 
 // BundleInfo represents bundle metadata
@@ -92,7 +92,15 @@ func buildBundleRunbook(bundleID string, includeSync bool, secrets []*SecretRef)
 	}
 
 	if len(secrets) > 0 {
-		addStep("credentials", "Resolve required secrets", "Credentials", domainrunbook.StepTypeInput)
+		steps = append(steps, domainrunbook.Step{
+			ID:               "credentials",
+			Name:             "Resolve required secrets",
+			Group:            "Credentials",
+			Type:             domainrunbook.StepTypeInput,
+			Status:           domainrunbook.StepStatusBlocked,
+			Executor:         "user",
+			SuccessCondition: "required secrets provided",
+		})
 	}
 	addStep("provision", "Deploy generated stack", "Provision", domainrunbook.StepTypeCommand)
 	if includeSync {
@@ -227,10 +235,10 @@ func NewBundleHandler() *BundleHandler {
 	_ = os.MkdirAll(bundleDir, 0755)
 
 	return &BundleHandler{
-		bundles:      make(map[string]*BundleInfo),
-		tempDir:      bundleDir,
-		exporterVer:  version.Version,
-		secretValues: make(map[string]map[string]string),
+		bundles:     make(map[string]*BundleInfo),
+		tempDir:     bundleDir,
+		exporterVer: version.Version,
+		secretStore: appsecrets.NewStore("."),
 	}
 }
 
@@ -712,24 +720,24 @@ func (h *BundleHandler) ProvideSecrets(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// Store secrets in memory
-	h.secretsMu.Lock()
-	if h.secretValues[bundleID] == nil {
-		h.secretValues[bundleID] = make(map[string]string)
-	}
 	for k, v := range req.Secrets {
-		h.secretValues[bundleID][k] = v
+		if err := h.secretStore.Put(bundleID, k, v); err != nil {
+			respondError(w, r, http.StatusInternalServerError, "Failed to store secrets")
+			return
+		}
 	}
-	h.secretsMu.Unlock()
 
 	// Check which required secrets are still missing (ensure non-null arrays)
 	resolved := make([]string, 0)
 	missing := make([]string, 0)
 
 	for _, secret := range bundleInfo.Secrets {
-		h.secretsMu.RLock()
-		_, provided := h.secretValues[bundleID][secret.Name]
-		h.secretsMu.RUnlock()
+		value, provided, err := h.secretStore.Get(bundleID, secret.Name)
+		if err != nil {
+			respondError(w, r, http.StatusInternalServerError, "Failed to read secrets")
+			return
+		}
+		provided = provided && strings.TrimSpace(value) != ""
 
 		if provided {
 			resolved = append(resolved, secret.Name)
@@ -738,11 +746,34 @@ func (h *BundleHandler) ProvideSecrets(w http.ResponseWriter, r *http.Request) {
 		}
 	}
 
+	if len(missing) == 0 {
+		if err := passBundleRunbookStep(bundleID, "credentials"); err != nil {
+			respondError(w, r, http.StatusInternalServerError, "Failed to update runbook")
+			return
+		}
+	}
+
 	respondJSON(w, r, http.StatusOK, ProvideSecretsResponse{
 		Success:  len(missing) == 0,
 		Resolved: resolved,
 		Missing:  missing,
 	})
+}
+
+func passBundleRunbookStep(bundleID, stepID string) error {
+	service := apprunbook.NewService(".")
+	book, err := service.Get(bundleID)
+	if err != nil {
+		return err
+	}
+	for i := range book.Steps {
+		if book.Steps[i].ID == stepID {
+			book.Steps[i].Status = domainrunbook.StepStatusPassed
+			book.Steps[i].Result = &domainrunbook.StepResult{Status: domainrunbook.StepStatusPassed}
+			return service.Save(book)
+		}
+	}
+	return nil
 }
 
 // PullSecrets pulls secrets from a cloud provider
@@ -836,16 +867,12 @@ func (h *BundleHandler) PullSecrets(w http.ResponseWriter, r *http.Request) {
 		}
 	}
 
-	// Also store the resolved secrets
-	if len(resolved) > 0 {
-		h.secretsMu.Lock()
-		if h.secretValues[bundleID] == nil {
-			h.secretValues[bundleID] = make(map[string]string)
+	for k, v := range resolved {
+		if err := h.secretStore.Put(bundleID, k, v); err != nil {
+			respondError(w, r, http.StatusInternalServerError, "Failed to store secrets")
+			return
 		}
-		for k, v := range resolved {
-			h.secretValues[bundleID][k] = v
-		}
-		h.secretsMu.Unlock()
+		resolved[k] = ""
 	}
 
 	respondJSON(w, r, http.StatusOK, PullSecretsResponse{
@@ -1227,13 +1254,14 @@ func (h *BundleHandler) ImportBundle(w http.ResponseWriter, r *http.Request) {
 
 	// Check for missing required secrets
 	var missingSecrets []string
-	h.secretsMu.RLock()
-	secrets := h.secretValues[req.BundleID]
-	h.secretsMu.RUnlock()
-
 	for _, secret := range bundleInfo.Secrets {
 		if secret.Required {
-			if secrets == nil || secrets[secret.Name] == "" {
+			value, ok, err := h.secretStore.Get(req.BundleID, secret.Name)
+			if err != nil {
+				respondError(w, r, http.StatusInternalServerError, "Failed to read secrets")
+				return
+			}
+			if !ok || strings.TrimSpace(value) == "" {
 				missingSecrets = append(missingSecrets, secret.Name)
 			}
 		}
