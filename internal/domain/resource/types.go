@@ -32,6 +32,7 @@ const (
 	TypeDynamoDBTable   Type = "aws_dynamodb_table"
 	TypeElastiCache     Type = "aws_elasticache_cluster"
 	TypeAthenaWorkgroup Type = "aws_athena_workgroup"
+	TypeEMRCluster      Type = "aws_emr_cluster"
 
 	// AWS Networking
 	TypeALB               Type = "aws_lb"

@@ -32,6 +32,7 @@ The parser supports mapping for the following AWS resource types:
 - `aws_rds_cluster` - RDS clusters
 - `aws_dynamodb_table` - DynamoDB tables
 - `aws_elasticache_cluster` - ElastiCache clusters
+- `aws_emr_cluster` - EMR clusters
 
 ### Networking
 - `aws_lb` / `aws_alb` - Application/Network Load Balancers

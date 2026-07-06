@@ -108,6 +108,7 @@ var CategoryMapping = map[Type]Category{
 	TypeDynamoDBTable:   CategoryNoSQLDatabase,
 	TypeElastiCache:     CategoryCache,
 	TypeAthenaWorkgroup: CategorySQLDatabase,
+	TypeEMRCluster:      CategoryCompute,
 
 	// AWS Networking
 	TypeALB:               CategoryLoadBalancer,

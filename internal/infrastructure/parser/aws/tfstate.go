@@ -318,6 +318,7 @@ func mapAWSTerraformType(tfType string) resource.Type {
 		"aws_elasticache_replication_group": resource.TypeElastiCache,
 		"aws_athena_workgroup":              resource.TypeAthenaWorkgroup,
 		"aws_athena_database":               resource.TypeAthenaWorkgroup,
+		"aws_emr_cluster":                   resource.TypeEMRCluster,
 
 		// Networking
 		"aws_lb":                      resource.TypeALB,

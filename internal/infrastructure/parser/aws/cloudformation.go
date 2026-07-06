@@ -495,6 +495,7 @@ func mapCFNTypeToResourceType(cfnType string) resource.Type {
 		"AWS::DynamoDB::Table":               resource.TypeDynamoDBTable,
 		"AWS::ElastiCache::CacheCluster":     resource.TypeElastiCache,
 		"AWS::ElastiCache::ReplicationGroup": resource.TypeElastiCache,
+		"AWS::EMR::Cluster":                  resource.TypeEMRCluster,
 
 		// Networking
 		"AWS::ElasticLoadBalancingV2::LoadBalancer": resource.TypeALB,

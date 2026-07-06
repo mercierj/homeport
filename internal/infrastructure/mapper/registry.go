@@ -55,6 +55,7 @@ func (r *Registry) RegisterDefaults() {
 	r.Register(database.NewDynamoDBMapper())
 	r.Register(database.NewElastiCacheMapper())
 	r.Register(database.NewAthenaMapper())
+	r.Register(database.NewEMRMapper())
 
 	// AWS Compute mappers
 	r.Register(compute.NewEC2Mapper())
