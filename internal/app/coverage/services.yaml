@@ -1016,13 +1016,23 @@ services:
     service: Organizations
     category: security/governance
     source_api: organizations
-    resource_types: []
+    resource_types: [aws_organizations_organization]
     terraform_resource_types: [aws_organizations_organization, aws_organizations_account]
     target: OpenTofu workspaces and policy-as-code
-    api_compatibility_strategy: export account hierarchy and service control policies into landing-zone config
-    impossibility_notes: Organizations account vending APIs require guided replacement
-    status: missing
-    blocker: not modeled yet
+    api_compatibility_strategy: generated_patch
+    manual_steps_resolved: true
+    discover: true
+    cost: true
+    provision: true
+    migrate: true
+    api_compat: true
+    env_dns: true
+    ha: true
+    backup: true
+    validate: true
+    cutover: true
+    rollback: true
+    status: full
   - provider: aws
     service: Control Tower
     category: security/governance
