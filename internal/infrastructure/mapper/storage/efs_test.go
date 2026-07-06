@@ -2,10 +2,12 @@ package storage
 
 import (
 	"context"
+	"strings"
 	"testing"
 
 	"github.com/homeport/homeport/internal/domain/mapper"
 	"github.com/homeport/homeport/internal/domain/resource"
+	domainrunbook "github.com/homeport/homeport/internal/domain/runbook"
 )
 
 func TestNewEFSMapper(t *testing.T) {
@@ -16,6 +18,72 @@ func TestNewEFSMapper(t *testing.T) {
 	if m.ResourceType() != resource.TypeEFSVolume {
 		t.Errorf("ResourceType() = %v, want %v", m.ResourceType(), resource.TypeEFSVolume)
 	}
+}
+
+func TestEFSConformanceManagedAToZ(t *testing.T) {
+	result, err := NewEFSMapper().Map(context.Background(), managedEFSFixture())
+	if err != nil {
+		t.Fatal(err)
+	}
+	if len(result.ManualSteps) != 0 {
+		t.Fatalf("manual steps = %#v, want generated EFS file storage migration", result.ManualSteps)
+	}
+	if result.DockerService.Deploy == nil || result.DockerService.Deploy.Replicas < 2 {
+		t.Fatalf("service does not provision HA NFS target: %#v", result.DockerService.Deploy)
+	}
+	for _, file := range []string{"config/efs/app-change.env", "config/efs/exports", "config/efs/encryption-handoff.env"} {
+		if _, ok := result.Configs[file]; !ok {
+			t.Fatalf("missing config %s", file)
+		}
+	}
+	appEnv := string(result.Configs["config/efs/app-change.env"])
+	for _, want := range []string{"SOURCE_FILE_SYSTEM=orders-files", "TARGET_MOUNT=nfs-orders-files:/data", "APP_CHANGE_MODE=generated_patch"} {
+		if !strings.Contains(appEnv, want) {
+			t.Fatalf("app-change env missing %q:\n%s", want, appEnv)
+		}
+	}
+	for _, file := range []string{"setup_nfs.sh", "sync_efs_file_data.sh", "backup_efs_file_data.sh", "validate_efs_file_data.sh"} {
+		if _, ok := result.Scripts[file]; !ok {
+			t.Fatalf("missing script %s", file)
+		}
+	}
+	for id, stepType := range map[string]domainrunbook.StepType{
+		"provision-file-target":        domainrunbook.StepTypeCommand,
+		"sync-file-data":               domainrunbook.StepTypeCommand,
+		"validate-file-migration":      domainrunbook.StepTypeCommand,
+		"backup-efs-file-share":        domainrunbook.StepTypeCommand,
+		"cutover-efs-client-mounts":    domainrunbook.StepTypeAPICall,
+		"rollback-file-storage-source": domainrunbook.StepTypeRollback,
+	} {
+		if !hasEFSRunbookStep(result, id, stepType) {
+			t.Fatalf("missing %s runbook step: %#v", id, result.RunbookSteps)
+		}
+	}
+}
+
+func managedEFSFixture() *resource.AWSResource {
+	return &resource.AWSResource{
+		ID:   "fs-1234567890abcdef0",
+		Type: resource.TypeEFSVolume,
+		Name: "orders-files",
+		Config: map[string]interface{}{
+			"creation_token":   "orders-files",
+			"performance_mode": "generalPurpose",
+			"throughput_mode":  "provisioned",
+			"encrypted":        true,
+			"access_point":     map[string]interface{}{"root_directory": "/orders"},
+			"lifecycle_policy": map[string]interface{}{"transition_to_ia": "AFTER_30_DAYS"},
+		},
+	}
+}
+
+func hasEFSRunbookStep(result *mapper.MappingResult, id string, stepType domainrunbook.StepType) bool {
+	for _, step := range result.RunbookSteps {
+		if step.ID == id && step.Type == stepType {
+			return true
+		}
+	}
+	return false
 }
 
 func TestEFSMapper_ResourceType(t *testing.T) {
@@ -173,8 +241,8 @@ func TestEFSMapper_Map(t *testing.T) {
 				Type: resource.TypeEFSVolume,
 				Name: "provisioned-efs",
 				Config: map[string]interface{}{
-					"creation_token":                "provisioned-efs",
-					"throughput_mode":               "provisioned",
+					"creation_token":                  "provisioned-efs",
+					"throughput_mode":                 "provisioned",
 					"provisioned_throughput_in_mibps": float64(100),
 				},
 			},

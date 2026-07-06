@@ -16,7 +16,7 @@
 | aws | EC2 | full | aws_instance |
 | aws | ECR | full | aws_ecr_repository |
 | aws | ECS | full | aws_ecs_service, aws_ecs_task_definition |
-| aws | EFS | mapped | aws_efs_file_system |
+| aws | EFS | full | aws_efs_file_system |
 | aws | EKS | mapped | aws_eks_cluster |
 | aws | EMR | missing |  |
 | aws | ElastiCache | mapped | aws_elasticache_cluster |
