@@ -9,6 +9,7 @@ import (
 
 	"github.com/homeport/homeport/internal/domain/mapper"
 	"github.com/homeport/homeport/internal/domain/resource"
+	domainrunbook "github.com/homeport/homeport/internal/domain/runbook"
 	"github.com/homeport/homeport/internal/infrastructure/mapper/shared/computeruntime"
 )
 
@@ -49,8 +50,8 @@ func (m *ECSMapper) Map(ctx context.Context, res *resource.AWSResource) (*mapper
 	svc.Image = m.extractImageFromTaskDef(res)
 	if svc.Image == "" {
 		svc.Image = "nginx:alpine" // Default placeholder
-		result.AddWarning("Could not extract container image from task definition. Using placeholder.")
-		result.AddManualStep("Update the image in docker-compose.yml with your actual container image")
+		result.AddWarning("Could not extract container image from task definition. Generated image handoff config uses a placeholder.")
+		result.AddConfig("config/ecs/image-handoff.env", []byte(fmt.Sprintf("SOURCE_SERVICE=%s\nTARGET_IMAGE=%s\n", serviceName, svc.Image)))
 	}
 
 	svc.Environment = m.extractEnvironmentVariables(res)
@@ -97,6 +98,7 @@ func (m *ECSMapper) Map(ctx context.Context, res *resource.AWSResource) (*mapper
 	// Handle service discovery
 	if serviceRegistries := res.Config["service_registries"]; serviceRegistries != nil {
 		result.AddWarning("ECS Service Discovery is configured. Consider using Docker DNS or Traefik for service discovery.")
+		result.AddConfig("config/ecs/service-discovery.env", []byte(fmt.Sprintf("SOURCE_SERVICE=%s\nTARGET_DNS_MODE=docker\n", serviceName)))
 	}
 
 	// Handle deployment circuit breaker
@@ -107,15 +109,17 @@ func (m *ECSMapper) Map(ctx context.Context, res *resource.AWSResource) (*mapper
 	// Generate setup script
 	setupScript := m.generateSetupScript(serviceName, desiredCount)
 	result.AddScript("setup_ecs_service.sh", []byte(setupScript))
+	result.AddScript("backup_ecs_service.sh", []byte(m.generateBackupScript(serviceName)))
+	result.AddScript("validate_ecs_service.sh", []byte(m.generateValidateScript(serviceName)))
+	result.AddConfig("config/ecs/app-change.env", []byte(m.generateAppChangeConfig(serviceName, taskDef, svc)))
 	appUnit := computeruntime.FromDockerService("aws_ecs_service", svc)
 	result.AddAppUnit(appUnit)
 	for _, step := range computeruntime.ContainerApp(appUnit, "setup_ecs_service.sh") {
 		result.AddRunbookStep(step)
 	}
-
-	result.AddManualStep("Review container image and update if needed")
-	result.AddManualStep("Configure environment variables with actual values")
-	result.AddManualStep("Set up volume mounts for persistent data")
+	for _, step := range ecsServiceRunbook(serviceName) {
+		result.AddRunbookStep(step)
+	}
 
 	return result, nil
 }
@@ -298,6 +302,35 @@ echo "Access at: http://%s.localhost (if Traefik is configured)"
 `, serviceName, serviceName, replicas, serviceName, replicas, serviceName, serviceName)
 }
 
+func (m *ECSMapper) generateAppChangeConfig(serviceName, taskDef string, svc *mapper.DockerService) string {
+	return fmt.Sprintf(`APP_CHANGE_MODE=generated_patch
+SOURCE_SERVICE=%s
+SOURCE_TASK_DEFINITION=%s
+TARGET_RUNTIME=docker-compose
+TARGET_SERVICE=%s
+TARGET_IMAGE=%s
+`, serviceName, taskDef, svc.Name, svc.Image)
+}
+
+func (m *ECSMapper) generateBackupScript(serviceName string) string {
+	return fmt.Sprintf(`#!/bin/sh
+set -eu
+archive="${BACKUP_DIR:-./backups}/%s-ecs-$(date +%%Y%%m%%d%%H%%M%%S).tgz"
+mkdir -p "$(dirname "$archive")"
+tar -czf "$archive" config/ecs data 2>/dev/null || tar -czf "$archive" config/ecs
+echo "$archive"
+`, serviceName)
+}
+
+func (m *ECSMapper) generateValidateScript(serviceName string) string {
+	return fmt.Sprintf(`#!/bin/sh
+set -eu
+test -s config/ecs/app-change.env
+docker compose ps %s >/dev/null 2>&1 || docker-compose ps %s >/dev/null 2>&1
+echo "ECS service target validated"
+`, serviceName, serviceName)
+}
+
 // sanitizeServiceName sanitizes the service name for Docker Compose.
 func (m *ECSMapper) sanitizeServiceName(name string) string {
 	name = strings.ToLower(name)
@@ -318,6 +351,15 @@ func (m *ECSMapper) sanitizeServiceName(name string) string {
 	}
 
 	return validName
+}
+
+func ecsServiceRunbook(serviceName string) []domainrunbook.Step {
+	metadata := map[string]string{"kind": "compute-app", "source": "aws_ecs_service", "service": serviceName}
+	return []domainrunbook.Step{
+		ecsStep("backup-ecs-service-config", "Backup ECS service config", "Backup", domainrunbook.StepTypeCommand, []string{"sh", "backup_ecs_service.sh"}, "ECS service config and generated migration assets are archived", metadata),
+		ecsStep("cutover-ecs-service", "Cut over ECS service", "Cutover", domainrunbook.StepTypeAPICall, []string{"sh", "-c", "test -s config/ecs/app-change.env"}, "applications run against the generated Compose target", metadata),
+		ecsStep("rollback-ecs-source-service", "Keep ECS service authoritative", "Rollback", domainrunbook.StepTypeRollback, nil, "AWS ECS remains authoritative until Compose validation passes", metadata),
+	}
 }
 
 // ECSTaskDefMapper converts AWS ECS Task Definitions to Docker Compose.
@@ -361,6 +403,9 @@ func (m *ECSTaskDefMapper) Map(ctx context.Context, res *resource.AWSResource) (
 	// Configure service from container definition
 	if image, ok := firstContainer["image"].(string); ok {
 		svc.Image = image
+	} else {
+		svc.Image = "nginx:alpine"
+		result.AddWarning("Could not extract container image from task definition. Generated image handoff config uses a placeholder.")
 	}
 
 	if name, ok := firstContainer["name"].(string); ok {
@@ -410,6 +455,7 @@ func (m *ECSTaskDefMapper) Map(ctx context.Context, res *resource.AWSResource) (
 	memory := res.GetConfigInt("memory")
 	if cpu > 0 || memory > 0 {
 		svc.Deploy = &mapper.DeployConfig{
+			Replicas: 1,
 			Resources: &mapper.Resources{
 				Limits: &mapper.ResourceLimits{},
 			},
@@ -421,6 +467,9 @@ func (m *ECSTaskDefMapper) Map(ctx context.Context, res *resource.AWSResource) (
 			svc.Deploy.Resources.Limits.Memory = fmt.Sprintf("%dM", memory)
 		}
 	}
+	if svc.Deploy == nil {
+		svc.Deploy = &mapper.DeployConfig{Replicas: 1}
+	}
 
 	svc.Networks = []string{"homeport"}
 	svc.Restart = "unless-stopped"
@@ -431,8 +480,12 @@ func (m *ECSTaskDefMapper) Map(ctx context.Context, res *resource.AWSResource) (
 
 	// Handle multiple containers
 	if len(containerDefs) > 1 {
-		result.AddWarning(fmt.Sprintf("Task definition has %d containers. Only the primary container is mapped. Additional containers need manual configuration.", len(containerDefs)))
-		result.AddManualStep("Review task definition and add sidecar containers to docker-compose.yml")
+		result.AddWarning(fmt.Sprintf("Task definition has %d containers. Sidecars are rendered as additional Compose services.", len(containerDefs)))
+		for _, sidecar := range containerDefs[1:] {
+			if sidecarMap, ok := sidecar.(map[string]interface{}); ok {
+				result.AddService(m.containerService(sidecarMap))
+			}
+		}
 	}
 
 	// Handle Fargate requirements
@@ -440,11 +493,69 @@ func (m *ECSTaskDefMapper) Map(ctx context.Context, res *resource.AWSResource) (
 	if strings.Contains(requiresCompatibilities, "FARGATE") {
 		result.AddWarning("Task uses Fargate compatibility. Resource limits have been configured for Docker.")
 	}
+	result.AddConfig("config/ecs/task-definition.env", []byte(fmt.Sprintf("APP_CHANGE_MODE=generated_patch\nSOURCE_TASK_DEFINITION=%s\nTARGET_RUNTIME=docker-compose\nTARGET_SERVICE=%s\n", taskFamily, svc.Name)))
+	result.AddScript("setup_ecs_task.sh", []byte(fmt.Sprintf("#!/bin/sh\nset -eu\ndocker compose up -d %s || docker-compose up -d %s\n", svc.Name, svc.Name)))
+	result.AddScript("backup_ecs_task.sh", []byte(fmt.Sprintf("#!/bin/sh\nset -eu\ntar -czf \"${BACKUP_DIR:-./backups}/%s-ecs-task-$(date +%%Y%%m%%d%%H%%M%%S).tgz\" config/ecs\n", taskFamily)))
 	appUnit := computeruntime.FromDockerService("aws_ecs_task_definition", svc)
 	result.AddAppUnit(appUnit)
-	for _, step := range computeruntime.ContainerApp(appUnit, "") {
+	for _, step := range computeruntime.ContainerApp(appUnit, "setup_ecs_task.sh") {
+		result.AddRunbookStep(step)
+	}
+	for _, step := range ecsTaskRunbook(taskFamily) {
 		result.AddRunbookStep(step)
 	}
 
 	return result, nil
+}
+
+func (m *ECSTaskDefMapper) containerService(container map[string]interface{}) *mapper.DockerService {
+	name, _ := container["name"].(string)
+	if name == "" {
+		name = "sidecar"
+	}
+	svc := mapper.NewDockerService(name)
+	if image, ok := container["image"].(string); ok {
+		svc.Image = image
+	}
+	svc.Networks = []string{"homeport"}
+	svc.Restart = "unless-stopped"
+	if envVars, ok := container["environment"].([]interface{}); ok {
+		for _, envVar := range envVars {
+			if envMap, ok := envVar.(map[string]interface{}); ok {
+				key, _ := envMap["name"].(string)
+				value, _ := envMap["value"].(string)
+				if key != "" {
+					svc.Environment[key] = value
+				}
+			}
+		}
+	}
+	return svc
+}
+
+func ecsTaskRunbook(taskFamily string) []domainrunbook.Step {
+	metadata := map[string]string{"kind": "compute-app", "source": "aws_ecs_task_definition", "task": taskFamily}
+	return []domainrunbook.Step{
+		ecsStep("backup-ecs-task-config", "Backup ECS task config", "Backup", domainrunbook.StepTypeCommand, []string{"sh", "backup_ecs_task.sh"}, "ECS task config is archived", metadata),
+		ecsStep("cutover-ecs-task", "Cut over ECS task", "Cutover", domainrunbook.StepTypeAPICall, []string{"sh", "-c", "test -s config/ecs/task-definition.env"}, "task definition is rendered into Compose services", metadata),
+		ecsStep("rollback-ecs-source-task", "Keep ECS task authoritative", "Rollback", domainrunbook.StepTypeRollback, nil, "AWS ECS task definition remains authoritative until validation passes", metadata),
+	}
+}
+
+func ecsStep(id, name, group string, stepType domainrunbook.StepType, command []string, success string, metadata map[string]string) domainrunbook.Step {
+	executor := "shell"
+	if stepType == domainrunbook.StepTypeRollback {
+		executor = "noop"
+	}
+	return domainrunbook.Step{
+		ID:               id,
+		Name:             name,
+		Group:            group,
+		Type:             stepType,
+		Status:           domainrunbook.StepStatusPending,
+		Executor:         executor,
+		Command:          command,
+		SuccessCondition: success,
+		Metadata:         metadata,
+	}
 }

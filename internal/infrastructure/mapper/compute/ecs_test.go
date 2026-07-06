@@ -2,10 +2,12 @@ package compute
 
 import (
 	"context"
+	"strings"
 	"testing"
 
 	"github.com/homeport/homeport/internal/domain/mapper"
 	"github.com/homeport/homeport/internal/domain/resource"
+	domainrunbook "github.com/homeport/homeport/internal/domain/runbook"
 )
 
 func TestNewECSMapper(t *testing.T) {
@@ -16,6 +18,123 @@ func TestNewECSMapper(t *testing.T) {
 	if m.ResourceType() != resource.TypeECSService {
 		t.Errorf("ResourceType() = %v, want %v", m.ResourceType(), resource.TypeECSService)
 	}
+}
+
+func TestECSConformanceManagedAToZ(t *testing.T) {
+	serviceResult, err := NewECSMapper().Map(context.Background(), managedECSServiceFixture())
+	if err != nil {
+		t.Fatal(err)
+	}
+	if len(serviceResult.ManualSteps) != 0 {
+		t.Fatalf("service manual steps = %#v, want generated ECS service migration", serviceResult.ManualSteps)
+	}
+	if serviceResult.DockerService.Deploy == nil || serviceResult.DockerService.Deploy.Replicas < 2 {
+		t.Fatalf("service does not preserve HA desired count: %#v", serviceResult.DockerService.Deploy)
+	}
+	for _, file := range []string{"config/ecs/app-change.env", "config/ecs/service-discovery.env"} {
+		if _, ok := serviceResult.Configs[file]; !ok {
+			t.Fatalf("missing service config %s", file)
+		}
+	}
+	appEnv := string(serviceResult.Configs["config/ecs/app-change.env"])
+	for _, want := range []string{"SOURCE_SERVICE=orders-api", "TARGET_RUNTIME=docker-compose", "APP_CHANGE_MODE=generated_patch"} {
+		if !strings.Contains(appEnv, want) {
+			t.Fatalf("app-change env missing %q:\n%s", want, appEnv)
+		}
+	}
+	for _, file := range []string{"setup_ecs_service.sh", "backup_ecs_service.sh", "validate_ecs_service.sh"} {
+		if _, ok := serviceResult.Scripts[file]; !ok {
+			t.Fatalf("missing service script %s", file)
+		}
+	}
+	for id, stepType := range map[string]domainrunbook.StepType{
+		"resolve-app-image":           domainrunbook.StepTypeCommand,
+		"deploy-compose-app":          domainrunbook.StepTypeCommand,
+		"validate-app-health":         domainrunbook.StepTypeCommand,
+		"backup-ecs-service-config":   domainrunbook.StepTypeCommand,
+		"cutover-ecs-service":         domainrunbook.StepTypeAPICall,
+		"rollback-ecs-source-service": domainrunbook.StepTypeRollback,
+	} {
+		if !hasECSRunbookStep(serviceResult, id, stepType) {
+			t.Fatalf("missing service %s runbook step: %#v", id, serviceResult.RunbookSteps)
+		}
+	}
+
+	taskResult, err := NewECSTaskDefMapper().Map(context.Background(), managedECSTaskFixture())
+	if err != nil {
+		t.Fatal(err)
+	}
+	if len(taskResult.ManualSteps) != 0 {
+		t.Fatalf("task manual steps = %#v, want generated ECS task migration", taskResult.ManualSteps)
+	}
+	if len(taskResult.AdditionalServices) != 1 || taskResult.AdditionalServices[0].Name != "envoy" {
+		t.Fatalf("sidecar not rendered as additional service: %#v", taskResult.AdditionalServices)
+	}
+	if _, ok := taskResult.Configs["config/ecs/task-definition.env"]; !ok {
+		t.Fatal("missing task definition app-change config")
+	}
+}
+
+func managedECSServiceFixture() *resource.AWSResource {
+	return &resource.AWSResource{
+		ID:   "arn:aws:ecs:eu-west-1:123456789012:service/orders/orders-api",
+		Type: resource.TypeECSService,
+		Name: "orders-api",
+		Config: map[string]interface{}{
+			"name":            "orders-api",
+			"task_definition": "orders-api:42",
+			"desired_count":   float64(2),
+			"service_registries": []interface{}{
+				map[string]interface{}{"registry_arn": "arn:aws:servicediscovery:eu-west-1:123456789012:service/srv-orders"},
+			},
+			"deployment_circuit_breaker": map[string]interface{}{"enable": true, "rollback": true},
+			"container_definitions": []interface{}{
+				map[string]interface{}{
+					"name":  "web",
+					"image": "123456789012.dkr.ecr.eu-west-1.amazonaws.com/orders-api:prod",
+					"environment": []interface{}{
+						map[string]interface{}{"name": "APP_ENV", "value": "production"},
+					},
+					"portMappings": []interface{}{
+						map[string]interface{}{"containerPort": float64(8080), "hostPort": float64(8080)},
+					},
+					"mountPoints": []interface{}{
+						map[string]interface{}{"sourceVolume": "orders-data", "containerPath": "/data"},
+					},
+				},
+			},
+			"load_balancer": []interface{}{
+				map[string]interface{}{"container_name": "web", "container_port": float64(8080)},
+			},
+		},
+	}
+}
+
+func managedECSTaskFixture() *resource.AWSResource {
+	return &resource.AWSResource{
+		ID:   "arn:aws:ecs:eu-west-1:123456789012:task-definition/orders-api:42",
+		Type: resource.TypeECSTaskDef,
+		Name: "orders-api",
+		Config: map[string]interface{}{
+			"family":                   "orders-api",
+			"requires_compatibilities": "FARGATE",
+			"cpu":                      float64(1024),
+			"memory":                   float64(2048),
+			"container_definitions": []interface{}{
+				map[string]interface{}{"name": "web", "image": "registry:5000/orders-api:prod"},
+				map[string]interface{}{"name": "envoy", "image": "envoyproxy/envoy:v1.30"},
+			},
+		},
+	}
+}
+
+func hasECSRunbookStep(result *mapper.MappingResult, id string, stepType domainrunbook.StepType) bool {
+	for _, step := range result.RunbookSteps {
+		if step.ID == id && step.Type == stepType {
+			return true
+		}
+	}
+	return false
 }
 
 func TestECSMapper_ResourceType(t *testing.T) {
