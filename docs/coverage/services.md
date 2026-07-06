@@ -36,7 +36,7 @@
 | aws | SES | full | aws_ses_domain_identity |
 | aws | SNS | full | aws_sns_topic |
 | aws | SQS | full | aws_sqs_queue |
-| aws | SageMaker | missing |  |
+| aws | SageMaker | full | aws_sagemaker_endpoint |
 | aws | Secrets Manager | mapped | aws_secretsmanager_secret |
 | aws | Step Functions | missing |  |
 | aws | VPC | mapped | aws_vpc |

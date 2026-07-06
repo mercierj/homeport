@@ -483,6 +483,7 @@ func mapCFNTypeToResourceType(cfnType string) resource.Type {
 		"AWS::EKS::Cluster":                         resource.TypeEKSCluster,
 		"AWS::Bedrock::ApplicationInferenceProfile": resource.TypeBedrockModel,
 		"AWS::Bedrock::ProvisionedModelThroughput":  resource.TypeBedrockModel,
+		"AWS::SageMaker::Endpoint":                  resource.TypeSageMakerEndpoint,
 
 		// Storage
 		"AWS::S3::Bucket":      resource.TypeS3Bucket,

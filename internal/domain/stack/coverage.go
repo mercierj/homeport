@@ -19,15 +19,16 @@ var ResourceMapping = map[resource.Type]StackType{
 	// ─────────────────────────────────────────────────────
 
 	// AWS Compute and devops
-	resource.TypeEC2Instance:    StackTypePassthrough, // VMs stay individual
-	resource.TypeLambdaFunction: StackTypeCompute,     // Serverless consolidates
-	resource.TypeECSService:     StackTypePassthrough, // Container orchestration stays individual
-	resource.TypeECSTaskDef:     StackTypePassthrough, // Container definitions stay individual
-	resource.TypeEKSCluster:     StackTypePassthrough, // Kubernetes stays individual
-	resource.TypeBedrockModel:   StackTypePassthrough, // Inference profiles stay individual
-	resource.TypeCodeBuild:      StackTypePassthrough, // Build projects stay individual
-	resource.TypeCodePipeline:   StackTypePassthrough, // Pipelines remain workflow definitions
-	resource.TypeECRRepository:  StackTypePassthrough, // Registries remain individual infrastructure
+	resource.TypeEC2Instance:       StackTypePassthrough, // VMs stay individual
+	resource.TypeLambdaFunction:    StackTypeCompute,     // Serverless consolidates
+	resource.TypeECSService:        StackTypePassthrough, // Container orchestration stays individual
+	resource.TypeECSTaskDef:        StackTypePassthrough, // Container definitions stay individual
+	resource.TypeEKSCluster:        StackTypePassthrough, // Kubernetes stays individual
+	resource.TypeBedrockModel:      StackTypePassthrough, // Inference profiles stay individual
+	resource.TypeSageMakerEndpoint: StackTypePassthrough, // ML inference endpoints stay individual
+	resource.TypeCodeBuild:         StackTypePassthrough, // Build projects stay individual
+	resource.TypeCodePipeline:      StackTypePassthrough, // Pipelines remain workflow definitions
+	resource.TypeECRRepository:     StackTypePassthrough, // Registries remain individual infrastructure
 
 	// AWS Storage (3 types)
 	resource.TypeS3Bucket:  StackTypeStorage,     // Object storage consolidates
