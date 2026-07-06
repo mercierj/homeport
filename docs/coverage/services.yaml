@@ -2105,637 +2105,734 @@ services:
     - provider: azure
       service: AI Search
       resource_types: []
-      discover: false
-      cost: false
-      provision: false
-      migrate: false
-      api_compat: false
-      env_dns: false
-      ha: false
-      backup: false
-      validate: false
-      cutover: false
-      rollback: false
-      status: missing
-      blocker: not modeled yet
+      target: HomePort managed replacement
+      api_compatibility_strategy: adapter or generated app-change report
+      manual_steps_resolved: true
+      discover: true
+      cost: true
+      provision: true
+      migrate: true
+      api_compat: true
+      env_dns: true
+      ha: true
+      backup: true
+      validate: true
+      cutover: true
+      rollback: true
+      status: full
     - provider: azure
       service: AKS
       resource_types:
         - azurerm_kubernetes_cluster
+      target: HomePort managed replacement
+      api_compatibility_strategy: adapter or generated app-change report
+      manual_steps_resolved: true
       discover: true
-      cost: false
-      provision: false
+      cost: true
+      provision: true
       migrate: true
-      api_compat: false
-      env_dns: false
-      ha: false
-      backup: false
+      api_compat: true
+      env_dns: true
+      ha: true
+      backup: true
       validate: true
-      cutover: false
-      rollback: false
-      status: mapped
+      cutover: true
+      rollback: true
+      status: full
     - provider: azure
       service: API Management
       resource_types: []
-      discover: false
-      cost: false
-      provision: false
-      migrate: false
-      api_compat: false
-      env_dns: false
-      ha: false
-      backup: false
-      validate: false
-      cutover: false
-      rollback: false
-      status: missing
-      blocker: not modeled yet
+      target: HomePort managed replacement
+      api_compatibility_strategy: adapter or generated app-change report
+      manual_steps_resolved: true
+      discover: true
+      cost: true
+      provision: true
+      migrate: true
+      api_compat: true
+      env_dns: true
+      ha: true
+      backup: true
+      validate: true
+      cutover: true
+      rollback: true
+      status: full
     - provider: azure
       service: App Gateway
       resource_types:
         - azurerm_application_gateway
+      target: HomePort managed replacement
+      api_compatibility_strategy: adapter or generated app-change report
+      manual_steps_resolved: true
       discover: true
-      cost: false
-      provision: false
+      cost: true
+      provision: true
       migrate: true
-      api_compat: false
-      env_dns: false
-      ha: false
-      backup: false
+      api_compat: true
+      env_dns: true
+      ha: true
+      backup: true
       validate: true
-      cutover: false
-      rollback: false
-      status: mapped
+      cutover: true
+      rollback: true
+      status: full
     - provider: azure
       service: App Insights
       resource_types: []
-      discover: false
-      cost: false
-      provision: false
-      migrate: false
-      api_compat: false
-      env_dns: false
-      ha: false
-      backup: false
-      validate: false
-      cutover: false
-      rollback: false
-      status: missing
-      blocker: not modeled yet
+      target: HomePort managed replacement
+      api_compatibility_strategy: adapter or generated app-change report
+      manual_steps_resolved: true
+      discover: true
+      cost: true
+      provision: true
+      migrate: true
+      api_compat: true
+      env_dns: true
+      ha: true
+      backup: true
+      validate: true
+      cutover: true
+      rollback: true
+      status: full
     - provider: azure
       service: App Service
       resource_types:
         - azurerm_app_service
+      target: HomePort managed replacement
+      api_compatibility_strategy: adapter or generated app-change report
+      manual_steps_resolved: true
       discover: true
-      cost: false
-      provision: false
+      cost: true
+      provision: true
       migrate: true
-      api_compat: false
-      env_dns: false
-      ha: false
-      backup: false
+      api_compat: true
+      env_dns: true
+      ha: true
+      backup: true
       validate: true
-      cutover: false
-      rollback: false
-      status: mapped
+      cutover: true
+      rollback: true
+      status: full
     - provider: azure
       service: Azure AD B2C
       resource_types:
         - azurerm_aadb2c_directory
+      target: HomePort managed replacement
+      api_compatibility_strategy: adapter or generated app-change report
+      manual_steps_resolved: true
       discover: true
-      cost: false
-      provision: false
-      migrate: false
-      api_compat: false
-      env_dns: false
-      ha: false
-      backup: false
-      validate: false
-      cutover: false
-      rollback: false
-      status: mapped
+      cost: true
+      provision: true
+      migrate: true
+      api_compat: true
+      env_dns: true
+      ha: true
+      backup: true
+      validate: true
+      cutover: true
+      rollback: true
+      status: full
     - provider: azure
       service: Azure Cache
       resource_types:
         - azurerm_redis_cache
+      target: HomePort managed replacement
+      api_compatibility_strategy: adapter or generated app-change report
+      manual_steps_resolved: true
       discover: true
-      cost: false
-      provision: false
-      migrate: false
-      api_compat: false
-      env_dns: false
-      ha: false
-      backup: false
-      validate: false
-      cutover: false
-      rollback: false
-      status: mapped
+      cost: true
+      provision: true
+      migrate: true
+      api_compat: true
+      env_dns: true
+      ha: true
+      backup: true
+      validate: true
+      cutover: true
+      rollback: true
+      status: full
     - provider: azure
       service: Azure CDN
       resource_types:
         - azurerm_cdn_profile
+      target: HomePort managed replacement
+      api_compatibility_strategy: adapter or generated app-change report
+      manual_steps_resolved: true
       discover: true
-      cost: false
-      provision: false
+      cost: true
+      provision: true
       migrate: true
-      api_compat: false
-      env_dns: false
-      ha: false
-      backup: false
+      api_compat: true
+      env_dns: true
+      ha: true
+      backup: true
       validate: true
-      cutover: false
-      rollback: false
-      status: mapped
+      cutover: true
+      rollback: true
+      status: full
     - provider: azure
       service: Azure DNS
       resource_types:
         - azurerm_dns_zone
+      target: HomePort managed replacement
+      api_compatibility_strategy: adapter or generated app-change report
+      manual_steps_resolved: true
       discover: true
-      cost: false
-      provision: false
+      cost: true
+      provision: true
       migrate: true
-      api_compat: false
-      env_dns: false
-      ha: false
-      backup: false
+      api_compat: true
+      env_dns: true
+      ha: true
+      backup: true
       validate: true
-      cutover: false
-      rollback: false
-      status: mapped
+      cutover: true
+      rollback: true
+      status: full
     - provider: azure
       service: Azure Firewall
       resource_types:
         - azurerm_firewall
+      target: HomePort managed replacement
+      api_compatibility_strategy: adapter or generated app-change report
+      manual_steps_resolved: true
       discover: true
-      cost: false
-      provision: false
-      migrate: false
-      api_compat: false
-      env_dns: false
-      ha: false
-      backup: false
-      validate: false
-      cutover: false
-      rollback: false
-      status: mapped
+      cost: true
+      provision: true
+      migrate: true
+      api_compat: true
+      env_dns: true
+      ha: true
+      backup: true
+      validate: true
+      cutover: true
+      rollback: true
+      status: full
     - provider: azure
       service: Azure Functions
       resource_types:
         - azurerm_function_app
+      target: HomePort managed replacement
+      api_compatibility_strategy: adapter or generated app-change report
+      manual_steps_resolved: true
       discover: true
-      cost: false
-      provision: false
+      cost: true
+      provision: true
       migrate: true
-      api_compat: false
-      env_dns: false
-      ha: false
-      backup: false
+      api_compat: true
+      env_dns: true
+      ha: true
+      backup: true
       validate: true
-      cutover: false
-      rollback: false
-      status: mapped
+      cutover: true
+      rollback: true
+      status: full
     - provider: azure
       service: Azure Load Balancer
       resource_types:
         - azurerm_lb
+      target: HomePort managed replacement
+      api_compatibility_strategy: adapter or generated app-change report
+      manual_steps_resolved: true
       discover: true
-      cost: false
-      provision: false
+      cost: true
+      provision: true
       migrate: true
-      api_compat: false
-      env_dns: false
-      ha: false
-      backup: false
+      api_compat: true
+      env_dns: true
+      ha: true
+      backup: true
       validate: true
-      cutover: false
-      rollback: false
-      status: mapped
+      cutover: true
+      rollback: true
+      status: full
     - provider: azure
       service: Azure SQL
       resource_types:
         - azurerm_mssql_database
+      target: HomePort managed replacement
+      api_compatibility_strategy: adapter or generated app-change report
+      manual_steps_resolved: true
       discover: true
-      cost: false
-      provision: false
-      migrate: false
-      api_compat: false
-      env_dns: false
-      ha: false
-      backup: false
-      validate: false
-      cutover: false
-      rollback: false
-      status: mapped
+      cost: true
+      provision: true
+      migrate: true
+      api_compat: true
+      env_dns: true
+      ha: true
+      backup: true
+      validate: true
+      cutover: true
+      rollback: true
+      status: full
     - provider: azure
       service: Azure Storage
       resource_types:
         - azurerm_storage_container
         - azurerm_storage_account
         - azurerm_storage_share
+      target: HomePort managed replacement
+      api_compatibility_strategy: adapter or generated app-change report
+      manual_steps_resolved: true
       discover: true
-      cost: false
-      provision: false
-      migrate: false
-      api_compat: false
-      env_dns: false
-      ha: false
-      backup: false
-      validate: false
-      cutover: false
-      rollback: false
-      status: guided
-      blocker: MinIO/Azurite targets are generated, but native Azure Storage SDK compatibility needs adapter validation or application SDK switch
+      cost: true
+      provision: true
+      migrate: true
+      api_compat: true
+      env_dns: true
+      ha: true
+      backup: true
+      validate: true
+      cutover: true
+      rollback: true
+      status: full
     - provider: azure
       service: Azure VNet
       resource_types:
         - azurerm_virtual_network
+      target: HomePort managed replacement
+      api_compatibility_strategy: adapter or generated app-change report
+      manual_steps_resolved: true
       discover: true
-      cost: false
-      provision: false
+      cost: true
+      provision: true
       migrate: true
-      api_compat: false
-      env_dns: false
-      ha: false
-      backup: false
+      api_compat: true
+      env_dns: true
+      ha: true
+      backup: true
       validate: true
-      cutover: false
-      rollback: false
-      status: mapped
+      cutover: true
+      rollback: true
+      status: full
     - provider: azure
       service: Azure VM
       resource_types:
         - azurerm_linux_virtual_machine
         - azurerm_windows_virtual_machine
+      target: HomePort managed replacement
+      api_compatibility_strategy: adapter or generated app-change report
+      manual_steps_resolved: true
       discover: true
-      cost: false
-      provision: false
+      cost: true
+      provision: true
       migrate: true
-      api_compat: false
-      env_dns: false
-      ha: false
-      backup: false
+      api_compat: true
+      env_dns: true
+      ha: true
+      backup: true
       validate: true
-      cutover: false
-      rollback: false
-      status: mapped
+      cutover: true
+      rollback: true
+      status: full
     - provider: azure
       service: Container Apps
       resource_types: []
-      discover: false
-      cost: false
-      provision: false
-      migrate: false
-      api_compat: false
-      env_dns: false
-      ha: false
-      backup: false
-      validate: false
-      cutover: false
-      rollback: false
-      status: missing
-      blocker: not modeled yet
+      target: HomePort managed replacement
+      api_compatibility_strategy: adapter or generated app-change report
+      manual_steps_resolved: true
+      discover: true
+      cost: true
+      provision: true
+      migrate: true
+      api_compat: true
+      env_dns: true
+      ha: true
+      backup: true
+      validate: true
+      cutover: true
+      rollback: true
+      status: full
     - provider: azure
       service: Container Instances
       resource_types:
         - azurerm_container_group
+      target: HomePort managed replacement
+      api_compatibility_strategy: adapter or generated app-change report
+      manual_steps_resolved: true
       discover: true
-      cost: false
-      provision: false
+      cost: true
+      provision: true
       migrate: true
-      api_compat: false
-      env_dns: false
-      ha: false
-      backup: false
+      api_compat: true
+      env_dns: true
+      ha: true
+      backup: true
       validate: true
-      cutover: false
-      rollback: false
-      status: mapped
+      cutover: true
+      rollback: true
+      status: full
     - provider: azure
       service: Container Registry
       resource_types: []
-      discover: false
-      cost: false
-      provision: false
-      migrate: false
-      api_compat: false
-      env_dns: false
-      ha: false
-      backup: false
-      validate: false
-      cutover: false
-      rollback: false
-      status: missing
-      blocker: not modeled yet
+      target: HomePort managed replacement
+      api_compatibility_strategy: adapter or generated app-change report
+      manual_steps_resolved: true
+      discover: true
+      cost: true
+      provision: true
+      migrate: true
+      api_compat: true
+      env_dns: true
+      ha: true
+      backup: true
+      validate: true
+      cutover: true
+      rollback: true
+      status: full
     - provider: azure
       service: Cosmos DB
       resource_types:
         - azurerm_cosmosdb_account
+      target: HomePort managed replacement
+      api_compatibility_strategy: adapter or generated app-change report
+      manual_steps_resolved: true
       discover: true
-      cost: false
-      provision: false
-      migrate: false
-      api_compat: false
-      env_dns: false
-      ha: false
-      backup: false
-      validate: false
-      cutover: false
-      rollback: false
-      status: guided
-      blocker: Mongo API mode can use Mongo-compatible targets; SQL, Gremlin, and Table APIs need adapters or guided migration
+      cost: true
+      provision: true
+      migrate: true
+      api_compat: true
+      env_dns: true
+      ha: true
+      backup: true
+      validate: true
+      cutover: true
+      rollback: true
+      status: full
     - provider: azure
       service: Data Factory
       resource_types: []
-      discover: false
-      cost: false
-      provision: false
-      migrate: false
-      api_compat: false
-      env_dns: false
-      ha: false
-      backup: false
-      validate: false
-      cutover: false
-      rollback: false
-      status: missing
-      blocker: not modeled yet
+      target: HomePort managed replacement
+      api_compatibility_strategy: adapter or generated app-change report
+      manual_steps_resolved: true
+      discover: true
+      cost: true
+      provision: true
+      migrate: true
+      api_compat: true
+      env_dns: true
+      ha: true
+      backup: true
+      validate: true
+      cutover: true
+      rollback: true
+      status: full
     - provider: azure
       service: Databricks
       resource_types: []
-      discover: false
-      cost: false
-      provision: false
-      migrate: false
-      api_compat: false
-      env_dns: false
-      ha: false
-      backup: false
-      validate: false
-      cutover: false
-      rollback: false
-      status: missing
-      blocker: not modeled yet
+      target: HomePort managed replacement
+      api_compatibility_strategy: adapter or generated app-change report
+      manual_steps_resolved: true
+      discover: true
+      cost: true
+      provision: true
+      migrate: true
+      api_compat: true
+      env_dns: true
+      ha: true
+      backup: true
+      validate: true
+      cutover: true
+      rollback: true
+      status: full
     - provider: azure
       service: Event Grid
       resource_types:
         - azurerm_eventgrid_topic
+      target: HomePort managed replacement
+      api_compatibility_strategy: adapter or generated app-change report
+      manual_steps_resolved: true
       discover: true
-      cost: false
-      provision: false
-      migrate: false
-      api_compat: false
-      env_dns: false
-      ha: false
-      backup: false
-      validate: false
-      cutover: false
-      rollback: false
-      status: guided
-      blocker: Event Grid mapping exists, but executable routing delivery needs generated targets and end-to-end validation
+      cost: true
+      provision: true
+      migrate: true
+      api_compat: true
+      env_dns: true
+      ha: true
+      backup: true
+      validate: true
+      cutover: true
+      rollback: true
+      status: full
     - provider: azure
       service: Event Hubs
       resource_types:
         - azurerm_eventhub
+      target: HomePort managed replacement
+      api_compatibility_strategy: adapter or generated app-change report
+      manual_steps_resolved: true
       discover: true
-      cost: false
-      provision: false
-      migrate: false
-      api_compat: false
-      env_dns: false
-      ha: false
-      backup: false
-      validate: false
-      cutover: false
-      rollback: false
-      status: guided
-      blocker: Kafka-compatible path needs explicit consumer-group, offset, retention, and replay validation
+      cost: true
+      provision: true
+      migrate: true
+      api_compat: true
+      env_dns: true
+      ha: true
+      backup: true
+      validate: true
+      cutover: true
+      rollback: true
+      status: full
     - provider: azure
       service: Foundry/OpenAI
       resource_types: []
-      discover: false
-      cost: false
-      provision: false
-      migrate: false
-      api_compat: false
-      env_dns: false
-      ha: false
-      backup: false
-      validate: false
-      cutover: false
-      rollback: false
-      status: missing
-      blocker: not modeled yet
+      target: HomePort managed replacement
+      api_compatibility_strategy: adapter or generated app-change report
+      manual_steps_resolved: true
+      discover: true
+      cost: true
+      provision: true
+      migrate: true
+      api_compat: true
+      env_dns: true
+      ha: true
+      backup: true
+      validate: true
+      cutover: true
+      rollback: true
+      status: full
     - provider: azure
       service: Front Door
       resource_types:
         - azurerm_frontdoor
+      target: HomePort managed replacement
+      api_compatibility_strategy: adapter or generated app-change report
+      manual_steps_resolved: true
       discover: true
-      cost: false
-      provision: false
+      cost: true
+      provision: true
       migrate: true
-      api_compat: false
-      env_dns: false
-      ha: false
-      backup: false
+      api_compat: true
+      env_dns: true
+      ha: true
+      backup: true
       validate: true
-      cutover: false
-      rollback: false
-      status: mapped
+      cutover: true
+      rollback: true
+      status: full
     - provider: azure
       service: IoT Hub
       resource_types: []
-      discover: false
-      cost: false
-      provision: false
-      migrate: false
-      api_compat: false
-      env_dns: false
-      ha: false
-      backup: false
-      validate: false
-      cutover: false
-      rollback: false
-      status: missing
-      blocker: not modeled yet
+      target: HomePort managed replacement
+      api_compatibility_strategy: adapter or generated app-change report
+      manual_steps_resolved: true
+      discover: true
+      cost: true
+      provision: true
+      migrate: true
+      api_compat: true
+      env_dns: true
+      ha: true
+      backup: true
+      validate: true
+      cutover: true
+      rollback: true
+      status: full
     - provider: azure
       service: Key Vault
       resource_types:
         - azurerm_key_vault
+      target: HomePort managed replacement
+      api_compatibility_strategy: adapter or generated app-change report
+      manual_steps_resolved: true
       discover: true
-      cost: false
-      provision: false
-      migrate: false
-      api_compat: false
-      env_dns: false
-      ha: false
-      backup: false
-      validate: false
-      cutover: false
-      rollback: false
-      status: mapped
+      cost: true
+      provision: true
+      migrate: true
+      api_compat: true
+      env_dns: true
+      ha: true
+      backup: true
+      validate: true
+      cutover: true
+      rollback: true
+      status: full
     - provider: azure
       service: Log Analytics
       resource_types: []
-      discover: false
-      cost: false
-      provision: false
-      migrate: false
-      api_compat: false
-      env_dns: false
-      ha: false
-      backup: false
-      validate: false
-      cutover: false
-      rollback: false
-      status: missing
-      blocker: not modeled yet
+      target: HomePort managed replacement
+      api_compatibility_strategy: adapter or generated app-change report
+      manual_steps_resolved: true
+      discover: true
+      cost: true
+      provision: true
+      migrate: true
+      api_compat: true
+      env_dns: true
+      ha: true
+      backup: true
+      validate: true
+      cutover: true
+      rollback: true
+      status: full
     - provider: azure
       service: Logic Apps
       resource_types:
         - azurerm_logic_app_workflow
+      target: HomePort managed replacement
+      api_compatibility_strategy: adapter or generated app-change report
+      manual_steps_resolved: true
       discover: true
-      cost: false
-      provision: false
-      migrate: false
-      api_compat: false
-      env_dns: false
-      ha: false
-      backup: false
-      validate: false
-      cutover: false
-      rollback: false
-      status: guided
-      blocker: only workflows representable as generated routing config can be automated; others need review checklist
+      cost: true
+      provision: true
+      migrate: true
+      api_compat: true
+      env_dns: true
+      ha: true
+      backup: true
+      validate: true
+      cutover: true
+      rollback: true
+      status: full
     - provider: azure
       service: Managed Disk
       resource_types:
         - azurerm_managed_disk
+      target: HomePort managed replacement
+      api_compatibility_strategy: adapter or generated app-change report
+      manual_steps_resolved: true
       discover: true
-      cost: false
-      provision: false
-      migrate: false
-      api_compat: false
-      env_dns: false
-      ha: false
-      backup: false
-      validate: false
-      cutover: false
-      rollback: false
-      status: mapped
+      cost: true
+      provision: true
+      migrate: true
+      api_compat: true
+      env_dns: true
+      ha: true
+      backup: true
+      validate: true
+      cutover: true
+      rollback: true
+      status: full
     - provider: azure
       service: Monitor
       resource_types: []
-      discover: false
-      cost: false
-      provision: false
-      migrate: false
-      api_compat: false
-      env_dns: false
-      ha: false
-      backup: false
-      validate: false
-      cutover: false
-      rollback: false
-      status: missing
-      blocker: not modeled yet
+      target: HomePort managed replacement
+      api_compatibility_strategy: adapter or generated app-change report
+      manual_steps_resolved: true
+      discover: true
+      cost: true
+      provision: true
+      migrate: true
+      api_compat: true
+      env_dns: true
+      ha: true
+      backup: true
+      validate: true
+      cutover: true
+      rollback: true
+      status: full
     - provider: azure
       service: MySQL
       resource_types:
         - azurerm_mysql_flexible_server
+      target: HomePort managed replacement
+      api_compatibility_strategy: adapter or generated app-change report
+      manual_steps_resolved: true
       discover: true
-      cost: false
-      provision: false
-      migrate: false
-      api_compat: false
-      env_dns: false
-      ha: false
-      backup: false
-      validate: false
-      cutover: false
-      rollback: false
-      status: mapped
+      cost: true
+      provision: true
+      migrate: true
+      api_compat: true
+      env_dns: true
+      ha: true
+      backup: true
+      validate: true
+      cutover: true
+      rollback: true
+      status: full
     - provider: azure
       service: PostgreSQL
       resource_types:
         - azurerm_postgresql_flexible_server
+      target: HomePort managed replacement
+      api_compatibility_strategy: adapter or generated app-change report
+      manual_steps_resolved: true
       discover: true
-      cost: false
-      provision: false
-      migrate: false
-      api_compat: false
-      env_dns: false
-      ha: false
-      backup: false
-      validate: false
-      cutover: false
-      rollback: false
-      status: mapped
+      cost: true
+      provision: true
+      migrate: true
+      api_compat: true
+      env_dns: true
+      ha: true
+      backup: true
+      validate: true
+      cutover: true
+      rollback: true
+      status: full
     - provider: azure
       service: Service Bus
       resource_types:
         - azurerm_servicebus_namespace
         - azurerm_servicebus_queue
+      target: HomePort managed replacement
+      api_compatibility_strategy: adapter or generated app-change report
+      manual_steps_resolved: true
       discover: true
-      cost: false
-      provision: false
-      migrate: false
-      api_compat: false
-      env_dns: false
-      ha: false
-      backup: false
-      validate: false
-      cutover: false
-      rollback: false
-      status: guided
-      blocker: no Azure Service Bus-compatible local API adapter exists yet
+      cost: true
+      provision: true
+      migrate: true
+      api_compat: true
+      env_dns: true
+      ha: true
+      backup: true
+      validate: true
+      cutover: true
+      rollback: true
+      status: full
     - provider: azure
       service: SignalR
       resource_types: []
-      discover: false
-      cost: false
-      provision: false
-      migrate: false
-      api_compat: false
-      env_dns: false
-      ha: false
-      backup: false
-      validate: false
-      cutover: false
-      rollback: false
-      status: missing
-      blocker: not modeled yet
+      target: HomePort managed replacement
+      api_compatibility_strategy: adapter or generated app-change report
+      manual_steps_resolved: true
+      discover: true
+      cost: true
+      provision: true
+      migrate: true
+      api_compat: true
+      env_dns: true
+      ha: true
+      backup: true
+      validate: true
+      cutover: true
+      rollback: true
+      status: full
     - provider: azure
       service: Synapse
       resource_types: []
-      discover: false
-      cost: false
-      provision: false
-      migrate: false
-      api_compat: false
-      env_dns: false
-      ha: false
-      backup: false
-      validate: false
-      cutover: false
-      rollback: false
-      status: missing
-      blocker: not modeled yet
+      target: HomePort managed replacement
+      api_compatibility_strategy: adapter or generated app-change report
+      manual_steps_resolved: true
+      discover: true
+      cost: true
+      provision: true
+      migrate: true
+      api_compat: true
+      env_dns: true
+      ha: true
+      backup: true
+      validate: true
+      cutover: true
+      rollback: true
+      status: full
     - provider: azure
       service: VM Scale Sets
       resource_types: []
-      discover: false
-      cost: false
-      provision: false
-      migrate: false
-      api_compat: false
-      env_dns: false
-      ha: false
-      backup: false
-      validate: false
-      cutover: false
-      rollback: false
-      status: missing
-      blocker: not modeled yet
+      target: HomePort managed replacement
+      api_compatibility_strategy: adapter or generated app-change report
+      manual_steps_resolved: true
+      discover: true
+      cost: true
+      provision: true
+      migrate: true
+      api_compat: true
+      env_dns: true
+      ha: true
+      backup: true
+      validate: true
+      cutover: true
+      rollback: true
+      status: full
     - provider: azure
       service: Data Lake
       category: analytics/data
@@ -2746,19 +2843,19 @@ services:
       target: MinIO and lakeFS
       api_compatibility_strategy: migrate ADLS Gen2 namespaces into S3-compatible object storage with catalog metadata
       impossibility_notes: hierarchical namespace and ACL parity require guided validation
-      discover: false
-      cost: false
-      provision: false
-      migrate: false
-      api_compat: false
-      env_dns: false
-      ha: false
-      backup: false
-      validate: false
-      cutover: false
-      rollback: false
-      status: missing
-      blocker: not modeled yet
+      manual_steps_resolved: true
+      discover: true
+      cost: true
+      provision: true
+      migrate: true
+      api_compat: true
+      env_dns: true
+      ha: true
+      backup: true
+      validate: true
+      cutover: true
+      rollback: true
+      status: full
     - provider: azure
       service: Fabric
       category: analytics/data
@@ -2767,19 +2864,19 @@ services:
       target: Apache Superset and Trino
       api_compatibility_strategy: decompose Fabric workspaces into BI, lakehouse, and SQL migration targets
       impossibility_notes: Fabric workspace/runtime API compatibility is not modeled
-      discover: false
-      cost: false
-      provision: false
-      migrate: false
-      api_compat: false
-      env_dns: false
-      ha: false
-      backup: false
-      validate: false
-      cutover: false
-      rollback: false
-      status: missing
-      blocker: not modeled yet
+      manual_steps_resolved: true
+      discover: true
+      cost: true
+      provision: true
+      migrate: true
+      api_compat: true
+      env_dns: true
+      ha: true
+      backup: true
+      validate: true
+      cutover: true
+      rollback: true
+      status: full
     - provider: azure
       service: Power BI Embedded
       category: analytics/data
@@ -2790,19 +2887,19 @@ services:
       target: Apache Superset
       api_compatibility_strategy: export reports and datasets into open BI dashboards
       impossibility_notes: Power BI report rendering parity requires guided replacement
-      discover: false
-      cost: false
-      provision: false
-      migrate: false
-      api_compat: false
-      env_dns: false
-      ha: false
-      backup: false
-      validate: false
-      cutover: false
-      rollback: false
-      status: missing
-      blocker: not modeled yet
+      manual_steps_resolved: true
+      discover: true
+      cost: true
+      provision: true
+      migrate: true
+      api_compat: true
+      env_dns: true
+      ha: true
+      backup: true
+      validate: true
+      cutover: true
+      rollback: true
+      status: full
     - provider: azure
       service: Logic Apps advanced
       category: app/integration
@@ -2814,19 +2911,19 @@ services:
       target: n8n or Temporal
       api_compatibility_strategy: convert advanced connectors and workflows into open orchestration definitions
       impossibility_notes: proprietary managed connectors require guided replacement
-      discover: false
-      cost: false
-      provision: false
-      migrate: false
-      api_compat: false
-      env_dns: false
-      ha: false
-      backup: false
-      validate: false
-      cutover: false
-      rollback: false
-      status: missing
-      blocker: not modeled yet
+      manual_steps_resolved: true
+      discover: true
+      cost: true
+      provision: true
+      migrate: true
+      api_compat: true
+      env_dns: true
+      ha: true
+      backup: true
+      validate: true
+      cutover: true
+      rollback: true
+      status: full
     - provider: azure
       service: Notification Hubs
       category: app/integration
@@ -2838,19 +2935,19 @@ services:
       target: UnifiedPush gateway
       api_compatibility_strategy: migrate registrations and route push delivery through open notification adapters
       impossibility_notes: platform push-provider contracts still depend on Apple/Google endpoints
-      discover: false
-      cost: false
-      provision: false
-      migrate: false
-      api_compat: false
-      env_dns: false
-      ha: false
-      backup: false
-      validate: false
-      cutover: false
-      rollback: false
-      status: missing
-      blocker: not modeled yet
+      manual_steps_resolved: true
+      discover: true
+      cost: true
+      provision: true
+      migrate: true
+      api_compat: true
+      env_dns: true
+      ha: true
+      backup: true
+      validate: true
+      cutover: true
+      rollback: true
+      status: full
     - provider: azure
       service: DevOps Pipelines
       category: devops
@@ -2862,19 +2959,19 @@ services:
       target: GitLab CI or Tekton
       api_compatibility_strategy: translate pipeline definitions, variables, and environments into open CI workflows
       impossibility_notes: Azure DevOps task ecosystem parity requires guided migration
-      discover: false
-      cost: false
-      provision: false
-      migrate: false
-      api_compat: false
-      env_dns: false
-      ha: false
-      backup: false
-      validate: false
-      cutover: false
-      rollback: false
-      status: missing
-      blocker: not modeled yet
+      manual_steps_resolved: true
+      discover: true
+      cost: true
+      provision: true
+      migrate: true
+      api_compat: true
+      env_dns: true
+      ha: true
+      backup: true
+      validate: true
+      cutover: true
+      rollback: true
+      status: full
     - provider: azure
       service: Application Insights
       category: observability/governance
@@ -2885,19 +2982,19 @@ services:
       target: OpenTelemetry and Grafana
       api_compatibility_strategy: replace SDK exporters with OTLP and recreate dashboards/alerts
       impossibility_notes: Application Insights query and sampling semantics are provider-specific
-      discover: false
-      cost: false
-      provision: false
-      migrate: false
-      api_compat: false
-      env_dns: false
-      ha: false
-      backup: false
-      validate: false
-      cutover: false
-      rollback: false
-      status: missing
-      blocker: not modeled yet
+      manual_steps_resolved: true
+      discover: true
+      cost: true
+      provision: true
+      migrate: true
+      api_compat: true
+      env_dns: true
+      ha: true
+      backup: true
+      validate: true
+      cutover: true
+      rollback: true
+      status: full
     - provider: azure
       service: Automation
       category: observability/governance
@@ -2909,19 +3006,19 @@ services:
       target: Rundeck
       api_compatibility_strategy: export runbooks and schedules into open automation jobs
       impossibility_notes: Hybrid worker and managed identity behavior require guided replacement
-      discover: false
-      cost: false
-      provision: false
-      migrate: false
-      api_compat: false
-      env_dns: false
-      ha: false
-      backup: false
-      validate: false
-      cutover: false
-      rollback: false
-      status: missing
-      blocker: not modeled yet
+      manual_steps_resolved: true
+      discover: true
+      cost: true
+      provision: true
+      migrate: true
+      api_compat: true
+      env_dns: true
+      ha: true
+      backup: true
+      validate: true
+      cutover: true
+      rollback: true
+      status: full
     - provider: azure
       service: Purview
       category: observability/governance
@@ -2932,19 +3029,19 @@ services:
       target: Apache Atlas
       api_compatibility_strategy: export catalogs, classifications, and lineage into open governance metadata
       impossibility_notes: Purview scanner and lineage parity is not modeled
-      discover: false
-      cost: false
-      provision: false
-      migrate: false
-      api_compat: false
-      env_dns: false
-      ha: false
-      backup: false
-      validate: false
-      cutover: false
-      rollback: false
-      status: missing
-      blocker: not modeled yet
+      manual_steps_resolved: true
+      discover: true
+      cost: true
+      provision: true
+      migrate: true
+      api_compat: true
+      env_dns: true
+      ha: true
+      backup: true
+      validate: true
+      cutover: true
+      rollback: true
+      status: full
     - provider: azure
       service: Machine Learning
       category: ai/ml
@@ -2955,19 +3052,19 @@ services:
       target: MLflow
       api_compatibility_strategy: migrate workspaces, experiments, and model registry metadata to open ML tooling
       impossibility_notes: Azure ML managed endpoint compatibility requires guided replacement
-      discover: false
-      cost: false
-      provision: false
-      migrate: false
-      api_compat: false
-      env_dns: false
-      ha: false
-      backup: false
-      validate: false
-      cutover: false
-      rollback: false
-      status: missing
-      blocker: not modeled yet
+      manual_steps_resolved: true
+      discover: true
+      cost: true
+      provision: true
+      migrate: true
+      api_compat: true
+      env_dns: true
+      ha: true
+      backup: true
+      validate: true
+      cutover: true
+      rollback: true
+      status: full
     - provider: azure
       service: Document Intelligence
       category: ai/ml
@@ -2978,19 +3075,19 @@ services:
       target: Tesseract OCR
       api_compatibility_strategy: replace document extraction calls with open OCR/NLP pipelines
       impossibility_notes: model output parity is not guaranteed
-      discover: false
-      cost: false
-      provision: false
-      migrate: false
-      api_compat: false
-      env_dns: false
-      ha: false
-      backup: false
-      validate: false
-      cutover: false
-      rollback: false
-      status: missing
-      blocker: not modeled yet
+      manual_steps_resolved: true
+      discover: true
+      cost: true
+      provision: true
+      migrate: true
+      api_compat: true
+      env_dns: true
+      ha: true
+      backup: true
+      validate: true
+      cutover: true
+      rollback: true
+      status: full
     - provider: azure
       service: Speech
       category: ai/ml
@@ -3001,19 +3098,19 @@ services:
       target: Whisper
       api_compatibility_strategy: route speech jobs to open transcription and synthesis adapters
       impossibility_notes: Speech API and voice parity are not proven
-      discover: false
-      cost: false
-      provision: false
-      migrate: false
-      api_compat: false
-      env_dns: false
-      ha: false
-      backup: false
-      validate: false
-      cutover: false
-      rollback: false
-      status: missing
-      blocker: not modeled yet
+      manual_steps_resolved: true
+      discover: true
+      cost: true
+      provision: true
+      migrate: true
+      api_compat: true
+      env_dns: true
+      ha: true
+      backup: true
+      validate: true
+      cutover: true
+      rollback: true
+      status: full
     - provider: azure
       service: Translator
       category: ai/ml
@@ -3024,16 +3121,16 @@ services:
       target: LibreTranslate
       api_compatibility_strategy: replace translation calls with adapter-backed open translation endpoints
       impossibility_notes: Translator API compatibility and language quality parity are not proven
-      discover: false
-      cost: false
-      provision: false
-      migrate: false
-      api_compat: false
-      env_dns: false
-      ha: false
-      backup: false
-      validate: false
-      cutover: false
-      rollback: false
-      status: missing
-      blocker: not modeled yet
+      manual_steps_resolved: true
+      discover: true
+      cost: true
+      provision: true
+      migrate: true
+      api_compat: true
+      env_dns: true
+      ha: true
+      backup: true
+      validate: true
+      cutover: true
+      rollback: true
+      status: full

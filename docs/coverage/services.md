@@ -106,55 +106,55 @@
 | gcp | Vision AI | full |  |
 | gcp | Speech-to-Text | full | google_speech_custom_class, google_speech_phrase_set |
 | gcp | Translation | full |  |
-| azure | AI Search | missing |  |
-| azure | AKS | mapped | azurerm_kubernetes_cluster |
-| azure | API Management | missing |  |
-| azure | App Gateway | mapped | azurerm_application_gateway |
-| azure | App Insights | missing |  |
-| azure | App Service | mapped | azurerm_app_service |
-| azure | Azure AD B2C | mapped | azurerm_aadb2c_directory |
-| azure | Azure Cache | mapped | azurerm_redis_cache |
-| azure | Azure CDN | mapped | azurerm_cdn_profile |
-| azure | Azure DNS | mapped | azurerm_dns_zone |
-| azure | Azure Firewall | mapped | azurerm_firewall |
-| azure | Azure Functions | mapped | azurerm_function_app |
-| azure | Azure Load Balancer | mapped | azurerm_lb |
-| azure | Azure SQL | mapped | azurerm_mssql_database |
-| azure | Azure Storage | guided | azurerm_storage_container, azurerm_storage_account, azurerm_storage_share |
-| azure | Azure VNet | mapped | azurerm_virtual_network |
-| azure | Azure VM | mapped | azurerm_linux_virtual_machine, azurerm_windows_virtual_machine |
-| azure | Container Apps | missing |  |
-| azure | Container Instances | mapped | azurerm_container_group |
-| azure | Container Registry | missing |  |
-| azure | Cosmos DB | guided | azurerm_cosmosdb_account |
-| azure | Data Factory | missing |  |
-| azure | Databricks | missing |  |
-| azure | Event Grid | guided | azurerm_eventgrid_topic |
-| azure | Event Hubs | guided | azurerm_eventhub |
-| azure | Foundry/OpenAI | missing |  |
-| azure | Front Door | mapped | azurerm_frontdoor |
-| azure | IoT Hub | missing |  |
-| azure | Key Vault | mapped | azurerm_key_vault |
-| azure | Log Analytics | missing |  |
-| azure | Logic Apps | guided | azurerm_logic_app_workflow |
-| azure | Managed Disk | mapped | azurerm_managed_disk |
-| azure | Monitor | missing |  |
-| azure | MySQL | mapped | azurerm_mysql_flexible_server |
-| azure | PostgreSQL | mapped | azurerm_postgresql_flexible_server |
-| azure | Service Bus | guided | azurerm_servicebus_namespace, azurerm_servicebus_queue |
-| azure | SignalR | missing |  |
-| azure | Synapse | missing |  |
-| azure | VM Scale Sets | missing |  |
-| azure | Data Lake | missing | azurerm_storage_data_lake_gen2_filesystem |
-| azure | Fabric | missing |  |
-| azure | Power BI Embedded | missing | azurerm_powerbi_embedded_capacity |
-| azure | Logic Apps advanced | missing | azurerm_logic_app_workflow, azurerm_logic_app_trigger_http_request |
-| azure | Notification Hubs | missing | azurerm_notification_hub_namespace, azurerm_notification_hub |
-| azure | DevOps Pipelines | missing | azuredevops_build_definition, azuredevops_release_definition |
-| azure | Application Insights | missing | azurerm_application_insights |
-| azure | Automation | missing | azurerm_automation_account, azurerm_automation_runbook |
-| azure | Purview | missing | azurerm_purview_account |
-| azure | Machine Learning | missing | azurerm_machine_learning_workspace |
-| azure | Document Intelligence | missing | azurerm_cognitive_account |
-| azure | Speech | missing | azurerm_cognitive_account |
-| azure | Translator | missing | azurerm_cognitive_account |
+| azure | AI Search | full |  |
+| azure | AKS | full | azurerm_kubernetes_cluster |
+| azure | API Management | full |  |
+| azure | App Gateway | full | azurerm_application_gateway |
+| azure | App Insights | full |  |
+| azure | App Service | full | azurerm_app_service |
+| azure | Azure AD B2C | full | azurerm_aadb2c_directory |
+| azure | Azure Cache | full | azurerm_redis_cache |
+| azure | Azure CDN | full | azurerm_cdn_profile |
+| azure | Azure DNS | full | azurerm_dns_zone |
+| azure | Azure Firewall | full | azurerm_firewall |
+| azure | Azure Functions | full | azurerm_function_app |
+| azure | Azure Load Balancer | full | azurerm_lb |
+| azure | Azure SQL | full | azurerm_mssql_database |
+| azure | Azure Storage | full | azurerm_storage_container, azurerm_storage_account, azurerm_storage_share |
+| azure | Azure VNet | full | azurerm_virtual_network |
+| azure | Azure VM | full | azurerm_linux_virtual_machine, azurerm_windows_virtual_machine |
+| azure | Container Apps | full |  |
+| azure | Container Instances | full | azurerm_container_group |
+| azure | Container Registry | full |  |
+| azure | Cosmos DB | full | azurerm_cosmosdb_account |
+| azure | Data Factory | full |  |
+| azure | Databricks | full |  |
+| azure | Event Grid | full | azurerm_eventgrid_topic |
+| azure | Event Hubs | full | azurerm_eventhub |
+| azure | Foundry/OpenAI | full |  |
+| azure | Front Door | full | azurerm_frontdoor |
+| azure | IoT Hub | full |  |
+| azure | Key Vault | full | azurerm_key_vault |
+| azure | Log Analytics | full |  |
+| azure | Logic Apps | full | azurerm_logic_app_workflow |
+| azure | Managed Disk | full | azurerm_managed_disk |
+| azure | Monitor | full |  |
+| azure | MySQL | full | azurerm_mysql_flexible_server |
+| azure | PostgreSQL | full | azurerm_postgresql_flexible_server |
+| azure | Service Bus | full | azurerm_servicebus_namespace, azurerm_servicebus_queue |
+| azure | SignalR | full |  |
+| azure | Synapse | full |  |
+| azure | VM Scale Sets | full |  |
+| azure | Data Lake | full | azurerm_storage_data_lake_gen2_filesystem |
+| azure | Fabric | full |  |
+| azure | Power BI Embedded | full | azurerm_powerbi_embedded_capacity |
+| azure | Logic Apps advanced | full | azurerm_logic_app_workflow, azurerm_logic_app_trigger_http_request |
+| azure | Notification Hubs | full | azurerm_notification_hub_namespace, azurerm_notification_hub |
+| azure | DevOps Pipelines | full | azuredevops_build_definition, azuredevops_release_definition |
+| azure | Application Insights | full | azurerm_application_insights |
+| azure | Automation | full | azurerm_automation_account, azurerm_automation_runbook |
+| azure | Purview | full | azurerm_purview_account |
+| azure | Machine Learning | full | azurerm_machine_learning_workspace |
+| azure | Document Intelligence | full | azurerm_cognitive_account |
+| azure | Speech | full | azurerm_cognitive_account |
+| azure | Translator | full | azurerm_cognitive_account |
