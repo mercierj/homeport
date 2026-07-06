@@ -29,6 +29,7 @@ var ResourceMapping = map[resource.Type]StackType{
 	resource.TypeCodeBuild:                 StackTypePassthrough, // Build projects stay individual
 	resource.TypeCodePipeline:              StackTypePassthrough, // Pipelines remain workflow definitions
 	resource.TypeCodeDeployApp:             StackTypePassthrough, // Deploy strategies remain rollout definitions
+	resource.TypeCloudFormationStack:       StackTypePassthrough, // IaC state imports stay explicit
 	resource.TypeECRRepository:             StackTypePassthrough, // Registries remain individual infrastructure
 	resource.TypeStepFunctionsStateMachine: StackTypeMessaging,   // Workflows consolidate with event orchestration
 

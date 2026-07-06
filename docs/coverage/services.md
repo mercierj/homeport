@@ -48,7 +48,7 @@
 | aws | IoT Core | full | aws_iot_thing |
 | aws | App Mesh | full | aws_appmesh_mesh |
 | aws | CodeDeploy | full | aws_codedeploy_app |
-| aws | CloudFormation full import | missing | aws_cloudformation_stack |
+| aws | CloudFormation full import | full | aws_cloudformation_stack |
 | aws | Shield | missing | aws_shield_protection |
 | aws | Security Hub | missing | aws_securityhub_account, aws_securityhub_standards_subscription |
 | aws | Config | missing | aws_config_configuration_recorder, aws_config_config_rule |

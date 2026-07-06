@@ -21,6 +21,7 @@ const (
 	TypeCodeBuild                 Type = "aws_codebuild_project"
 	TypeCodePipeline              Type = "aws_codepipeline"
 	TypeCodeDeployApp             Type = "aws_codedeploy_app"
+	TypeCloudFormationStack       Type = "aws_cloudformation_stack"
 	TypeECRRepository             Type = "aws_ecr_repository"
 	TypeStepFunctionsStateMachine Type = "aws_sfn_state_machine"
 

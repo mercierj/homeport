@@ -97,6 +97,7 @@ var CategoryMapping = map[Type]Category{
 	TypeCodeBuild:                 CategoryDevOps,
 	TypeCodePipeline:              CategoryDevOps,
 	TypeCodeDeployApp:             CategoryDevOps,
+	TypeCloudFormationStack:       CategoryDevOps,
 	TypeECRRepository:             CategoryContainer,
 	TypeStepFunctionsStateMachine: CategoryMessaging,
 

@@ -73,6 +73,7 @@ func (r *Registry) RegisterDefaults() {
 	r.Register(devops.NewCodeBuildMapper())
 	r.Register(devops.NewCodePipelineMapper())
 	r.Register(devops.NewCodeDeployMapper())
+	r.Register(devops.NewCloudFormationMapper())
 
 	// AWS Networking mappers
 	r.Register(networking.NewALBMapper())

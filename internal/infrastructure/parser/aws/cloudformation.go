@@ -550,6 +550,7 @@ func mapCFNTypeToResourceType(cfnType string) resource.Type {
 		"AWS::CodePipeline::Pipeline":      resource.TypeCodePipeline,
 		"AWS::CodeDeploy::Application":     resource.TypeCodeDeployApp,
 		"AWS::CodeDeploy::DeploymentGroup": resource.TypeCodeDeployApp,
+		"AWS::CloudFormation::Stack":       resource.TypeCloudFormationStack,
 		"AWS::StepFunctions::StateMachine": resource.TypeStepFunctionsStateMachine,
 	}
 

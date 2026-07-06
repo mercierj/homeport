@@ -246,6 +246,8 @@ func mapTerraformTypeToResourceType(tfType string) resource.Type {
 		return resource.TypeCodePipeline
 	case "aws_codedeploy_app", "aws_codedeploy_deployment_group":
 		return resource.TypeCodeDeployApp
+	case "aws_cloudformation_stack":
+		return resource.TypeCloudFormationStack
 	case "aws_sfn_state_machine":
 		return resource.TypeStepFunctionsStateMachine
 

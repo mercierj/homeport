@@ -374,6 +374,7 @@ func mapAWSTerraformType(tfType string) resource.Type {
 		"aws_codepipeline":                resource.TypeCodePipeline,
 		"aws_codedeploy_app":              resource.TypeCodeDeployApp,
 		"aws_codedeploy_deployment_group": resource.TypeCodeDeployApp,
+		"aws_cloudformation_stack":        resource.TypeCloudFormationStack,
 		"aws_sfn_state_machine":           resource.TypeStepFunctionsStateMachine,
 	}
 
