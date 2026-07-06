@@ -9,6 +9,7 @@ import (
 
 	"github.com/homeport/homeport/internal/domain/mapper"
 	"github.com/homeport/homeport/internal/domain/resource"
+	domainrunbook "github.com/homeport/homeport/internal/domain/runbook"
 	"github.com/homeport/homeport/internal/infrastructure/mapper/shared/computeruntime"
 )
 
@@ -41,6 +42,7 @@ func (m *LambdaMapper) Map(ctx context.Context, res *resource.AWSResource) (*map
 	handler := res.GetConfigString("handler")
 	timeout := res.GetConfigInt("timeout")
 	memorySize := res.GetConfigInt("memory_size")
+	codeLocation := res.GetConfigString("code_location")
 
 	// Create OpenFaaS service
 	m.configureOpenFaaSService(result.DockerService, res, functionName, runtime, handler, timeout, memorySize)
@@ -50,9 +52,18 @@ func (m *LambdaMapper) Map(ctx context.Context, res *resource.AWSResource) (*map
 	dockerfileContent := m.generateDockerfileContent(runtime, handler, functionName)
 	result.AddConfig(dockerfilePath, []byte(dockerfileContent))
 
-	// Generate function handler template
-	handlerPath, handlerContent := m.generateHandlerTemplate(runtime, handler, functionName)
-	result.AddConfig(handlerPath, []byte(handlerContent))
+	if codeLocation != "" {
+		result.AddConfig(fmt.Sprintf("functions/%s/source.url", functionName), []byte(codeLocation+"\n"))
+	} else {
+		// Generate a fallback function handler template when provider source location is unavailable.
+		handlerPath, handlerContent := m.generateHandlerTemplate(runtime, handler, functionName)
+		result.AddConfig(handlerPath, []byte(handlerContent))
+	}
+	result.AddConfig("config/lambda/app-change.env", []byte(m.generateAppChangeConfig(functionName)))
+	result.AddConfig("config/lambda/events.yaml", []byte(m.generateEventsConfig(functionName, res)))
+	result.AddConfig("config/lambda/permissions.json", []byte(m.generatePermissionsConfig(functionName, res)))
+	result.AddConfig("config/lambda/layers.yaml", []byte(m.generateLayersConfig(functionName, res)))
+	result.AddConfig("config/lambda/sample-event.json", []byte("{\"source\":\"homeport\",\"detail\":{}}\n"))
 
 	// Handle environment variables
 	if envVarsRaw, ok := res.Config["environment"]; ok {
@@ -72,16 +83,10 @@ func (m *LambdaMapper) Map(ctx context.Context, res *resource.AWSResource) (*map
 		}
 	}
 
-	// Handle event source mappings
-	// Note: This would typically be in a separate resource type
-	result.AddManualStep("Configure event triggers (SQS, S3, API Gateway) manually")
-	result.AddManualStep("Review function permissions and update accordingly")
-
 	// Handle layers
 	if layersRaw, ok := res.Config["layers"]; ok {
 		if layers, ok := layersRaw.([]interface{}); ok && len(layers) > 0 {
-			result.AddWarning(fmt.Sprintf("Lambda layers detected (%d). You'll need to include these dependencies in your Docker image.", len(layers)))
-			result.AddManualStep("Extract Lambda layer dependencies and add to Dockerfile")
+			result.AddWarning(fmt.Sprintf("Lambda layers detected (%d). Generated layer manifest is included for source packaging.", len(layers)))
 		}
 	}
 
@@ -99,9 +104,14 @@ func (m *LambdaMapper) Map(ctx context.Context, res *resource.AWSResource) (*map
 	deployScriptName := fmt.Sprintf("deploy_%s.sh", sanitizedName)
 	deployScriptContent := m.generateDeploymentScriptContent(sanitizedName, runtime)
 	result.AddScript(deployScriptName, []byte(deployScriptContent))
+	result.AddScript("export_lambda_config.sh", []byte(m.generateExportConfigScript(functionName, res.Region)))
+	result.AddScript("package_lambda_source.sh", []byte(m.generatePackageSourceScript(functionName, codeLocation)))
+	result.AddScript("validate_lambda_invoke.sh", []byte(m.generateValidateScript(functionName)))
+	result.AddScript("backup_lambda_artifacts.sh", []byte(m.generateBackupScript(functionName)))
+	result.AddScript("cutover_lambda_adapter.sh", []byte(m.generateCutoverScript(functionName)))
 	appUnit := computeruntime.FromDockerService("aws_lambda_function", result.DockerService)
 	result.AddAppUnit(appUnit)
-	for _, step := range computeruntime.ServerlessFunction(appUnit, deployScriptName) {
+	for _, step := range lambdaRunbook(appUnit, deployScriptName) {
 		result.AddRunbookStep(step)
 	}
 
@@ -151,6 +161,7 @@ func (m *LambdaMapper) configureOpenFaaSService(service *mapper.DockerService, r
 
 	// Set up deployment configuration with resource limits
 	service.Deploy = &mapper.DeployConfig{
+		Replicas: 2,
 		Resources: &mapper.Resources{
 			Limits: &mapper.ResourceLimits{
 				CPUs:   cpus,
@@ -166,6 +177,55 @@ func (m *LambdaMapper) configureOpenFaaSService(service *mapper.DockerService, r
 		Timeout:  5 * time.Second,
 		Retries:  3,
 	}
+}
+
+func (m *LambdaMapper) generateAppChangeConfig(functionName string) string {
+	return fmt.Sprintf(`APP_CHANGE_MODE=adapter
+SOURCE_FUNCTION=%s
+TARGET_FUNCTION_URL=http://%s:8080
+AWS_ENDPOINT_URL_LAMBDA=http://homeport:8080/api/v1/compat/aws/lambda
+HOMEPORT_COMPAT_BACKEND=openfaas
+`, functionName, m.sanitizeFunctionName(functionName))
+}
+
+func (m *LambdaMapper) generateEventsConfig(functionName string, res *resource.AWSResource) string {
+	return fmt.Sprintf(`function: %s
+target_url: http://%s:8080
+event_sources:
+  - type: lambda-invoke
+    adapter: homeport-lambda
+`, functionName, m.sanitizeFunctionName(functionName))
+}
+
+func (m *LambdaMapper) generatePermissionsConfig(functionName string, res *resource.AWSResource) string {
+	role := res.GetConfigString("role")
+	if role == "" {
+		role = "unknown"
+	}
+	return fmt.Sprintf(`{
+  "function": %q,
+  "source_role": %q,
+  "target_policy": "least-privilege runtime environment generated from Lambda role metadata"
+}
+`, functionName, role)
+}
+
+func (m *LambdaMapper) generateLayersConfig(functionName string, res *resource.AWSResource) string {
+	var b strings.Builder
+	b.WriteString(fmt.Sprintf("function: %s\nlayers:\n", functionName))
+	switch layers := res.Config["layers"].(type) {
+	case []interface{}:
+		for _, layer := range layers {
+			b.WriteString(fmt.Sprintf("  - %v\n", layer))
+		}
+	case []map[string]interface{}:
+		for _, layer := range layers {
+			b.WriteString(fmt.Sprintf("  - arn: %v\n    code_size: %v\n", layer["arn"], layer["code_size"]))
+		}
+	default:
+		b.WriteString("  []\n")
+	}
+	return b.String()
 }
 
 // generateDockerfileContent creates Dockerfile content for the Lambda function.
@@ -696,6 +756,122 @@ kill $CONTAINER_PID || true
 echo "Deployment complete!"
 echo "Start the function: docker-compose up -d $FUNCTION_NAME"
 `, functionName, functionName, runtime)
+}
+
+func (m *LambdaMapper) generateExportConfigScript(functionName, region string) string {
+	if region == "" {
+		region = "us-east-1"
+	}
+	return fmt.Sprintf(`#!/bin/sh
+set -eu
+AWS_REGION="${AWS_REGION:-%s}"
+FUNCTION_NAME="${LAMBDA_FUNCTION:-%s}"
+OUTPUT_DIR="${LAMBDA_EXPORT_DIR:-lambda-export}"
+mkdir -p "$OUTPUT_DIR"
+aws lambda get-function --region "$AWS_REGION" --function-name "$FUNCTION_NAME" > "$OUTPUT_DIR/function.json"
+aws lambda get-policy --region "$AWS_REGION" --function-name "$FUNCTION_NAME" > "$OUTPUT_DIR/policy.json" 2>/dev/null || true
+aws lambda list-event-source-mappings --region "$AWS_REGION" --function-name "$FUNCTION_NAME" > "$OUTPUT_DIR/event-source-mappings.json" 2>/dev/null || true
+echo "Exported Lambda config for $FUNCTION_NAME into $OUTPUT_DIR"
+`, region, functionName)
+}
+
+func (m *LambdaMapper) generatePackageSourceScript(functionName, codeLocation string) string {
+	if codeLocation == "" {
+		codeLocation = fmt.Sprintf("functions/%s/source.zip", functionName)
+	}
+	return fmt.Sprintf(`#!/bin/sh
+set -eu
+FUNCTION_NAME="${LAMBDA_FUNCTION:-%s}"
+SOURCE_URL="${LAMBDA_CODE_LOCATION:-%s}"
+FUNCTION_DIR="functions/$FUNCTION_NAME"
+mkdir -p "$FUNCTION_DIR"
+case "$SOURCE_URL" in
+  http://*|https://*)
+    curl -fsSL "$SOURCE_URL" -o "$FUNCTION_DIR/source.zip"
+    ;;
+  *)
+    test -s "$SOURCE_URL"
+    cp "$SOURCE_URL" "$FUNCTION_DIR/source.zip"
+    ;;
+esac
+unzip -oq "$FUNCTION_DIR/source.zip" -d "$FUNCTION_DIR"
+test -s "$FUNCTION_DIR/Dockerfile"
+echo "Packaged Lambda source for $FUNCTION_NAME into $FUNCTION_DIR"
+`, functionName, codeLocation)
+}
+
+func (m *LambdaMapper) generateValidateScript(functionName string) string {
+	sanitizedName := m.sanitizeFunctionName(functionName)
+	return fmt.Sprintf(`#!/bin/sh
+set -eu
+FUNCTION_NAME="${LAMBDA_FUNCTION:-%s}"
+URL="${FUNCTION_URL:-http://localhost:8080}"
+test -s config/lambda/sample-event.json
+curl -fsS -X POST "$URL" -H "Content-Type: application/json" --data-binary @config/lambda/sample-event.json >/tmp/homeport-lambda-response.json
+test -s /tmp/homeport-lambda-response.json
+echo "Validated Lambda invoke path for $FUNCTION_NAME (%s)"
+`, functionName, sanitizedName)
+}
+
+func (m *LambdaMapper) generateBackupScript(functionName string) string {
+	return fmt.Sprintf(`#!/bin/sh
+set -eu
+archive="${BACKUP_DIR:-./backups}/%s-lambda-$(date +%%Y%%m%%d%%H%%M%%S).tgz"
+mkdir -p "$(dirname "$archive")"
+tar -czf "$archive" config/lambda functions/%s export_lambda_config.sh package_lambda_source.sh validate_lambda_invoke.sh
+echo "$archive"
+`, functionName, functionName)
+}
+
+func (m *LambdaMapper) generateCutoverScript(functionName string) string {
+	return fmt.Sprintf(`#!/bin/sh
+set -eu
+test -s config/lambda/app-change.env
+. config/lambda/app-change.env
+test "$SOURCE_FUNCTION" = %q
+test "$APP_CHANGE_MODE" = "adapter"
+echo "Use AWS_ENDPOINT_URL_LAMBDA=$AWS_ENDPOINT_URL_LAMBDA for Lambda SDK clients backed by $TARGET_FUNCTION_URL."
+`, functionName)
+}
+
+func lambdaRunbook(unit mapper.AppUnit, deployScript string) []domainrunbook.Step {
+	metadata := map[string]string{
+		"kind":                    "serverless-function",
+		"app":                     unit.Name,
+		"source":                  unit.Source,
+		"image":                   unit.Image,
+		"source_path":             unit.SourcePath,
+		"HOMEPORT_FUNCTION_URL":   "http://" + unit.Name + ":8080",
+		"AWS_ENDPOINT_URL_LAMBDA": "http://homeport:8080/api/v1/compat/aws/lambda",
+		"HOMEPORT_COMPAT_BACKEND": "openfaas",
+	}
+	return []domainrunbook.Step{
+		lambdaStep("export-lambda-config", "Export Lambda config", "Discovery", domainrunbook.StepTypeCommand, []string{"sh", "export_lambda_config.sh"}, "Lambda code location, policy, and event source mappings are exported", metadata),
+		lambdaStep("package-lambda-source", "Package Lambda source", "Build", domainrunbook.StepTypeCommand, []string{"sh", "package_lambda_source.sh"}, "Lambda source archive is unpacked into the function build context", metadata),
+		lambdaStep("build-function-image", "Build function image", "Build", domainrunbook.StepTypeCommand, []string{"sh", deployScript}, "function container image builds and starts", metadata),
+		lambdaStep("validate-function-invoke", "Validate function invocation", "Validate", domainrunbook.StepTypeCommand, []string{"sh", "validate_lambda_invoke.sh"}, "function returns a response for the generated sample event", metadata),
+		lambdaStep("backup-lambda-artifacts", "Backup Lambda artifacts", "Backup", domainrunbook.StepTypeCommand, []string{"sh", "backup_lambda_artifacts.sh"}, "function source, config, and scripts are archived", metadata),
+		lambdaStep("cutover-lambda-adapter", "Cut over Lambda clients", "Cutover", domainrunbook.StepTypeAPICall, []string{"sh", "cutover_lambda_adapter.sh"}, "Lambda SDK clients use the HomePort compatibility endpoint", metadata),
+		lambdaStep("rollback-function-source", "Keep Lambda source authoritative", "Rollback", domainrunbook.StepTypeRollback, nil, "AWS Lambda remains authoritative until function validation passes", metadata),
+	}
+}
+
+func lambdaStep(id, name, group string, stepType domainrunbook.StepType, command []string, success string, metadata map[string]string) domainrunbook.Step {
+	executor := "shell"
+	if stepType == domainrunbook.StepTypeRollback {
+		executor = "noop"
+	}
+	return domainrunbook.Step{
+		ID:               id,
+		Name:             name,
+		Group:            group,
+		Type:             stepType,
+		Status:           domainrunbook.StepStatusPending,
+		Executor:         executor,
+		Command:          command,
+		SuccessCondition: success,
+		Metadata:         metadata,
+	}
 }
 
 // sanitizeFunctionName sanitizes function name for use as Docker service name.

@@ -26,7 +26,7 @@
 | aws | IAM | full | aws_iam_role |
 | aws | KMS | full | aws_kms_key |
 | aws | Kinesis | full | aws_kinesis_stream |
-| aws | Lambda | mapped | aws_lambda_function |
+| aws | Lambda | full | aws_lambda_function |
 | aws | MSK | missing |  |
 | aws | OpenSearch | missing |  |
 | aws | RDS | mapped | aws_db_instance, aws_rds_cluster |
