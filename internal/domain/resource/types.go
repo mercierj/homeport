@@ -11,16 +11,17 @@ const (
 	// ─────────────────────────────────────────────────────
 
 	// AWS Compute
-	TypeEC2Instance       Type = "aws_instance"
-	TypeLambdaFunction    Type = "aws_lambda_function"
-	TypeECSService        Type = "aws_ecs_service"
-	TypeECSTaskDef        Type = "aws_ecs_task_definition"
-	TypeEKSCluster        Type = "aws_eks_cluster"
-	TypeBedrockModel      Type = "aws_bedrock_inference_profile"
-	TypeSageMakerEndpoint Type = "aws_sagemaker_endpoint"
-	TypeCodeBuild         Type = "aws_codebuild_project"
-	TypeCodePipeline      Type = "aws_codepipeline"
-	TypeECRRepository     Type = "aws_ecr_repository"
+	TypeEC2Instance               Type = "aws_instance"
+	TypeLambdaFunction            Type = "aws_lambda_function"
+	TypeECSService                Type = "aws_ecs_service"
+	TypeECSTaskDef                Type = "aws_ecs_task_definition"
+	TypeEKSCluster                Type = "aws_eks_cluster"
+	TypeBedrockModel              Type = "aws_bedrock_inference_profile"
+	TypeSageMakerEndpoint         Type = "aws_sagemaker_endpoint"
+	TypeCodeBuild                 Type = "aws_codebuild_project"
+	TypeCodePipeline              Type = "aws_codepipeline"
+	TypeECRRepository             Type = "aws_ecr_repository"
+	TypeStepFunctionsStateMachine Type = "aws_sfn_state_machine"
 
 	// AWS Storage
 	TypeS3Bucket  Type = "aws_s3_bucket"

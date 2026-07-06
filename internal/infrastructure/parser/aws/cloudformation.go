@@ -534,8 +534,9 @@ func mapCFNTypeToResourceType(cfnType string) resource.Type {
 		"AWS::CloudWatch::Dashboard": resource.TypeCloudWatchDashboard,
 
 		// DevOps
-		"AWS::CodeBuild::Project":     resource.TypeCodeBuild,
-		"AWS::CodePipeline::Pipeline": resource.TypeCodePipeline,
+		"AWS::CodeBuild::Project":          resource.TypeCodeBuild,
+		"AWS::CodePipeline::Pipeline":      resource.TypeCodePipeline,
+		"AWS::StepFunctions::StateMachine": resource.TypeStepFunctionsStateMachine,
 	}
 
 	if resType, ok := mapping[cfnType]; ok {

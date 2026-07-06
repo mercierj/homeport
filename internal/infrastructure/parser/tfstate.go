@@ -230,6 +230,8 @@ func mapTerraformTypeToResourceType(tfType string) resource.Type {
 		return resource.TypeCodeBuild
 	case "aws_codepipeline":
 		return resource.TypeCodePipeline
+	case "aws_sfn_state_machine":
+		return resource.TypeStepFunctionsStateMachine
 
 	default:
 		// Return the Terraform type as-is for unknown types

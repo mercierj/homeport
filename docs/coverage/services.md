@@ -38,7 +38,7 @@
 | aws | SQS | full | aws_sqs_queue |
 | aws | SageMaker | full | aws_sagemaker_endpoint |
 | aws | Secrets Manager | full | aws_secretsmanager_secret |
-| aws | Step Functions | missing |  |
+| aws | Step Functions | full | aws_sfn_state_machine |
 | aws | VPC | mapped | aws_vpc |
 | aws | WAF | missing |  |
 | aws | X-Ray | missing |  |

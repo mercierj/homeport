@@ -87,16 +87,17 @@ var CategoryMapping = map[Type]Category{
 	// ─────────────────────────────────────────────────────
 
 	// AWS Compute
-	TypeEC2Instance:       CategoryCompute,
-	TypeLambdaFunction:    CategoryServerless,
-	TypeECSService:        CategoryContainer,
-	TypeECSTaskDef:        CategoryContainer,
-	TypeEKSCluster:        CategoryKubernetes,
-	TypeBedrockModel:      CategoryServerless,
-	TypeSageMakerEndpoint: CategoryCompute,
-	TypeCodeBuild:         CategoryDevOps,
-	TypeCodePipeline:      CategoryDevOps,
-	TypeECRRepository:     CategoryContainer,
+	TypeEC2Instance:               CategoryCompute,
+	TypeLambdaFunction:            CategoryServerless,
+	TypeECSService:                CategoryContainer,
+	TypeECSTaskDef:                CategoryContainer,
+	TypeEKSCluster:                CategoryKubernetes,
+	TypeBedrockModel:              CategoryServerless,
+	TypeSageMakerEndpoint:         CategoryCompute,
+	TypeCodeBuild:                 CategoryDevOps,
+	TypeCodePipeline:              CategoryDevOps,
+	TypeECRRepository:             CategoryContainer,
+	TypeStepFunctionsStateMachine: CategoryMessaging,
 
 	// AWS Storage
 	TypeS3Bucket:  CategoryObjectStorage,
