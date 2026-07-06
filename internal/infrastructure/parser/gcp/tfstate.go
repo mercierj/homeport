@@ -308,6 +308,7 @@ func mapGCPTerraformType(tfType string) resource.Type {
 		"google_container_cluster":            resource.TypeGKE,
 		"google_app_engine_application":       resource.TypeAppEngine,
 		"google_artifact_registry_repository": resource.TypeArtifactRegistryRepository,
+		"google_cloudbuild_trigger":           resource.TypeCloudBuildTrigger,
 
 		// Storage
 		"google_storage_bucket":     resource.TypeGCSBucket,

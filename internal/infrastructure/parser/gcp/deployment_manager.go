@@ -321,6 +321,7 @@ func mapDMTypeToResourceType(dmType string) resource.Type {
 		"compute.v1.instancetemplate":    resource.TypeGCEInstance,
 		"compute.beta.instance":          resource.TypeGCEInstance,
 		"artifactregistry.v1.repository": resource.TypeArtifactRegistryRepository,
+		"cloudbuild.v1.trigger":          resource.TypeCloudBuildTrigger,
 
 		// Storage
 		"storage.v1.bucket": resource.TypeGCSBucket,

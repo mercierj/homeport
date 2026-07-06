@@ -5,6 +5,7 @@ import (
 	"github.com/homeport/homeport/internal/domain/mapper"
 	"github.com/homeport/homeport/internal/infrastructure/mapper/gcp/compute"
 	"github.com/homeport/homeport/internal/infrastructure/mapper/gcp/database"
+	"github.com/homeport/homeport/internal/infrastructure/mapper/gcp/devops"
 	"github.com/homeport/homeport/internal/infrastructure/mapper/gcp/messaging"
 	"github.com/homeport/homeport/internal/infrastructure/mapper/gcp/networking"
 	"github.com/homeport/homeport/internal/infrastructure/mapper/gcp/security"
@@ -26,6 +27,7 @@ func RegisterAll(registry MapperRegistrar) {
 	registry.Register(compute.NewAppEngineMapper())
 	registry.Register(compute.NewCloudSchedulerMapper())
 	registry.Register(compute.NewArtifactRegistryMapper())
+	registry.Register(devops.NewCloudBuildMapper())
 
 	// Database mappers
 	registry.Register(database.NewCloudSQLMapper())

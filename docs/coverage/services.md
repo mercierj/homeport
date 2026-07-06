@@ -65,7 +65,7 @@
 | gcp | BigQuery | full | google_bigquery_dataset |
 | gcp | Bigtable | full | google_bigtable_instance |
 | gcp | Cloud Armor | full | google_compute_security_policy |
-| gcp | Cloud Build | missing |  |
+| gcp | Cloud Build | full | google_cloudbuild_trigger |
 | gcp | Cloud CDN | mapped | google_compute_backend_bucket |
 | gcp | Cloud DNS | mapped | google_dns_managed_zone |
 | gcp | Cloud Functions | mapped | google_cloudfunctions_function |

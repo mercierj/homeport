@@ -176,6 +176,7 @@ var CategoryMapping = map[Type]Category{
 	TypeGKE:                        CategoryKubernetes,
 	TypeAppEngine:                  CategoryCompute,
 	TypeArtifactRegistryRepository: CategoryContainer,
+	TypeCloudBuildTrigger:          CategoryDevOps,
 
 	// GCP Storage
 	TypeGCSBucket:      CategoryObjectStorage,

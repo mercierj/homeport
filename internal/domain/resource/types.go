@@ -100,6 +100,7 @@ const (
 	TypeGKE                        Type = "google_container_cluster"
 	TypeAppEngine                  Type = "google_app_engine_application"
 	TypeArtifactRegistryRepository Type = "google_artifact_registry_repository"
+	TypeCloudBuildTrigger          Type = "google_cloudbuild_trigger"
 
 	// GCP Storage
 	TypeGCSBucket      Type = "google_storage_bucket"
