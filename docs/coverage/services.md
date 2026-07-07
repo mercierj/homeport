@@ -83,7 +83,7 @@
 | gcp | Filestore | full | google_filestore_instance |
 | gcp | Firestore | full | google_firestore_database |
 | gcp | GKE | full | google_container_cluster |
-| gcp | IAM | mapped | google_project_iam_member |
+| gcp | IAM | full | google_project_iam_member |
 | gcp | Identity Platform | mapped | google_identity_platform_config |
 | gcp | Logging | missing |  |
 | gcp | Memorystore | mapped | google_redis_instance |

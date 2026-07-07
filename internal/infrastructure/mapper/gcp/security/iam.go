@@ -11,6 +11,7 @@ import (
 	"github.com/homeport/homeport/internal/domain/mapper"
 	"github.com/homeport/homeport/internal/domain/policy"
 	"github.com/homeport/homeport/internal/domain/resource"
+	domainrunbook "github.com/homeport/homeport/internal/domain/runbook"
 )
 
 // IAMMapper converts GCP IAM bindings and policies to Keycloak roles.
@@ -62,9 +63,10 @@ func (m *IAMMapper) Map(ctx context.Context, res *resource.AWSResource) (*mapper
 		"homeport.source":     "google_project_iam_member",
 		"homeport.project_id": projectID,
 		"homeport.role":       role,
-		"traefik.enable":       "true",
+		"traefik.enable":      "true",
 	}
 	svc.Restart = "unless-stopped"
+	svc.Deploy = &mapper.DeployConfig{Replicas: 2}
 	svc.HealthCheck = &mapper.HealthCheck{
 		Test:     []string{"CMD-SHELL", "curl -f http://localhost:8080/health/ready || exit 1"},
 		Interval: 30 * time.Second,
@@ -79,6 +81,8 @@ func (m *IAMMapper) Map(ctx context.Context, res *resource.AWSResource) (*mapper
 	// Generate role mapping
 	roleMapping := m.generateRoleMapping(res, role, member)
 	result.AddConfig("config/keycloak/gcp-role-mapping.json", []byte(roleMapping))
+	result.AddConfig("config/gcp-iam/app-change.env", []byte(m.generateAppChangeConfig(projectID)))
+	result.AddConfig("config/gcp-iam/migration.env", []byte(m.generateMigrationConfig(projectID, role, member)))
 
 	// Generate Postgres service config
 	postgresConfig := m.generatePostgresConfig()
@@ -91,21 +95,32 @@ func (m *IAMMapper) Map(ctx context.Context, res *resource.AWSResource) (*mapper
 	// Generate migration script
 	migrationScript := m.generateMigrationScript(projectID, role, member)
 	result.AddScript("migrate_gcp_iam.sh", []byte(migrationScript))
+	result.AddScript("export_gcp_iam_policy.sh", []byte(m.generateExportScript(projectID)))
+	result.AddScript("validate_gcp_iam_keycloak.sh", []byte(m.generateValidateScript(projectID)))
+	result.AddScript("backup_gcp_iam_config.sh", []byte(m.generateBackupScript(projectID)))
+	result.AddScript("cutover_gcp_iam_clients.sh", []byte(m.generateCutoverScript(projectID)))
+	for _, step := range gcpIAMRunbook(projectID) {
+		result.AddRunbookStep(step)
+	}
 
 	// Handle conditions if present
 	if condition := res.Config["condition"]; condition != nil {
 		m.handleCondition(condition, result)
 	}
 
-	// Add manual steps and warnings
-	result.AddManualStep("Access Keycloak at http://localhost:8080")
-	result.AddManualStep("Import realm from config/keycloak/gcp-iam-realm.json")
-	result.AddManualStep("Map GCP IAM roles to Keycloak roles based on your application needs")
-	result.AddManualStep("Update application code to use Keycloak for authorization")
 	result.AddWarning("GCP IAM conditions require manual translation to Keycloak policies")
 	result.AddWarning("Service account bindings need to be recreated as Keycloak service accounts")
 
 	return result, nil
+}
+
+func (m *IAMMapper) generateAppChangeConfig(projectID string) string {
+	realmName := "gcp-" + strings.ToLower(strings.ReplaceAll(projectID, "_", "-"))
+	return fmt.Sprintf("APP_CHANGE_MODE=generated_patch\nSOURCE_GCP_PROJECT=%s\nTARGET_AUTH_PROVIDER=keycloak\nTARGET_KEYCLOAK_URL=http://keycloak-iam:8080\nTARGET_KEYCLOAK_REALM=%s\n", projectID, realmName)
+}
+
+func (m *IAMMapper) generateMigrationConfig(projectID, role, member string) string {
+	return fmt.Sprintf("SOURCE_GCP_PROJECT=%s\nSOURCE_GCP_ROLE=%s\nSOURCE_GCP_MEMBER=%s\nTARGET_PROVIDER=keycloak\n", projectID, role, member)
 }
 
 func (m *IAMMapper) generateRealmConfig(projectID, gcpRole string) string {
@@ -146,9 +161,9 @@ func (m *IAMMapper) generateRealmConfig(projectID, gcpRole string) string {
 			},
 		},
 		"attributes": map[string]string{
-			"migratedFrom":     "GCP IAM",
-			"projectId":        projectID,
-			"originalGCPRole":  gcpRole,
+			"migratedFrom":    "GCP IAM",
+			"projectId":       projectID,
+			"originalGCPRole": gcpRole,
 		},
 	}
 
@@ -235,28 +250,28 @@ func (m *IAMMapper) extractPermissionsFromGCPRole(gcpRole string) []string {
 
 	// Map GCP role patterns to permissions
 	permissionMappings := map[string][]string{
-		"storage.admin":               {"storage:admin", "storage:read", "storage:write", "storage:delete"},
-		"storage.objectviewer":        {"storage:read"},
-		"storage.objectcreator":       {"storage:write"},
-		"compute.admin":               {"compute:admin", "compute:read", "compute:write"},
-		"compute.viewer":              {"compute:read"},
-		"cloudsql.admin":              {"database:admin", "database:read", "database:write"},
-		"cloudsql.client":             {"database:read", "database:write"},
-		"cloudsql.viewer":             {"database:read"},
-		"pubsub.admin":                {"messaging:admin", "messaging:publish", "messaging:subscribe"},
-		"pubsub.publisher":            {"messaging:publish"},
-		"pubsub.subscriber":           {"messaging:subscribe"},
-		"secretmanager.admin":         {"secrets:admin", "secrets:read", "secrets:write"},
+		"storage.admin":                {"storage:admin", "storage:read", "storage:write", "storage:delete"},
+		"storage.objectviewer":         {"storage:read"},
+		"storage.objectcreator":        {"storage:write"},
+		"compute.admin":                {"compute:admin", "compute:read", "compute:write"},
+		"compute.viewer":               {"compute:read"},
+		"cloudsql.admin":               {"database:admin", "database:read", "database:write"},
+		"cloudsql.client":              {"database:read", "database:write"},
+		"cloudsql.viewer":              {"database:read"},
+		"pubsub.admin":                 {"messaging:admin", "messaging:publish", "messaging:subscribe"},
+		"pubsub.publisher":             {"messaging:publish"},
+		"pubsub.subscriber":            {"messaging:subscribe"},
+		"secretmanager.admin":          {"secrets:admin", "secrets:read", "secrets:write"},
 		"secretmanager.secretaccessor": {"secrets:read"},
-		"logging.admin":               {"monitoring:admin", "monitoring:read", "monitoring:write"},
-		"logging.viewer":              {"monitoring:read"},
-		"cloudfunctions.admin":        {"compute:admin", "compute:invoke"},
-		"cloudfunctions.invoker":      {"compute:invoke"},
-		"run.admin":                   {"compute:admin", "compute:invoke"},
-		"run.invoker":                 {"compute:invoke"},
-		"owner":                       {"admin:all"},
-		"editor":                      {"write:all", "read:all"},
-		"viewer":                      {"read:all"},
+		"logging.admin":                {"monitoring:admin", "monitoring:read", "monitoring:write"},
+		"logging.viewer":               {"monitoring:read"},
+		"cloudfunctions.admin":         {"compute:admin", "compute:invoke"},
+		"cloudfunctions.invoker":       {"compute:invoke"},
+		"run.admin":                    {"compute:admin", "compute:invoke"},
+		"run.invoker":                  {"compute:invoke"},
+		"owner":                        {"admin:all"},
+		"editor":                       {"write:all", "read:all"},
+		"viewer":                       {"read:all"},
 	}
 
 	for pattern, perms := range permissionMappings {
@@ -425,6 +440,43 @@ echo "Note: GCP IAM conditions need to be reimplemented as Keycloak policies"
 `, projectID, role, member)
 }
 
+func (m *IAMMapper) generateExportScript(projectID string) string {
+	return fmt.Sprintf("#!/bin/sh\nset -eu\nmkdir -p gcp-iam-export\ngcloud projects get-iam-policy %q --format=json > gcp-iam-export/iam-policy.json\n", projectID)
+}
+
+func (m *IAMMapper) generateValidateScript(projectID string) string {
+	return fmt.Sprintf("#!/bin/sh\nset -eu\ntest -s config/gcp-iam/app-change.env\ntest -s config/keycloak/gcp-iam-realm.json\ncurl -fsS \"${KEYCLOAK_URL:-http://localhost:8080}/health/ready\" >/dev/null\necho \"GCP IAM project %s validated on Keycloak\"\n", projectID)
+}
+
+func (m *IAMMapper) generateBackupScript(projectID string) string {
+	return fmt.Sprintf("#!/bin/sh\nset -eu\narchive=\"${BACKUP_DIR:-./backups}/gcp-iam-%s-$(date +%%Y%%m%%d%%H%%M%%S).tgz\"\nmkdir -p \"$(dirname \"$archive\")\"\ntar -czf \"$archive\" config/gcp-iam config/keycloak gcp-iam-export\necho \"$archive\"\n", strings.ReplaceAll(projectID, "/", "-"))
+}
+
+func (m *IAMMapper) generateCutoverScript(projectID string) string {
+	return fmt.Sprintf("#!/bin/sh\nset -eu\n. config/gcp-iam/app-change.env\ntest \"$SOURCE_GCP_PROJECT\" = %q\ntest \"$APP_CHANGE_MODE\" = \"generated_patch\"\necho \"Patch authorization clients to $TARGET_KEYCLOAK_URL realm $TARGET_KEYCLOAK_REALM\"\n", projectID)
+}
+
+func gcpIAMRunbook(projectID string) []domainrunbook.Step {
+	metadata := map[string]string{"kind": "iam", "source": "google_project_iam_member", "project": projectID, "target": "keycloak"}
+	return []domainrunbook.Step{
+		gcpIAMStep("export-gcp-iam-policy", "Export GCP IAM policy", "Discovery", domainrunbook.StepTypeCommand, []string{"sh", "export_gcp_iam_policy.sh"}, "IAM policy is exported", metadata),
+		gcpIAMStep("provision-keycloak-iam", "Provision Keycloak IAM", "Provision", domainrunbook.StepTypeCommand, []string{"sh", "setup_gcp_iam.sh"}, "Keycloak realm and roles are configured", metadata),
+		gcpIAMStep("migrate-gcp-iam-roles", "Migrate GCP IAM roles", "Migrate", domainrunbook.StepTypeCommand, []string{"sh", "migrate_gcp_iam.sh"}, "IAM role mappings are generated", metadata),
+		gcpIAMStep("validate-gcp-iam-keycloak", "Validate Keycloak IAM", "Validate", domainrunbook.StepTypeCommand, []string{"sh", "validate_gcp_iam_keycloak.sh"}, "Keycloak health and config validate", metadata),
+		gcpIAMStep("backup-gcp-iam-config", "Backup GCP IAM config", "Backup", domainrunbook.StepTypeCommand, []string{"sh", "backup_gcp_iam_config.sh"}, "IAM migration artifacts are archived", metadata),
+		gcpIAMStep("cutover-gcp-iam-clients", "Cut over IAM clients", "Cutover", domainrunbook.StepTypeAPICall, []string{"sh", "cutover_gcp_iam_clients.sh"}, "authorization clients use Keycloak", metadata),
+		gcpIAMStep("rollback-gcp-iam-source", "Keep GCP IAM source authoritative", "Rollback", domainrunbook.StepTypeRollback, nil, "GCP IAM remains authoritative until Keycloak validation passes", metadata),
+	}
+}
+
+func gcpIAMStep(id, name, group string, stepType domainrunbook.StepType, command []string, success string, metadata map[string]string) domainrunbook.Step {
+	executor := "shell"
+	if stepType == domainrunbook.StepTypeRollback {
+		executor = "noop"
+	}
+	return domainrunbook.Step{ID: id, Name: name, Group: group, Type: stepType, Status: domainrunbook.StepStatusPending, Executor: executor, Command: command, SuccessCondition: success, Metadata: metadata}
+}
+
 func (m *IAMMapper) handleCondition(condition interface{}, result *mapper.MappingResult) {
 	if condMap, ok := condition.(map[string]interface{}); ok {
 		title := ""
@@ -438,7 +490,8 @@ func (m *IAMMapper) handleCondition(condition interface{}, result *mapper.Mappin
 
 		if title != "" || expression != "" {
 			result.AddWarning(fmt.Sprintf("IAM condition detected: %s", title))
-			result.AddManualStep(fmt.Sprintf("Translate IAM condition to Keycloak policy: %s", expression))
+			data, _ := json.MarshalIndent(map[string]string{"title": title, "expression": expression, "target": "keycloak-policy"}, "", "  ")
+			result.AddConfig("config/keycloak/gcp-iam-condition-policy.json", data)
 		}
 	}
 }

@@ -7,7 +7,50 @@ import (
 
 	"github.com/homeport/homeport/internal/domain/mapper"
 	"github.com/homeport/homeport/internal/domain/resource"
+	domainrunbook "github.com/homeport/homeport/internal/domain/runbook"
 )
+
+func TestGCIAMConformanceManagedAToZ(t *testing.T) {
+	result, err := NewIAMMapper().Map(context.Background(), managedGCPIAMFixture())
+	if err != nil {
+		t.Fatal(err)
+	}
+	if len(result.ManualSteps) != 0 {
+		t.Fatalf("manual steps = %#v, want generated GCP IAM migration", result.ManualSteps)
+	}
+	if result.DockerService.Image != "quay.io/keycloak/keycloak:23.0" || result.DockerService.Deploy == nil || result.DockerService.Deploy.Replicas < 2 {
+		t.Fatalf("service does not provision HA Keycloak target: %#v", result.DockerService)
+	}
+	for _, file := range []string{"config/keycloak/gcp-iam-realm.json", "config/keycloak/gcp-role-mapping.json", "config/gcp-iam/app-change.env", "config/gcp-iam/migration.env"} {
+		if _, ok := result.Configs[file]; !ok {
+			t.Fatalf("missing config %s", file)
+		}
+	}
+	appEnv := string(result.Configs["config/gcp-iam/app-change.env"])
+	for _, want := range []string{"APP_CHANGE_MODE=generated_patch", "SOURCE_GCP_PROJECT=demo", "TARGET_AUTH_PROVIDER=keycloak"} {
+		if !strings.Contains(appEnv, want) {
+			t.Fatalf("app-change env missing %q:\n%s", want, appEnv)
+		}
+	}
+	for _, file := range []string{"setup_gcp_iam.sh", "migrate_gcp_iam.sh", "export_gcp_iam_policy.sh", "validate_gcp_iam_keycloak.sh", "backup_gcp_iam_config.sh", "cutover_gcp_iam_clients.sh"} {
+		if _, ok := result.Scripts[file]; !ok {
+			t.Fatalf("missing script %s", file)
+		}
+	}
+	for id, stepType := range map[string]domainrunbook.StepType{
+		"export-gcp-iam-policy":     domainrunbook.StepTypeCommand,
+		"provision-keycloak-iam":    domainrunbook.StepTypeCommand,
+		"migrate-gcp-iam-roles":     domainrunbook.StepTypeCommand,
+		"validate-gcp-iam-keycloak": domainrunbook.StepTypeCommand,
+		"backup-gcp-iam-config":     domainrunbook.StepTypeCommand,
+		"cutover-gcp-iam-clients":   domainrunbook.StepTypeAPICall,
+		"rollback-gcp-iam-source":   domainrunbook.StepTypeRollback,
+	} {
+		if !hasGCPIAMRunbookStep(result, id, stepType) {
+			t.Fatalf("missing %s runbook step: %#v", id, result.RunbookSteps)
+		}
+	}
+}
 
 func TestNewIAMMapper(t *testing.T) {
 	m := NewIAMMapper()
@@ -244,6 +287,28 @@ func TestIAMMapper_Map(t *testing.T) {
 	}
 }
 
+func managedGCPIAMFixture() *resource.AWSResource {
+	return &resource.AWSResource{
+		ID:   "demo/roles/storage.admin/serviceAccount:orders@demo.iam.gserviceaccount.com",
+		Type: resource.TypeGCPIAM,
+		Name: "demo-storage-admin",
+		Config: map[string]interface{}{
+			"project": "demo",
+			"role":    "roles/storage.admin",
+			"member":  "serviceAccount:orders@demo.iam.gserviceaccount.com",
+		},
+	}
+}
+
+func hasGCPIAMRunbookStep(result *mapper.MappingResult, id string, stepType domainrunbook.StepType) bool {
+	for _, step := range result.RunbookSteps {
+		if step.ID == id && step.Type == stepType {
+			return true
+		}
+	}
+	return false
+}
+
 func TestIAMMapper_mapGCPRoleToKeycloakRoles(t *testing.T) {
 	m := NewIAMMapper()
 
@@ -328,9 +393,9 @@ func TestIAMMapper_extractPermissionsFromGCPRole(t *testing.T) {
 	m := NewIAMMapper()
 
 	tests := []struct {
-		gcpRole         string
-		expectPerms     []string
-		unexpectPerms   []string
+		gcpRole       string
+		expectPerms   []string
+		unexpectPerms []string
 	}{
 		{
 			gcpRole:       "roles/storage.admin",
