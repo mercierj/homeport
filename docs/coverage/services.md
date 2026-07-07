@@ -78,7 +78,7 @@
 | gcp | Compute Engine | full | google_compute_instance |
 | gcp | Composer | full | google_composer_environment |
 | gcp | Dataflow | full | google_dataflow_job |
-| gcp | Dataproc | missing |  |
+| gcp | Dataproc | full | google_dataproc_cluster |
 | gcp | Eventarc | missing |  |
 | gcp | Filestore | mapped | google_filestore_instance |
 | gcp | Firestore | guided | google_firestore_database |

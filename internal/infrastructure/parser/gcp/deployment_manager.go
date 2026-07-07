@@ -324,6 +324,7 @@ func mapDMTypeToResourceType(dmType string) resource.Type {
 		"cloudbuild.v1.trigger":          resource.TypeCloudBuildTrigger,
 		"composer.v1.environment":        resource.TypeComposerEnvironment,
 		"dataflow.v1b3.job":              resource.TypeDataflowJob,
+		"dataproc.v1.cluster":            resource.TypeDataprocCluster,
 
 		// Storage
 		"storage.v1.bucket": resource.TypeGCSBucket,

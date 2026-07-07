@@ -30,6 +30,7 @@ func RegisterAll(registry MapperRegistrar) {
 	registry.Register(devops.NewCloudBuildMapper())
 	registry.Register(devops.NewComposerMapper())
 	registry.Register(devops.NewDataflowMapper())
+	registry.Register(devops.NewDataprocMapper())
 
 	// Database mappers
 	registry.Register(database.NewCloudSQLMapper())

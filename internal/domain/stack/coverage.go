@@ -111,6 +111,7 @@ var ResourceMapping = map[resource.Type]StackType{
 	resource.TypeCloudBuildTrigger:          StackTypePassthrough, // Build triggers stay individual
 	resource.TypeComposerEnvironment:        StackTypeMessaging,   // Workflow orchestration consolidates
 	resource.TypeDataflowJob:                StackTypePassthrough, // Data processing jobs stay explicit
+	resource.TypeDataprocCluster:            StackTypePassthrough, // Spark clusters stay explicit
 
 	// GCP Storage (3 types)
 	resource.TypeGCSBucket:      StackTypeStorage,     // Object storage consolidates
