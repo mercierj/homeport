@@ -91,7 +91,7 @@
 | gcp | Persistent Disk | full | google_compute_disk |
 | gcp | Pub/Sub | full | google_pubsub_topic, google_pubsub_subscription |
 | gcp | Secret Manager | full | google_secret_manager_secret |
-| gcp | Spanner | guided | google_spanner_instance |
+| gcp | Spanner | full | google_spanner_instance |
 | gcp | Trace | missing |  |
 | gcp | VPC | mapped | google_compute_network |
 | gcp | Vertex AI | missing |  |

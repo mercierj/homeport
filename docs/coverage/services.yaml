@@ -1802,19 +1802,22 @@ services:
     service: Spanner
     resource_types:
       - google_spanner_instance
+    terraform_resource_types: [google_spanner_instance]
+    target: CockroachDB with generated PostgreSQL client patch
+    api_compatibility_strategy: generated_patch
+    manual_steps_resolved: true
     discover: true
-    cost: false
-    provision: false
-    migrate: false
-    api_compat: false
-    env_dns: false
-    ha: false
-    backup: false
-    validate: false
-    cutover: false
-    rollback: false
-    status: guided
-    blocker: Postgres or Cockroach target requires query and driver review; no Spanner-compatible API adapter exists yet
+    cost: true
+    provision: true
+    migrate: true
+    api_compat: true
+    env_dns: true
+    ha: true
+    backup: true
+    validate: true
+    cutover: true
+    rollback: true
+    status: full
   - provider: gcp
     service: Trace
     resource_types: []

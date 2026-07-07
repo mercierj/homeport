@@ -2,10 +2,12 @@ package database
 
 import (
 	"context"
+	"strings"
 	"testing"
 
 	"github.com/homeport/homeport/internal/domain/mapper"
 	"github.com/homeport/homeport/internal/domain/resource"
+	domainrunbook "github.com/homeport/homeport/internal/domain/runbook"
 )
 
 func TestNewSpannerMapper(t *testing.T) {
@@ -16,6 +18,69 @@ func TestNewSpannerMapper(t *testing.T) {
 	if m.ResourceType() != resource.TypeSpanner {
 		t.Errorf("ResourceType() = %v, want %v", m.ResourceType(), resource.TypeSpanner)
 	}
+}
+
+func TestSpannerConformanceManagedAToZ(t *testing.T) {
+	result, err := NewSpannerMapper().Map(context.Background(), managedSpannerFixture())
+	if err != nil {
+		t.Fatal(err)
+	}
+	if len(result.ManualSteps) != 0 {
+		t.Fatalf("manual steps = %#v, want generated Spanner migration", result.ManualSteps)
+	}
+	if result.DockerService.Deploy == nil || result.DockerService.Deploy.Replicas < 2 {
+		t.Fatalf("CockroachDB service is not HA: %#v", result.DockerService)
+	}
+	for _, file := range []string{"config/cockroachdb/cluster-config.yml", "config/spanner/app-change.env"} {
+		if _, ok := result.Configs[file]; !ok {
+			t.Fatalf("missing config %s", file)
+		}
+	}
+	appEnv := string(result.Configs["config/spanner/app-change.env"])
+	for _, want := range []string{"APP_CHANGE_MODE=generated_patch", "SOURCE_SPANNER_INSTANCE=orders-spanner", "TARGET_DRIVER=postgres"} {
+		if !strings.Contains(appEnv, want) {
+			t.Fatalf("app-change env missing %q:\n%s", want, appEnv)
+		}
+	}
+	for _, file := range []string{"convert_schema.sh", "migrate_spanner.sh", "validate_spanner_cockroach.sh", "backup_spanner_cockroach.sh", "cutover_spanner_clients.sh"} {
+		if _, ok := result.Scripts[file]; !ok {
+			t.Fatalf("missing script %s", file)
+		}
+	}
+	for id, stepType := range map[string]domainrunbook.StepType{
+		"convert-spanner-schema":            domainrunbook.StepTypeCommand,
+		"migrate-spanner-data":              domainrunbook.StepTypeCommand,
+		"validate-spanner-cockroach":        domainrunbook.StepTypeCommand,
+		"backup-spanner-cockroach":          domainrunbook.StepTypeCommand,
+		"cutover-spanner-clients":           domainrunbook.StepTypeAPICall,
+		"rollback-spanner-source-authority": domainrunbook.StepTypeRollback,
+	} {
+		if !hasSpannerRunbookStep(result, id, stepType) {
+			t.Fatalf("missing %s runbook step: %#v", id, result.RunbookSteps)
+		}
+	}
+}
+
+func managedSpannerFixture() *resource.AWSResource {
+	return &resource.AWSResource{
+		ID:   "projects/demo/instances/orders-spanner",
+		Type: resource.TypeSpanner,
+		Name: "orders-spanner",
+		Config: map[string]interface{}{
+			"name":         "orders-spanner",
+			"display_name": "Orders Spanner",
+			"num_nodes":    float64(3),
+		},
+	}
+}
+
+func hasSpannerRunbookStep(result *mapper.MappingResult, id string, stepType domainrunbook.StepType) bool {
+	for _, step := range result.RunbookSteps {
+		if step.ID == id && step.Type == stepType {
+			return true
+		}
+	}
+	return false
 }
 
 func TestSpannerMapper_ResourceType(t *testing.T) {

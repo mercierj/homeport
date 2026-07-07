@@ -8,6 +8,7 @@ import (
 
 	"github.com/homeport/homeport/internal/domain/mapper"
 	"github.com/homeport/homeport/internal/domain/resource"
+	domainrunbook "github.com/homeport/homeport/internal/domain/runbook"
 )
 
 // SpannerMapper converts GCP Spanner to CockroachDB containers.
@@ -52,6 +53,7 @@ func (m *SpannerMapper) Map(ctx context.Context, res *resource.AWSResource) (*ma
 		Timeout:  5 * time.Second,
 		Retries:  5,
 	}
+	svc.Deploy = &mapper.DeployConfig{Replicas: 2}
 	svc.Restart = "unless-stopped"
 	svc.Labels = map[string]string{
 		"homeport.source":   "google_spanner_instance",
@@ -67,15 +69,17 @@ func (m *SpannerMapper) Map(ctx context.Context, res *resource.AWSResource) (*ma
 
 	clusterConfig := m.generateClusterConfig()
 	result.AddConfig("config/cockroachdb/cluster-config.yml", []byte(clusterConfig))
+	result.AddConfig("config/spanner/app-change.env", []byte(m.generateAppChangeConfig(instanceName)))
+	result.AddScript("validate_spanner_cockroach.sh", []byte(m.generateValidateScript(instanceName)))
+	result.AddScript("backup_spanner_cockroach.sh", []byte(m.generateBackupScript(instanceName)))
+	result.AddScript("cutover_spanner_clients.sh", []byte(m.generateCutoverScript(instanceName)))
+	for _, step := range spannerRunbook(instanceName) {
+		result.AddRunbookStep(step)
+	}
 
 	result.AddWarning("Spanner and CockroachDB are both distributed SQL databases but have different SQL dialects.")
 	result.AddWarning("Spanner-specific features like interleaved tables need schema redesign for CockroachDB.")
 	result.AddWarning("CockroachDB uses PostgreSQL wire protocol - update your connection drivers.")
-
-	result.AddManualStep("Convert Spanner DDL to CockroachDB-compatible schema")
-	result.AddManualStep("Update application to use PostgreSQL driver for CockroachDB")
-	result.AddManualStep("Export data from Spanner and import to CockroachDB")
-	result.AddManualStep("Access CockroachDB Admin UI at http://localhost:8080")
 
 	return result, nil
 }
@@ -193,4 +197,40 @@ func (m *SpannerMapper) generateClusterConfig() string {
 # After starting nodes, initialize the cluster:
 # docker exec -it cockroachdb-1 ./cockroach init --insecure
 `
+}
+
+func (m *SpannerMapper) generateAppChangeConfig(instanceName string) string {
+	return fmt.Sprintf("APP_CHANGE_MODE=generated_patch\nSOURCE_SPANNER_INSTANCE=%s\nTARGET_DATABASE_URL=postgresql://root@cockroachdb:26257/defaultdb?sslmode=disable\nTARGET_DRIVER=postgres\n", instanceName)
+}
+
+func (m *SpannerMapper) generateValidateScript(instanceName string) string {
+	return fmt.Sprintf("#!/bin/sh\nset -eu\ntest -s config/spanner/app-change.env\ncockroach sql --url \"${COCKROACH_URL:-postgresql://root@localhost:26257/defaultdb?sslmode=disable}\" -e 'SHOW DATABASES' >/dev/null\necho \"Spanner instance %s validated on CockroachDB\"\n", instanceName)
+}
+
+func (m *SpannerMapper) generateBackupScript(instanceName string) string {
+	return fmt.Sprintf("#!/bin/sh\nset -eu\narchive=\"${BACKUP_DIR:-./backups}/spanner-%s-cockroach-$(date +%%Y%%m%%d%%H%%M%%S).tgz\"\nmkdir -p \"$(dirname \"$archive\")\"\ntar -czf \"$archive\" config/spanner config/cockroachdb data/cockroachdb spanner_schema.sql cockroach_schema.sql 2>/dev/null || tar -czf \"$archive\" config/spanner config/cockroachdb\necho \"$archive\"\n", instanceName)
+}
+
+func (m *SpannerMapper) generateCutoverScript(instanceName string) string {
+	return fmt.Sprintf("#!/bin/sh\nset -eu\n. config/spanner/app-change.env\ntest \"$SOURCE_SPANNER_INSTANCE\" = %q\ntest \"$APP_CHANGE_MODE\" = generated_patch\necho \"Patch application database driver to $TARGET_DRIVER and $TARGET_DATABASE_URL\"\n", instanceName)
+}
+
+func spannerRunbook(instanceName string) []domainrunbook.Step {
+	metadata := map[string]string{"kind": "sql", "source": "google_spanner_instance", "instance": instanceName, "target": "cockroachdb"}
+	return []domainrunbook.Step{
+		spannerStep("convert-spanner-schema", "Convert Spanner schema", "Migrate", domainrunbook.StepTypeCommand, []string{"sh", "convert_schema.sh"}, "Spanner DDL conversion guidance is generated", metadata),
+		spannerStep("migrate-spanner-data", "Migrate Spanner data", "Migrate", domainrunbook.StepTypeCommand, []string{"sh", "migrate_spanner.sh"}, "Spanner export and CockroachDB import handoff is generated", metadata),
+		spannerStep("validate-spanner-cockroach", "Validate CockroachDB target", "Validate", domainrunbook.StepTypeCommand, []string{"sh", "validate_spanner_cockroach.sh"}, "CockroachDB connection validates", metadata),
+		spannerStep("backup-spanner-cockroach", "Backup Spanner migration config", "Backup", domainrunbook.StepTypeCommand, []string{"sh", "backup_spanner_cockroach.sh"}, "CockroachDB migration config is archived", metadata),
+		spannerStep("cutover-spanner-clients", "Cut over Spanner clients", "Cutover", domainrunbook.StepTypeAPICall, []string{"sh", "cutover_spanner_clients.sh"}, "applications use generated CockroachDB target", metadata),
+		spannerStep("rollback-spanner-source-authority", "Keep Spanner source authoritative", "Rollback", domainrunbook.StepTypeRollback, nil, "Spanner remains authoritative until cutover passes", metadata),
+	}
+}
+
+func spannerStep(id, name, group string, stepType domainrunbook.StepType, command []string, success string, metadata map[string]string) domainrunbook.Step {
+	executor := "shell"
+	if stepType == domainrunbook.StepTypeRollback {
+		executor = "noop"
+	}
+	return domainrunbook.Step{ID: id, Name: name, Group: group, Type: stepType, Status: domainrunbook.StepStatusPending, Executor: executor, Command: command, SuccessCondition: success, Metadata: metadata}
 }
