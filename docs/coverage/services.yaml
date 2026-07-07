@@ -2248,18 +2248,21 @@ services:
     service: Azure AD B2C
     resource_types:
       - azurerm_aadb2c_directory
+    target: Keycloak with realm-per-tenant mapping
+    api_compatibility_strategy: generated OIDC client patch and realm import
+    manual_steps_resolved: true
     discover: true
-    cost: false
-    provision: false
-    migrate: false
-    api_compat: false
-    env_dns: false
-    ha: false
-    backup: false
-    validate: false
-    cutover: false
-    rollback: false
-    status: mapped
+    cost: true
+    provision: true
+    migrate: true
+    api_compat: true
+    env_dns: true
+    ha: true
+    backup: true
+    validate: true
+    cutover: true
+    rollback: true
+    status: full
   - provider: azure
     service: Azure Cache
     resource_types:

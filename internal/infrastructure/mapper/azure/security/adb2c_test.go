@@ -2,10 +2,12 @@ package security
 
 import (
 	"context"
+	"strings"
 	"testing"
 
 	"github.com/homeport/homeport/internal/domain/mapper"
 	"github.com/homeport/homeport/internal/domain/resource"
+	domainrunbook "github.com/homeport/homeport/internal/domain/runbook"
 )
 
 func TestNewADB2CMapper(t *testing.T) {
@@ -26,6 +28,81 @@ func TestADB2CMapper_ResourceType(t *testing.T) {
 	if got != want {
 		t.Errorf("ResourceType() = %v, want %v", got, want)
 	}
+}
+
+func TestADB2CConformanceManagedAToZ(t *testing.T) {
+	result, err := NewADB2CMapper().Map(context.Background(), managedADB2CFixture())
+	if err != nil {
+		t.Fatal(err)
+	}
+	if len(result.ManualSteps) != 0 {
+		t.Fatalf("manual steps = %#v, want generated Azure AD B2C migration", result.ManualSteps)
+	}
+	if result.DockerService.Image != "quay.io/keycloak/keycloak:23.0" || result.DockerService.Deploy == nil || result.DockerService.Deploy.Replicas < 2 {
+		t.Fatalf("service does not provision HA Keycloak target: %#v", result.DockerService)
+	}
+	if !hasADB2CService(result, "postgres:16-alpine") {
+		t.Fatalf("missing generated Postgres service: %#v", result.AdditionalServices)
+	}
+	for _, file := range []string{"config/keycloak/realm.json", "config/keycloak/postgres-service.yml", "config/adb2c/app-change.env", "config/adb2c/generated-client.patch", "config/adb2c/user-import-plan.json"} {
+		if _, ok := result.Configs[file]; !ok {
+			t.Fatalf("missing config %s", file)
+		}
+	}
+	appEnv := string(result.Configs["config/adb2c/app-change.env"])
+	for _, want := range []string{"APP_CHANGE_MODE=generated_patch", "SOURCE_ADB2C_DIRECTORY=checkout.b2clogin.com", "KEYCLOAK_REALM=checkout-b2clogin-com"} {
+		if !strings.Contains(appEnv, want) {
+			t.Fatalf("app-change env missing %q:\n%s", want, appEnv)
+		}
+	}
+	for _, file := range []string{"setup_keycloak.sh", "migrate_user_flows.sh", "export_adb2c_users.sh", "validate_adb2c_keycloak.sh", "backup_adb2c_config.sh", "cutover_adb2c_clients.sh"} {
+		if _, ok := result.Scripts[file]; !ok {
+			t.Fatalf("missing script %s", file)
+		}
+	}
+	for id, stepType := range map[string]domainrunbook.StepType{
+		"export-adb2c-users":    domainrunbook.StepTypeCommand,
+		"setup-keycloak-realm":  domainrunbook.StepTypeCommand,
+		"migrate-adb2c-flows":   domainrunbook.StepTypeCommand,
+		"validate-adb2c-realm":  domainrunbook.StepTypeCommand,
+		"backup-adb2c-config":   domainrunbook.StepTypeCommand,
+		"cutover-adb2c-clients": domainrunbook.StepTypeAPICall,
+		"rollback-adb2c-source": domainrunbook.StepTypeRollback,
+	} {
+		if !hasADB2CRunbookStep(result, id, stepType) {
+			t.Fatalf("missing %s runbook step: %#v", id, result.RunbookSteps)
+		}
+	}
+}
+
+func managedADB2CFixture() *resource.AWSResource {
+	return &resource.AWSResource{
+		ID:   "/subscriptions/demo/resourceGroups/rg/providers/Microsoft.AzureActiveDirectory/b2cDirectories/checkout",
+		Type: resource.TypeAzureADB2C,
+		Name: "checkout",
+		Config: map[string]interface{}{
+			"domain_name": "checkout.b2clogin.com",
+			"tenant_id":   "tenant-123",
+		},
+	}
+}
+
+func hasADB2CRunbookStep(result *mapper.MappingResult, id string, stepType domainrunbook.StepType) bool {
+	for _, step := range result.RunbookSteps {
+		if step.ID == id && step.Type == stepType {
+			return true
+		}
+	}
+	return false
+}
+
+func hasADB2CService(result *mapper.MappingResult, image string) bool {
+	for _, svc := range result.AdditionalServices {
+		if svc.Image == image {
+			return true
+		}
+	}
+	return false
 }
 
 func TestADB2CMapper_Dependencies(t *testing.T) {
