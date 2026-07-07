@@ -7,7 +7,7 @@ Expose the smallest Azure Container Instances-compatible surface needed to migra
 ## Provider API Surface
 
 - Initial supported surface: Microsoft.ContainerInstance/containerGroups/read, Microsoft.ContainerInstance/containerGroups/write, Microsoft.ContainerInstance/containerGroups/delete.
-- Actions explicitly not supported first: Container Instances console-only workflows, commercial billing/quota administration, provider-managed fleet automation, and cross-region control-plane features outside `Microsoft.ContainerInstance/containerGroups/read` and its paired read/list calls.
+- Actions explicitly not supported first: Container Instances console-only workflows, account billing, quota purchase flows, and managed cross-region failover controls outside `Microsoft.ContainerInstance/containerGroups/read` and its paired read/list calls.
 - Ledger resource types: `azurerm_container_group`.
 - Provider errors: map Container Instances authorization failures to Azure access-denied codes, missing `azurerm_container_group` records to not-found codes, duplicate imports to conflict/already-exists, invalid mapped fields to validation errors, backend saturation to throttle/quota responses, and unexpected `azure/container-instances` failures to provider internal-error shapes with request ids.
 - Pagination/idempotency/tags: list/read calls expose provider tokens where the API has them; mutating calls persist idempotency keys or operation ids; tags/labels round-trip on `azurerm_container_group`.
@@ -17,7 +17,7 @@ Expose the smallest Azure Container Instances-compatible surface needed to migra
 - Backend: Kubernetes Jobs and Pods.
 - Storage and metadata: Container Instances state lives in `Kubernetes Jobs and Pods`; HomePort stores provider identifiers for `azurerm_container_group`, source import ids, authz bindings, generated artifact checksums, backup references, and audit events.
 - Secrets/keys/tokens: issue HomePort-scoped credentials from the identity/secrets layer; store provider source credentials only as encrypted migration inputs.
-- Runtime/provisioning: provision `Kubernetes Jobs and Pods` with the generated runtime manifest, health endpoint, persistence volume, backup job, endpoint route, and teardown script for `azure/container-instances`.
+- Runtime/provisioning: provision `Kubernetes Jobs and Pods` with generated `artifacts/compat/azure/container-instances/backend.yaml`, health endpoint, persistence volume, backup job, endpoint route, and teardown script for `azure/container-instances`.
 
 ## Authz Model
 
@@ -34,7 +34,7 @@ Expose the smallest Azure Container Instances-compatible surface needed to migra
 - SDK used in tests: Azure SDK for Go or Python configured with endpoint override and HomePort credentials.
 - Request mapping: Container Instances provider names, locations, tags/labels, and request bodies map to HomePort `azurerm_container_group` records and `Kubernetes Jobs and Pods` configuration; backend-only knobs are omitted from provider responses.
 - Response mapping: return Container Instances provider ids, `azurerm_container_group` lifecycle state, operation ids, etags/versions where the source API exposes them, list pagination tokens, and HomePort audit timestamps without exposing backend-only fields.
-- Error mapping: translate `azure/container-instances` backend auth, missing `azurerm_container_group`, duplicate import, malformed request, timeout, quota, and dependency failures to the provider error families above with retry hints.
+- Error mapping: translate `azure/container-instances` backend auth, missing `azurerm_container_group`, duplicate import, malformed request, timeout, quota, and dependency failures to the provider-shaped access-denied/not-found/conflict/validation/throttle/internal-error responses with retry hints.
 
 ## Generated Artifacts
 

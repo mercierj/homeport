@@ -7,7 +7,7 @@ Expose the smallest AWS Secrets Manager-compatible surface needed to migrate the
 ## Provider API Surface
 
 - Initial supported surface: secretsmanager:CreateSecret, secretsmanager:DescribeSecret, secretsmanager:ListSecrets, secretsmanager:UpdateSecret, secretsmanager:DeleteSecret.
-- Actions explicitly not supported first: Secrets Manager console-only workflows, commercial billing/quota administration, provider-managed fleet automation, and cross-region control-plane features outside `secretsmanager:CreateSecret` and its paired read/list calls.
+- Actions explicitly not supported first: Secrets Manager console-only workflows, account billing, quota purchase flows, and managed cross-region failover controls outside `secretsmanager:CreateSecret` and its paired read/list calls.
 - Ledger resource types: `aws_secretsmanager_secret`.
 - Provider errors: map Secrets Manager authorization failures to AWS access-denied codes, missing `aws_secretsmanager_secret` records to not-found codes, duplicate imports to conflict/already-exists, invalid mapped fields to validation errors, backend saturation to throttle/quota responses, and unexpected `aws/secrets-manager` failures to provider internal-error shapes with request ids.
 - Pagination/idempotency/tags: list/read calls expose provider tokens where the API has them; mutating calls persist idempotency keys or operation ids; tags/labels round-trip on `aws_secretsmanager_secret`.
@@ -34,7 +34,7 @@ Expose the smallest AWS Secrets Manager-compatible surface needed to migrate the
 - SDK used in tests: AWS SDK for Go v2 configured with endpoint override and HomePort credentials.
 - Request mapping: Secrets Manager provider names, locations, tags/labels, and request bodies map to HomePort `aws_secretsmanager_secret` records and `Vault` configuration; backend-only knobs are omitted from provider responses.
 - Response mapping: return Secrets Manager provider ids, `aws_secretsmanager_secret` lifecycle state, operation ids, etags/versions where the source API exposes them, list pagination tokens, and HomePort audit timestamps without exposing backend-only fields.
-- Error mapping: translate `aws/secrets-manager` backend auth, missing `aws_secretsmanager_secret`, duplicate import, malformed request, timeout, quota, and dependency failures to the provider error families above with retry hints.
+- Error mapping: translate `aws/secrets-manager` backend auth, missing `aws_secretsmanager_secret`, duplicate import, malformed request, timeout, quota, and dependency failures to the provider-shaped access-denied/not-found/conflict/validation/throttle/internal-error responses with retry hints.
 
 ## Generated Artifacts
 

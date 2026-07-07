@@ -7,7 +7,7 @@ Expose the smallest AWS Shield-compatible surface needed to migrate the ledger r
 ## Provider API Surface
 
 - Initial supported surface: shield:CreateProtection, shield:DescribeProtection, shield:ListProtections, shield:DeleteProtection.
-- Actions explicitly not supported first: Shield console-only workflows, commercial billing/quota administration, provider-managed fleet automation, and cross-region control-plane features outside `shield:CreateProtection` and its paired read/list calls.
+- Actions explicitly not supported first: Shield console-only workflows, account billing, quota purchase flows, and managed cross-region failover controls outside `shield:CreateProtection` and its paired read/list calls.
 - Ledger resource types: `aws_shield_protection`.
 - Provider errors: map Shield authorization failures to AWS access-denied codes, missing `aws_shield_protection` records to not-found codes, duplicate imports to conflict/already-exists, invalid mapped fields to validation errors, backend saturation to throttle/quota responses, and unexpected `aws/shield` failures to provider internal-error shapes with request ids.
 - Pagination/idempotency/tags: list/read calls expose provider tokens where the API has them; mutating calls persist idempotency keys or operation ids; tags/labels round-trip on `aws_shield_protection`.
@@ -34,7 +34,7 @@ Expose the smallest AWS Shield-compatible surface needed to migrate the ledger r
 - SDK used in tests: AWS SDK for Go v2 configured with endpoint override and HomePort credentials.
 - Request mapping: Shield provider names, locations, tags/labels, and request bodies map to HomePort `aws_shield_protection` records and `edge WAF and DDoS provider controls` configuration; backend-only knobs are omitted from provider responses.
 - Response mapping: return Shield provider ids, `aws_shield_protection` lifecycle state, operation ids, etags/versions where the source API exposes them, list pagination tokens, and HomePort audit timestamps without exposing backend-only fields.
-- Error mapping: translate `aws/shield` backend auth, missing `aws_shield_protection`, duplicate import, malformed request, timeout, quota, and dependency failures to the provider error families above with retry hints.
+- Error mapping: translate `aws/shield` backend auth, missing `aws_shield_protection`, duplicate import, malformed request, timeout, quota, and dependency failures to the provider-shaped access-denied/not-found/conflict/validation/throttle/internal-error responses with retry hints.
 
 ## Generated Artifacts
 

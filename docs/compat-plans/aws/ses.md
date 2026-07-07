@@ -7,7 +7,7 @@ Expose the smallest AWS SES-compatible surface needed to migrate the ledger reso
 ## Provider API Surface
 
 - Initial supported surface: ses:CreateEmailIdentity, ses:GetEmailIdentity, ses:ListEmailIdentities, ses:DeleteEmailIdentity.
-- Actions explicitly not supported first: SES console-only workflows, commercial billing/quota administration, provider-managed fleet automation, and cross-region control-plane features outside `ses:CreateEmailIdentity` and its paired read/list calls.
+- Actions explicitly not supported first: SES console-only workflows, account billing, quota purchase flows, and managed cross-region failover controls outside `ses:CreateEmailIdentity` and its paired read/list calls.
 - Ledger resource types: `aws_ses_domain_identity`.
 - Provider errors: map SES authorization failures to AWS access-denied codes, missing `aws_ses_domain_identity` records to not-found codes, duplicate imports to conflict/already-exists, invalid mapped fields to validation errors, backend saturation to throttle/quota responses, and unexpected `aws/ses` failures to provider internal-error shapes with request ids.
 - Pagination/idempotency/tags: list/read calls expose provider tokens where the API has them; mutating calls persist idempotency keys or operation ids; tags/labels round-trip on `aws_ses_domain_identity`.
@@ -34,7 +34,7 @@ Expose the smallest AWS SES-compatible surface needed to migrate the ledger reso
 - SDK used in tests: AWS SDK for Go v2 configured with endpoint override and HomePort credentials.
 - Request mapping: SES provider names, locations, tags/labels, and request bodies map to HomePort `aws_ses_domain_identity` records and `Postal` configuration; backend-only knobs are omitted from provider responses.
 - Response mapping: return SES provider ids, `aws_ses_domain_identity` lifecycle state, operation ids, etags/versions where the source API exposes them, list pagination tokens, and HomePort audit timestamps without exposing backend-only fields.
-- Error mapping: translate `aws/ses` backend auth, missing `aws_ses_domain_identity`, duplicate import, malformed request, timeout, quota, and dependency failures to the provider error families above with retry hints.
+- Error mapping: translate `aws/ses` backend auth, missing `aws_ses_domain_identity`, duplicate import, malformed request, timeout, quota, and dependency failures to the provider-shaped access-denied/not-found/conflict/validation/throttle/internal-error responses with retry hints.
 
 ## Generated Artifacts
 

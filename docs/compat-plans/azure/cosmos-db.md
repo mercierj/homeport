@@ -7,7 +7,7 @@ Expose the smallest Azure Cosmos DB-compatible surface needed to migrate the led
 ## Provider API Surface
 
 - Initial supported surface: Microsoft.DocumentDB/databaseAccounts/read, Microsoft.DocumentDB/databaseAccounts/write, Microsoft.DocumentDB/databaseAccounts/delete.
-- Actions explicitly not supported first: Cosmos DB console-only workflows, commercial billing/quota administration, provider-managed fleet automation, and cross-region control-plane features outside `Microsoft.DocumentDB/databaseAccounts/read` and its paired read/list calls.
+- Actions explicitly not supported first: Cosmos DB console-only workflows, account billing, quota purchase flows, and managed cross-region failover controls outside `Microsoft.DocumentDB/databaseAccounts/read` and its paired read/list calls.
 - Ledger resource types: `azurerm_cosmosdb_account`.
 - Provider errors: map Cosmos DB authorization failures to Azure access-denied codes, missing `azurerm_cosmosdb_account` records to not-found codes, duplicate imports to conflict/already-exists, invalid mapped fields to validation errors, backend saturation to throttle/quota responses, and unexpected `azure/cosmos-db` failures to provider internal-error shapes with request ids.
 - Pagination/idempotency/tags: list/read calls expose provider tokens where the API has them; mutating calls persist idempotency keys or operation ids; tags/labels round-trip on `azurerm_cosmosdb_account`.
@@ -17,7 +17,7 @@ Expose the smallest Azure Cosmos DB-compatible surface needed to migrate the led
 - Backend: MongoDB-compatible FerretDB or PostgreSQL JSONB.
 - Storage and metadata: Cosmos DB state lives in `MongoDB-compatible FerretDB or PostgreSQL JSONB`; HomePort stores provider identifiers for `azurerm_cosmosdb_account`, source import ids, authz bindings, generated artifact checksums, backup references, and audit events.
 - Secrets/keys/tokens: issue HomePort-scoped credentials from the identity/secrets layer; store provider source credentials only as encrypted migration inputs.
-- Runtime/provisioning: provision `MongoDB-compatible FerretDB or PostgreSQL JSONB` with the generated runtime manifest, health endpoint, persistence volume, backup job, endpoint route, and teardown script for `azure/cosmos-db`.
+- Runtime/provisioning: provision `MongoDB-compatible FerretDB or PostgreSQL JSONB` with generated `artifacts/compat/azure/cosmos-db/backend.yaml`, health endpoint, persistence volume, backup job, endpoint route, and teardown script for `azure/cosmos-db`.
 
 ## Authz Model
 
@@ -34,7 +34,7 @@ Expose the smallest Azure Cosmos DB-compatible surface needed to migrate the led
 - SDK used in tests: Azure SDK for Go or Python configured with endpoint override and HomePort credentials.
 - Request mapping: Cosmos DB provider names, locations, tags/labels, and request bodies map to HomePort `azurerm_cosmosdb_account` records and `MongoDB-compatible FerretDB or PostgreSQL JSONB` configuration; backend-only knobs are omitted from provider responses.
 - Response mapping: return Cosmos DB provider ids, `azurerm_cosmosdb_account` lifecycle state, operation ids, etags/versions where the source API exposes them, list pagination tokens, and HomePort audit timestamps without exposing backend-only fields.
-- Error mapping: translate `azure/cosmos-db` backend auth, missing `azurerm_cosmosdb_account`, duplicate import, malformed request, timeout, quota, and dependency failures to the provider error families above with retry hints.
+- Error mapping: translate `azure/cosmos-db` backend auth, missing `azurerm_cosmosdb_account`, duplicate import, malformed request, timeout, quota, and dependency failures to the provider-shaped access-denied/not-found/conflict/validation/throttle/internal-error responses with retry hints.
 
 ## Generated Artifacts
 

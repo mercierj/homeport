@@ -7,7 +7,7 @@ Expose the smallest Azure Azure Load Balancer-compatible surface needed to migra
 ## Provider API Surface
 
 - Initial supported surface: Microsoft.Network/loadBalancers/read, Microsoft.Network/loadBalancers/write, Microsoft.Network/loadBalancers/delete.
-- Actions explicitly not supported first: Azure Load Balancer console-only workflows, commercial billing/quota administration, provider-managed fleet automation, and cross-region control-plane features outside `Microsoft.Network/loadBalancers/read` and its paired read/list calls.
+- Actions explicitly not supported first: Azure Load Balancer console-only workflows, account billing, quota purchase flows, and managed cross-region failover controls outside `Microsoft.Network/loadBalancers/read` and its paired read/list calls.
 - Ledger resource types: `azurerm_lb`.
 - Provider errors: map Azure Load Balancer authorization failures to Azure access-denied codes, missing `azurerm_lb` records to not-found codes, duplicate imports to conflict/already-exists, invalid mapped fields to validation errors, backend saturation to throttle/quota responses, and unexpected `azure/azure-load-balancer` failures to provider internal-error shapes with request ids.
 - Pagination/idempotency/tags: list/read calls expose provider tokens where the API has them; mutating calls persist idempotency keys or operation ids; tags/labels round-trip on `azurerm_lb`.
@@ -17,7 +17,7 @@ Expose the smallest Azure Azure Load Balancer-compatible surface needed to migra
 - Backend: HAProxy or MetalLB.
 - Storage and metadata: Azure Load Balancer state lives in `HAProxy or MetalLB`; HomePort stores provider identifiers for `azurerm_lb`, source import ids, authz bindings, generated artifact checksums, backup references, and audit events.
 - Secrets/keys/tokens: issue HomePort-scoped credentials from the identity/secrets layer; store provider source credentials only as encrypted migration inputs.
-- Runtime/provisioning: provision `HAProxy or MetalLB` with the generated runtime manifest, health endpoint, persistence volume, backup job, endpoint route, and teardown script for `azure/azure-load-balancer`.
+- Runtime/provisioning: provision `HAProxy or MetalLB` with generated `artifacts/compat/azure/azure-load-balancer/backend.yaml`, health endpoint, persistence volume, backup job, endpoint route, and teardown script for `azure/azure-load-balancer`.
 
 ## Authz Model
 
@@ -34,7 +34,7 @@ Expose the smallest Azure Azure Load Balancer-compatible surface needed to migra
 - SDK used in tests: Azure SDK for Go or Python configured with endpoint override and HomePort credentials.
 - Request mapping: Azure Load Balancer provider names, locations, tags/labels, and request bodies map to HomePort `azurerm_lb` records and `HAProxy or MetalLB` configuration; backend-only knobs are omitted from provider responses.
 - Response mapping: return Azure Load Balancer provider ids, `azurerm_lb` lifecycle state, operation ids, etags/versions where the source API exposes them, list pagination tokens, and HomePort audit timestamps without exposing backend-only fields.
-- Error mapping: translate `azure/azure-load-balancer` backend auth, missing `azurerm_lb`, duplicate import, malformed request, timeout, quota, and dependency failures to the provider error families above with retry hints.
+- Error mapping: translate `azure/azure-load-balancer` backend auth, missing `azurerm_lb`, duplicate import, malformed request, timeout, quota, and dependency failures to the provider-shaped access-denied/not-found/conflict/validation/throttle/internal-error responses with retry hints.
 
 ## Generated Artifacts
 

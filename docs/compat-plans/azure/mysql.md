@@ -7,7 +7,7 @@ Expose the smallest Azure MySQL-compatible surface needed to migrate the ledger 
 ## Provider API Surface
 
 - Initial supported surface: Microsoft.DBforMySQL/flexibleServers/read, Microsoft.DBforMySQL/flexibleServers/write, Microsoft.DBforMySQL/flexibleServers/delete.
-- Actions explicitly not supported first: MySQL console-only workflows, commercial billing/quota administration, provider-managed fleet automation, and cross-region control-plane features outside `Microsoft.DBforMySQL/flexibleServers/read` and its paired read/list calls.
+- Actions explicitly not supported first: MySQL console-only workflows, account billing, quota purchase flows, and managed cross-region failover controls outside `Microsoft.DBforMySQL/flexibleServers/read` and its paired read/list calls.
 - Ledger resource types: `azurerm_mysql_flexible_server`.
 - Provider errors: map MySQL authorization failures to Azure access-denied codes, missing `azurerm_mysql_flexible_server` records to not-found codes, duplicate imports to conflict/already-exists, invalid mapped fields to validation errors, backend saturation to throttle/quota responses, and unexpected `azure/mysql` failures to provider internal-error shapes with request ids.
 - Pagination/idempotency/tags: list/read calls expose provider tokens where the API has them; mutating calls persist idempotency keys or operation ids; tags/labels round-trip on `azurerm_mysql_flexible_server`.
@@ -17,7 +17,7 @@ Expose the smallest Azure MySQL-compatible surface needed to migrate the ledger 
 - Backend: MySQL or MariaDB.
 - Storage and metadata: MySQL state lives in `MySQL or MariaDB`; HomePort stores provider identifiers for `azurerm_mysql_flexible_server`, source import ids, authz bindings, generated artifact checksums, backup references, and audit events.
 - Secrets/keys/tokens: issue HomePort-scoped credentials from the identity/secrets layer; store provider source credentials only as encrypted migration inputs.
-- Runtime/provisioning: provision `MySQL or MariaDB` with the generated runtime manifest, health endpoint, persistence volume, backup job, endpoint route, and teardown script for `azure/mysql`.
+- Runtime/provisioning: provision `MySQL or MariaDB` with generated `artifacts/compat/azure/mysql/backend.yaml`, health endpoint, persistence volume, backup job, endpoint route, and teardown script for `azure/mysql`.
 
 ## Authz Model
 
@@ -34,7 +34,7 @@ Expose the smallest Azure MySQL-compatible surface needed to migrate the ledger 
 - SDK used in tests: Azure SDK for Go or Python configured with endpoint override and HomePort credentials.
 - Request mapping: MySQL provider names, locations, tags/labels, and request bodies map to HomePort `azurerm_mysql_flexible_server` records and `MySQL or MariaDB` configuration; backend-only knobs are omitted from provider responses.
 - Response mapping: return MySQL provider ids, `azurerm_mysql_flexible_server` lifecycle state, operation ids, etags/versions where the source API exposes them, list pagination tokens, and HomePort audit timestamps without exposing backend-only fields.
-- Error mapping: translate `azure/mysql` backend auth, missing `azurerm_mysql_flexible_server`, duplicate import, malformed request, timeout, quota, and dependency failures to the provider error families above with retry hints.
+- Error mapping: translate `azure/mysql` backend auth, missing `azurerm_mysql_flexible_server`, duplicate import, malformed request, timeout, quota, and dependency failures to the provider-shaped access-denied/not-found/conflict/validation/throttle/internal-error responses with retry hints.
 
 ## Generated Artifacts
 

@@ -7,7 +7,7 @@ Expose the smallest Azure Front Door-compatible surface needed to migrate the le
 ## Provider API Surface
 
 - Initial supported surface: Microsoft.Network/frontDoors/read, Microsoft.Network/frontDoors/write, Microsoft.Network/frontDoors/delete.
-- Actions explicitly not supported first: Front Door console-only workflows, commercial billing/quota administration, provider-managed fleet automation, and cross-region control-plane features outside `Microsoft.Network/frontDoors/read` and its paired read/list calls.
+- Actions explicitly not supported first: Front Door console-only workflows, account billing, quota purchase flows, and managed cross-region failover controls outside `Microsoft.Network/frontDoors/read` and its paired read/list calls.
 - Ledger resource types: `azurerm_frontdoor`.
 - Provider errors: map Front Door authorization failures to Azure access-denied codes, missing `azurerm_frontdoor` records to not-found codes, duplicate imports to conflict/already-exists, invalid mapped fields to validation errors, backend saturation to throttle/quota responses, and unexpected `azure/front-door` failures to provider internal-error shapes with request ids.
 - Pagination/idempotency/tags: list/read calls expose provider tokens where the API has them; mutating calls persist idempotency keys or operation ids; tags/labels round-trip on `azurerm_frontdoor`.
@@ -17,7 +17,7 @@ Expose the smallest Azure Front Door-compatible surface needed to migrate the le
 - Backend: Caddy with Varnish cache.
 - Storage and metadata: Front Door state lives in `Caddy with Varnish cache`; HomePort stores provider identifiers for `azurerm_frontdoor`, source import ids, authz bindings, generated artifact checksums, backup references, and audit events.
 - Secrets/keys/tokens: issue HomePort-scoped credentials from the identity/secrets layer; store provider source credentials only as encrypted migration inputs.
-- Runtime/provisioning: provision `Caddy with Varnish cache` with the generated runtime manifest, health endpoint, persistence volume, backup job, endpoint route, and teardown script for `azure/front-door`.
+- Runtime/provisioning: provision `Caddy with Varnish cache` with generated `artifacts/compat/azure/front-door/backend.yaml`, health endpoint, persistence volume, backup job, endpoint route, and teardown script for `azure/front-door`.
 
 ## Authz Model
 
@@ -34,7 +34,7 @@ Expose the smallest Azure Front Door-compatible surface needed to migrate the le
 - SDK used in tests: Azure SDK for Go or Python configured with endpoint override and HomePort credentials.
 - Request mapping: Front Door provider names, locations, tags/labels, and request bodies map to HomePort `azurerm_frontdoor` records and `Caddy with Varnish cache` configuration; backend-only knobs are omitted from provider responses.
 - Response mapping: return Front Door provider ids, `azurerm_frontdoor` lifecycle state, operation ids, etags/versions where the source API exposes them, list pagination tokens, and HomePort audit timestamps without exposing backend-only fields.
-- Error mapping: translate `azure/front-door` backend auth, missing `azurerm_frontdoor`, duplicate import, malformed request, timeout, quota, and dependency failures to the provider error families above with retry hints.
+- Error mapping: translate `azure/front-door` backend auth, missing `azurerm_frontdoor`, duplicate import, malformed request, timeout, quota, and dependency failures to the provider-shaped access-denied/not-found/conflict/validation/throttle/internal-error responses with retry hints.
 
 ## Generated Artifacts
 

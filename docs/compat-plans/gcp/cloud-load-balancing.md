@@ -7,17 +7,17 @@ Expose the smallest GCP Cloud Load Balancing-compatible surface needed to migrat
 ## Provider API Surface
 
 - Initial supported surface: compute.backendServices.insert -> compute.backendServices.get -> compute.backendServices.list -> compute.backendServices.patch -> compute.backendServices.delete.
-- Actions explicitly not supported first: Cloud Load Balancing console-only workflows, commercial billing/quota administration, provider-managed fleet automation, and cross-region control-plane features outside `compute.backendServices.insert` and its paired read/list calls.
+- Actions explicitly not supported first: Cloud Load Balancing console-only workflows, account billing, quota purchase flows, and managed cross-region failover controls outside `compute.backendServices.insert` and its paired read/list calls.
 - Ledger resource types: `google_compute_backend_service`.
 - Provider errors: map Cloud Load Balancing authorization failures to GCP access-denied codes, missing `google_compute_backend_service` records to not-found codes, duplicate imports to conflict/already-exists, invalid mapped fields to validation errors, backend saturation to throttle/quota responses, and unexpected `gcp/cloud-load-balancing` failures to provider internal-error shapes with request ids.
 - Pagination/idempotency/tags: list/read calls expose provider tokens where the API has them; mutating calls persist idempotency keys or operation ids; tags/labels round-trip on `google_compute_backend_service`.
 
 ## Backend
 
-- Backend: Traefik ingress gateway.
+- Backend: Traefik.
 - Storage and metadata: Cloud Load Balancing state lives in `Traefik ingress gateway`; HomePort stores provider identifiers for `google_compute_backend_service`, source import ids, authz bindings, generated artifact checksums, backup references, and audit events.
 - Secrets/keys/tokens: issue HomePort-scoped credentials from the identity/secrets layer; store provider source credentials only as encrypted migration inputs.
-- Runtime/provisioning: provision `Traefik ingress gateway` with the generated runtime manifest, health endpoint, persistence volume, backup job, endpoint route, and teardown script for `gcp/cloud-load-balancing`.
+- Runtime/provisioning: provision `Traefik ingress gateway` with generated `artifacts/compat/gcp/cloud-load-balancing/backend.yaml`, health endpoint, persistence volume, backup job, endpoint route, and teardown script for `gcp/cloud-load-balancing`.
 
 ## Authz Model
 
@@ -34,7 +34,7 @@ Expose the smallest GCP Cloud Load Balancing-compatible surface needed to migrat
 - SDK used in tests: Google Cloud REST client configured with endpoint override and HomePort credentials.
 - Request mapping: Cloud Load Balancing provider names, locations, tags/labels, and request bodies map to HomePort `google_compute_backend_service` records and `Traefik ingress gateway` configuration; backend-only knobs are omitted from provider responses.
 - Response mapping: return Cloud Load Balancing provider ids, `google_compute_backend_service` lifecycle state, operation ids, etags/versions where the source API exposes them, list pagination tokens, and HomePort audit timestamps without exposing backend-only fields.
-- Error mapping: translate `gcp/cloud-load-balancing` backend auth, missing `google_compute_backend_service`, duplicate import, malformed request, timeout, quota, and dependency failures to the provider error families above with retry hints.
+- Error mapping: translate `gcp/cloud-load-balancing` backend auth, missing `google_compute_backend_service`, duplicate import, malformed request, timeout, quota, and dependency failures to the provider-shaped access-denied/not-found/conflict/validation/throttle/internal-error responses with retry hints.
 
 ## Generated Artifacts
 

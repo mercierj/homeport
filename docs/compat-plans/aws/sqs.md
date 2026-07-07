@@ -7,7 +7,7 @@ Expose the smallest AWS SQS-compatible surface needed to migrate the ledger reso
 ## Provider API Surface
 
 - Initial supported surface: sqs:CreateQueue, sqs:GetQueueAttributes, sqs:SendMessage, sqs:ReceiveMessage, sqs:DeleteQueue.
-- Actions explicitly not supported first: SQS console-only workflows, commercial billing/quota administration, provider-managed fleet automation, and cross-region control-plane features outside `sqs:CreateQueue` and its paired read/list calls.
+- Actions explicitly not supported first: SQS console-only workflows, account billing, quota purchase flows, and managed cross-region failover controls outside `sqs:CreateQueue` and its paired read/list calls.
 - Ledger resource types: `aws_sqs_queue`.
 - Provider errors: map SQS authorization failures to AWS access-denied codes, missing `aws_sqs_queue` records to not-found codes, duplicate imports to conflict/already-exists, invalid mapped fields to validation errors, backend saturation to throttle/quota responses, and unexpected `aws/sqs` failures to provider internal-error shapes with request ids.
 - Pagination/idempotency/tags: list/read calls expose provider tokens where the API has them; mutating calls persist idempotency keys or operation ids; tags/labels round-trip on `aws_sqs_queue`.
@@ -34,7 +34,7 @@ Expose the smallest AWS SQS-compatible surface needed to migrate the ledger reso
 - SDK used in tests: AWS SDK for Go v2 configured with endpoint override and HomePort credentials.
 - Request mapping: SQS provider names, locations, tags/labels, and request bodies map to HomePort `aws_sqs_queue` records and `RabbitMQ` configuration; backend-only knobs are omitted from provider responses.
 - Response mapping: return SQS provider ids, `aws_sqs_queue` lifecycle state, operation ids, etags/versions where the source API exposes them, list pagination tokens, and HomePort audit timestamps without exposing backend-only fields.
-- Error mapping: translate `aws/sqs` backend auth, missing `aws_sqs_queue`, duplicate import, malformed request, timeout, quota, and dependency failures to the provider error families above with retry hints.
+- Error mapping: translate `aws/sqs` backend auth, missing `aws_sqs_queue`, duplicate import, malformed request, timeout, quota, and dependency failures to the provider-shaped access-denied/not-found/conflict/validation/throttle/internal-error responses with retry hints.
 
 ## Generated Artifacts
 

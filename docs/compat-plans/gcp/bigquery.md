@@ -7,7 +7,7 @@ Expose the smallest GCP BigQuery-compatible surface needed to migrate the ledger
 ## Provider API Surface
 
 - Initial supported surface: bigquery.datasets.insert -> bigquery.datasets.get -> bigquery.datasets.list -> bigquery.datasets.patch -> bigquery.datasets.delete.
-- Actions explicitly not supported first: BigQuery console-only workflows, commercial billing/quota administration, provider-managed fleet automation, and cross-region control-plane features outside `bigquery.datasets.insert` and its paired read/list calls.
+- Actions explicitly not supported first: BigQuery console-only workflows, account billing, quota purchase flows, and managed cross-region failover controls outside `bigquery.datasets.insert` and its paired read/list calls.
 - Ledger resource types: `google_bigquery_dataset`.
 - Provider errors: map BigQuery authorization failures to GCP access-denied codes, missing `google_bigquery_dataset` records to not-found codes, duplicate imports to conflict/already-exists, invalid mapped fields to validation errors, backend saturation to throttle/quota responses, and unexpected `gcp/bigquery` failures to provider internal-error shapes with request ids.
 - Pagination/idempotency/tags: list/read calls expose provider tokens where the API has them; mutating calls persist idempotency keys or operation ids; tags/labels round-trip on `google_bigquery_dataset`.
@@ -34,7 +34,7 @@ Expose the smallest GCP BigQuery-compatible surface needed to migrate the ledger
 - SDK used in tests: Google Cloud REST client configured with endpoint override and HomePort credentials.
 - Request mapping: BigQuery provider names, locations, tags/labels, and request bodies map to HomePort `google_bigquery_dataset` records and `Trino with Iceberg catalog` configuration; backend-only knobs are omitted from provider responses.
 - Response mapping: return BigQuery provider ids, `google_bigquery_dataset` lifecycle state, operation ids, etags/versions where the source API exposes them, list pagination tokens, and HomePort audit timestamps without exposing backend-only fields.
-- Error mapping: translate `gcp/bigquery` backend auth, missing `google_bigquery_dataset`, duplicate import, malformed request, timeout, quota, and dependency failures to the provider error families above with retry hints.
+- Error mapping: translate `gcp/bigquery` backend auth, missing `google_bigquery_dataset`, duplicate import, malformed request, timeout, quota, and dependency failures to the provider-shaped access-denied/not-found/conflict/validation/throttle/internal-error responses with retry hints.
 
 ## Generated Artifacts
 

@@ -7,17 +7,17 @@ Expose the smallest GCP Cloud CDN-compatible surface needed to migrate the ledge
 ## Provider API Surface
 
 - Initial supported surface: compute.backendBuckets.insert -> compute.backendBuckets.get -> compute.backendBuckets.list -> compute.backendBuckets.patch -> compute.backendBuckets.delete.
-- Actions explicitly not supported first: Cloud CDN console-only workflows, commercial billing/quota administration, provider-managed fleet automation, and cross-region control-plane features outside `compute.backendBuckets.insert` and its paired read/list calls.
+- Actions explicitly not supported first: Cloud CDN console-only workflows, account billing, quota purchase flows, and managed cross-region failover controls outside `compute.backendBuckets.insert` and its paired read/list calls.
 - Ledger resource types: `google_compute_backend_bucket`.
 - Provider errors: map Cloud CDN authorization failures to GCP access-denied codes, missing `google_compute_backend_bucket` records to not-found codes, duplicate imports to conflict/already-exists, invalid mapped fields to validation errors, backend saturation to throttle/quota responses, and unexpected `gcp/cloud-cdn` failures to provider internal-error shapes with request ids.
 - Pagination/idempotency/tags: list/read calls expose provider tokens where the API has them; mutating calls persist idempotency keys or operation ids; tags/labels round-trip on `google_compute_backend_bucket`.
 
 ## Backend
 
-- Backend: Caddy with Varnish cache.
+- Backend: Varnish CDN.
 - Storage and metadata: Cloud CDN state lives in `Caddy with Varnish cache`; HomePort stores provider identifiers for `google_compute_backend_bucket`, source import ids, authz bindings, generated artifact checksums, backup references, and audit events.
 - Secrets/keys/tokens: issue HomePort-scoped credentials from the identity/secrets layer; store provider source credentials only as encrypted migration inputs.
-- Runtime/provisioning: provision `Caddy with Varnish cache` with the generated runtime manifest, health endpoint, persistence volume, backup job, endpoint route, and teardown script for `gcp/cloud-cdn`.
+- Runtime/provisioning: provision `Caddy with Varnish cache` with generated `artifacts/compat/gcp/cloud-cdn/backend.yaml`, health endpoint, persistence volume, backup job, endpoint route, and teardown script for `gcp/cloud-cdn`.
 
 ## Authz Model
 
@@ -34,7 +34,7 @@ Expose the smallest GCP Cloud CDN-compatible surface needed to migrate the ledge
 - SDK used in tests: Google Cloud REST client configured with endpoint override and HomePort credentials.
 - Request mapping: Cloud CDN provider names, locations, tags/labels, and request bodies map to HomePort `google_compute_backend_bucket` records and `Caddy with Varnish cache` configuration; backend-only knobs are omitted from provider responses.
 - Response mapping: return Cloud CDN provider ids, `google_compute_backend_bucket` lifecycle state, operation ids, etags/versions where the source API exposes them, list pagination tokens, and HomePort audit timestamps without exposing backend-only fields.
-- Error mapping: translate `gcp/cloud-cdn` backend auth, missing `google_compute_backend_bucket`, duplicate import, malformed request, timeout, quota, and dependency failures to the provider error families above with retry hints.
+- Error mapping: translate `gcp/cloud-cdn` backend auth, missing `google_compute_backend_bucket`, duplicate import, malformed request, timeout, quota, and dependency failures to the provider-shaped access-denied/not-found/conflict/validation/throttle/internal-error responses with retry hints.
 
 ## Generated Artifacts
 

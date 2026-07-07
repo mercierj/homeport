@@ -7,7 +7,7 @@ Expose the smallest Azure Service Bus-compatible surface needed to migrate the l
 ## Provider API Surface
 
 - Initial supported surface: Microsoft.ServiceBus/namespaces/queues/read, Microsoft.ServiceBus/namespaces/queues/write, Microsoft.ServiceBus/namespaces/queues/delete.
-- Actions explicitly not supported first: Service Bus console-only workflows, commercial billing/quota administration, provider-managed fleet automation, and cross-region control-plane features outside `Microsoft.ServiceBus/namespaces/queues/read` and its paired read/list calls.
+- Actions explicitly not supported first: Service Bus console-only workflows, account billing, quota purchase flows, and managed cross-region failover controls outside `Microsoft.ServiceBus/namespaces/queues/read` and its paired read/list calls.
 - Ledger resource types: `azurerm_servicebus_namespace`, `azurerm_servicebus_queue`.
 - Provider errors: map Service Bus authorization failures to Azure access-denied codes, missing `azurerm_servicebus_namespace` records to not-found codes, duplicate imports to conflict/already-exists, invalid mapped fields to validation errors, backend saturation to throttle/quota responses, and unexpected `azure/service-bus` failures to provider internal-error shapes with request ids.
 - Pagination/idempotency/tags: list/read calls expose provider tokens where the API has them; mutating calls persist idempotency keys or operation ids; tags/labels round-trip on `azurerm_servicebus_namespace`.
@@ -17,7 +17,7 @@ Expose the smallest Azure Service Bus-compatible surface needed to migrate the l
 - Backend: RabbitMQ with AMQP compatibility.
 - Storage and metadata: Service Bus state lives in `RabbitMQ with AMQP compatibility`; HomePort stores provider identifiers for `azurerm_servicebus_namespace`, source import ids, authz bindings, generated artifact checksums, backup references, and audit events.
 - Secrets/keys/tokens: issue HomePort-scoped credentials from the identity/secrets layer; store provider source credentials only as encrypted migration inputs.
-- Runtime/provisioning: provision `RabbitMQ with AMQP compatibility` with the generated runtime manifest, health endpoint, persistence volume, backup job, endpoint route, and teardown script for `azure/service-bus`.
+- Runtime/provisioning: provision `RabbitMQ with AMQP compatibility` with generated `artifacts/compat/azure/service-bus/backend.yaml`, health endpoint, persistence volume, backup job, endpoint route, and teardown script for `azure/service-bus`.
 
 ## Authz Model
 
@@ -34,7 +34,7 @@ Expose the smallest Azure Service Bus-compatible surface needed to migrate the l
 - SDK used in tests: Azure SDK for Go or Python configured with endpoint override and HomePort credentials.
 - Request mapping: Service Bus provider names, locations, tags/labels, and request bodies map to HomePort `azurerm_servicebus_namespace` records and `RabbitMQ with AMQP compatibility` configuration; backend-only knobs are omitted from provider responses.
 - Response mapping: return Service Bus provider ids, `azurerm_servicebus_namespace` lifecycle state, operation ids, etags/versions where the source API exposes them, list pagination tokens, and HomePort audit timestamps without exposing backend-only fields.
-- Error mapping: translate `azure/service-bus` backend auth, missing `azurerm_servicebus_namespace`, duplicate import, malformed request, timeout, quota, and dependency failures to the provider error families above with retry hints.
+- Error mapping: translate `azure/service-bus` backend auth, missing `azurerm_servicebus_namespace`, duplicate import, malformed request, timeout, quota, and dependency failures to the provider-shaped access-denied/not-found/conflict/validation/throttle/internal-error responses with retry hints.
 
 ## Generated Artifacts
 

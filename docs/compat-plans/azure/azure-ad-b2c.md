@@ -7,7 +7,7 @@ Expose the smallest Azure Azure AD B2C-compatible surface needed to migrate the 
 ## Provider API Surface
 
 - Initial supported surface: Microsoft.AzureActiveDirectory/b2cDirectories/read, Microsoft.AzureActiveDirectory/b2cDirectories/write, Microsoft.AzureActiveDirectory/b2cDirectories/delete.
-- Actions explicitly not supported first: Azure AD B2C console-only workflows, commercial billing/quota administration, provider-managed fleet automation, and cross-region control-plane features outside `Microsoft.AzureActiveDirectory/b2cDirectories/read` and its paired read/list calls.
+- Actions explicitly not supported first: Azure AD B2C console-only workflows, account billing, quota purchase flows, and managed cross-region failover controls outside `Microsoft.AzureActiveDirectory/b2cDirectories/read` and its paired read/list calls.
 - Ledger resource types: `azurerm_aadb2c_directory`.
 - Provider errors: map Azure AD B2C authorization failures to Azure access-denied codes, missing `azurerm_aadb2c_directory` records to not-found codes, duplicate imports to conflict/already-exists, invalid mapped fields to validation errors, backend saturation to throttle/quota responses, and unexpected `azure/azure-ad-b2c` failures to provider internal-error shapes with request ids.
 - Pagination/idempotency/tags: list/read calls expose provider tokens where the API has them; mutating calls persist idempotency keys or operation ids; tags/labels round-trip on `azurerm_aadb2c_directory`.
@@ -17,7 +17,7 @@ Expose the smallest Azure Azure AD B2C-compatible surface needed to migrate the 
 - Backend: Keycloak with realm-per-tenant mapping.
 - Storage and metadata: Azure AD B2C state lives in `Keycloak with realm-per-tenant mapping`; HomePort stores provider identifiers for `azurerm_aadb2c_directory`, source import ids, authz bindings, generated artifact checksums, backup references, and audit events.
 - Secrets/keys/tokens: issue HomePort-scoped credentials from the identity/secrets layer; store provider source credentials only as encrypted migration inputs.
-- Runtime/provisioning: provision `Keycloak with realm-per-tenant mapping` with the generated runtime manifest, health endpoint, persistence volume, backup job, endpoint route, and teardown script for `azure/azure-ad-b2c`.
+- Runtime/provisioning: provision `Keycloak with realm-per-tenant mapping` with generated `artifacts/compat/azure/azure-ad-b2c/backend.yaml`, health endpoint, persistence volume, backup job, endpoint route, and teardown script for `azure/azure-ad-b2c`.
 
 ## Authz Model
 
@@ -34,7 +34,7 @@ Expose the smallest Azure Azure AD B2C-compatible surface needed to migrate the 
 - SDK used in tests: Azure SDK for Go or Python configured with endpoint override and HomePort credentials.
 - Request mapping: Azure AD B2C provider names, locations, tags/labels, and request bodies map to HomePort `azurerm_aadb2c_directory` records and `Keycloak with realm-per-tenant mapping` configuration; backend-only knobs are omitted from provider responses.
 - Response mapping: return Azure AD B2C provider ids, `azurerm_aadb2c_directory` lifecycle state, operation ids, etags/versions where the source API exposes them, list pagination tokens, and HomePort audit timestamps without exposing backend-only fields.
-- Error mapping: translate `azure/azure-ad-b2c` backend auth, missing `azurerm_aadb2c_directory`, duplicate import, malformed request, timeout, quota, and dependency failures to the provider error families above with retry hints.
+- Error mapping: translate `azure/azure-ad-b2c` backend auth, missing `azurerm_aadb2c_directory`, duplicate import, malformed request, timeout, quota, and dependency failures to the provider-shaped access-denied/not-found/conflict/validation/throttle/internal-error responses with retry hints.
 
 ## Generated Artifacts
 

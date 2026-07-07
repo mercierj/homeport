@@ -7,7 +7,7 @@ Expose the smallest GCP Artifact Registry-compatible surface needed to migrate t
 ## Provider API Surface
 
 - Initial supported surface: artifactregistry.projects.locations.repositories.create -> artifactregistry.projects.locations.repositories.get -> artifactregistry.projects.locations.repositories.list -> artifactregistry.projects.locations.repositories.patch -> artifactregistry.projects.locations.repositories.delete.
-- Actions explicitly not supported first: Artifact Registry console-only workflows, commercial billing/quota administration, provider-managed fleet automation, and cross-region control-plane features outside `artifactregistry.projects.locations.repositories.create` and its paired read/list calls.
+- Actions explicitly not supported first: Artifact Registry console-only workflows, account billing, quota purchase flows, and managed cross-region failover controls outside `artifactregistry.projects.locations.repositories.create` and its paired read/list calls.
 - Ledger resource types: `google_artifact_registry_repository`.
 - Provider errors: map Artifact Registry authorization failures to GCP access-denied codes, missing `google_artifact_registry_repository` records to not-found codes, duplicate imports to conflict/already-exists, invalid mapped fields to validation errors, backend saturation to throttle/quota responses, and unexpected `gcp/artifact-registry` failures to provider internal-error shapes with request ids.
 - Pagination/idempotency/tags: list/read calls expose provider tokens where the API has them; mutating calls persist idempotency keys or operation ids; tags/labels round-trip on `google_artifact_registry_repository`.
@@ -34,7 +34,7 @@ Expose the smallest GCP Artifact Registry-compatible surface needed to migrate t
 - SDK used in tests: Google Cloud REST client configured with endpoint override and HomePort credentials.
 - Request mapping: Artifact Registry provider names, locations, tags/labels, and request bodies map to HomePort `google_artifact_registry_repository` records and `OCI Distribution Registry` configuration; backend-only knobs are omitted from provider responses.
 - Response mapping: return Artifact Registry provider ids, `google_artifact_registry_repository` lifecycle state, operation ids, etags/versions where the source API exposes them, list pagination tokens, and HomePort audit timestamps without exposing backend-only fields.
-- Error mapping: translate `gcp/artifact-registry` backend auth, missing `google_artifact_registry_repository`, duplicate import, malformed request, timeout, quota, and dependency failures to the provider error families above with retry hints.
+- Error mapping: translate `gcp/artifact-registry` backend auth, missing `google_artifact_registry_repository`, duplicate import, malformed request, timeout, quota, and dependency failures to the provider-shaped access-denied/not-found/conflict/validation/throttle/internal-error responses with retry hints.
 
 ## Generated Artifacts
 

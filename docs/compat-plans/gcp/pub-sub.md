@@ -7,7 +7,7 @@ Expose the smallest GCP Pub/Sub-compatible surface needed to migrate the ledger 
 ## Provider API Surface
 
 - Initial supported surface: pubsub.projects.topics.create -> pubsub.projects.topics.get -> pubsub.projects.topics.list -> pubsub.projects.topics.delete; pubsub.projects.subscriptions.create -> pubsub.projects.subscriptions.get -> pubsub.projects.subscriptions.list -> pubsub.projects.subscriptions.delete.
-- Actions explicitly not supported first: Pub/Sub console-only workflows, commercial billing/quota administration, provider-managed fleet automation, and cross-region control-plane features outside `pubsub.projects.topics.create` and its paired read/list calls.
+- Actions explicitly not supported first: Pub/Sub console-only workflows, account billing, quota purchase flows, and managed cross-region failover controls outside `pubsub.projects.topics.create` and its paired read/list calls.
 - Ledger resource types: `google_pubsub_topic`, `google_pubsub_subscription`.
 - Provider errors: map Pub/Sub authorization failures to GCP access-denied codes, missing `google_pubsub_topic` records to not-found codes, duplicate imports to conflict/already-exists, invalid mapped fields to validation errors, backend saturation to throttle/quota responses, and unexpected `gcp/pub-sub` failures to provider internal-error shapes with request ids.
 - Pagination/idempotency/tags: list/read calls expose provider tokens where the API has them; mutating calls persist idempotency keys or operation ids; tags/labels round-trip on `google_pubsub_topic` and `google_pubsub_subscription`.
@@ -17,7 +17,7 @@ Expose the smallest GCP Pub/Sub-compatible surface needed to migrate the ledger 
 - Backend: NATS JetStream.
 - Storage and metadata: Pub/Sub state lives in `NATS JetStream`; HomePort stores provider identifiers for `google_pubsub_topic`, source import ids, authz bindings, generated artifact checksums, backup references, and audit events.
 - Secrets/keys/tokens: issue HomePort-scoped credentials from the identity/secrets layer; store provider source credentials only as encrypted migration inputs.
-- Runtime/provisioning: provision `NATS JetStream` with the generated runtime manifest, health endpoint, persistence volume, backup job, endpoint route, and teardown script for `gcp/pub-sub`.
+- Runtime/provisioning: provision `NATS JetStream` with generated `artifacts/compat/gcp/pub-sub/backend.yaml`, health endpoint, persistence volume, backup job, endpoint route, and teardown script for `gcp/pub-sub`.
 
 ## Authz Model
 
@@ -34,7 +34,7 @@ Expose the smallest GCP Pub/Sub-compatible surface needed to migrate the ledger 
 - SDK used in tests: Google Cloud REST client configured with endpoint override and HomePort credentials.
 - Request mapping: Pub/Sub provider names, locations, tags/labels, and request bodies map to HomePort `google_pubsub_topic` records and `NATS JetStream` configuration; backend-only knobs are omitted from provider responses.
 - Response mapping: return Pub/Sub provider ids, `google_pubsub_topic` lifecycle state, operation ids, etags/versions where the source API exposes them, list pagination tokens, and HomePort audit timestamps without exposing backend-only fields.
-- Error mapping: translate `gcp/pub-sub` backend auth, missing `google_pubsub_topic`, duplicate import, malformed request, timeout, quota, and dependency failures to the provider error families above with retry hints.
+- Error mapping: translate `gcp/pub-sub` backend auth, missing `google_pubsub_topic`, duplicate import, malformed request, timeout, quota, and dependency failures to the provider-shaped access-denied/not-found/conflict/validation/throttle/internal-error responses with retry hints.
 
 ## Generated Artifacts
 

@@ -7,7 +7,7 @@ Expose the smallest AWS KMS-compatible surface needed to migrate the ledger reso
 ## Provider API Surface
 
 - Initial supported surface: kms:CreateKey, kms:DescribeKey, kms:ListKeys, kms:ScheduleKeyDeletion.
-- Actions explicitly not supported first: KMS console-only workflows, commercial billing/quota administration, provider-managed fleet automation, and cross-region control-plane features outside `kms:CreateKey` and its paired read/list calls.
+- Actions explicitly not supported first: KMS console-only workflows, account billing, quota purchase flows, and managed cross-region failover controls outside `kms:CreateKey` and its paired read/list calls.
 - Ledger resource types: `aws_kms_key`.
 - Provider errors: map KMS authorization failures to AWS access-denied codes, missing `aws_kms_key` records to not-found codes, duplicate imports to conflict/already-exists, invalid mapped fields to validation errors, backend saturation to throttle/quota responses, and unexpected `aws/kms` failures to provider internal-error shapes with request ids.
 - Pagination/idempotency/tags: list/read calls expose provider tokens where the API has them; mutating calls persist idempotency keys or operation ids; tags/labels round-trip on `aws_kms_key`.
@@ -34,7 +34,7 @@ Expose the smallest AWS KMS-compatible surface needed to migrate the ledger reso
 - SDK used in tests: AWS SDK for Go v2 configured with endpoint override and HomePort credentials.
 - Request mapping: KMS provider names, locations, tags/labels, and request bodies map to HomePort `aws_kms_key` records and `Vault Transit` configuration; backend-only knobs are omitted from provider responses.
 - Response mapping: return KMS provider ids, `aws_kms_key` lifecycle state, operation ids, etags/versions where the source API exposes them, list pagination tokens, and HomePort audit timestamps without exposing backend-only fields.
-- Error mapping: translate `aws/kms` backend auth, missing `aws_kms_key`, duplicate import, malformed request, timeout, quota, and dependency failures to the provider error families above with retry hints.
+- Error mapping: translate `aws/kms` backend auth, missing `aws_kms_key`, duplicate import, malformed request, timeout, quota, and dependency failures to the provider-shaped access-denied/not-found/conflict/validation/throttle/internal-error responses with retry hints.
 
 ## Generated Artifacts
 

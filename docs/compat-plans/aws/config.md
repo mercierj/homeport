@@ -7,7 +7,7 @@ Expose the smallest AWS Config-compatible surface needed to migrate the ledger r
 ## Provider API Surface
 
 - Initial supported surface: config:PutConfigRule, config:DescribeConfigRules, config:GetComplianceDetailsByConfigRule, config:DeleteConfigRule.
-- Actions explicitly not supported first: Config console-only workflows, commercial billing/quota administration, provider-managed fleet automation, and cross-region control-plane features outside `config:PutConfigRule` and its paired read/list calls.
+- Actions explicitly not supported first: Config console-only workflows, account billing, quota purchase flows, and managed cross-region failover controls outside `config:PutConfigRule` and its paired read/list calls.
 - Ledger resource types: `aws_config_config_rule`.
 - Provider errors: map Config authorization failures to AWS access-denied codes, missing `aws_config_config_rule` records to not-found codes, duplicate imports to conflict/already-exists, invalid mapped fields to validation errors, backend saturation to throttle/quota responses, and unexpected `aws/config` failures to provider internal-error shapes with request ids.
 - Pagination/idempotency/tags: list/read calls expose provider tokens where the API has them; mutating calls persist idempotency keys or operation ids; tags/labels round-trip on `aws_config_config_rule`.
@@ -34,7 +34,7 @@ Expose the smallest AWS Config-compatible surface needed to migrate the ledger r
 - SDK used in tests: AWS SDK for Go v2 configured with endpoint override and HomePort credentials.
 - Request mapping: Config provider names, locations, tags/labels, and request bodies map to HomePort `aws_config_config_rule` records and `Open Policy Agent` configuration; backend-only knobs are omitted from provider responses.
 - Response mapping: return Config provider ids, `aws_config_config_rule` lifecycle state, operation ids, etags/versions where the source API exposes them, list pagination tokens, and HomePort audit timestamps without exposing backend-only fields.
-- Error mapping: translate `aws/config` backend auth, missing `aws_config_config_rule`, duplicate import, malformed request, timeout, quota, and dependency failures to the provider error families above with retry hints.
+- Error mapping: translate `aws/config` backend auth, missing `aws_config_config_rule`, duplicate import, malformed request, timeout, quota, and dependency failures to the provider-shaped access-denied/not-found/conflict/validation/throttle/internal-error responses with retry hints.
 
 ## Generated Artifacts
 

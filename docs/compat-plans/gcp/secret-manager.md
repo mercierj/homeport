@@ -7,7 +7,7 @@ Expose the smallest GCP Secret Manager-compatible surface needed to migrate the 
 ## Provider API Surface
 
 - Initial supported surface: secretmanager.projects.secrets.create -> secretmanager.projects.secrets.get -> secretmanager.projects.secrets.list -> secretmanager.projects.secrets.patch -> secretmanager.projects.secrets.delete; versions.access.
-- Actions explicitly not supported first: Secret Manager console-only workflows, commercial billing/quota administration, provider-managed fleet automation, and cross-region control-plane features outside `secretmanager.projects.secrets.create` and its paired read/list calls.
+- Actions explicitly not supported first: Secret Manager console-only workflows, account billing, quota purchase flows, and managed cross-region failover controls outside `secretmanager.projects.secrets.create` and its paired read/list calls.
 - Ledger resource types: `google_secret_manager_secret`.
 - Provider errors: map Secret Manager authorization failures to GCP access-denied codes, missing `google_secret_manager_secret` records to not-found codes, duplicate imports to conflict/already-exists, invalid mapped fields to validation errors, backend saturation to throttle/quota responses, and unexpected `gcp/secret-manager` failures to provider internal-error shapes with request ids.
 - Pagination/idempotency/tags: list/read calls expose provider tokens where the API has them; mutating calls persist idempotency keys or operation ids; tags/labels round-trip on `google_secret_manager_secret`.
@@ -17,7 +17,7 @@ Expose the smallest GCP Secret Manager-compatible surface needed to migrate the 
 - Backend: HashiCorp Vault.
 - Storage and metadata: Secret Manager state lives in `HashiCorp Vault`; HomePort stores provider identifiers for `google_secret_manager_secret`, source import ids, authz bindings, generated artifact checksums, backup references, and audit events.
 - Secrets/keys/tokens: issue HomePort-scoped credentials from the identity/secrets layer; store provider source credentials only as encrypted migration inputs.
-- Runtime/provisioning: provision `HashiCorp Vault` with the generated runtime manifest, health endpoint, persistence volume, backup job, endpoint route, and teardown script for `gcp/secret-manager`.
+- Runtime/provisioning: provision `HashiCorp Vault` with generated `artifacts/compat/gcp/secret-manager/backend.yaml`, health endpoint, persistence volume, backup job, endpoint route, and teardown script for `gcp/secret-manager`.
 
 ## Authz Model
 
@@ -34,7 +34,7 @@ Expose the smallest GCP Secret Manager-compatible surface needed to migrate the 
 - SDK used in tests: Google Cloud REST client configured with endpoint override and HomePort credentials.
 - Request mapping: Secret Manager provider names, locations, tags/labels, and request bodies map to HomePort `google_secret_manager_secret` records and `HashiCorp Vault` configuration; backend-only knobs are omitted from provider responses.
 - Response mapping: return Secret Manager provider ids, `google_secret_manager_secret` lifecycle state, operation ids, etags/versions where the source API exposes them, list pagination tokens, and HomePort audit timestamps without exposing backend-only fields.
-- Error mapping: translate `gcp/secret-manager` backend auth, missing `google_secret_manager_secret`, duplicate import, malformed request, timeout, quota, and dependency failures to the provider error families above with retry hints.
+- Error mapping: translate `gcp/secret-manager` backend auth, missing `google_secret_manager_secret`, duplicate import, malformed request, timeout, quota, and dependency failures to the provider-shaped access-denied/not-found/conflict/validation/throttle/internal-error responses with retry hints.
 
 ## Generated Artifacts
 

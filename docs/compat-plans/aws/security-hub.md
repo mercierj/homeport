@@ -7,7 +7,7 @@ Expose the smallest AWS Security Hub-compatible surface needed to migrate the le
 ## Provider API Surface
 
 - Initial supported surface: securityhub:BatchImportFindings, securityhub:GetFindings, securityhub:BatchUpdateFindings.
-- Actions explicitly not supported first: Security Hub console-only workflows, commercial billing/quota administration, provider-managed fleet automation, and cross-region control-plane features outside `securityhub:BatchImportFindings` and its paired read/list calls.
+- Actions explicitly not supported first: Security Hub console-only workflows, account billing, quota purchase flows, and managed cross-region failover controls outside `securityhub:BatchImportFindings` and its paired read/list calls.
 - Ledger resource types: `aws_securityhub_account`.
 - Provider errors: map Security Hub authorization failures to AWS access-denied codes, missing `aws_securityhub_account` records to not-found codes, duplicate imports to conflict/already-exists, invalid mapped fields to validation errors, backend saturation to throttle/quota responses, and unexpected `aws/security-hub` failures to provider internal-error shapes with request ids.
 - Pagination/idempotency/tags: list/read calls expose provider tokens where the API has them; mutating calls persist idempotency keys or operation ids; tags/labels round-trip on `aws_securityhub_account`.
@@ -34,7 +34,7 @@ Expose the smallest AWS Security Hub-compatible surface needed to migrate the le
 - SDK used in tests: AWS SDK for Go v2 configured with endpoint override and HomePort credentials.
 - Request mapping: Security Hub provider names, locations, tags/labels, and request bodies map to HomePort `aws_securityhub_account` records and `Wazuh` configuration; backend-only knobs are omitted from provider responses.
 - Response mapping: return Security Hub provider ids, `aws_securityhub_account` lifecycle state, operation ids, etags/versions where the source API exposes them, list pagination tokens, and HomePort audit timestamps without exposing backend-only fields.
-- Error mapping: translate `aws/security-hub` backend auth, missing `aws_securityhub_account`, duplicate import, malformed request, timeout, quota, and dependency failures to the provider error families above with retry hints.
+- Error mapping: translate `aws/security-hub` backend auth, missing `aws_securityhub_account`, duplicate import, malformed request, timeout, quota, and dependency failures to the provider-shaped access-denied/not-found/conflict/validation/throttle/internal-error responses with retry hints.
 
 ## Generated Artifacts
 

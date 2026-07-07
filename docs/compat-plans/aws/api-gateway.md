@@ -7,7 +7,7 @@ Expose the smallest AWS API Gateway-compatible surface needed to migrate the led
 ## Provider API Surface
 
 - Initial supported surface: apigateway:CreateRestApi, apigateway:GetRestApi, apigateway:GetRestApis, apigateway:UpdateRestApi, apigateway:DeleteRestApi.
-- Actions explicitly not supported first: API Gateway console-only workflows, commercial billing/quota administration, provider-managed fleet automation, and cross-region control-plane features outside `apigateway:CreateRestApi` and its paired read/list calls.
+- Actions explicitly not supported first: API Gateway console-only workflows, account billing, quota purchase flows, and managed cross-region failover controls outside `apigateway:CreateRestApi` and its paired read/list calls.
 - Ledger resource types: `aws_api_gateway_rest_api`.
 - Provider errors: map API Gateway authorization failures to AWS access-denied codes, missing `aws_api_gateway_rest_api` records to not-found codes, duplicate imports to conflict/already-exists, invalid mapped fields to validation errors, backend saturation to throttle/quota responses, and unexpected `aws/api-gateway` failures to provider internal-error shapes with request ids.
 - Pagination/idempotency/tags: list/read calls expose provider tokens where the API has them; mutating calls persist idempotency keys or operation ids; tags/labels round-trip on `aws_api_gateway_rest_api`.
@@ -34,7 +34,7 @@ Expose the smallest AWS API Gateway-compatible surface needed to migrate the led
 - SDK used in tests: AWS SDK for Go v2 configured with endpoint override and HomePort credentials.
 - Request mapping: API Gateway provider names, locations, tags/labels, and request bodies map to HomePort `aws_api_gateway_rest_api` records and `Kong` configuration; backend-only knobs are omitted from provider responses.
 - Response mapping: return API Gateway provider ids, `aws_api_gateway_rest_api` lifecycle state, operation ids, etags/versions where the source API exposes them, list pagination tokens, and HomePort audit timestamps without exposing backend-only fields.
-- Error mapping: translate `aws/api-gateway` backend auth, missing `aws_api_gateway_rest_api`, duplicate import, malformed request, timeout, quota, and dependency failures to the provider error families above with retry hints.
+- Error mapping: translate `aws/api-gateway` backend auth, missing `aws_api_gateway_rest_api`, duplicate import, malformed request, timeout, quota, and dependency failures to the provider-shaped access-denied/not-found/conflict/validation/throttle/internal-error responses with retry hints.
 
 ## Generated Artifacts
 

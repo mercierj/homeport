@@ -7,7 +7,7 @@ Expose the smallest AWS EBS-compatible surface needed to migrate the ledger reso
 ## Provider API Surface
 
 - Initial supported surface: ebs:CreateVolume, ebs:DescribeVolumes, ebs:ModifyVolume, ebs:DeleteVolume.
-- Actions explicitly not supported first: EBS console-only workflows, commercial billing/quota administration, provider-managed fleet automation, and cross-region control-plane features outside `ebs:CreateVolume` and its paired read/list calls.
+- Actions explicitly not supported first: EBS console-only workflows, account billing, quota purchase flows, and managed cross-region failover controls outside `ebs:CreateVolume` and its paired read/list calls.
 - Ledger resource types: `aws_ebs_volume`.
 - Provider errors: map EBS authorization failures to AWS access-denied codes, missing `aws_ebs_volume` records to not-found codes, duplicate imports to conflict/already-exists, invalid mapped fields to validation errors, backend saturation to throttle/quota responses, and unexpected `aws/ebs` failures to provider internal-error shapes with request ids.
 - Pagination/idempotency/tags: list/read calls expose provider tokens where the API has them; mutating calls persist idempotency keys or operation ids; tags/labels round-trip on `aws_ebs_volume`.
@@ -34,7 +34,7 @@ Expose the smallest AWS EBS-compatible surface needed to migrate the ledger reso
 - SDK used in tests: AWS SDK for Go v2 configured with endpoint override and HomePort credentials.
 - Request mapping: EBS provider names, locations, tags/labels, and request bodies map to HomePort `aws_ebs_volume` records and `Docker local volume` configuration; backend-only knobs are omitted from provider responses.
 - Response mapping: return EBS provider ids, `aws_ebs_volume` lifecycle state, operation ids, etags/versions where the source API exposes them, list pagination tokens, and HomePort audit timestamps without exposing backend-only fields.
-- Error mapping: translate `aws/ebs` backend auth, missing `aws_ebs_volume`, duplicate import, malformed request, timeout, quota, and dependency failures to the provider error families above with retry hints.
+- Error mapping: translate `aws/ebs` backend auth, missing `aws_ebs_volume`, duplicate import, malformed request, timeout, quota, and dependency failures to the provider-shaped access-denied/not-found/conflict/validation/throttle/internal-error responses with retry hints.
 
 ## Generated Artifacts
 

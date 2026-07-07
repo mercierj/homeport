@@ -7,7 +7,7 @@ Expose the smallest AWS QuickSight-compatible surface needed to migrate the ledg
 ## Provider API Surface
 
 - Initial supported surface: quicksight:CreateDashboard, quicksight:DescribeDashboard, quicksight:ListDashboards, quicksight:UpdateDashboard, quicksight:DeleteDashboard.
-- Actions explicitly not supported first: QuickSight console-only workflows, commercial billing/quota administration, provider-managed fleet automation, and cross-region control-plane features outside `quicksight:CreateDashboard` and its paired read/list calls.
+- Actions explicitly not supported first: QuickSight console-only workflows, account billing, quota purchase flows, and managed cross-region failover controls outside `quicksight:CreateDashboard` and its paired read/list calls.
 - Ledger resource types: `aws_quicksight_dashboard`.
 - Provider errors: map QuickSight authorization failures to AWS access-denied codes, missing `aws_quicksight_dashboard` records to not-found codes, duplicate imports to conflict/already-exists, invalid mapped fields to validation errors, backend saturation to throttle/quota responses, and unexpected `aws/quicksight` failures to provider internal-error shapes with request ids.
 - Pagination/idempotency/tags: list/read calls expose provider tokens where the API has them; mutating calls persist idempotency keys or operation ids; tags/labels round-trip on `aws_quicksight_dashboard`.
@@ -34,7 +34,7 @@ Expose the smallest AWS QuickSight-compatible surface needed to migrate the ledg
 - SDK used in tests: AWS SDK for Go v2 configured with endpoint override and HomePort credentials.
 - Request mapping: QuickSight provider names, locations, tags/labels, and request bodies map to HomePort `aws_quicksight_dashboard` records and `Apache Superset` configuration; backend-only knobs are omitted from provider responses.
 - Response mapping: return QuickSight provider ids, `aws_quicksight_dashboard` lifecycle state, operation ids, etags/versions where the source API exposes them, list pagination tokens, and HomePort audit timestamps without exposing backend-only fields.
-- Error mapping: translate `aws/quicksight` backend auth, missing `aws_quicksight_dashboard`, duplicate import, malformed request, timeout, quota, and dependency failures to the provider error families above with retry hints.
+- Error mapping: translate `aws/quicksight` backend auth, missing `aws_quicksight_dashboard`, duplicate import, malformed request, timeout, quota, and dependency failures to the provider-shaped access-denied/not-found/conflict/validation/throttle/internal-error responses with retry hints.
 
 ## Generated Artifacts
 

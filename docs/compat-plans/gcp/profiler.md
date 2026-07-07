@@ -7,16 +7,16 @@ Expose the smallest GCP Profiler-compatible surface needed to migrate the ledger
 ## Provider API Surface
 
 - Initial supported surface: cloudprofiler.projects.profiles.create -> profiles.patch -> profiles.list.
-- Actions explicitly not supported first: Profiler console-only workflows, commercial billing/quota administration, provider-managed fleet automation, and cross-region control-plane features outside `cloudprofiler.projects.profiles.create` and its paired read/list calls.
-- Ledger resource types: source Profiler resource model
-- First concrete resource model to add: source Profiler resource with import id, region/location, labels/tags, backend target id, lifecycle state, and owner principal.
-- Provider errors: map Profiler authorization failures to GCP access-denied codes, missing `source Profiler resource model` records to not-found codes, duplicate imports to conflict/already-exists, invalid mapped fields to validation errors, backend saturation to throttle/quota responses, and unexpected `gcp/profiler` failures to provider internal-error shapes with request ids.
-- Pagination/idempotency/tags: list/read calls expose provider tokens where the API has them; mutating calls persist idempotency keys or operation ids; tags/labels round-trip on the source Profiler resource model.
+- Actions explicitly not supported first: Profiler console-only workflows, account billing, quota purchase flows, and managed cross-region failover controls outside `cloudprofiler.projects.profiles.create` and its paired read/list calls.
+- Ledger resource types: no resource type currently modeled in the ledger.
+- First concrete resource model to add: service-specific model with import id, region/location, labels/tags, backend target id, lifecycle state, and owner principal.
+- Provider errors: map Profiler authorization failures to GCP access-denied codes, missing `planned resource model` records to not-found codes, duplicate imports to conflict/already-exists, invalid mapped fields to validation errors, backend saturation to throttle/quota responses, and unexpected `gcp/profiler` failures to provider internal-error shapes with request ids.
+- Pagination/idempotency/tags: list/read calls expose provider tokens where the API has them; mutating calls persist idempotency keys or operation ids; tags/labels round-trip on the planned resource model.
 
 ## Backend
 
 - Backend: Pyroscope.
-- Storage and metadata: Profiler state lives in `Pyroscope`; HomePort stores provider identifiers for `source Profiler resource model`, source import ids, authz bindings, generated artifact checksums, backup references, and audit events.
+- Storage and metadata: Profiler state lives in `Pyroscope`; HomePort stores provider identifiers for `planned resource model`, source import ids, authz bindings, generated artifact checksums, backup references, and audit events.
 - Secrets/keys/tokens: issue HomePort-scoped credentials from the identity/secrets layer; store provider source credentials only as encrypted migration inputs.
 - Runtime/provisioning: provision `Pyroscope` with generated Compose/Kubernetes/OpenTofu, health checks, backup hooks, endpoint routing, and teardown scripts.
 
@@ -25,17 +25,17 @@ Expose the smallest GCP Profiler-compatible surface needed to migrate the ledger
 - Principal: HomePort subject mapped from GCP user/role/service account/managed identity/session token.
 - Actions: cloudprofiler.projects.profiles.create -> profiles.patch -> profiles.list.
 - Resource: projects/{project}/locations/{location}/profiler/{id}.
-- Context: evaluate Profiler calls with tenant/project/account, provider region/location, `projects/{project}/locations/{location}/profiler/{id}`, source IP, request id, user agent, tags/labels on `source Profiler resource model`, credential age, and MFA/managed-identity claims when the source provider supplies them.
+- Context: evaluate Profiler calls with tenant/project/account, provider region/location, `projects/{project}/locations/{location}/profiler/{id}`, source IP, request id, user agent, tags/labels on `planned resource model`, credential age, and MFA/managed-identity claims when the source provider supplies them.
 - Evaluation: call `Authorize(principal, action, resource, context)` before each mutating operation and each data-plane read/write.
-- Conditions: support exact/wildcard matches for the listed Profiler actions, `projects/{project}/locations/{location}/profiler/{id}` prefix checks, tag/label equality on `source Profiler resource model`, requested region/location, source IP CIDR, time window, and principal attributes.
+- Conditions: support exact/wildcard matches for the listed Profiler actions, `projects/{project}/locations/{location}/profiler/{id}` prefix checks, tag/label equality on `planned resource model`, requested region/location, source IP CIDR, time window, and principal attributes.
 
 ## Adapter
 
 - Endpoints exposed: `/compat/gcp/profiler` for the actions above.
 - SDK used in tests: Google Cloud REST client configured with endpoint override and HomePort credentials.
-- Request mapping: Profiler provider names, locations, tags/labels, and request bodies map to HomePort `source Profiler resource model` records and `Pyroscope` configuration; backend-only knobs are omitted from provider responses.
-- Response mapping: return Profiler provider ids, `source Profiler resource model` lifecycle state, operation ids, etags/versions where the source API exposes them, list pagination tokens, and HomePort audit timestamps without exposing backend-only fields.
-- Error mapping: translate `gcp/profiler` backend auth, missing `source Profiler resource model`, duplicate import, malformed request, timeout, quota, and dependency failures to the provider error families above with retry hints.
+- Request mapping: Profiler provider names, locations, tags/labels, and request bodies map to HomePort `planned resource model` records and `Pyroscope` configuration; backend-only knobs are omitted from provider responses.
+- Response mapping: return Profiler provider ids, `planned resource model` lifecycle state, operation ids, etags/versions where the source API exposes them, list pagination tokens, and HomePort audit timestamps without exposing backend-only fields.
+- Error mapping: translate `gcp/profiler` backend auth, missing `planned resource model`, duplicate import, malformed request, timeout, quota, and dependency failures to the provider-shaped access-denied/not-found/conflict/validation/throttle/internal-error responses with retry hints.
 
 ## Generated Artifacts
 
@@ -47,7 +47,7 @@ Expose the smallest GCP Profiler-compatible surface needed to migrate the ledger
 ## Contract Tests
 
 - Google Cloud REST client exercises cloudprofiler.projects.profiles.create -> profiles.patch -> profiles.list against `/compat/gcp/profiler` and asserts provider-shaped request, response, error, authz, retry, and pagination behavior.
-- Fixture import covers the source Profiler resource model from `gcp/profiler`.
+- Fixture import covers the planned resource model from `gcp/profiler`.
 - Negative cases: denied principal, missing resource, malformed request, duplicate/conflict, expired credential, backend timeout, and quota/throttle.
 - Cross-service case: one allowed and one denied call pass through the central authorization engine and emit audit events.
 

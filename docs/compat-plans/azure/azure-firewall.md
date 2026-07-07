@@ -7,7 +7,7 @@ Expose the smallest Azure Azure Firewall-compatible surface needed to migrate th
 ## Provider API Surface
 
 - Initial supported surface: Microsoft.Network/azureFirewalls/read, Microsoft.Network/azureFirewalls/write, Microsoft.Network/azureFirewalls/delete.
-- Actions explicitly not supported first: Azure Firewall console-only workflows, commercial billing/quota administration, provider-managed fleet automation, and cross-region control-plane features outside `Microsoft.Network/azureFirewalls/read` and its paired read/list calls.
+- Actions explicitly not supported first: Azure Firewall console-only workflows, account billing, quota purchase flows, and managed cross-region failover controls outside `Microsoft.Network/azureFirewalls/read` and its paired read/list calls.
 - Ledger resource types: `azurerm_firewall`.
 - Provider errors: map Azure Firewall authorization failures to Azure access-denied codes, missing `azurerm_firewall` records to not-found codes, duplicate imports to conflict/already-exists, invalid mapped fields to validation errors, backend saturation to throttle/quota responses, and unexpected `azure/azure-firewall` failures to provider internal-error shapes with request ids.
 - Pagination/idempotency/tags: list/read calls expose provider tokens where the API has them; mutating calls persist idempotency keys or operation ids; tags/labels round-trip on `azurerm_firewall`.
@@ -17,7 +17,7 @@ Expose the smallest Azure Azure Firewall-compatible surface needed to migrate th
 - Backend: nftables with Suricata policy inspection.
 - Storage and metadata: Azure Firewall state lives in `nftables with Suricata policy inspection`; HomePort stores provider identifiers for `azurerm_firewall`, source import ids, authz bindings, generated artifact checksums, backup references, and audit events.
 - Secrets/keys/tokens: issue HomePort-scoped credentials from the identity/secrets layer; store provider source credentials only as encrypted migration inputs.
-- Runtime/provisioning: provision `nftables with Suricata policy inspection` with the generated runtime manifest, health endpoint, persistence volume, backup job, endpoint route, and teardown script for `azure/azure-firewall`.
+- Runtime/provisioning: provision `nftables with Suricata policy inspection` with generated `artifacts/compat/azure/azure-firewall/backend.yaml`, health endpoint, persistence volume, backup job, endpoint route, and teardown script for `azure/azure-firewall`.
 
 ## Authz Model
 
@@ -34,7 +34,7 @@ Expose the smallest Azure Azure Firewall-compatible surface needed to migrate th
 - SDK used in tests: Azure SDK for Go or Python configured with endpoint override and HomePort credentials.
 - Request mapping: Azure Firewall provider names, locations, tags/labels, and request bodies map to HomePort `azurerm_firewall` records and `nftables with Suricata policy inspection` configuration; backend-only knobs are omitted from provider responses.
 - Response mapping: return Azure Firewall provider ids, `azurerm_firewall` lifecycle state, operation ids, etags/versions where the source API exposes them, list pagination tokens, and HomePort audit timestamps without exposing backend-only fields.
-- Error mapping: translate `azure/azure-firewall` backend auth, missing `azurerm_firewall`, duplicate import, malformed request, timeout, quota, and dependency failures to the provider error families above with retry hints.
+- Error mapping: translate `azure/azure-firewall` backend auth, missing `azurerm_firewall`, duplicate import, malformed request, timeout, quota, and dependency failures to the provider-shaped access-denied/not-found/conflict/validation/throttle/internal-error responses with retry hints.
 
 ## Generated Artifacts
 

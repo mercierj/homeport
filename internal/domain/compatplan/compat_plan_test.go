@@ -15,8 +15,10 @@ type coverageCatalog struct {
 }
 
 type coverageService struct {
-	Provider string `yaml:"provider"`
-	Service  string `yaml:"service"`
+	Provider      string   `yaml:"provider"`
+	Service       string   `yaml:"service"`
+	ResourceTypes []string `yaml:"resource_types"`
+	Target        string   `yaml:"target"`
 }
 
 func TestEveryCoverageServiceHasCompatibilityPlan(t *testing.T) {
@@ -75,7 +77,6 @@ func TestEveryCoverageServiceHasCompatibilityPlan(t *testing.T) {
 		"exercises create -> get -> list -> patch/run -> delete",
 		"exercises get/list -> create/update -> run/action -> delete",
 		"provider-only managed behavior not required by migrated workloads",
-		"Backend: Not selected in `docs/coverage/services.yaml`.",
 		"blocked until a backend is selected",
 		"the selected backend",
 		"Actions explicitly not supported first: provider billing controls, proprietary fleet automation, and managed cross-region behavior outside the listed actions.",
@@ -88,6 +89,10 @@ func TestEveryCoverageServiceHasCompatibilityPlan(t *testing.T) {
 		"`.`",
 		"none yet.",
 		"provider ids, names, metadata, lifecycle state, pagination tokens, and operation status map to backend-native records without leaking backend internals.",
+		"generated runtime manifest",
+		"provider-managed fleet automation",
+		"commercial billing/quota administration",
+		"provider error families above",
 	}
 
 	requiredPaths := make(map[string]bool, len(catalog.Services))
@@ -112,6 +117,21 @@ func TestEveryCoverageServiceHasCompatibilityPlan(t *testing.T) {
 		if strings.Contains(text, "no resource type currently modeled in the ledger") &&
 			!strings.Contains(text, "First concrete resource model to add:") {
 			t.Fatalf("%s/%s plan has no modeled resource without a concrete resource-model gap", service.Provider, service.Service)
+		}
+		ledgerResourceLine := regexp.MustCompile(`(?m)^- Ledger resource types: .*$`).FindString(text)
+		if len(service.ResourceTypes) == 0 {
+			if ledgerResourceLine != "- Ledger resource types: no resource type currently modeled in the ledger." {
+				t.Fatalf("%s/%s plan resource types drift from ledger: %s", service.Provider, service.Service, ledgerResourceLine)
+			}
+		} else {
+			for _, resourceType := range service.ResourceTypes {
+				if !strings.Contains(ledgerResourceLine, resourceType) {
+					t.Fatalf("%s/%s plan missing ledger resource type %q in %s", service.Provider, service.Service, resourceType, ledgerResourceLine)
+				}
+			}
+		}
+		if regexp.MustCompile(`\bsource [A-Za-z0-9 /-]+ resource model\b|\bhomeport_[a-z0-9_]+_resource\b`).MatchString(text) {
+			t.Fatalf("%s/%s plan contains placeholder resource model", service.Provider, service.Service)
 		}
 		resourceLine := regexp.MustCompile(`(?m)^- Resource: .*$`).FindString(text)
 		if regexp.MustCompile(`\b(aws|google|azurerm)_[a-z0-9_]+\b`).MatchString(resourceLine) {
@@ -150,6 +170,15 @@ func TestEveryCoverageServiceHasCompatibilityPlan(t *testing.T) {
 			t.Fatalf("%s/%s plan contains generic request mapping", service.Provider, service.Service)
 		}
 		backendLine := regexp.MustCompile(`(?m)^- Backend: .*$`).FindString(text)
+		backend := strings.TrimSuffix(strings.TrimSpace(strings.TrimPrefix(backendLine, "- Backend:")), ".")
+		target := strings.TrimSuffix(strings.TrimSpace(service.Target), ".")
+		if target == "" {
+			if backend != "Not selected in `docs/coverage/services.yaml`" {
+				t.Fatalf("%s/%s plan backend drifts from missing ledger target: %s", service.Provider, service.Service, backendLine)
+			}
+		} else if backend != target {
+			t.Fatalf("%s/%s plan backend %q drifts from ledger target %q", service.Provider, service.Service, backend, target)
+		}
 		if regexp.MustCompile(`^- Backend: [A-Z][A-Za-z0-9 /&+.-]+ adapter\.$`).MatchString(backendLine) &&
 			!strings.Contains(backendLine, " with ") &&
 			!strings.Contains(backendLine, "HomePort") &&
