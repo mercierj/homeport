@@ -9,6 +9,7 @@ import (
 
 	"github.com/homeport/homeport/internal/domain/mapper"
 	"github.com/homeport/homeport/internal/domain/resource"
+	domainrunbook "github.com/homeport/homeport/internal/domain/runbook"
 	"github.com/homeport/homeport/internal/infrastructure/mapper/shared/netrunbook"
 )
 
@@ -57,6 +58,7 @@ func (m *DNSMapper) Map(ctx context.Context, res *resource.AWSResource) (*mapper
 
 	svc.Networks = []string{"homeport"}
 	svc.Restart = "unless-stopped"
+	svc.Deploy = &mapper.DeployConfig{Replicas: 2}
 	svc.Labels = map[string]string{
 		"homeport.source":    "azurerm_dns_zone",
 		"homeport.zone_name": zoneName,
@@ -93,18 +95,23 @@ func (m *DNSMapper) Map(ctx context.Context, res *resource.AWSResource) (*mapper
 	// Generate PowerDNS zone SQL
 	powerDNSSQL := m.generatePowerDNSZoneSQL(zoneName, res)
 	result.AddScript("powerdns_zones.sql", []byte(powerDNSSQL))
+	result.AddConfig("config/dns/app-change.env", []byte(m.generateAppChange(zoneName)))
+	result.AddConfig("config/dns/generated-zone.patch", []byte(m.generateZonePatch(zoneName)))
 
 	// Generate setup script
 	setupScript := m.generateSetupScript(zoneName)
 	result.AddScript("setup_dns.sh", []byte(setupScript))
+	result.AddScript("export_dns_zone.sh", []byte(m.generateExportScript(zoneName)))
+	result.AddScript("validate_dns.sh", []byte(m.generateValidateScript(zoneName)))
+	result.AddScript("backup_dns_zone.sh", []byte(m.generateBackupScript(zoneName)))
+	result.AddScript("cutover_dns.sh", []byte(m.generateCutoverScript(zoneName)))
 
 	result.AddWarning(fmt.Sprintf("DNS zone '%s' has %d record sets. Configure them in the zone file.", zoneName, numberOfRecordSets))
 	result.AddWarning("CoreDNS configuration provided. PowerDNS alternative also available in config/powerdns/")
-	result.AddManualStep("Update DNS records in config/coredns/*.zone files")
-	result.AddManualStep("Update your domain registrar to point to the new DNS servers")
-	result.AddManualStep("Test DNS resolution: dig @localhost example.com")
-	result.AddManualStep("Configure DNSSEC if required")
-	for _, step := range netrunbook.DNS(zoneName, "azurerm_dns_zone", "setup_dns.sh") {
+	for _, step := range netrunbook.DNS(zoneName, "azurerm_dns_zone", "export_dns_zone.sh") {
+		result.AddRunbookStep(step)
+	}
+	for _, step := range m.runbook(zoneName) {
 		result.AddRunbookStep(step)
 	}
 
@@ -296,4 +303,39 @@ echo "4. Update your domain registrar's nameservers"
 echo ""
 echo "Alternative: To use PowerDNS instead, see config/powerdns/"
 `, zoneName, zoneName, zoneName, zoneName)
+}
+
+func (m *DNSMapper) generateAppChange(zoneName string) string {
+	return fmt.Sprintf("APP_CHANGE_MODE=generated_patch\nSOURCE_DNS_ZONE=%s\nCOREDNS_ENDPOINT=coredns:53\nZONE_FILE=config/coredns/%s.zone\nGENERATED_PATCH=config/dns/generated-zone.patch\n", zoneName, zoneName)
+}
+
+func (m *DNSMapper) generateZonePatch(zoneName string) string {
+	return fmt.Sprintf("--- a/dns/%s.zone\n+++ b/dns/%s.zone\n@@\n-AZURE_DNS_ZONE=%s\n+NAMESERVER_1=ns1.%s\n+NAMESERVER_2=ns2.%s\n+DNS_TARGET=coredns:53\n", zoneName, zoneName, zoneName, zoneName, zoneName)
+}
+
+func (m *DNSMapper) generateExportScript(zoneName string) string {
+	return fmt.Sprintf("#!/bin/sh\nset -eu\nOUTPUT_DIR=\"${OUTPUT_DIR:-./dns-export}\"\nmkdir -p \"$OUTPUT_DIR\"\naz network dns record-set list --zone-name %q --resource-group \"${AZURE_RESOURCE_GROUP}\" > \"$OUTPUT_DIR/%s-recordsets.json\"\n", zoneName, zoneName)
+}
+
+func (m *DNSMapper) generateValidateScript(zoneName string) string {
+	return fmt.Sprintf("#!/bin/sh\nset -eu\ntest -s config/coredns/Corefile\ntest -s config/coredns/%s.zone\ntest -s config/dns/app-change.env\ngrep -q %q config/dns/app-change.env\n", zoneName, zoneName)
+}
+
+func (m *DNSMapper) generateBackupScript(zoneName string) string {
+	return fmt.Sprintf("#!/bin/sh\nset -eu\narchive=\"${BACKUP_DIR:-./backups}/dns-%s-$(date +%%Y%%m%%d%%H%%M%%S).tgz\"\nmkdir -p \"$(dirname \"$archive\")\"\ntar -czf \"$archive\" config/coredns config/powerdns config/dns dns-export 2>/dev/null || tar -czf \"$archive\" config/coredns config/powerdns config/dns\necho \"$archive\"\n", strings.ReplaceAll(zoneName, ".", "-"))
+}
+
+func (m *DNSMapper) generateCutoverScript(zoneName string) string {
+	return fmt.Sprintf("#!/bin/sh\nset -eu\n. config/dns/app-change.env\ntest \"$SOURCE_DNS_ZONE\" = %q\ntest \"$APP_CHANGE_MODE\" = \"generated_patch\"\necho \"Publish generated NS/A/CNAME/TXT records from $GENERATED_PATCH for $SOURCE_DNS_ZONE\"\n", zoneName)
+}
+
+func (m *DNSMapper) runbook(zoneName string) []domainrunbook.Step {
+	metadata := map[string]string{"kind": "dns", "source": "azurerm_dns_zone", "zone": zoneName, "target": "coredns"}
+	return []domainrunbook.Step{
+		m.step("backup-dns-zone", "Backup DNS zone config", "Backup", domainrunbook.StepTypeCommand, []string{"sh", "backup_dns_zone.sh"}, "DNS migration artifacts are archived", metadata),
+	}
+}
+
+func (m *DNSMapper) step(id, name, group string, stepType domainrunbook.StepType, command []string, success string, metadata map[string]string) domainrunbook.Step {
+	return domainrunbook.Step{ID: id, Name: name, Group: group, Type: stepType, Status: domainrunbook.StepStatusPending, Executor: "shell", Command: command, SuccessCondition: success, Metadata: metadata}
 }
