@@ -29,6 +29,8 @@ func RegisterAll(registry MapperRegistrar) {
 	registry.Register(compute.NewCloudSchedulerMapper())
 	registry.Register(compute.NewArtifactRegistryMapper())
 	registry.Register(compute.NewDocumentAIMapper())
+	registry.Register(compute.NewSpeechCustomClassMapper())
+	registry.Register(compute.NewSpeechPhraseSetMapper())
 	registry.Register(compute.NewTPUNodeMapper())
 	registry.Register(compute.NewTPUV2VMMapper())
 	registry.Register(compute.NewVertexAIMapper())

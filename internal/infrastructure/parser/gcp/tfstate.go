@@ -318,6 +318,8 @@ func mapGCPTerraformType(tfType string) resource.Type {
 		"google_dataflow_job":                  resource.TypeDataflowJob,
 		"google_dataproc_cluster":              resource.TypeDataprocCluster,
 		"google_document_ai_processor":         resource.TypeDocumentAIProcessor,
+		"google_speech_custom_class":           resource.TypeSpeechCustomClass,
+		"google_speech_phrase_set":             resource.TypeSpeechPhraseSet,
 		"google_tpu_node":                      resource.TypeTPUNode,
 		"google_tpu_v2_vm":                     resource.TypeTPUV2VM,
 		"google_vertex_ai_endpoint":            resource.TypeVertexAIEndpoint,

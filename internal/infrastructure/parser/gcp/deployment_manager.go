@@ -331,6 +331,8 @@ func mapDMTypeToResourceType(dmType string) resource.Type {
 		"dataflow.v1b3.job":               resource.TypeDataflowJob,
 		"dataproc.v1.cluster":             resource.TypeDataprocCluster,
 		"documentai.v1.processor":         resource.TypeDocumentAIProcessor,
+		"speech.v1.customclass":           resource.TypeSpeechCustomClass,
+		"speech.v1.phraseset":             resource.TypeSpeechPhraseSet,
 		"tpu.v1.node":                     resource.TypeTPUNode,
 		"tpu.v2.vm":                       resource.TypeTPUV2VM,
 		"aiplatform.v1.endpoint":          resource.TypeVertexAIEndpoint,

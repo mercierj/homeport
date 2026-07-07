@@ -107,6 +107,8 @@ const (
 	TypeDataflowJob                 Type = "google_dataflow_job"
 	TypeDataprocCluster             Type = "google_dataproc_cluster"
 	TypeDocumentAIProcessor         Type = "google_document_ai_processor"
+	TypeSpeechCustomClass           Type = "google_speech_custom_class"
+	TypeSpeechPhraseSet             Type = "google_speech_phrase_set"
 	TypeTPUNode                     Type = "google_tpu_node"
 	TypeTPUV2VM                     Type = "google_tpu_v2_vm"
 	TypeVertexAIEndpoint            Type = "google_vertex_ai_endpoint"

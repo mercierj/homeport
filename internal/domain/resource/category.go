@@ -183,6 +183,8 @@ var CategoryMapping = map[Type]Category{
 	TypeDataflowJob:                 CategoryDevOps,
 	TypeDataprocCluster:             CategoryDevOps,
 	TypeDocumentAIProcessor:         CategoryCompute,
+	TypeSpeechCustomClass:           CategoryCompute,
+	TypeSpeechPhraseSet:             CategoryCompute,
 	TypeTPUNode:                     CategoryCompute,
 	TypeTPUV2VM:                     CategoryCompute,
 	TypeVertexAIEndpoint:            CategoryCompute,

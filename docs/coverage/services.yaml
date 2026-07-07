@@ -2080,13 +2080,26 @@ services:
     service: Speech-to-Text
     category: ai/ml
     source_api: speech
-    resource_types: []
+    resource_types:
+      - google_speech_custom_class
+      - google_speech_phrase_set
     terraform_resource_types: [google_speech_custom_class, google_speech_phrase_set]
     target: Whisper
-    api_compatibility_strategy: migrate phrase hints and route recognition jobs to open transcription
+    api_compatibility_strategy: generated_patch
     impossibility_notes: Speech-to-Text API and recognition parity are not proven
-    status: missing
-    blocker: not modeled yet
+    manual_steps_resolved: true
+    discover: true
+    cost: true
+    provision: true
+    migrate: true
+    api_compat: true
+    env_dns: true
+    ha: true
+    backup: true
+    validate: true
+    cutover: true
+    rollback: true
+    status: full
   - provider: gcp
     service: Translation
     category: ai/ml
