@@ -101,7 +101,7 @@
 | gcp | Cloud Deploy | full | google_clouddeploy_delivery_pipeline, google_clouddeploy_target |
 | gcp | Error Reporting | full | google_error_reporting_service |
 | gcp | Profiler | full | google_profiler_service |
-| gcp | TPU | missing | google_tpu_node, google_tpu_v2_vm |
+| gcp | TPU | full | google_tpu_node, google_tpu_v2_vm |
 | gcp | Document AI | missing | google_document_ai_processor |
 | gcp | Vision AI | missing |  |
 | gcp | Speech-to-Text | missing | google_speech_custom_class, google_speech_phrase_set |

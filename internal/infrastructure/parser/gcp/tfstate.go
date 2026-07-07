@@ -317,6 +317,8 @@ func mapGCPTerraformType(tfType string) resource.Type {
 		"google_composer_environment":          resource.TypeComposerEnvironment,
 		"google_dataflow_job":                  resource.TypeDataflowJob,
 		"google_dataproc_cluster":              resource.TypeDataprocCluster,
+		"google_tpu_node":                      resource.TypeTPUNode,
+		"google_tpu_v2_vm":                     resource.TypeTPUV2VM,
 		"google_vertex_ai_endpoint":            resource.TypeVertexAIEndpoint,
 		"google_workflows_workflow":            resource.TypeWorkflowsWorkflow,
 

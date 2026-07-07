@@ -106,6 +106,8 @@ const (
 	TypeComposerEnvironment         Type = "google_composer_environment"
 	TypeDataflowJob                 Type = "google_dataflow_job"
 	TypeDataprocCluster             Type = "google_dataproc_cluster"
+	TypeTPUNode                     Type = "google_tpu_node"
+	TypeTPUV2VM                     Type = "google_tpu_v2_vm"
 	TypeVertexAIEndpoint            Type = "google_vertex_ai_endpoint"
 	TypeWorkflowsWorkflow           Type = "google_workflows_workflow"
 

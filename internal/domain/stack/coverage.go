@@ -114,6 +114,8 @@ var ResourceMapping = map[resource.Type]StackType{
 	resource.TypeComposerEnvironment:         StackTypeMessaging,   // Workflow orchestration consolidates
 	resource.TypeDataflowJob:                 StackTypePassthrough, // Data processing jobs stay explicit
 	resource.TypeDataprocCluster:             StackTypePassthrough, // Spark clusters stay explicit
+	resource.TypeTPUNode:                     StackTypePassthrough, // Accelerator jobs stay explicit
+	resource.TypeTPUV2VM:                     StackTypePassthrough, // Accelerator VMs stay explicit
 	resource.TypeVertexAIEndpoint:            StackTypePassthrough, // ML inference endpoints stay explicit
 	resource.TypeWorkflowsWorkflow:           StackTypeMessaging,   // Workflows consolidate with event orchestration
 
