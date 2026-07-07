@@ -344,6 +344,7 @@ func mapAzureTerraformType(tfType string) resource.Type {
 		"azurerm_eventhub":             resource.TypeEventHub,
 		"azurerm_eventhub_namespace":   resource.TypeEventHub,
 		"azurerm_eventgrid_topic":      resource.TypeEventGrid,
+		"azurerm_iothub":               resource.TypeAzureIoTHub,
 		"azurerm_logic_app_workflow":   resource.TypeLogicApp,
 	}
 

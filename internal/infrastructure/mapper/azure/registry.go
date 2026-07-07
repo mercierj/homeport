@@ -69,5 +69,6 @@ func RegisterAll(registry MapperRegistrar) {
 	registry.Register(messaging.NewServiceBusQueueMapper())
 	registry.Register(messaging.NewEventHubMapper())
 	registry.Register(messaging.NewEventGridMapper())
+	registry.Register(messaging.NewIoTHubMapper())
 	registry.Register(messaging.NewLogicAppMapper())
 }

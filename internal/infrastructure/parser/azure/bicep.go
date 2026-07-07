@@ -471,6 +471,7 @@ func mapBicepTypeToResourceType(bicepType string) resource.Type {
 		"microsoft.servicebus/namespaces/queues": resource.TypeServiceBusQueue,
 		"microsoft.eventhub/namespaces":          resource.TypeEventHub,
 		"microsoft.eventgrid/topics":             resource.TypeEventGrid,
+		"microsoft.devices/iothubs":              resource.TypeAzureIoTHub,
 		"microsoft.logic/workflows":              resource.TypeLogicApp,
 	}
 

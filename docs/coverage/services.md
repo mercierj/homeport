@@ -133,7 +133,7 @@
 | azure | Event Hubs | full | azurerm_eventhub |
 | azure | Foundry/OpenAI | full | azurerm_cognitive_account |
 | azure | Front Door | full | azurerm_frontdoor |
-| azure | IoT Hub | missing |  |
+| azure | IoT Hub | full | azurerm_iothub |
 | azure | Key Vault | mapped | azurerm_key_vault |
 | azure | Log Analytics | missing |  |
 | azure | Logic Apps | guided | azurerm_logic_app_workflow |

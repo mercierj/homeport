@@ -279,6 +279,7 @@ func mapARMTypeToResourceType(armType string) resource.Type {
 		"microsoft.servicebus/namespaces": resource.TypeServiceBus,
 		"microsoft.eventhub/namespaces":   resource.TypeEventHub,
 		"microsoft.eventgrid/topics":      resource.TypeEventGrid,
+		"microsoft.devices/iothubs":       resource.TypeAzureIoTHub,
 		"microsoft.logic/workflows":       resource.TypeLogicApp,
 	}
 

@@ -289,6 +289,7 @@ var CategoryMapping = map[Type]Category{
 	TypeServiceBusQueue: CategoryQueue,
 	TypeEventHub:        CategoryStream,
 	TypeEventGrid:       CategoryPubSub,
+	TypeAzureIoTHub:     CategoryPubSub,
 	TypeLogicApp:        CategoryServerless,
 }
 

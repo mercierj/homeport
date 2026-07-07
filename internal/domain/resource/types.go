@@ -215,6 +215,7 @@ const (
 	TypeServiceBusQueue Type = "azurerm_servicebus_queue"
 	TypeEventHub        Type = "azurerm_eventhub"
 	TypeEventGrid       Type = "azurerm_eventgrid_topic"
+	TypeAzureIoTHub     Type = "azurerm_iothub"
 	TypeLogicApp        Type = "azurerm_logic_app_workflow"
 )
 

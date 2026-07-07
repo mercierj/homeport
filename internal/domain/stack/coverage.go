@@ -216,6 +216,7 @@ var ResourceMapping = map[resource.Type]StackType{
 	resource.TypeServiceBusQueue:  StackTypeMessaging,   // Queues consolidate
 	resource.TypeEventHub:         StackTypeMessaging,   // Event Hubs consolidate
 	resource.TypeEventGrid:        StackTypeMessaging,   // Event Grid consolidates
+	resource.TypeAzureIoTHub:      StackTypeMessaging,   // IoT topics consolidate with MQTT brokers
 	resource.TypeLogicApp:         StackTypeMessaging,   // Logic Apps consolidate (workflow/integration)
 	resource.TypeAzureDataFactory: StackTypeMessaging,   // Pipelines consolidate with workflow orchestration
 	resource.TypeAzureDatabricks:  StackTypePassthrough, // Spark workspaces stay individual
