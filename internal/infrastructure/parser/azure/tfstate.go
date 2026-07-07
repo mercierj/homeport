@@ -308,6 +308,7 @@ func mapAzureTerraformType(tfType string) resource.Type {
 		"azurerm_storage_share":     resource.TypeAzureFiles,
 
 		// Database
+		"azurerm_search_service":             resource.TypeAzureAISearch,
 		"azurerm_mssql_database":             resource.TypeAzureSQL,
 		"azurerm_sql_database":               resource.TypeAzureSQL,
 		"azurerm_postgresql_flexible_server": resource.TypeAzurePostgres,
@@ -345,9 +346,9 @@ func mapAzureTerraformType(tfType string) resource.Type {
 
 // TerraformState represents a Terraform state file.
 type TerraformState struct {
-	Version          int                   `json:"version"`
-	TerraformVersion string                `json:"terraform_version"`
-	Resources        []StateResource       `json:"resources"`
+	Version          int                    `json:"version"`
+	TerraformVersion string                 `json:"terraform_version"`
+	Resources        []StateResource        `json:"resources"`
 	Outputs          map[string]StateOutput `json:"outputs,omitempty"`
 }
 

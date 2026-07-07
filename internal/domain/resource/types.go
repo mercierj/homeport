@@ -179,6 +179,7 @@ const (
 	TypeAzureFiles       Type = "azurerm_storage_share"
 
 	// Azure Database
+	TypeAzureAISearch Type = "azurerm_search_service"
 	TypeAzureSQL      Type = "azurerm_mssql_database"
 	TypeAzurePostgres Type = "azurerm_postgresql_flexible_server"
 	TypeAzureMySQL    Type = "azurerm_mysql_flexible_server"

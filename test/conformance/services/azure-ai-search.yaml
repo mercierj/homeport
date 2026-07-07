@@ -1,0 +1,17 @@
+provider: azure
+service: AI Search
+checks:
+  discover: GOCACHE=/private/tmp/exit-gafam-go-build go test ./internal/infrastructure/mapper/azure/database -run TestAISearchConformanceManagedAToZ
+  cost: GOCACHE=/private/tmp/exit-gafam-go-build go test ./internal/infrastructure/mapper/azure/database -run TestAISearchConformanceManagedAToZ
+  provision: GOCACHE=/private/tmp/exit-gafam-go-build go test ./internal/infrastructure/mapper/azure/database -run TestAISearchConformanceManagedAToZ
+  migrate: GOCACHE=/private/tmp/exit-gafam-go-build go test ./internal/infrastructure/mapper/azure/database -run TestAISearchConformanceManagedAToZ
+  api_compat: GOCACHE=/private/tmp/exit-gafam-go-build go test ./internal/infrastructure/mapper/azure/database -run TestAISearchConformanceManagedAToZ
+  env_dns: GOCACHE=/private/tmp/exit-gafam-go-build go test ./internal/infrastructure/mapper/azure/database -run TestAISearchConformanceManagedAToZ
+  ha: GOCACHE=/private/tmp/exit-gafam-go-build go test ./internal/infrastructure/mapper/azure/database -run TestAISearchConformanceManagedAToZ
+  backup: GOCACHE=/private/tmp/exit-gafam-go-build go test ./internal/infrastructure/mapper/azure/database -run TestAISearchConformanceManagedAToZ
+  validate: GOCACHE=/private/tmp/exit-gafam-go-build go test ./internal/infrastructure/mapper/azure/database -run TestAISearchConformanceManagedAToZ
+  cutover: GOCACHE=/private/tmp/exit-gafam-go-build go test ./internal/infrastructure/mapper/azure/database -run TestAISearchConformanceManagedAToZ
+  rollback: GOCACHE=/private/tmp/exit-gafam-go-build go test ./internal/infrastructure/mapper/azure/database -run TestAISearchConformanceManagedAToZ
+evidence:
+  target: OpenSearch
+  app_change_mode: generated_patch

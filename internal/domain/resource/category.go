@@ -255,6 +255,7 @@ var CategoryMapping = map[Type]Category{
 	TypeAzureFiles:       CategoryFileStorage,
 
 	// Azure Database
+	TypeAzureAISearch: CategoryNoSQLDatabase,
 	TypeAzureSQL:      CategorySQLDatabase,
 	TypeAzurePostgres: CategorySQLDatabase,
 	TypeAzureMySQL:    CategorySQLDatabase,

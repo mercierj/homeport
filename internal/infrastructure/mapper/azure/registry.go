@@ -33,6 +33,7 @@ func RegisterAll(registry MapperRegistrar) {
 	registry.Register(storage.NewFilesMapper())
 
 	// Database mappers
+	registry.Register(database.NewAISearchMapper())
 	registry.Register(database.NewAzureSQLMapper())
 	registry.Register(database.NewPostgresMapper())
 	registry.Register(database.NewMySQLMapper())

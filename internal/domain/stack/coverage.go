@@ -186,12 +186,13 @@ var ResourceMapping = map[resource.Type]StackType{
 	resource.TypeManagedDisk:      StackTypePassthrough, // Block storage stays with VMs
 	resource.TypeAzureFiles:       StackTypeStorage,     // File storage consolidates
 
-	// Azure Database (5 types)
-	resource.TypeAzureSQL:      StackTypeDatabase, // SQL Server consolidates
-	resource.TypeAzurePostgres: StackTypeDatabase, // PostgreSQL consolidates
-	resource.TypeAzureMySQL:    StackTypeDatabase, // MySQL consolidates
-	resource.TypeCosmosDB:      StackTypeDatabase, // NoSQL consolidates
-	resource.TypeAzureCache:    StackTypeCache,    // Cache consolidates
+	// Azure Database (6 types)
+	resource.TypeAzureAISearch: StackTypePassthrough, // Search indexes stay explicit
+	resource.TypeAzureSQL:      StackTypeDatabase,    // SQL Server consolidates
+	resource.TypeAzurePostgres: StackTypeDatabase,    // PostgreSQL consolidates
+	resource.TypeAzureMySQL:    StackTypeDatabase,    // MySQL consolidates
+	resource.TypeCosmosDB:      StackTypeDatabase,    // NoSQL consolidates
+	resource.TypeAzureCache:    StackTypeCache,       // Cache consolidates
 
 	// Azure Networking (6 types) - All passthrough
 	resource.TypeAzureLB:    StackTypePassthrough, // Load balancers stay individual
