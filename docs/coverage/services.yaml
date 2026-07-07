@@ -1967,13 +1967,24 @@ services:
     service: Error Reporting
     category: observability
     source_api: clouderrorreporting
-    resource_types: []
+    resource_types:
+      - google_error_reporting_service
     terraform_resource_types: []
     target: Sentry
-    api_compatibility_strategy: route application errors into open error tracking
-    impossibility_notes: Error Reporting grouping semantics are provider-specific
-    status: missing
-    blocker: not modeled yet
+    api_compatibility_strategy: generated_patch
+    manual_steps_resolved: true
+    discover: true
+    cost: true
+    provision: true
+    migrate: true
+    api_compat: true
+    env_dns: true
+    ha: true
+    backup: true
+    validate: true
+    cutover: true
+    rollback: true
+    status: full
   - provider: gcp
     service: Profiler
     category: observability

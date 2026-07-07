@@ -229,6 +229,9 @@ func (p *TFStateParser) convertResource(stateRes StateResource, instance Resourc
 	}
 
 	resourceType := mapGCPTerraformType(stateRes.Type)
+	if stateRes.Type == "google_project_service" {
+		resourceType = mapGCPProjectServiceResource(instance.Attributes["service"], resourceType)
+	}
 	res := resource.NewAWSResource(resourceID, name, resourceType)
 
 	if selfLink, ok := instance.Attributes["self_link"].(string); ok {
@@ -365,6 +368,13 @@ func mapGCPTerraformType(tfType string) resource.Type {
 		return resType
 	}
 	return resource.Type(tfType)
+}
+
+func mapGCPProjectServiceResource(service interface{}, fallback resource.Type) resource.Type {
+	if serviceName, ok := service.(string); ok && strings.EqualFold(serviceName, "clouderrorreporting.googleapis.com") {
+		return resource.TypeErrorReportingService
+	}
+	return fallback
 }
 
 // TerraformState represents a Terraform state file.

@@ -199,6 +199,9 @@ func (p *DeploymentManagerParser) parseDeploymentFile(path string, infra *resour
 func (p *DeploymentManagerParser) convertResource(dmRes DMResource, sourcePath string) *resource.Resource {
 	resourceID := dmRes.Name
 	resourceType := mapDMTypeToResourceType(dmRes.Type)
+	if strings.EqualFold(dmRes.Type, "serviceusage.v1.service") {
+		resourceType = mapGCPProjectServiceResource(dmRes.Properties["name"], resourceType)
+	}
 
 	res := resource.NewAWSResource(resourceID, dmRes.Name, resourceType)
 	res.Config = dmRes.Properties

@@ -226,6 +226,7 @@ var CategoryMapping = map[Type]Category{
 	TypeCloudMonitoringAlertPolicy: CategoryMonitoring,
 	TypeCloudMonitoringDashboard:   CategoryMonitoring,
 	TypeCloudTraceService:          CategoryTracing,
+	TypeErrorReportingService:      CategoryMonitoring,
 
 	// ─────────────────────────────────────────────────────
 	// Azure Resource Mappings (Complete)

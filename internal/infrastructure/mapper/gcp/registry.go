@@ -77,4 +77,5 @@ func RegisterAll(registry MapperRegistrar) {
 	registry.Register(observability.NewCloudMonitoringAlertPolicyMapper())
 	registry.Register(observability.NewCloudMonitoringDashboardMapper())
 	registry.Register(observability.NewCloudTraceMapper())
+	registry.Register(observability.NewErrorReportingMapper())
 }

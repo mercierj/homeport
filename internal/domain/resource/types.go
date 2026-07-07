@@ -150,6 +150,7 @@ const (
 	TypeCloudMonitoringAlertPolicy Type = "google_monitoring_alert_policy"
 	TypeCloudMonitoringDashboard   Type = "google_monitoring_dashboard"
 	TypeCloudTraceService          Type = "google_project_service"
+	TypeErrorReportingService      Type = "google_error_reporting_service"
 
 	// ─────────────────────────────────────────────────────
 	// Azure Resource Types
