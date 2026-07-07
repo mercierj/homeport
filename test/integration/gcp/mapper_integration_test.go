@@ -88,17 +88,15 @@ func TestGCSToMinIO_WithVersioning(t *testing.T) {
 		t.Fatalf("Failed to map: %v", err)
 	}
 
-	// Should have manual step for versioning
-	hasVersioningStep := false
-	for _, step := range result.ManualSteps {
-		if containsString(step, "versioning") || containsString(step, "version") {
-			hasVersioningStep = true
-			break
-		}
+	if len(result.ManualSteps) != 0 {
+		t.Fatalf("manual steps = %#v, want generated versioning config", result.ManualSteps)
 	}
-
-	if !hasVersioningStep {
-		t.Error("Expected manual step for versioning configuration")
+	versioningScript, ok := result.Scripts["configure_versioning.sh"]
+	if !ok {
+		t.Fatal("missing generated versioning script")
+	}
+	if !containsString(string(versioningScript), "mc version enable local/versioned-bucket") {
+		t.Fatalf("unexpected versioning script:\n%s", versioningScript)
 	}
 }
 

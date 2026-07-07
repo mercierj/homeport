@@ -596,11 +596,14 @@ func TestMapperIntegration_MappingResultStructure(t *testing.T) {
 			}
 		}
 
-		// Verify ManualSteps
-		if len(result.ManualSteps) == 0 {
-			t.Error("expected manual steps")
-		} else {
-			t.Logf("Manual steps: %d", len(result.ManualSteps))
+		// Verify complex resources stay generated, not manual.
+		if len(result.ManualSteps) != 0 {
+			t.Fatalf("manual steps = %#v, want generated database migration", result.ManualSteps)
+		}
+		for _, script := range []string{"migrate_database.sh", "validate_database.sh", "backup_database.sh", "cutover_database.sh"} {
+			if _, ok := result.Scripts[script]; !ok {
+				t.Fatalf("missing generated script %s", script)
+			}
 		}
 
 		// Verify Labels
