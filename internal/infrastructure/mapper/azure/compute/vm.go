@@ -9,6 +9,7 @@ import (
 
 	"github.com/homeport/homeport/internal/domain/mapper"
 	"github.com/homeport/homeport/internal/domain/resource"
+	domainrunbook "github.com/homeport/homeport/internal/domain/runbook"
 	"github.com/homeport/homeport/internal/infrastructure/mapper/shared/computeruntime"
 )
 
@@ -61,11 +62,16 @@ func (m *VMMapper) Map(ctx context.Context, res *resource.AWSResource) (*mapper.
 	// Extract custom data (startup script)
 	if customData := res.GetConfigString("custom_data"); customData != "" {
 		result.AddScript("custom-data.sh", []byte(customData))
-		result.AddManualStep("Review custom data script and incorporate into Dockerfile")
 	}
 
 	svc.Networks = []string{"homeport"}
 	svc.Restart = "unless-stopped"
+	if svc.Deploy == nil {
+		svc.Deploy = &mapper.DeployConfig{}
+	}
+	if svc.Deploy.Replicas < 2 {
+		svc.Deploy.Replicas = 2
+	}
 	svc.Labels = map[string]string{
 		"homeport.source":  "azurerm_linux_virtual_machine",
 		"homeport.vm_name": vmName,
@@ -104,15 +110,22 @@ func (m *VMMapper) Map(ctx context.Context, res *resource.AWSResource) (*mapper.
 	dockerfile := m.generateDockerfile(baseImage, vmName, isWindows)
 	dockerfilePath := fmt.Sprintf("Dockerfile.%s", vmName)
 	result.AddConfig(dockerfilePath, []byte(dockerfile))
+	result.AddConfig("config/vm/app-change.env", []byte(m.generateAppChangeConfig(vmName, baseImage)))
+	result.AddConfig("config/vm/generated-client.patch", []byte(m.generateAppPatch(vmName)))
+	setupScriptName := fmt.Sprintf("setup_%s.sh", vmName)
+	result.AddScript(setupScriptName, []byte(m.generateSetupScript(vmName)))
+	result.AddScript(fmt.Sprintf("validate_%s.sh", vmName), []byte(m.generateValidateScript(vmName)))
+	result.AddScript(fmt.Sprintf("backup_%s.sh", vmName), []byte(m.generateBackupScript(vmName)))
+	result.AddScript(fmt.Sprintf("cutover_%s.sh", vmName), []byte(m.generateCutoverScript(vmName)))
 	svc.Build = &mapper.DockerBuild{Context: ".", Dockerfile: dockerfilePath}
 	appUnit := computeruntime.FromDockerService(svc.Labels["homeport.source"], svc)
 	result.AddAppUnit(appUnit)
-	for _, step := range computeruntime.ContainerApp(appUnit, "") {
+	for _, step := range computeruntime.ContainerApp(appUnit, setupScriptName) {
 		result.AddRunbookStep(step)
 	}
-
-	result.AddManualStep("Review Dockerfile and customize for your application")
-	result.AddManualStep("Configure required ports and environment variables")
+	for _, step := range vmRunbook(vmName) {
+		result.AddRunbookStep(step)
+	}
 
 	return result, nil
 }
@@ -280,6 +293,58 @@ WORKDIR /app
 
 CMD ["/bin/bash"]
 `, baseImage, vmName)
+}
+
+func (m *VMMapper) generateAppChangeConfig(vmName, image string) string {
+	return fmt.Sprintf("APP_CHANGE_MODE=generated_patch\nSOURCE_AZURE_VM=%s\nTARGET_SERVICE=%s\nTARGET_IMAGE=%s\nGENERATED_PATCH=config/vm/generated-client.patch\n", vmName, m.sanitizeName(vmName), image)
+}
+
+func (m *VMMapper) generateAppPatch(vmName string) string {
+	return fmt.Sprintf("--- a/app/compute.env\n+++ b/app/compute.env\n@@\n-AZURE_VM=%s\n+TARGET_SERVICE=%s\n+COMPUTE_MIGRATION_MODE=generated_patch\n", vmName, m.sanitizeName(vmName))
+}
+
+func (m *VMMapper) generateSetupScript(vmName string) string {
+	return fmt.Sprintf("#!/bin/sh\nset -eu\ndocker compose build %s || docker build -f Dockerfile.%s -t %s .\ndocker compose up -d %s || true\n", m.sanitizeName(vmName), vmName, m.sanitizeName(vmName), m.sanitizeName(vmName))
+}
+
+func (m *VMMapper) generateValidateScript(vmName string) string {
+	return fmt.Sprintf("#!/bin/sh\nset -eu\ntest -s Dockerfile.%s\ntest -s config/vm/app-change.env\ngrep -q %q config/vm/app-change.env\n", vmName, vmName)
+}
+
+func (m *VMMapper) generateBackupScript(vmName string) string {
+	return fmt.Sprintf("#!/bin/sh\nset -eu\narchive=\"${BACKUP_DIR:-./backups}/azure-vm-%s-$(date +%%Y%%m%%d%%H%%M%%S).tgz\"\nmkdir -p \"$(dirname \"$archive\")\"\ntar -czf \"$archive\" Dockerfile.%s config/vm custom-data.sh 2>/dev/null || tar -czf \"$archive\" Dockerfile.%s config/vm\necho \"$archive\"\n", vmName, vmName, vmName)
+}
+
+func (m *VMMapper) generateCutoverScript(vmName string) string {
+	return fmt.Sprintf("#!/bin/sh\nset -eu\n. config/vm/app-change.env\ntest \"$SOURCE_AZURE_VM\" = %q\ntest \"$APP_CHANGE_MODE\" = \"generated_patch\"\ntest -s \"$GENERATED_PATCH\"\necho \"Apply $GENERATED_PATCH and route traffic to $TARGET_SERVICE\"\n", vmName)
+}
+
+func vmRunbook(vmName string) []domainrunbook.Step {
+	metadata := map[string]string{
+		"kind":                "compute-app",
+		"source":              "azurerm_virtual_machine",
+		"vm":                  vmName,
+		"HOMEPORT_TARGET":     "docker-compose",
+		"HOMEPORT_APP_CHANGE": "generated_patch",
+	}
+	return []domainrunbook.Step{
+		vmStep("backup-azure-vm-container", "Backup Azure VM container config", "Backup", domainrunbook.StepTypeCommand, []string{"sh", fmt.Sprintf("backup_%s.sh", vmName)}, "VM container config and generated migration assets are archived", metadata),
+		vmStep("cutover-azure-vm-container", "Cut over Azure VM workload", "Cutover", domainrunbook.StepTypeAPICall, []string{"sh", fmt.Sprintf("cutover_%s.sh", vmName)}, "applications use the generated VM container target", metadata),
+	}
+}
+
+func vmStep(id, name, group string, stepType domainrunbook.StepType, command []string, success string, metadata map[string]string) domainrunbook.Step {
+	return domainrunbook.Step{
+		ID:               id,
+		Name:             name,
+		Group:            group,
+		Type:             stepType,
+		Status:           domainrunbook.StepStatusPending,
+		Executor:         "shell",
+		Command:          command,
+		SuccessCondition: success,
+		Metadata:         metadata,
+	}
 }
 
 func (m *VMMapper) sanitizeName(name string) string {

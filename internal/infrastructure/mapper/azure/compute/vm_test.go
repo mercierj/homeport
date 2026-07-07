@@ -2,10 +2,12 @@ package compute
 
 import (
 	"context"
+	"strings"
 	"testing"
 
 	"github.com/homeport/homeport/internal/domain/mapper"
 	"github.com/homeport/homeport/internal/domain/resource"
+	domainrunbook "github.com/homeport/homeport/internal/domain/runbook"
 )
 
 func TestNewVMMapper(t *testing.T) {
@@ -16,6 +18,74 @@ func TestNewVMMapper(t *testing.T) {
 	if m.ResourceType() != resource.TypeAzureVM {
 		t.Errorf("ResourceType() = %v, want %v", m.ResourceType(), resource.TypeAzureVM)
 	}
+}
+
+func TestVMConformanceManagedAToZ(t *testing.T) {
+	result, err := NewVMMapper().Map(context.Background(), managedVMFixture())
+	if err != nil {
+		t.Fatal(err)
+	}
+	if len(result.ManualSteps) != 0 {
+		t.Fatalf("manual steps = %#v, want generated Azure VM container migration", result.ManualSteps)
+	}
+	if result.DockerService.Deploy == nil || result.DockerService.Deploy.Replicas < 2 {
+		t.Fatalf("service does not provision HA VM container target: %#v", result.DockerService.Deploy)
+	}
+	for _, file := range []string{"Dockerfile.checkout-vm", "config/vm/app-change.env", "config/vm/generated-client.patch"} {
+		if _, ok := result.Configs[file]; !ok {
+			t.Fatalf("missing config %s", file)
+		}
+	}
+	appEnv := string(result.Configs["config/vm/app-change.env"])
+	for _, want := range []string{"APP_CHANGE_MODE=generated_patch", "SOURCE_AZURE_VM=checkout-vm", "TARGET_SERVICE=checkout-vm", "TARGET_IMAGE=ubuntu:22.04"} {
+		if !strings.Contains(appEnv, want) {
+			t.Fatalf("app-change env missing %q:\n%s", want, appEnv)
+		}
+	}
+	for _, file := range []string{"setup_checkout-vm.sh", "validate_checkout-vm.sh", "backup_checkout-vm.sh", "cutover_checkout-vm.sh"} {
+		if _, ok := result.Scripts[file]; !ok {
+			t.Fatalf("missing script %s", file)
+		}
+	}
+	for id, stepType := range map[string]domainrunbook.StepType{
+		"resolve-app-image":                 domainrunbook.StepTypeCommand,
+		"deploy-compose-app":                domainrunbook.StepTypeCommand,
+		"validate-app-health":               domainrunbook.StepTypeCommand,
+		"backup-azure-vm-container":         domainrunbook.StepTypeCommand,
+		"cutover-azure-vm-container":        domainrunbook.StepTypeAPICall,
+		"rollback-compute-source-authority": domainrunbook.StepTypeRollback,
+	} {
+		if !hasVMRunbookStep(result, id, stepType) {
+			t.Fatalf("missing %s runbook step: %#v", id, result.RunbookSteps)
+		}
+	}
+}
+
+func managedVMFixture() *resource.AWSResource {
+	return &resource.AWSResource{
+		ID:   "/subscriptions/demo/resourceGroups/rg/providers/Microsoft.Compute/virtualMachines/checkout-vm",
+		Type: resource.TypeAzureVM,
+		Name: "checkout-vm",
+		Config: map[string]interface{}{
+			"name": "checkout-vm",
+			"size": "Standard_D2s_v3",
+			"source_image_reference": map[string]interface{}{
+				"publisher": "Canonical",
+				"offer":     "UbuntuServer",
+				"sku":       "22_04-lts",
+			},
+			"custom_data": "#!/bin/sh\necho boot\n",
+		},
+	}
+}
+
+func hasVMRunbookStep(result *mapper.MappingResult, id string, stepType domainrunbook.StepType) bool {
+	for _, step := range result.RunbookSteps {
+		if step.ID == id && step.Type == stepType {
+			return true
+		}
+	}
+	return false
 }
 
 func TestVMMapper_ResourceType(t *testing.T) {
