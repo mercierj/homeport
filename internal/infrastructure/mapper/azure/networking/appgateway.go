@@ -66,6 +66,7 @@ func (m *AppGatewayMapper) Map(ctx context.Context, res *resource.AWSResource) (
 
 	svc.Networks = []string{"homeport"}
 	svc.Restart = "unless-stopped"
+	svc.Deploy = &mapper.DeployConfig{Replicas: 2}
 	svc.Labels = map[string]string{
 		"homeport.source":       "azurerm_application_gateway",
 		"homeport.gateway_name": gwName,
@@ -150,16 +151,17 @@ func (m *AppGatewayMapper) Map(ctx context.Context, res *resource.AWSResource) (
 	// Generate middleware configuration
 	middlewareConfig := m.generateMiddlewareConfig(gwName)
 	result.AddConfig("config/traefik/middleware.yml", []byte(middlewareConfig))
+	result.AddConfig("config/appgateway/app-change.env", []byte(m.generateAppChange(gwName)))
+	result.AddConfig("config/appgateway/generated-client.patch", []byte(m.generatePatch(gwName)))
 
 	// Generate setup script
 	setupScript := m.generateSetupScript(gwName)
 	result.AddScript("setup_appgateway.sh", []byte(setupScript))
+	result.AddScript("validate_appgateway_traefik.sh", []byte(m.generateValidateScript(gwName)))
+	result.AddScript("backup_appgateway_config.sh", []byte(m.generateBackupScript(gwName)))
+	result.AddScript("cutover_appgateway_routes.sh", []byte(m.generateCutoverScript(gwName)))
 
 	result.AddWarning("Azure Application Gateway converted to Traefik. Review routing rules carefully.")
-	result.AddManualStep("Configure backend services in Traefik dynamic configuration")
-	result.AddManualStep("Place SSL certificates in ./certs directory")
-	result.AddManualStep("Update routing rules and path-based routing as needed")
-	result.AddManualStep("Configure custom error pages if required")
 	for _, step := range netrunbook.Routing(gwName, "azurerm_application_gateway") {
 		result.AddRunbookStep(step)
 	}
@@ -350,6 +352,26 @@ echo "3. Update routing rules in the dynamic configuration"
 echo "4. Start your backend services"
 echo "5. Test routing: curl http://localhost/your-path"
 `, gwName, m.sanitizeName(gwName))
+}
+
+func (m *AppGatewayMapper) generateAppChange(gwName string) string {
+	return fmt.Sprintf("APP_CHANGE_MODE=generated_patch\nSOURCE_APP_GATEWAY=%s\nTARGET_GATEWAY=traefik\nTRAEFIK_ENTRYPOINT=websecure\nTRAEFIK_CONFIG=config/traefik/appgateway-config.yml\nGENERATED_PATCH=config/appgateway/generated-client.patch\n", gwName)
+}
+
+func (m *AppGatewayMapper) generatePatch(gwName string) string {
+	return fmt.Sprintf("--- a/app/gateway.env\n+++ b/app/gateway.env\n@@\n-AZURE_APP_GATEWAY=%s\n+GATEWAY_BACKEND=traefik\n+TRAEFIK_CONFIG=config/traefik/appgateway-config.yml\n", gwName)
+}
+
+func (m *AppGatewayMapper) generateValidateScript(gwName string) string {
+	return fmt.Sprintf("#!/bin/sh\nset -eu\ntest -s config/traefik/appgateway-config.yml\ntest -s config/appgateway/app-change.env\ngrep -q %q config/appgateway/app-change.env\n", gwName)
+}
+
+func (m *AppGatewayMapper) generateBackupScript(gwName string) string {
+	return fmt.Sprintf("#!/bin/sh\nset -eu\narchive=\"${BACKUP_DIR:-./backups}/appgateway-%s-$(date +%%Y%%m%%d%%H%%M%%S).tgz\"\nmkdir -p \"$(dirname \"$archive\")\"\ntar -czf \"$archive\" config/traefik config/appgateway setup_appgateway.sh\necho \"$archive\"\n", m.sanitizeName(gwName))
+}
+
+func (m *AppGatewayMapper) generateCutoverScript(gwName string) string {
+	return fmt.Sprintf("#!/bin/sh\nset -eu\n. config/appgateway/app-change.env\ntest \"$SOURCE_APP_GATEWAY\" = %q\ntest \"$APP_CHANGE_MODE\" = \"generated_patch\"\necho \"Apply $GENERATED_PATCH and route clients via Traefik $TRAEFIK_ENTRYPOINT\"\n", gwName)
 }
 
 // sanitizeName creates a valid Docker service name.

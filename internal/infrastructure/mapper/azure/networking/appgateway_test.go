@@ -2,10 +2,12 @@ package networking
 
 import (
 	"context"
+	"strings"
 	"testing"
 
 	"github.com/homeport/homeport/internal/domain/mapper"
 	"github.com/homeport/homeport/internal/domain/resource"
+	domainrunbook "github.com/homeport/homeport/internal/domain/runbook"
 )
 
 func TestNewAppGatewayMapper(t *testing.T) {
@@ -16,6 +18,65 @@ func TestNewAppGatewayMapper(t *testing.T) {
 	if m.ResourceType() != resource.TypeAppGateway {
 		t.Errorf("ResourceType() = %v, want %v", m.ResourceType(), resource.TypeAppGateway)
 	}
+}
+
+func TestAppGatewayConformanceManagedAToZ(t *testing.T) {
+	result, err := NewAppGatewayMapper().Map(context.Background(), managedAppGatewayFixture())
+	if err != nil {
+		t.Fatal(err)
+	}
+	if len(result.ManualSteps) != 0 {
+		t.Fatalf("manual steps = %#v, want generated App Gateway migration", result.ManualSteps)
+	}
+	if result.DockerService.Image != "traefik:v2.10" || result.DockerService.Deploy == nil || result.DockerService.Deploy.Replicas < 2 {
+		t.Fatalf("service does not provision HA Traefik target: %#v", result.DockerService)
+	}
+	for _, file := range []string{"config/traefik/appgateway-config.yml", "config/traefik/middleware.yml", "config/appgateway/app-change.env", "config/appgateway/generated-client.patch"} {
+		if _, ok := result.Configs[file]; !ok {
+			t.Fatalf("missing config %s", file)
+		}
+	}
+	appEnv := string(result.Configs["config/appgateway/app-change.env"])
+	for _, want := range []string{"APP_CHANGE_MODE=generated_patch", "SOURCE_APP_GATEWAY=checkout-gateway", "TRAEFIK_ENTRYPOINT=websecure"} {
+		if !strings.Contains(appEnv, want) {
+			t.Fatalf("app-change env missing %q:\n%s", want, appEnv)
+		}
+	}
+	for _, file := range []string{"setup_appgateway.sh", "validate_appgateway_traefik.sh", "backup_appgateway_config.sh", "cutover_appgateway_routes.sh"} {
+		if _, ok := result.Scripts[file]; !ok {
+			t.Fatalf("missing script %s", file)
+		}
+	}
+	for id, stepType := range map[string]domainrunbook.StepType{
+		"render-traefik-routes":             domainrunbook.StepTypeCommand,
+		"validate-route-table":              domainrunbook.StepTypeCommand,
+		"block-unsupported-route-features":  domainrunbook.StepTypeInput,
+		"rollback-routing-source-authority": domainrunbook.StepTypeRollback,
+	} {
+		if !hasAppGatewayRunbookStep(result, id, stepType) {
+			t.Fatalf("missing %s runbook step: %#v", id, result.RunbookSteps)
+		}
+	}
+}
+
+func managedAppGatewayFixture() *resource.AWSResource {
+	return &resource.AWSResource{
+		ID:   "/subscriptions/demo/resourceGroups/rg/providers/Microsoft.Network/applicationGateways/checkout-gateway",
+		Type: resource.TypeAppGateway,
+		Name: "checkout-gateway",
+		Config: map[string]interface{}{
+			"name": "checkout-gateway",
+		},
+	}
+}
+
+func hasAppGatewayRunbookStep(result *mapper.MappingResult, id string, stepType domainrunbook.StepType) bool {
+	for _, step := range result.RunbookSteps {
+		if step.ID == id && step.Type == stepType {
+			return true
+		}
+	}
+	return false
 }
 
 func TestAppGatewayMapper_ResourceType(t *testing.T) {
