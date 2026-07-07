@@ -2,11 +2,54 @@ package storage
 
 import (
 	"context"
+	"strings"
 	"testing"
 
 	"github.com/homeport/homeport/internal/domain/mapper"
 	"github.com/homeport/homeport/internal/domain/resource"
+	domainrunbook "github.com/homeport/homeport/internal/domain/runbook"
 )
+
+func TestGCSConformanceManagedAToZ(t *testing.T) {
+	result, err := NewGCSMapper().Map(context.Background(), managedGCSFixture())
+	if err != nil {
+		t.Fatal(err)
+	}
+	if len(result.ManualSteps) != 0 {
+		t.Fatalf("manual steps = %#v, want generated Cloud Storage migration", result.ManualSteps)
+	}
+	if result.DockerService.Image != "minio/minio:latest" || result.DockerService.Deploy == nil || result.DockerService.Deploy.Replicas < 2 {
+		t.Fatalf("service does not provision HA MinIO target: %#v", result.DockerService)
+	}
+	for _, file := range []string{"config/minio/app-change.env", "config/minio/assets-cors.json", "config/minio/encryption.env"} {
+		if _, ok := result.Configs[file]; !ok {
+			t.Fatalf("missing config %s", file)
+		}
+	}
+	appEnv := string(result.Configs["config/minio/app-change.env"])
+	for _, want := range []string{"APP_CHANGE_MODE=generated_patch", "SOURCE_GCS_BUCKET=assets", "TARGET_BUCKET=assets", "HOMEPORT_STORAGE_ENDPOINT=http://minio:9000"} {
+		if !strings.Contains(appEnv, want) {
+			t.Fatalf("app-change env missing %q:\n%s", want, appEnv)
+		}
+	}
+	for _, file := range []string{"setup_minio.sh", "configure_versioning.sh", "configure_cors.sh", "configure_encryption.sh", "configure_website.sh", "configure_retention.sh", "configure_audit_logging.sh", "validate_gcs_api.sh", "backup_gcs_config.sh", "cutover_gcs_clients.sh"} {
+		if _, ok := result.Scripts[file]; !ok {
+			t.Fatalf("missing script %s", file)
+		}
+	}
+	for id, stepType := range map[string]domainrunbook.StepType{
+		"provision-minio-bucket":         domainrunbook.StepTypeCommand,
+		"estimate-object-source":         domainrunbook.StepTypeCommand,
+		"sync-objects-to-minio":          domainrunbook.StepTypeCommand,
+		"verify-object-migration":        domainrunbook.StepTypeCommand,
+		"validate-object-api":            domainrunbook.StepTypeCommand,
+		"rollback-keep-source-authority": domainrunbook.StepTypeRollback,
+	} {
+		if !hasGCSRunbookStep(result, id, stepType) {
+			t.Fatalf("missing %s runbook step: %#v", id, result.RunbookSteps)
+		}
+	}
+}
 
 func TestNewGCSMapper(t *testing.T) {
 	m := NewGCSMapper()
@@ -16,6 +59,37 @@ func TestNewGCSMapper(t *testing.T) {
 	if m.ResourceType() != resource.TypeGCSBucket {
 		t.Errorf("ResourceType() = %v, want %v", m.ResourceType(), resource.TypeGCSBucket)
 	}
+}
+
+func managedGCSFixture() *resource.AWSResource {
+	return &resource.AWSResource{
+		ID:   "google_storage_bucket.assets",
+		Type: resource.TypeGCSBucket,
+		Name: "assets",
+		Config: map[string]interface{}{
+			"name":                        "assets",
+			"location":                    "EU",
+			"storage_class":               "STANDARD",
+			"public_access_prevention":    "enforced",
+			"uniform_bucket_level_access": map[string]interface{}{"enabled": true},
+			"versioning":                  map[string]interface{}{"enabled": true},
+			"encryption":                  map[string]interface{}{"default_kms_key_name": "projects/demo/locations/eu/keyRings/main/cryptoKeys/storage"},
+			"website":                     map[string]interface{}{"main_page_suffix": "index.html"},
+			"retention_policy":            map[string]interface{}{"retention_period": float64(86400)},
+			"logging":                     map[string]interface{}{"log_bucket": "assets-logs"},
+			"cors":                        []interface{}{map[string]interface{}{"origin": []interface{}{"*"}, "method": []interface{}{"GET"}, "response_header": []interface{}{"Content-Type"}, "max_age_seconds": float64(3600)}},
+			"lifecycle_rule":              []interface{}{map[string]interface{}{"action": map[string]interface{}{"type": "Delete"}, "condition": map[string]interface{}{"age": float64(30)}}},
+		},
+	}
+}
+
+func hasGCSRunbookStep(result *mapper.MappingResult, id string, stepType domainrunbook.StepType) bool {
+	for _, step := range result.RunbookSteps {
+		if step.ID == id && step.Type == stepType {
+			return true
+		}
+	}
+	return false
 }
 
 func TestGCSMapper_ResourceType(t *testing.T) {
@@ -132,16 +206,8 @@ func TestGCSMapper_Map(t *testing.T) {
 				if result == nil {
 					t.Fatal("Map() returned nil result")
 				}
-				// Should have manual step about versioning
-				hasVersioningStep := false
-				for _, step := range result.ManualSteps {
-					if containsGCS(step, "versioning") {
-						hasVersioningStep = true
-						break
-					}
-				}
-				if !hasVersioningStep {
-					t.Error("Expected manual step about versioning")
+				if _, ok := result.Scripts["configure_versioning.sh"]; !ok {
+					t.Error("Expected generated versioning script")
 				}
 			},
 		},

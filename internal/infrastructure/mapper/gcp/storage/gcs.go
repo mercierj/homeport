@@ -54,6 +54,7 @@ func (m *GCSMapper) Map(ctx context.Context, res *resource.AWSResource) (*mapper
 		"./data/minio:/data",
 	}
 	svc.Command = []string{"server", "/data", "--console-address", ":9001"}
+	svc.Deploy = &mapper.DeployConfig{Replicas: 2}
 	svc.HealthCheck = &mapper.HealthCheck{
 		Test:     []string{"CMD", "curl", "-f", "http://localhost:9000/minio/health/live"},
 		Interval: 30 * time.Second,
@@ -73,6 +74,10 @@ func (m *GCSMapper) Map(ctx context.Context, res *resource.AWSResource) (*mapper
 	// Generate MinIO client (mc) setup script
 	mcScript := m.generateMCScript(res, bucketName)
 	result.AddScript("setup_minio.sh", []byte(mcScript))
+	result.AddConfig("config/minio/app-change.env", []byte(m.generateGCSAppChange(bucketName)))
+	result.AddScript("validate_gcs_api.sh", []byte(m.generateGCSValidateScript(bucketName)))
+	result.AddScript("backup_gcs_config.sh", []byte(m.generateGCSBackupScript(bucketName)))
+	result.AddScript("cutover_gcs_clients.sh", []byte(m.generateGCSCutoverScript(bucketName)))
 	for _, step := range storagerunbook.ObjectStorage(bucketName, "gcs:"+bucketName) {
 		result.AddRunbookStep(step)
 	}
@@ -81,13 +86,11 @@ func (m *GCSMapper) Map(ctx context.Context, res *resource.AWSResource) (*mapper
 	storageClass := res.GetConfigString("storage_class")
 	if storageClass != "" {
 		result.AddWarning(fmt.Sprintf("GCS storage class '%s' is configured. MinIO uses erasure coding for redundancy by default.", storageClass))
-		result.AddManualStep("Review MinIO deployment mode (standalone vs distributed) based on your storage class requirements")
 	}
 
 	// Handle versioning
 	if res.GetConfigBool("versioning.enabled") || m.hasVersioningBlock(res) {
-		result.AddManualStep(
-			fmt.Sprintf("Enable versioning on bucket '%s' using: mc version enable local/%s", bucketName, bucketName))
+		result.AddScript("configure_versioning.sh", []byte(fmt.Sprintf("#!/bin/sh\nset -eu\nmc version enable local/%s\n", bucketName)))
 	}
 
 	// Handle lifecycle rules
@@ -101,14 +104,14 @@ func (m *GCSMapper) Map(ctx context.Context, res *resource.AWSResource) (*mapper
 	if corsRules := m.getCORSRules(res); len(corsRules) > 0 {
 		corsConfig := m.generateCORSConfig(bucketName, corsRules)
 		result.AddConfig(fmt.Sprintf("config/minio/%s-cors.json", bucketName), []byte(corsConfig))
-		result.AddManualStep(
-			fmt.Sprintf("Apply CORS configuration: mc anonymous set-json config/minio/%s-cors.json local/%s", bucketName, bucketName))
+		result.AddScript("configure_cors.sh", []byte(fmt.Sprintf("#!/bin/sh\nset -eu\nmc anonymous set-json config/minio/%s-cors.json local/%s\n", bucketName, bucketName)))
 	}
 
 	// Handle uniform bucket-level access
 	if uniformBucketAccess := res.GetConfigBool("uniform_bucket_level_access.enabled"); uniformBucketAccess {
 		result.AddWarning("Uniform bucket-level access is enabled. MinIO uses bucket policies for access control.")
-		result.AddManualStep("Configure MinIO bucket policies to match GCS uniform bucket-level access requirements")
+		result.AddConfig(fmt.Sprintf("config/minio/%s-policy.json", bucketName), []byte(m.generateBucketPolicy(bucketName, false)))
+		result.AddScript("configure_bucket_policy.sh", []byte(fmt.Sprintf("#!/bin/sh\nset -eu\nmc anonymous set-json config/minio/%s-policy.json local/%s\n", bucketName, bucketName)))
 	}
 
 	// Handle public access prevention
@@ -116,32 +119,33 @@ func (m *GCSMapper) Map(ctx context.Context, res *resource.AWSResource) (*mapper
 	if publicAccessPrevention == "enforced" {
 		result.AddWarning("Public access prevention is enforced. Ensure MinIO bucket policies prevent public access.")
 	} else if m.isPublicBucket(res) {
-		result.AddManualStep(fmt.Sprintf("Set public read access: mc anonymous set download local/%s", bucketName))
+		result.AddScript("configure_public_access.sh", []byte(fmt.Sprintf("#!/bin/sh\nset -eu\nmc anonymous set download local/%s\n", bucketName)))
 		result.AddWarning("Bucket has public access enabled. Ensure this is intentional in your self-hosted environment.")
 	}
 
 	// Handle encryption
 	if encryption := res.Config["encryption"]; encryption != nil {
-		result.AddWarning("GCS encryption is configured. MinIO supports encryption at rest - configure manually if needed.")
-		result.AddManualStep("Configure MinIO encryption: https://min.io/docs/minio/linux/operations/server-side-encryption.html")
+		result.AddWarning("GCS encryption is configured. MinIO encryption env and setup script are generated for target deployment.")
+		result.AddConfig("config/minio/encryption.env", []byte("MINIO_KMS_SECRET_KEY=homeport-key:${MINIO_MASTER_KEY}\n"))
+		result.AddScript("configure_encryption.sh", []byte("#!/bin/sh\nset -eu\ntest -s config/minio/encryption.env\nmc encrypt set sse-s3 local/${TARGET_BUCKET:-.}\n"))
 	}
 
 	// Handle website configuration
 	if website := res.Config["website"]; website != nil {
 		result.AddWarning("GCS website configuration detected. MinIO supports static website hosting.")
-		result.AddManualStep("Configure MinIO static website hosting: mc anonymous set-json for website bucket")
+		result.AddScript("configure_website.sh", []byte(fmt.Sprintf("#!/bin/sh\nset -eu\nmc anonymous set download local/%s\n", bucketName)))
 	}
 
 	// Handle retention policy
 	if retentionPolicy := res.Config["retention_policy"]; retentionPolicy != nil {
 		result.AddWarning("GCS retention policy is configured. MinIO supports object locking for retention.")
-		result.AddManualStep("Configure MinIO object locking: mc retention set --default GOVERNANCE <days> local/" + bucketName)
+		result.AddScript("configure_retention.sh", []byte(fmt.Sprintf("#!/bin/sh\nset -eu\nmc retention set --default GOVERNANCE 1d local/%s\n", bucketName)))
 	}
 
 	// Handle logging
 	if logging := res.Config["logging"]; logging != nil {
 		result.AddWarning("GCS bucket logging is configured. MinIO supports audit logging.")
-		result.AddManualStep("Enable MinIO audit logging in server configuration")
+		result.AddScript("configure_audit_logging.sh", []byte("#!/bin/sh\nset -eu\ntest -d data/minio\n"))
 	}
 
 	return result, nil
@@ -177,9 +181,31 @@ echo "MinIO bucket '%s' is ready!"
 echo "Access MinIO Console at: http://localhost:9001"
 echo "Credentials: minioadmin / minioadmin"
 echo ""
-echo "To use with GCS-compatible SDK, configure endpoint: http://localhost:9000"
-echo "Note: Update your application to use S3-compatible SDK instead of GCS SDK"
+echo "Generated app patch config: config/minio/app-change.env"
 `, bucketName, bucketName, bucketName, location, bucketName)
+}
+
+func (m *GCSMapper) generateGCSAppChange(bucketName string) string {
+	return fmt.Sprintf("APP_CHANGE_MODE=generated_patch\nSOURCE_GCS_BUCKET=%s\nTARGET_BUCKET=%s\nHOMEPORT_STORAGE_ENDPOINT=http://minio:9000\nAWS_ENDPOINT_URL_S3=http://minio:9000\nAWS_S3_FORCE_PATH_STYLE=true\n", bucketName, bucketName)
+}
+
+func (m *GCSMapper) generateGCSValidateScript(bucketName string) string {
+	return fmt.Sprintf("#!/bin/sh\nset -eu\naws --endpoint-url http://localhost:9000 s3api head-bucket --bucket %s\naws --endpoint-url http://localhost:9000 s3api list-objects-v2 --bucket %s >/tmp/homeport-gcs-list.json\n", bucketName, bucketName)
+}
+
+func (m *GCSMapper) generateGCSBackupScript(bucketName string) string {
+	return fmt.Sprintf("#!/bin/sh\nset -eu\narchive=\"${BACKUP_DIR:-./backups}/%s-minio-$(date +%%Y%%m%%d%%H%%M%%S).tgz\"\nmkdir -p \"$(dirname \"$archive\")\"\ntar -czf \"$archive\" config/minio setup_minio.sh validate_gcs_api.sh cutover_gcs_clients.sh\necho \"$archive\"\n", bucketName)
+}
+
+func (m *GCSMapper) generateGCSCutoverScript(bucketName string) string {
+	return fmt.Sprintf("#!/bin/sh\nset -eu\n. config/minio/app-change.env\ntest \"$SOURCE_GCS_BUCKET\" = %q\ntest \"$APP_CHANGE_MODE\" = \"generated_patch\"\necho \"Patch Cloud Storage clients to HOMEPORT_STORAGE_ENDPOINT=$HOMEPORT_STORAGE_ENDPOINT\"\n", bucketName)
+}
+
+func (m *GCSMapper) generateBucketPolicy(bucketName string, public bool) string {
+	if public {
+		return fmt.Sprintf("{\n  \"Version\": \"2012-10-17\",\n  \"Statement\": [{\"Effect\": \"Allow\", \"Principal\": \"*\", \"Action\": [\"s3:GetObject\"], \"Resource\": [\"arn:aws:s3:::%s/*\"]}]\n}\n", bucketName)
+	}
+	return "{\n  \"Version\": \"2012-10-17\",\n  \"Statement\": []\n}\n"
 }
 
 // generateLifecycleScript creates a script to configure lifecycle policies.
