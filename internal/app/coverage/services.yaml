@@ -2034,13 +2034,25 @@ services:
     service: Document AI
     category: ai/ml
     source_api: documentai
-    resource_types: []
+    resource_types:
+      - google_document_ai_processor
     terraform_resource_types: [google_document_ai_processor]
     target: Tesseract OCR
-    api_compatibility_strategy: replace document processors with open OCR/NLP pipelines
+    api_compatibility_strategy: generated_patch
     impossibility_notes: Document AI processor output parity is not guaranteed
-    status: missing
-    blocker: not modeled yet
+    manual_steps_resolved: true
+    discover: true
+    cost: true
+    provision: true
+    migrate: true
+    api_compat: true
+    env_dns: true
+    ha: true
+    backup: true
+    validate: true
+    cutover: true
+    rollback: true
+    status: full
   - provider: gcp
     service: Vision AI
     category: ai/ml

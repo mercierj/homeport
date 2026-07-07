@@ -182,6 +182,7 @@ var CategoryMapping = map[Type]Category{
 	TypeComposerEnvironment:         CategoryDevOps,
 	TypeDataflowJob:                 CategoryDevOps,
 	TypeDataprocCluster:             CategoryDevOps,
+	TypeDocumentAIProcessor:         CategoryCompute,
 	TypeTPUNode:                     CategoryCompute,
 	TypeTPUV2VM:                     CategoryCompute,
 	TypeVertexAIEndpoint:            CategoryCompute,
