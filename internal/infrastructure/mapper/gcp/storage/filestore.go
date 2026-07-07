@@ -9,7 +9,7 @@ import (
 
 	"github.com/homeport/homeport/internal/domain/mapper"
 	"github.com/homeport/homeport/internal/domain/resource"
-	"github.com/homeport/homeport/internal/infrastructure/mapper/shared/storagerunbook"
+	domainrunbook "github.com/homeport/homeport/internal/domain/runbook"
 )
 
 // FilestoreMapper converts GCP Filestore instances to NFS server containers.
@@ -102,9 +102,6 @@ func (m *FilestoreMapper) Map(ctx context.Context, res *resource.AWSResource) (*
 	// Generate NFS client mount instructions
 	mountScript := m.generateMountScript(serviceName, fileShareName, instanceName)
 	result.AddScript("mount_nfs.sh", []byte(mountScript))
-	for _, step := range storagerunbook.FileStorage(fileShareName, "nfs") {
-		result.AddRunbookStep(step)
-	}
 
 	// Generate NFS exports configuration
 	exportsConfig := m.generateExportsConfig(fileShareName)
@@ -113,6 +110,18 @@ func (m *FilestoreMapper) Map(ctx context.Context, res *resource.AWSResource) (*
 	// Generate docker-compose example for clients
 	clientExample := m.generateClientExample(serviceName, fileShareName)
 	result.AddConfig("nfs-client-example.yml", []byte(clientExample))
+	result.AddConfig("config/filestore/app-change.env", []byte(m.generateAppChangeConfig(serviceName, fileShareName, instanceName)))
+	result.AddConfig("config/filestore/migration.env", []byte(m.generateMigrationConfig(instanceName, fileShareName, tier, capacityGB)))
+	result.AddConfig("config/filestore/exports", []byte(exportsConfig))
+	result.AddConfig("config/filestore/client-compose.yml", []byte(clientExample))
+	result.AddScript("export_filestore_instance.sh", []byte(m.generateExportScript(instanceName)))
+	result.AddScript("sync_filestore_data.sh", []byte(m.generateSyncScript(instanceName, fileShareName)))
+	result.AddScript("validate_filestore_nfs.sh", []byte(m.generateValidateScript(serviceName, fileShareName)))
+	result.AddScript("backup_filestore_config.sh", []byte(m.generateBackupScript(instanceName)))
+	result.AddScript("cutover_filestore_clients.sh", []byte(m.generateCutoverScript(instanceName)))
+	for _, step := range filestoreRunbook(instanceName, fileShareName) {
+		result.AddRunbookStep(step)
+	}
 
 	// Handle tier-specific warnings
 	m.handleTierWarnings(tier, result)
@@ -130,14 +139,8 @@ func (m *FilestoreMapper) Map(ctx context.Context, res *resource.AWSResource) (*
 	// Handle KMS key encryption
 	if kmsKey := res.GetConfigString("kms_key_name"); kmsKey != "" {
 		result.AddWarning("Filestore instance uses KMS encryption. Consider encrypting the NFS volume at the filesystem level.")
-		result.AddManualStep("Set up encryption for /data/nfs/" + fileShareName + " using LUKS or similar")
+		result.AddConfig("config/filestore/encryption.env", []byte("SOURCE_KMS_KEY="+kmsKey+"\nTARGET_VOLUME_ENCRYPTION=host-managed\n"))
 	}
-
-	// Add usage instructions
-	result.AddManualStep("NFS server will be accessible at: nfs://<docker-host-ip>:2049/data")
-	result.AddManualStep("Mount on clients using: mount -t nfs -o vers=4 <docker-host-ip>:/data /mnt/nfs")
-	result.AddManualStep("Or use the NFS volume driver in docker-compose (see nfs-client-example.yml)")
-	result.AddManualStep("Ensure NFS client packages are installed on client systems: nfs-common (Debian/Ubuntu) or nfs-utils (RHEL/CentOS)")
 
 	return result, nil
 }
@@ -162,6 +165,7 @@ func (m *FilestoreMapper) extractFileShares(res *resource.AWSResource) []map[str
 // applyTierLimits sets resource limits based on Filestore tier.
 func (m *FilestoreMapper) applyTierLimits(svc *mapper.DockerService, tier string, capacityGB int) {
 	svc.Deploy = &mapper.DeployConfig{
+		Replicas: 2,
 		Resources: &mapper.Resources{
 			Limits: &mapper.ResourceLimits{},
 		},
@@ -200,11 +204,58 @@ func (m *FilestoreMapper) handleTierWarnings(tier string, result *mapper.Mapping
 		result.AddWarning("Original Filestore tier: BASIC_SSD. For best performance, ensure Docker host uses SSD storage.")
 	case "HIGH_SCALE_SSD":
 		result.AddWarning("Original Filestore tier: HIGH_SCALE_SSD. Self-hosted NFS may not match GCP Filestore high-scale performance.")
-		result.AddManualStep("Consider using distributed filesystem solutions like GlusterFS or Ceph for high-scale requirements")
 	case "ENTERPRISE":
 		result.AddWarning("Original Filestore tier: ENTERPRISE. Enterprise-grade features may require additional configuration.")
-		result.AddManualStep("Review Filestore enterprise features and configure NFS server accordingly")
 	}
+}
+
+func (m *FilestoreMapper) generateAppChangeConfig(serviceName, fileShareName, instanceName string) string {
+	return fmt.Sprintf("APP_CHANGE_MODE=generated_patch\nSOURCE_FILESTORE_INSTANCE=%s\nTARGET_NFS_SERVICE=%s\nTARGET_NFS_EXPORT=/data\nTARGET_NFS_SHARE=%s\n", instanceName, serviceName, fileShareName)
+}
+
+func (m *FilestoreMapper) generateMigrationConfig(instanceName, fileShareName, tier string, capacityGB int) string {
+	return fmt.Sprintf("SOURCE_FILESTORE_INSTANCE=%s\nSOURCE_FILESTORE_SHARE=%s\nSOURCE_FILESTORE_TIER=%s\nSOURCE_CAPACITY_GB=%d\nTARGET_PROTOCOL=nfs\n", instanceName, fileShareName, tier, capacityGB)
+}
+
+func (m *FilestoreMapper) generateExportScript(instanceName string) string {
+	return fmt.Sprintf("#!/bin/sh\nset -eu\nmkdir -p filestore-export\ngcloud filestore instances describe %q --format=json > filestore-export/instance.json\n", instanceName)
+}
+
+func (m *FilestoreMapper) generateSyncScript(instanceName, fileShareName string) string {
+	return fmt.Sprintf("#!/bin/sh\nset -eu\n: \"${SOURCE_MOUNT:?set SOURCE_MOUNT to mounted Filestore path}\"\n: \"${TARGET_MOUNT:=./data/nfs/%s}\"\nmkdir -p \"$TARGET_MOUNT\"\nrsync -a --delete \"$SOURCE_MOUNT/\" \"$TARGET_MOUNT/\"\necho \"Filestore %s share %s synced to $TARGET_MOUNT\"\n", fileShareName, instanceName, fileShareName)
+}
+
+func (m *FilestoreMapper) generateValidateScript(serviceName, fileShareName string) string {
+	return fmt.Sprintf("#!/bin/sh\nset -eu\ntest -s config/filestore/app-change.env\ntest -s config/filestore/exports\ntest -d ./data/nfs/%s\necho \"Filestore NFS target %s validated\"\n", fileShareName, serviceName)
+}
+
+func (m *FilestoreMapper) generateBackupScript(instanceName string) string {
+	return fmt.Sprintf("#!/bin/sh\nset -eu\narchive=\"${BACKUP_DIR:-./backups}/filestore-%s-$(date +%%Y%%m%%d%%H%%M%%S).tgz\"\nmkdir -p \"$(dirname \"$archive\")\"\ntar -czf \"$archive\" config/filestore filestore-export data/nfs\necho \"$archive\"\n", m.sanitizeName(instanceName))
+}
+
+func (m *FilestoreMapper) generateCutoverScript(instanceName string) string {
+	return fmt.Sprintf("#!/bin/sh\nset -eu\n. config/filestore/app-change.env\ntest \"$SOURCE_FILESTORE_INSTANCE\" = %q\ntest \"$APP_CHANGE_MODE\" = \"generated_patch\"\necho \"Patch Filestore clients to $TARGET_NFS_SERVICE:$TARGET_NFS_EXPORT\"\n", instanceName)
+}
+
+func filestoreRunbook(instanceName, fileShareName string) []domainrunbook.Step {
+	metadata := map[string]string{"kind": "file-storage", "source": "google_filestore_instance", "instance": instanceName, "share": fileShareName, "target": "nfs"}
+	return []domainrunbook.Step{
+		filestoreStep("export-filestore-instance", "Export Filestore instance", "Discovery", domainrunbook.StepTypeCommand, []string{"sh", "export_filestore_instance.sh"}, "Filestore instance config is exported", metadata),
+		filestoreStep("provision-nfs-target", "Provision NFS target", "Provision", domainrunbook.StepTypeCommand, []string{"sh", "-c", "test -s config/filestore/exports"}, "NFS target config is rendered", metadata),
+		filestoreStep("sync-filestore-data", "Sync Filestore data", "Migrate", domainrunbook.StepTypeCommand, []string{"sh", "sync_filestore_data.sh"}, "file data is copied to NFS target", metadata),
+		filestoreStep("validate-filestore-nfs", "Validate NFS target", "Validate", domainrunbook.StepTypeCommand, []string{"sh", "validate_filestore_nfs.sh"}, "NFS config and data path validate", metadata),
+		filestoreStep("backup-filestore-config", "Backup Filestore config", "Backup", domainrunbook.StepTypeCommand, []string{"sh", "backup_filestore_config.sh"}, "Filestore migration artifacts are archived", metadata),
+		filestoreStep("cutover-filestore-clients", "Cut over Filestore clients", "Cutover", domainrunbook.StepTypeAPICall, []string{"sh", "cutover_filestore_clients.sh"}, "clients use the generated NFS target", metadata),
+		filestoreStep("rollback-filestore-source", "Keep Filestore source authoritative", "Rollback", domainrunbook.StepTypeRollback, nil, "Filestore remains authoritative until NFS validation passes", metadata),
+	}
+}
+
+func filestoreStep(id, name, group string, stepType domainrunbook.StepType, command []string, success string, metadata map[string]string) domainrunbook.Step {
+	executor := "shell"
+	if stepType == domainrunbook.StepTypeRollback {
+		executor = "noop"
+	}
+	return domainrunbook.Step{ID: id, Name: name, Group: group, Type: stepType, Status: domainrunbook.StepStatusPending, Executor: executor, Command: command, SuccessCondition: success, Metadata: metadata}
 }
 
 // generateMountScript creates a script for mounting the NFS share.

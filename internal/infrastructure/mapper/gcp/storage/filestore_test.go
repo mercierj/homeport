@@ -2,11 +2,55 @@ package storage
 
 import (
 	"context"
+	"strings"
 	"testing"
 
 	"github.com/homeport/homeport/internal/domain/mapper"
 	"github.com/homeport/homeport/internal/domain/resource"
+	domainrunbook "github.com/homeport/homeport/internal/domain/runbook"
 )
+
+func TestFilestoreConformanceManagedAToZ(t *testing.T) {
+	result, err := NewFilestoreMapper().Map(context.Background(), managedFilestoreFixture())
+	if err != nil {
+		t.Fatal(err)
+	}
+	if len(result.ManualSteps) != 0 {
+		t.Fatalf("manual steps = %#v, want generated Filestore migration", result.ManualSteps)
+	}
+	if result.DockerService.Image != "itsthenetwork/nfs-server-alpine:latest" || result.DockerService.Deploy == nil || result.DockerService.Deploy.Replicas < 2 {
+		t.Fatalf("service does not provision HA NFS target: %#v", result.DockerService)
+	}
+	for _, file := range []string{"config/filestore/app-change.env", "config/filestore/migration.env", "config/filestore/exports", "config/filestore/client-compose.yml"} {
+		if _, ok := result.Configs[file]; !ok {
+			t.Fatalf("missing config %s", file)
+		}
+	}
+	appEnv := string(result.Configs["config/filestore/app-change.env"])
+	for _, want := range []string{"APP_CHANGE_MODE=generated_patch", "SOURCE_FILESTORE_INSTANCE=orders-files", "TARGET_NFS_SERVICE=orders-files-nfs"} {
+		if !strings.Contains(appEnv, want) {
+			t.Fatalf("app-change env missing %q:\n%s", want, appEnv)
+		}
+	}
+	for _, file := range []string{"mount_nfs.sh", "export_filestore_instance.sh", "sync_filestore_data.sh", "validate_filestore_nfs.sh", "backup_filestore_config.sh", "cutover_filestore_clients.sh"} {
+		if _, ok := result.Scripts[file]; !ok {
+			t.Fatalf("missing script %s", file)
+		}
+	}
+	for id, stepType := range map[string]domainrunbook.StepType{
+		"export-filestore-instance": domainrunbook.StepTypeCommand,
+		"provision-nfs-target":      domainrunbook.StepTypeCommand,
+		"sync-filestore-data":       domainrunbook.StepTypeCommand,
+		"validate-filestore-nfs":    domainrunbook.StepTypeCommand,
+		"backup-filestore-config":   domainrunbook.StepTypeCommand,
+		"cutover-filestore-clients": domainrunbook.StepTypeAPICall,
+		"rollback-filestore-source": domainrunbook.StepTypeRollback,
+	} {
+		if !hasFilestoreRunbookStep(result, id, stepType) {
+			t.Fatalf("missing %s runbook step: %#v", id, result.RunbookSteps)
+		}
+	}
+}
 
 func TestNewFilestoreMapper(t *testing.T) {
 	m := NewFilestoreMapper()
@@ -317,6 +361,33 @@ func TestFilestoreMapper_extractFileShares(t *testing.T) {
 			}
 		})
 	}
+}
+
+func managedFilestoreFixture() *resource.AWSResource {
+	return &resource.AWSResource{
+		ID:   "projects/demo/locations/europe-west1-b/instances/orders-files",
+		Type: resource.TypeFilestore,
+		Name: "orders-files",
+		Config: map[string]interface{}{
+			"name": "orders-files",
+			"tier": "BASIC_SSD",
+			"file_shares": []interface{}{
+				map[string]interface{}{
+					"name":        "orders",
+					"capacity_gb": float64(1024),
+				},
+			},
+		},
+	}
+}
+
+func hasFilestoreRunbookStep(result *mapper.MappingResult, id string, stepType domainrunbook.StepType) bool {
+	for _, step := range result.RunbookSteps {
+		if step.ID == id && step.Type == stepType {
+			return true
+		}
+	}
+	return false
 }
 
 func TestFilestoreMapper_sanitizeName(t *testing.T) {

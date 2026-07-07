@@ -80,7 +80,7 @@
 | gcp | Dataflow | full | google_dataflow_job |
 | gcp | Dataproc | full | google_dataproc_cluster |
 | gcp | Eventarc | full | google_eventarc_trigger |
-| gcp | Filestore | mapped | google_filestore_instance |
+| gcp | Filestore | full | google_filestore_instance |
 | gcp | Firestore | guided | google_firestore_database |
 | gcp | GKE | mapped | google_container_cluster |
 | gcp | IAM | mapped | google_project_iam_member |
