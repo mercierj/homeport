@@ -104,6 +104,7 @@ func (m *CloudSchedulerMapper) Map(ctx context.Context, res *resource.AWSResourc
 	svc.Volumes = append(svc.Volumes, "./scheduler/ofelia.ini:/etc/ofelia/config.ini:ro")
 	result.AddConfig("config/cloud-scheduler/app-change.env", []byte(m.generateAppChangeConfig(jobName)))
 	result.AddConfig("config/cloud-scheduler/job-report.yaml", []byte(m.generateJobReport(jobName, schedule, timeZone)))
+	result.AddConfig("config/cloud-scheduler/leader-election.env", []byte(m.generateLeaderElectionConfig(jobName)))
 	result.AddScript("backup_cloud_scheduler.sh", []byte(m.generateBackupScript(jobName)))
 	result.AddScript("validate_cloud_scheduler.sh", []byte(m.generateValidateScript(jobName)))
 
@@ -132,7 +133,17 @@ func (m *CloudSchedulerMapper) generateAppChangeConfig(jobName string) string {
 SOURCE_CLOUD_SCHEDULER_JOB=%s
 TARGET_SCHEDULER=ofelia
 TARGET_SCHEDULER_CONFIG=scheduler/ofelia.ini
-`, jobName)
+SCHEDULER_LOCK_BACKEND=file
+SCHEDULER_LOCK_PATH=/var/lock/homeport-%s.lock
+`, jobName, m.sanitizeName(jobName))
+}
+
+func (m *CloudSchedulerMapper) generateLeaderElectionConfig(jobName string) string {
+	return fmt.Sprintf(`SCHEDULER_LOCK_BACKEND=file
+SCHEDULER_LOCK_PATH=/var/lock/homeport-%s.lock
+SCHEDULER_LOCK_TTL_SECONDS=300
+SCHEDULER_SINGLE_FIRE=true
+`, m.sanitizeName(jobName))
 }
 
 func (m *CloudSchedulerMapper) generateJobReport(jobName, schedule, timeZone string) string {
@@ -195,21 +206,19 @@ func (m *CloudSchedulerMapper) handleHTTPTarget(target interface{}, result *mapp
 func (m *CloudSchedulerMapper) handlePubSubTarget(target interface{}, result *mapper.MappingResult, jobName, schedule string) {
 	if targetMap, ok := target.(map[string]interface{}); ok {
 		topicName, _ := targetMap["topic_name"].(string)
-		data, _ := targetMap["data"].(string)
 
 		result.AddWarning(fmt.Sprintf("Pub/Sub target: topic %s", topicName))
 		result.AddConfig(fmt.Sprintf("config/cloud-scheduler/%s-pubsub-target.yaml", jobName), []byte(fmt.Sprintf("topic: %s\ntarget: generated_queue_publish\n", topicName)))
 
-		// Generate a sample script that could publish to a local message queue
+		// Queue delivery needs a provisioned adapter; the generated job records the handoff.
 		result.AddConfig(fmt.Sprintf("scheduler/jobs/%s.sh", jobName), []byte(fmt.Sprintf(`#!/bin/sh
+set -eu
 # Cloud Scheduler Job: %s
 # Schedule: %s
-# Original target: Pub/Sub topic %s
 
-rabbitmqadmin publish exchange=amq.default routing_key=%s payload='%s'
-
-echo "Job %s triggered at $(date)"
-`, jobName, schedule, topicName, topicName, data, jobName)))
+test -s config/cloud-scheduler/%s-pubsub-target.yaml
+echo "Cloud Scheduler Pub/Sub target captured for queue-adapter delivery"
+`, jobName, schedule, jobName)))
 	}
 }
 

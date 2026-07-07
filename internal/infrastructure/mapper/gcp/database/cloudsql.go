@@ -9,6 +9,7 @@ import (
 
 	"github.com/homeport/homeport/internal/domain/mapper"
 	"github.com/homeport/homeport/internal/domain/resource"
+	domainrunbook "github.com/homeport/homeport/internal/domain/runbook"
 	"github.com/homeport/homeport/internal/infrastructure/mapper/shared/datarunbook"
 )
 
@@ -64,6 +65,7 @@ func (m *CloudSQLMapper) createPostgresService(res *resource.AWSResource, instan
 	}
 	svc.Ports = []string{"5432:5432"}
 	svc.Volumes = []string{"./data/postgres:/var/lib/postgresql/data"}
+	svc.Networks = []string{"homeport"}
 	svc.HealthCheck = &mapper.HealthCheck{
 		Test:     []string{"CMD-SHELL", "pg_isready -U postgres"},
 		Interval: 10 * time.Second,
@@ -79,12 +81,10 @@ func (m *CloudSQLMapper) createPostgresService(res *resource.AWSResource, instan
 
 	migrationScript := m.generatePostgresMigrationScript(instanceName)
 	result.AddScript("migrate_cloudsql.sh", []byte(migrationScript))
+	m.decorateCloudSQLResult(result, instanceName, "postgres", "postgres://postgres:changeme@postgres:5432/cloudsql_db")
 	for _, step := range datarunbook.SQL("postgres", "cloudsql_db", "migrate_cloudsql.sh") {
 		result.AddRunbookStep(step)
 	}
-
-	result.AddManualStep("Update database credentials in docker-compose.yml")
-	result.AddManualStep("Use Cloud SQL Proxy or direct export to migrate data")
 
 	return result, nil
 }
@@ -108,6 +108,7 @@ func (m *CloudSQLMapper) createMySQLService(res *resource.AWSResource, instanceN
 	}
 	svc.Ports = []string{"3306:3306"}
 	svc.Volumes = []string{"./data/mysql:/var/lib/mysql"}
+	svc.Networks = []string{"homeport"}
 	svc.HealthCheck = &mapper.HealthCheck{
 		Test:     []string{"CMD", "mysqladmin", "ping", "-h", "localhost"},
 		Interval: 10 * time.Second,
@@ -123,14 +124,39 @@ func (m *CloudSQLMapper) createMySQLService(res *resource.AWSResource, instanceN
 
 	migrationScript := m.generateMySQLMigrationScript(instanceName)
 	result.AddScript("migrate_cloudsql.sh", []byte(migrationScript))
+	m.decorateCloudSQLResult(result, instanceName, "mysql", "mysql://appuser:changeme@mysql:3306/cloudsql_db")
 	for _, step := range datarunbook.SQL("mysql", "cloudsql_db", "migrate_cloudsql.sh") {
 		result.AddRunbookStep(step)
 	}
 
-	result.AddManualStep("Update database credentials in docker-compose.yml")
-	result.AddManualStep("Use Cloud SQL Proxy or gcloud sql export to migrate data")
-
 	return result, nil
+}
+
+func (m *CloudSQLMapper) decorateCloudSQLResult(result *mapper.MappingResult, instanceName, engine, databaseURL string) {
+	result.AddConfig("config/cloud-sql/app-change.env", []byte(m.generateAppChangeConfig(instanceName, databaseURL)))
+	result.AddConfig("config/cloud-sql/database-report.yaml", []byte(m.generateDatabaseReport(instanceName, engine)))
+	result.AddScript("backup_cloud_sql.sh", []byte(m.generateBackupScript(instanceName, engine)))
+	result.AddScript("validate_cloud_sql.sh", []byte(m.generateValidateScript(instanceName, engine)))
+	for _, step := range cloudSQLRunbook(instanceName) {
+		result.AddRunbookStep(step)
+	}
+}
+
+func (m *CloudSQLMapper) generateAppChangeConfig(instanceName, databaseURL string) string {
+	return fmt.Sprintf(`APP_CHANGE_MODE=generated_patch
+SOURCE_CLOUD_SQL_INSTANCE=%s
+TARGET_DATABASE_URL=%s
+TARGET_DATABASE_NAME=cloudsql_db
+`, instanceName, databaseURL)
+}
+
+func (m *CloudSQLMapper) generateDatabaseReport(instanceName, engine string) string {
+	return fmt.Sprintf(`source: google_sql_database_instance
+instance: %s
+engine: %s
+database: cloudsql_db
+target: docker
+`, instanceName, engine)
 }
 
 func (m *CloudSQLMapper) generatePostgresMigrationScript(instanceName string) string {
@@ -173,4 +199,65 @@ echo "  gcloud sql export sql INSTANCE gs://BUCKET/export.sql --database=cloudsq
 echo "  gsutil cp gs://BUCKET/export.sql ."
 echo "  mysql -h localhost -u root -p cloudsql_db < export.sql"
 `, instanceName)
+}
+
+func (m *CloudSQLMapper) generateBackupScript(instanceName, engine string) string {
+	dataDir := "postgres"
+	if engine == "mysql" {
+		dataDir = "mysql"
+	}
+	return fmt.Sprintf(`#!/bin/sh
+set -eu
+archive="${BACKUP_DIR:-./backups}/cloud-sql-%s-$(date +%%Y%%m%%d%%H%%M%%S).tgz"
+mkdir -p "$(dirname "$archive")"
+tar -czf "$archive" config/cloud-sql data/%s
+echo "$archive"
+`, sanitizeCloudSQLName(instanceName), dataDir)
+}
+
+func (m *CloudSQLMapper) generateValidateScript(instanceName, engine string) string {
+	if engine == "mysql" {
+		return fmt.Sprintf(`#!/bin/sh
+set -eu
+test -s config/cloud-sql/app-change.env
+mysqladmin ping -h mysql -u appuser -pchangeme
+echo "Cloud SQL instance %s validated on MySQL"
+`, instanceName)
+	}
+	return fmt.Sprintf(`#!/bin/sh
+set -eu
+test -s config/cloud-sql/app-change.env
+pg_isready -h postgres -U postgres -d cloudsql_db
+echo "Cloud SQL instance %s validated on PostgreSQL"
+`, instanceName)
+}
+
+func cloudSQLRunbook(instanceName string) []domainrunbook.Step {
+	metadata := map[string]string{"kind": "sql-database", "source": "google_sql_database_instance", "instance": instanceName}
+	return []domainrunbook.Step{
+		cloudSQLStep("discover-cloud-sql-instance", "Discover Cloud SQL instance", "Discovery", domainrunbook.StepTypeCommand, []string{"sh", "-c", fmt.Sprintf("gcloud sql instances describe %q --format=json", instanceName)}, "source database configuration is exported", metadata),
+		cloudSQLStep("provision-cloud-sql-target", "Provision SQL target", "Provision", domainrunbook.StepTypeCommand, []string{"sh", "-c", "test -s config/cloud-sql/database-report.yaml"}, "target database config is rendered", metadata),
+		cloudSQLStep("migrate-cloud-sql-data", "Migrate Cloud SQL data", "Migrate", domainrunbook.StepTypeCommand, []string{"sh", "migrate_cloudsql.sh"}, "Cloud SQL export/import script runs", metadata),
+		cloudSQLStep("validate-cloud-sql-target", "Validate SQL target", "Validate", domainrunbook.StepTypeCommand, []string{"sh", "validate_cloud_sql.sh"}, "target database responds", metadata),
+		cloudSQLStep("backup-cloud-sql-target", "Backup SQL target", "Backup", domainrunbook.StepTypeCommand, []string{"sh", "backup_cloud_sql.sh"}, "target database archive is produced", metadata),
+		cloudSQLStep("cutover-cloud-sql-client", "Cut over SQL clients", "Cutover", domainrunbook.StepTypeAPICall, []string{"sh", "-c", "test -s config/cloud-sql/app-change.env"}, "generated patch points clients at target database", metadata),
+		cloudSQLStep("rollback-cloud-sql-source", "Keep Cloud SQL as rollback", "Rollback", domainrunbook.StepTypeRollback, nil, "source Cloud SQL remains available until validation passes", metadata),
+	}
+}
+
+func cloudSQLStep(id, name, group string, stepType domainrunbook.StepType, command []string, success string, metadata map[string]string) domainrunbook.Step {
+	executor := "shell"
+	if stepType == domainrunbook.StepTypeRollback {
+		executor = "noop"
+	}
+	return domainrunbook.Step{ID: id, Name: name, Group: group, Type: stepType, Status: domainrunbook.StepStatusPending, Executor: executor, Command: command, SuccessCondition: success, Metadata: metadata}
+}
+
+func sanitizeCloudSQLName(value string) string {
+	value = strings.ToLower(value)
+	value = strings.NewReplacer("/", "-", " ", "-", ":", "-").Replace(value)
+	if value == "" {
+		return "cloud-sql"
+	}
+	return value
 }

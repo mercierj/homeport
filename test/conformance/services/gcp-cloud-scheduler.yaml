@@ -13,5 +13,5 @@ checks:
   cutover: GOCACHE=/private/tmp/exit-gafam-go-build go test ./internal/infrastructure/mapper/gcp/compute -run TestCloudSchedulerConformanceManagedAToZ
   rollback: GOCACHE=/private/tmp/exit-gafam-go-build go test ./internal/infrastructure/mapper/gcp/compute -run TestCloudSchedulerConformanceManagedAToZ
 evidence:
-  target: Ofelia cron scheduler
+  target: Ofelia cron scheduler with file lock single-fire coordination
   app_change_mode: generated_patch

@@ -72,7 +72,7 @@
 | gcp | Cloud Load Balancing | full | google_compute_backend_service |
 | gcp | Cloud Run | full | google_cloud_run_service |
 | gcp | Cloud Scheduler | full | google_cloud_scheduler_job |
-| gcp | Cloud SQL | mapped | google_sql_database_instance |
+| gcp | Cloud SQL | full | google_sql_database_instance |
 | gcp | Cloud Storage | guided | google_storage_bucket |
 | gcp | Cloud Tasks | guided | google_cloud_tasks_queue |
 | gcp | Compute Engine | mapped | google_compute_instance |

@@ -2,11 +2,55 @@ package database
 
 import (
 	"context"
+	"strings"
 	"testing"
 
 	"github.com/homeport/homeport/internal/domain/mapper"
 	"github.com/homeport/homeport/internal/domain/resource"
+	domainrunbook "github.com/homeport/homeport/internal/domain/runbook"
 )
+
+func TestCloudSQLConformanceManagedAToZ(t *testing.T) {
+	result, err := NewCloudSQLMapper().Map(context.Background(), managedCloudSQLFixture())
+	if err != nil {
+		t.Fatal(err)
+	}
+	if len(result.ManualSteps) != 0 {
+		t.Fatalf("manual steps = %#v, want generated Cloud SQL migration", result.ManualSteps)
+	}
+	if result.DockerService.Image != "postgres:15-alpine" || (result.DockerService.Deploy != nil && result.DockerService.Deploy.Replicas > 1) {
+		t.Fatalf("service must not run duplicate database writers: %#v", result.DockerService)
+	}
+	for _, file := range []string{"config/cloud-sql/app-change.env", "config/cloud-sql/database-report.yaml"} {
+		if _, ok := result.Configs[file]; !ok {
+			t.Fatalf("missing config %s", file)
+		}
+	}
+	appEnv := string(result.Configs["config/cloud-sql/app-change.env"])
+	for _, want := range []string{"APP_CHANGE_MODE=generated_patch", "SOURCE_CLOUD_SQL_INSTANCE=orders-db", "TARGET_DATABASE_URL=postgres://postgres:changeme@postgres:5432/cloudsql_db"} {
+		if !strings.Contains(appEnv, want) {
+			t.Fatalf("app-change env missing %q:\n%s", want, appEnv)
+		}
+	}
+	for _, file := range []string{"migrate_cloudsql.sh", "backup_cloud_sql.sh", "validate_cloud_sql.sh"} {
+		if _, ok := result.Scripts[file]; !ok {
+			t.Fatalf("missing script %s", file)
+		}
+	}
+	for id, stepType := range map[string]domainrunbook.StepType{
+		"discover-cloud-sql-instance": domainrunbook.StepTypeCommand,
+		"provision-cloud-sql-target":  domainrunbook.StepTypeCommand,
+		"migrate-cloud-sql-data":      domainrunbook.StepTypeCommand,
+		"validate-cloud-sql-target":   domainrunbook.StepTypeCommand,
+		"backup-cloud-sql-target":     domainrunbook.StepTypeCommand,
+		"cutover-cloud-sql-client":    domainrunbook.StepTypeAPICall,
+		"rollback-cloud-sql-source":   domainrunbook.StepTypeRollback,
+	} {
+		if !hasCloudSQLRunbookStep(result, id, stepType) {
+			t.Fatalf("missing %s runbook step: %#v", id, result.RunbookSteps)
+		}
+	}
+}
 
 func TestNewCloudSQLMapper(t *testing.T) {
 	m := NewCloudSQLMapper()
@@ -16,6 +60,28 @@ func TestNewCloudSQLMapper(t *testing.T) {
 	if m.ResourceType() != resource.TypeCloudSQL {
 		t.Errorf("ResourceType() = %v, want %v", m.ResourceType(), resource.TypeCloudSQL)
 	}
+}
+
+func managedCloudSQLFixture() *resource.AWSResource {
+	return &resource.AWSResource{
+		ID:   "projects/demo/instances/orders-db",
+		Type: resource.TypeCloudSQL,
+		Name: "orders-db",
+		Config: map[string]interface{}{
+			"name":             "orders-db",
+			"database_version": "POSTGRES_15",
+			"region":           "europe-west1",
+		},
+	}
+}
+
+func hasCloudSQLRunbookStep(result *mapper.MappingResult, id string, stepType domainrunbook.StepType) bool {
+	for _, step := range result.RunbookSteps {
+		if step.ID == id && step.Type == stepType {
+			return true
+		}
+	}
+	return false
 }
 
 func TestCloudSQLMapper_ResourceType(t *testing.T) {

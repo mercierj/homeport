@@ -21,13 +21,13 @@ func TestCloudSchedulerConformanceManagedAToZ(t *testing.T) {
 	if result.DockerService.Image != "mcuadros/ofelia:latest" || result.DockerService.Deploy == nil || result.DockerService.Deploy.Replicas < 2 {
 		t.Fatalf("service does not provision HA Ofelia scheduler: %#v", result.DockerService)
 	}
-	for _, file := range []string{"scheduler/ofelia.ini", "scheduler/jobs/nightly-sync.sh", "config/cloud-scheduler/app-change.env", "config/cloud-scheduler/job-report.yaml"} {
+	for _, file := range []string{"scheduler/ofelia.ini", "scheduler/jobs/nightly-sync.sh", "config/cloud-scheduler/app-change.env", "config/cloud-scheduler/job-report.yaml", "config/cloud-scheduler/leader-election.env"} {
 		if _, ok := result.Configs[file]; !ok {
 			t.Fatalf("missing config %s", file)
 		}
 	}
 	appEnv := string(result.Configs["config/cloud-scheduler/app-change.env"])
-	for _, want := range []string{"APP_CHANGE_MODE=generated_patch", "SOURCE_CLOUD_SCHEDULER_JOB=nightly-sync", "TARGET_SCHEDULER=ofelia"} {
+	for _, want := range []string{"APP_CHANGE_MODE=generated_patch", "SOURCE_CLOUD_SCHEDULER_JOB=nightly-sync", "TARGET_SCHEDULER=ofelia", "SCHEDULER_LOCK_BACKEND=file"} {
 		if !strings.Contains(appEnv, want) {
 			t.Fatalf("app-change env missing %q:\n%s", want, appEnv)
 		}
@@ -251,6 +251,10 @@ func TestCloudSchedulerMapper_Map(t *testing.T) {
 				}
 				if !hasPubSubWarning {
 					t.Error("Expected warning about Pub/Sub target")
+				}
+				job := string(result.Configs["scheduler/jobs/pubsub-job.sh"])
+				if strings.Contains(job, "rabbitmqadmin publish") {
+					t.Fatalf("pubsub job should not call unprovisioned RabbitMQ directly:\n%s", job)
 				}
 			},
 		},
