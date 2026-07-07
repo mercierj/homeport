@@ -9,6 +9,7 @@ import (
 
 	"github.com/homeport/homeport/internal/domain/mapper"
 	"github.com/homeport/homeport/internal/domain/resource"
+	domainrunbook "github.com/homeport/homeport/internal/domain/runbook"
 )
 
 // CosmosDBMapper converts Azure Cosmos DB to MongoDB or Cassandra containers.
@@ -99,6 +100,7 @@ func (m *CosmosDBMapper) createMongoDBService(res *resource.AWSResource, account
 		Retries:  5,
 	}
 	svc.Restart = "unless-stopped"
+	svc.Deploy = &mapper.DeployConfig{Replicas: 2}
 	svc.Labels = map[string]string{
 		"homeport.source":  "azurerm_cosmosdb_account",
 		"homeport.engine":  "mongodb",
@@ -107,13 +109,18 @@ func (m *CosmosDBMapper) createMongoDBService(res *resource.AWSResource, account
 
 	migrationScript := m.generateMongoMigrationScript(accountName)
 	result.AddScript("migrate_cosmosdb.sh", []byte(migrationScript))
+	result.AddScript("validate_cosmosdb.sh", []byte(m.generateValidateScript(accountName)))
+	result.AddScript("backup_cosmosdb.sh", []byte(m.generateBackupScript(accountName)))
+	result.AddScript("cutover_cosmosdb.sh", []byte(m.generateCutoverScript(accountName)))
+	result.AddConfig("config/cosmosdb/app-change.env", []byte(m.generateAppChange(accountName)))
+	result.AddConfig("config/cosmosdb/generated-client.patch", []byte(m.generateClientPatch(accountName)))
 
 	result.AddWarning("Cosmos DB (MongoDB API) mapped to MongoDB. Update connection strings in your application.")
 	result.AddWarning("Cosmos DB-specific features like RU/s throughput are not available in MongoDB.")
 
-	result.AddManualStep("Update MongoDB connection string in your application")
-	result.AddManualStep("Export data from Cosmos DB using Azure Data Factory or mongodump")
-	result.AddManualStep("Import data using mongorestore")
+	for _, step := range cosmosDBRunbook(accountName) {
+		result.AddRunbookStep(step)
+	}
 
 	return result, nil
 }
@@ -231,4 +238,44 @@ echo "    --drop /tmp/cosmosdb_dump"
 
 echo "Alternative: Use Azure Data Factory for large-scale migrations"
 `, accountName, accountName, accountName)
+}
+
+func (m *CosmosDBMapper) generateAppChange(accountName string) string {
+	return fmt.Sprintf("APP_CHANGE_MODE=generated_patch\nSOURCE_COSMOSDB_ACCOUNT=%s\nMONGODB_URI='mongodb://admin:changeme@mongodb:27017/cosmosdb?authSource=admin'\nGENERATED_PATCH=config/cosmosdb/generated-client.patch\n", accountName)
+}
+
+func (m *CosmosDBMapper) generateClientPatch(accountName string) string {
+	return fmt.Sprintf("--- a/app/database.env\n+++ b/app/database.env\n@@\n-COSMOSDB_ACCOUNT=%s\n+MONGODB_URI=mongodb://admin:changeme@mongodb:27017/cosmosdb?authSource=admin\n+DATABASE_MIGRATION_MODE=generated_patch\n", accountName)
+}
+
+func (m *CosmosDBMapper) generateValidateScript(accountName string) string {
+	return fmt.Sprintf("#!/bin/sh\nset -eu\ntest -s config/cosmosdb/app-change.env\n. config/cosmosdb/app-change.env\ngrep -q %q config/cosmosdb/app-change.env\nmongosh \"$MONGODB_URI\" --eval 'db.adminCommand({ping:1})'\n", accountName)
+}
+
+func (m *CosmosDBMapper) generateBackupScript(accountName string) string {
+	return fmt.Sprintf("#!/bin/sh\nset -eu\narchive=\"${BACKUP_DIR:-./backups}/cosmosdb-%s-$(date +%%Y%%m%%d%%H%%M%%S).tgz\"\nmkdir -p \"$(dirname \"$archive\")\"\ntar -czf \"$archive\" config/cosmosdb data/mongodb\necho \"$archive\"\n", accountName)
+}
+
+func (m *CosmosDBMapper) generateCutoverScript(accountName string) string {
+	return fmt.Sprintf("#!/bin/sh\nset -eu\n. config/cosmosdb/app-change.env\ntest \"$SOURCE_COSMOSDB_ACCOUNT\" = %q\ntest \"$APP_CHANGE_MODE\" = \"generated_patch\"\ntest -s \"$GENERATED_PATCH\"\necho \"Apply $GENERATED_PATCH and use $MONGODB_URI\"\n", accountName)
+}
+
+func cosmosDBRunbook(accountName string) []domainrunbook.Step {
+	metadata := map[string]string{"kind": "nosql-database", "source": "azurerm_cosmosdb_account", "account": accountName, "target": "mongodb"}
+	return []domainrunbook.Step{
+		cosmosDBStep("dump-restore-cosmosdb", "Dump and restore Cosmos DB", "Migrate", domainrunbook.StepTypeCommand, []string{"sh", "migrate_cosmosdb.sh"}, "Cosmos DB collections are restored into MongoDB", metadata),
+		cosmosDBStep("validate-cosmosdb-migration", "Validate Cosmos DB migration", "Validate", domainrunbook.StepTypeCommand, []string{"sh", "validate_cosmosdb.sh"}, "MongoDB target responds and migration artifacts validate", metadata),
+		cosmosDBStep("backup-cosmosdb-target", "Backup Cosmos DB target", "Backup", domainrunbook.StepTypeCommand, []string{"sh", "backup_cosmosdb.sh"}, "MongoDB data and generated handoff are archived", metadata),
+		cosmosDBStep("cutover-cosmosdb-clients", "Cut over Cosmos DB clients", "Cutover", domainrunbook.StepTypeAPICall, []string{"sh", "cutover_cosmosdb.sh"}, "clients use the generated MongoDB connection string", metadata),
+		cosmosDBStep("rollback-cosmosdb-source-authority", "Keep Cosmos DB as rollback source", "Rollback", domainrunbook.StepTypeRollback, nil, "Cosmos DB remains authoritative until MongoDB validation passes", metadata),
+	}
+}
+
+func cosmosDBStep(id, name, group string, stepType domainrunbook.StepType, command []string, success string, metadata map[string]string) domainrunbook.Step {
+	executor := "shell"
+	if stepType == domainrunbook.StepTypeRollback {
+		executor = "noop"
+		command = nil
+	}
+	return domainrunbook.Step{ID: id, Name: name, Group: group, Type: stepType, Status: domainrunbook.StepStatusPending, Executor: executor, Command: command, SuccessCondition: success, Metadata: metadata}
 }

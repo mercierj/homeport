@@ -126,7 +126,7 @@
 | azure | Container Apps | full | azurerm_container_app |
 | azure | Container Instances | full | azurerm_container_group |
 | azure | Container Registry | full | azurerm_container_registry |
-| azure | Cosmos DB | guided | azurerm_cosmosdb_account |
+| azure | Cosmos DB | full | azurerm_cosmosdb_account |
 | azure | Data Factory | missing |  |
 | azure | Databricks | missing |  |
 | azure | Event Grid | guided | azurerm_eventgrid_topic |

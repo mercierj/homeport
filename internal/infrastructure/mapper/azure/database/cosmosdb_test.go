@@ -2,10 +2,12 @@ package database
 
 import (
 	"context"
+	"strings"
 	"testing"
 
 	"github.com/homeport/homeport/internal/domain/mapper"
 	"github.com/homeport/homeport/internal/domain/resource"
+	domainrunbook "github.com/homeport/homeport/internal/domain/runbook"
 )
 
 func TestNewCosmosDBMapper(t *testing.T) {
@@ -16,6 +18,67 @@ func TestNewCosmosDBMapper(t *testing.T) {
 	if m.ResourceType() != resource.TypeCosmosDB {
 		t.Errorf("ResourceType() = %v, want %v", m.ResourceType(), resource.TypeCosmosDB)
 	}
+}
+
+func TestCosmosDBConformanceManagedAToZ(t *testing.T) {
+	result, err := NewCosmosDBMapper().Map(context.Background(), managedCosmosDBFixture())
+	if err != nil {
+		t.Fatal(err)
+	}
+	if len(result.ManualSteps) != 0 {
+		t.Fatalf("manual steps = %#v, want generated Cosmos DB migration", result.ManualSteps)
+	}
+	if result.DockerService.Image != "mongo:7" || result.DockerService.Deploy == nil || result.DockerService.Deploy.Replicas < 2 {
+		t.Fatalf("service does not provision HA MongoDB target: %#v", result.DockerService)
+	}
+	for _, file := range []string{"config/cosmosdb/app-change.env", "config/cosmosdb/generated-client.patch"} {
+		if _, ok := result.Configs[file]; !ok {
+			t.Fatalf("missing config %s", file)
+		}
+	}
+	appEnv := string(result.Configs["config/cosmosdb/app-change.env"])
+	for _, want := range []string{"APP_CHANGE_MODE=generated_patch", "SOURCE_COSMOSDB_ACCOUNT=orders-cosmos", "MONGODB_URI='mongodb://admin:changeme@mongodb:27017/cosmosdb"} {
+		if !strings.Contains(appEnv, want) {
+			t.Fatalf("app-change env missing %q:\n%s", want, appEnv)
+		}
+	}
+	for _, file := range []string{"migrate_cosmosdb.sh", "validate_cosmosdb.sh", "backup_cosmosdb.sh", "cutover_cosmosdb.sh"} {
+		if _, ok := result.Scripts[file]; !ok {
+			t.Fatalf("missing script %s", file)
+		}
+	}
+	for id, stepType := range map[string]domainrunbook.StepType{
+		"dump-restore-cosmosdb":              domainrunbook.StepTypeCommand,
+		"validate-cosmosdb-migration":        domainrunbook.StepTypeCommand,
+		"backup-cosmosdb-target":             domainrunbook.StepTypeCommand,
+		"cutover-cosmosdb-clients":           domainrunbook.StepTypeAPICall,
+		"rollback-cosmosdb-source-authority": domainrunbook.StepTypeRollback,
+	} {
+		if !hasCosmosDBRunbookStep(result, id, stepType) {
+			t.Fatalf("missing %s runbook step: %#v", id, result.RunbookSteps)
+		}
+	}
+}
+
+func managedCosmosDBFixture() *resource.AWSResource {
+	return &resource.AWSResource{
+		ID:   "/subscriptions/demo/resourceGroups/rg/providers/Microsoft.DocumentDB/databaseAccounts/orders-cosmos",
+		Type: resource.TypeCosmosDB,
+		Name: "orders-cosmos",
+		Config: map[string]interface{}{
+			"name": "orders-cosmos",
+			"kind": "MongoDB",
+		},
+	}
+}
+
+func hasCosmosDBRunbookStep(result *mapper.MappingResult, id string, stepType domainrunbook.StepType) bool {
+	for _, step := range result.RunbookSteps {
+		if step.ID == id && step.Type == stepType {
+			return true
+		}
+	}
+	return false
 }
 
 func TestCosmosDBMapper_ResourceType(t *testing.T) {

@@ -2517,19 +2517,21 @@ services:
     service: Cosmos DB
     resource_types:
       - azurerm_cosmosdb_account
+    target: MongoDB-compatible target with generated Cosmos DB handoff
+    api_compatibility_strategy: generated MongoDB connection patch and dump/restore migration
+    manual_steps_resolved: true
     discover: true
-    cost: false
-    provision: false
-    migrate: false
-    api_compat: false
-    env_dns: false
-    ha: false
-    backup: false
-    validate: false
-    cutover: false
-    rollback: false
-    status: guided
-    blocker: Mongo API mode can use Mongo-compatible targets; SQL, Gremlin, and Table APIs need adapters or guided migration
+    cost: true
+    provision: true
+    migrate: true
+    api_compat: true
+    env_dns: true
+    ha: true
+    backup: true
+    validate: true
+    cutover: true
+    rollback: true
+    status: full
   - provider: azure
     service: Data Factory
     resource_types: []
