@@ -105,7 +105,7 @@
 | gcp | Document AI | full | google_document_ai_processor |
 | gcp | Vision AI | full | google_vision_ai_service |
 | gcp | Speech-to-Text | full | google_speech_custom_class, google_speech_phrase_set |
-| gcp | Translation | missing |  |
+| gcp | Translation | full | google_translation_service |
 | azure | AI Search | missing |  |
 | azure | AKS | mapped | azurerm_kubernetes_cluster |
 | azure | API Management | missing |  |

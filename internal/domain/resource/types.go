@@ -111,6 +111,7 @@ const (
 	TypeSpeechPhraseSet             Type = "google_speech_phrase_set"
 	TypeTPUNode                     Type = "google_tpu_node"
 	TypeTPUV2VM                     Type = "google_tpu_v2_vm"
+	TypeTranslationService          Type = "google_translation_service"
 	TypeVertexAIEndpoint            Type = "google_vertex_ai_endpoint"
 	TypeVisionAIService             Type = "google_vision_ai_service"
 	TypeWorkflowsWorkflow           Type = "google_workflows_workflow"

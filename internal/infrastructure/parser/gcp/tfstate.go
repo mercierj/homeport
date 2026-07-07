@@ -384,6 +384,8 @@ func mapGCPProjectServiceResource(service interface{}, fallback resource.Type) r
 			return resource.TypeProfilerService
 		case "vision.googleapis.com", "visionai.googleapis.com":
 			return resource.TypeVisionAIService
+		case "translate.googleapis.com", "translation.googleapis.com":
+			return resource.TypeTranslationService
 		}
 	}
 	return fallback

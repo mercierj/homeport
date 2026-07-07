@@ -33,6 +33,7 @@ func RegisterAll(registry MapperRegistrar) {
 	registry.Register(compute.NewSpeechPhraseSetMapper())
 	registry.Register(compute.NewTPUNodeMapper())
 	registry.Register(compute.NewTPUV2VMMapper())
+	registry.Register(compute.NewTranslationMapper())
 	registry.Register(compute.NewVertexAIMapper())
 	registry.Register(compute.NewVisionAIMapper())
 	registry.Register(devops.NewCloudBuildMapper())

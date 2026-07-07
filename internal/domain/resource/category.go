@@ -187,6 +187,7 @@ var CategoryMapping = map[Type]Category{
 	TypeSpeechPhraseSet:             CategoryCompute,
 	TypeTPUNode:                     CategoryCompute,
 	TypeTPUV2VM:                     CategoryCompute,
+	TypeTranslationService:          CategoryCompute,
 	TypeVertexAIEndpoint:            CategoryCompute,
 	TypeVisionAIService:             CategoryCompute,
 	TypeWorkflowsWorkflow:           CategoryMessaging,
