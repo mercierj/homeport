@@ -200,6 +200,9 @@ const (
 	// Azure Observability
 	TypeAppInsights Type = "azurerm_application_insights"
 
+	// Azure DevOps / Integration
+	TypeAzureDataFactory Type = "azurerm_data_factory"
+
 	// Azure Security
 	TypeAzureADB2C    Type = "azurerm_aadb2c_directory"
 	TypeKeyVault      Type = "azurerm_key_vault"

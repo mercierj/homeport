@@ -5,6 +5,7 @@ import (
 	"github.com/homeport/homeport/internal/domain/mapper"
 	"github.com/homeport/homeport/internal/infrastructure/mapper/azure/compute"
 	"github.com/homeport/homeport/internal/infrastructure/mapper/azure/database"
+	"github.com/homeport/homeport/internal/infrastructure/mapper/azure/devops"
 	"github.com/homeport/homeport/internal/infrastructure/mapper/azure/messaging"
 	"github.com/homeport/homeport/internal/infrastructure/mapper/azure/networking"
 	"github.com/homeport/homeport/internal/infrastructure/mapper/azure/observability"
@@ -28,6 +29,7 @@ func RegisterAll(registry MapperRegistrar) {
 	registry.Register(compute.NewAKSMapper())
 	registry.Register(compute.NewContainerInstanceMapper())
 	registry.Register(compute.NewAppServiceMapper())
+	registry.Register(devops.NewDataFactoryMapper())
 
 	// Storage mappers
 	registry.Register(storage.NewBlobMapper())

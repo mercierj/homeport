@@ -211,11 +211,12 @@ var ResourceMapping = map[resource.Type]StackType{
 	resource.TypeAzureFirewall: StackTypePassthrough, // Firewall stays individual
 
 	// Azure Messaging (5 types)
-	resource.TypeServiceBus:      StackTypeMessaging, // Service Bus consolidates
-	resource.TypeServiceBusQueue: StackTypeMessaging, // Queues consolidate
-	resource.TypeEventHub:        StackTypeMessaging, // Event Hubs consolidate
-	resource.TypeEventGrid:       StackTypeMessaging, // Event Grid consolidates
-	resource.TypeLogicApp:        StackTypeMessaging, // Logic Apps consolidate (workflow/integration)
+	resource.TypeServiceBus:       StackTypeMessaging, // Service Bus consolidates
+	resource.TypeServiceBusQueue:  StackTypeMessaging, // Queues consolidate
+	resource.TypeEventHub:         StackTypeMessaging, // Event Hubs consolidate
+	resource.TypeEventGrid:        StackTypeMessaging, // Event Grid consolidates
+	resource.TypeLogicApp:         StackTypeMessaging, // Logic Apps consolidate (workflow/integration)
+	resource.TypeAzureDataFactory: StackTypeMessaging, // Pipelines consolidate with workflow orchestration
 
 	// Azure Observability
 	resource.TypeAppInsights: StackTypeObservability, // Telemetry consolidates with OpenTelemetry
