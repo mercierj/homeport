@@ -10,6 +10,7 @@ import (
 	"github.com/homeport/homeport/internal/domain/mapper"
 	"github.com/homeport/homeport/internal/domain/policy"
 	"github.com/homeport/homeport/internal/domain/resource"
+	domainrunbook "github.com/homeport/homeport/internal/domain/runbook"
 	"github.com/homeport/homeport/internal/infrastructure/mapper/shared/netrunbook"
 )
 
@@ -85,6 +86,8 @@ func (m *VNetMapper) Map(ctx context.Context, res *resource.AWSResource) (*mappe
 			subnets = subnetSlice
 		}
 	}
+	targetNetwork := m.primaryNetworkName(vnetName, subnets)
+	svc.Networks = []string{targetNetwork}
 
 	// Generate Docker network configurations for each subnet
 	networkConfigs := m.generateNetworkConfigs(vnetName, addressSpaces, subnets)
@@ -103,6 +106,11 @@ func (m *VNetMapper) Map(ctx context.Context, res *resource.AWSResource) (*mappe
 	// Generate network diagram
 	diagram := m.generateNetworkDiagram(vnetName, addressSpaces, subnets)
 	result.AddConfig("config/networks/network-diagram.txt", []byte(diagram))
+	result.AddConfig("config/networks/app-change.env", []byte(m.generateAppChangeConfig(vnetName, targetNetwork)))
+	result.AddConfig("config/networks/generated-network.patch", []byte(m.generateAppPatch(vnetName, targetNetwork)))
+	result.AddScript("validate_networks.sh", []byte(m.generateValidateScript(vnetName, targetNetwork)))
+	result.AddScript("backup_network_config.sh", []byte(m.generateBackupScript(vnetName)))
+	result.AddScript("cutover_network_clients.sh", []byte(m.generateCutoverScript(vnetName)))
 
 	// Add warnings and manual steps
 	if len(addressSpaces) > 0 {
@@ -111,22 +119,35 @@ func (m *VNetMapper) Map(ctx context.Context, res *resource.AWSResource) (*mappe
 
 	if len(dnsServers) > 0 {
 		result.AddWarning(fmt.Sprintf("Custom DNS servers configured: %s. Set these in Docker daemon config.", strings.Join(dnsServers, ", ")))
-		result.AddManualStep("Configure DNS servers in /etc/docker/daemon.json")
+		result.AddConfig("config/networks/docker-daemon-dns.json", []byte(m.generateDockerDNSConfig(dnsServers)))
 	}
 
 	result.AddWarning("Azure VNet peering is not supported in Docker. Use overlay networks for multi-host networking.")
 	result.AddWarning("Network Security Groups (NSGs) should be replaced with Docker firewall rules or iptables.")
 	result.AddWarning("Service endpoints are not applicable. Use Docker service discovery instead.")
 
-	result.AddManualStep("Create Docker networks using the generated configurations")
-	result.AddManualStep("Update services to use the appropriate networks")
-	result.AddManualStep("Configure firewall rules if NSGs were used")
-	result.AddManualStep("Review network isolation requirements")
 	for _, step := range netrunbook.Network(vnetName, "azurerm_virtual_network") {
+		result.AddRunbookStep(step)
+	}
+	for _, step := range vnetRunbook(vnetName) {
 		result.AddRunbookStep(step)
 	}
 
 	return result, nil
+}
+
+func (m *VNetMapper) primaryNetworkName(vnetName string, subnets []interface{}) string {
+	for _, subnet := range subnets {
+		subnetMap, ok := subnet.(map[string]interface{})
+		if !ok {
+			continue
+		}
+		name, _ := subnetMap["name"].(string)
+		if name != "" {
+			return m.sanitizeName(fmt.Sprintf("%s-%s", vnetName, name))
+		}
+	}
+	return m.sanitizeName(vnetName)
 }
 
 // generateNetworkConfigs generates Docker network configurations for subnets.
@@ -342,6 +363,62 @@ func (m *VNetMapper) generateNetworkDiagram(vnetName string, addressSpaces []str
 	sb.WriteString("Azure Service Endpoints → Docker service discovery\n")
 
 	return sb.String()
+}
+
+func (m *VNetMapper) generateAppChangeConfig(vnetName, targetNetwork string) string {
+	return fmt.Sprintf("APP_CHANGE_MODE=generated_patch\nSOURCE_AZURE_VNET=%s\nTARGET_DOCKER_NETWORK=%s\nGENERATED_PATCH=config/networks/generated-network.patch\n", vnetName, targetNetwork)
+}
+
+func (m *VNetMapper) generateAppPatch(vnetName, targetNetwork string) string {
+	return fmt.Sprintf("--- a/app/network.env\n+++ b/app/network.env\n@@\n-AZURE_VNET=%s\n+DOCKER_NETWORK=%s\n+NETWORK_MIGRATION_MODE=generated_patch\n", vnetName, targetNetwork)
+}
+
+func (m *VNetMapper) generateDockerDNSConfig(dnsServers []string) string {
+	quoted := make([]string, 0, len(dnsServers))
+	for _, server := range dnsServers {
+		quoted = append(quoted, fmt.Sprintf("%q", server))
+	}
+	return fmt.Sprintf("{\n  \"dns\": [%s]\n}\n", strings.Join(quoted, ", "))
+}
+
+func (m *VNetMapper) generateValidateScript(vnetName, targetNetwork string) string {
+	return fmt.Sprintf("#!/bin/sh\nset -eu\nSOURCE_AZURE_VNET=%q\nTARGET_DOCKER_NETWORK=%q\ntest -s config/networks/app-change.env\ngrep -q \"SOURCE_AZURE_VNET=$SOURCE_AZURE_VNET\" config/networks/app-change.env\ngrep -q \"TARGET_DOCKER_NETWORK=$TARGET_DOCKER_NETWORK\" config/networks/app-change.env\necho \"Azure VNet artifacts validate for $SOURCE_AZURE_VNET\"\n", vnetName, targetNetwork)
+}
+
+func (m *VNetMapper) generateBackupScript(vnetName string) string {
+	return fmt.Sprintf("#!/bin/sh\nset -eu\narchive=\"${BACKUP_DIR:-./backups}/azure-vnet-%s-$(date +%%Y%%m%%d%%H%%M%%S).tgz\"\nmkdir -p \"$(dirname \"$archive\")\"\ntar -czf \"$archive\" config/networks setup_networks.sh validate_networks.sh cutover_network_clients.sh\necho \"$archive\"\n", vnetName)
+}
+
+func (m *VNetMapper) generateCutoverScript(vnetName string) string {
+	return fmt.Sprintf("#!/bin/sh\nset -eu\n. config/networks/app-change.env\ntest \"$SOURCE_AZURE_VNET\" = %q\ntest \"$APP_CHANGE_MODE\" = \"generated_patch\"\ntest -s \"$GENERATED_PATCH\"\necho \"Apply $GENERATED_PATCH and attach services to $TARGET_DOCKER_NETWORK\"\n", vnetName)
+}
+
+func vnetRunbook(vnetName string) []domainrunbook.Step {
+	metadata := map[string]string{
+		"kind":                "network",
+		"source":              "azurerm_virtual_network",
+		"network":             vnetName,
+		"HOMEPORT_TARGET":     "docker-network",
+		"HOMEPORT_APP_CHANGE": "generated_patch",
+	}
+	return []domainrunbook.Step{
+		vnetStep("backup-azure-vnet-config", "Backup Azure VNet config", "Backup", domainrunbook.StepTypeCommand, []string{"sh", "backup_network_config.sh"}, "Azure VNet migration artifacts are archived", metadata),
+		vnetStep("cutover-azure-vnet-clients", "Cut over Azure VNet clients", "Cutover", domainrunbook.StepTypeAPICall, []string{"sh", "cutover_network_clients.sh"}, "applications attach to the generated Docker network", metadata),
+	}
+}
+
+func vnetStep(id, name, group string, stepType domainrunbook.StepType, command []string, success string, metadata map[string]string) domainrunbook.Step {
+	return domainrunbook.Step{
+		ID:               id,
+		Name:             name,
+		Group:            group,
+		Type:             stepType,
+		Status:           domainrunbook.StepStatusPending,
+		Executor:         "shell",
+		Command:          command,
+		SuccessCondition: success,
+		Metadata:         metadata,
+	}
 }
 
 // sanitizeName creates a valid Docker network name.
