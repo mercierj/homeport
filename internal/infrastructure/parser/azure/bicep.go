@@ -428,44 +428,47 @@ func mapBicepTypeToResourceType(bicepType string) resource.Type {
 
 	mapping := map[string]resource.Type{
 		// Compute
-		"microsoft.compute/virtualmachines":                          resource.TypeAzureVM,
-		"microsoft.web/sites":                                        resource.TypeAppService,
-		"microsoft.web/serverfarms":                                  resource.TypeAppService,
-		"microsoft.containerinstance/containergroups":                resource.TypeContainerInstance,
-		"microsoft.containerservice/managedclusters":                 resource.TypeAKS,
+		"microsoft.compute/virtualmachines":           resource.TypeAzureVM,
+		"microsoft.web/sites":                         resource.TypeAppService,
+		"microsoft.web/serverfarms":                   resource.TypeAppService,
+		"microsoft.containerinstance/containergroups": resource.TypeContainerInstance,
+		"microsoft.containerservice/managedclusters":  resource.TypeAKS,
 
 		// Storage
-		"microsoft.storage/storageaccounts":                          resource.TypeAzureStorageAcct,
-		"microsoft.storage/storageaccounts/blobservices/containers":  resource.TypeBlobStorage,
-		"microsoft.compute/disks":                                    resource.TypeManagedDisk,
+		"microsoft.storage/storageaccounts":                         resource.TypeAzureStorageAcct,
+		"microsoft.storage/storageaccounts/blobservices/containers": resource.TypeBlobStorage,
+		"microsoft.compute/disks":                                   resource.TypeManagedDisk,
 
 		// Database
-		"microsoft.sql/servers/databases":                            resource.TypeAzureSQL,
-		"microsoft.sql/servers":                                      resource.TypeAzureSQL,
-		"microsoft.dbforpostgresql/flexibleservers":                  resource.TypeAzurePostgres,
-		"microsoft.dbformysql/flexibleservers":                       resource.TypeAzureMySQL,
-		"microsoft.documentdb/databaseaccounts":                      resource.TypeCosmosDB,
-		"microsoft.cache/redis":                                      resource.TypeAzureCache,
+		"microsoft.sql/servers/databases":           resource.TypeAzureSQL,
+		"microsoft.sql/servers":                     resource.TypeAzureSQL,
+		"microsoft.dbforpostgresql/flexibleservers": resource.TypeAzurePostgres,
+		"microsoft.dbformysql/flexibleservers":      resource.TypeAzureMySQL,
+		"microsoft.documentdb/databaseaccounts":     resource.TypeCosmosDB,
+		"microsoft.cache/redis":                     resource.TypeAzureCache,
 
 		// Networking
-		"microsoft.network/loadbalancers":                            resource.TypeAzureLB,
-		"microsoft.network/applicationgateways":                      resource.TypeAppGateway,
-		"microsoft.network/dnszones":                                 resource.TypeAzureDNS,
-		"microsoft.cdn/profiles":                                     resource.TypeAzureCDN,
-		"microsoft.network/frontdoors":                               resource.TypeFrontDoor,
-		"microsoft.network/virtualnetworks":                          resource.TypeAzureVNet,
+		"microsoft.network/loadbalancers":       resource.TypeAzureLB,
+		"microsoft.network/applicationgateways": resource.TypeAppGateway,
+		"microsoft.network/dnszones":            resource.TypeAzureDNS,
+		"microsoft.cdn/profiles":                resource.TypeAzureCDN,
+		"microsoft.network/frontdoors":          resource.TypeFrontDoor,
+		"microsoft.network/virtualnetworks":     resource.TypeAzureVNet,
+
+		// Observability
+		"microsoft.insights/components": resource.TypeAppInsights,
 
 		// Security
-		"microsoft.keyvault/vaults":                                  resource.TypeKeyVault,
-		"microsoft.network/firewallpolicies":                         resource.TypeAzureFirewall,
-		"microsoft.network/azurefirewalls":                           resource.TypeAzureFirewall,
+		"microsoft.keyvault/vaults":          resource.TypeKeyVault,
+		"microsoft.network/firewallpolicies": resource.TypeAzureFirewall,
+		"microsoft.network/azurefirewalls":   resource.TypeAzureFirewall,
 
 		// Messaging
-		"microsoft.servicebus/namespaces":                            resource.TypeServiceBus,
-		"microsoft.servicebus/namespaces/queues":                     resource.TypeServiceBusQueue,
-		"microsoft.eventhub/namespaces":                              resource.TypeEventHub,
-		"microsoft.eventgrid/topics":                                 resource.TypeEventGrid,
-		"microsoft.logic/workflows":                                  resource.TypeLogicApp,
+		"microsoft.servicebus/namespaces":        resource.TypeServiceBus,
+		"microsoft.servicebus/namespaces/queues": resource.TypeServiceBusQueue,
+		"microsoft.eventhub/namespaces":          resource.TypeEventHub,
+		"microsoft.eventgrid/topics":             resource.TypeEventGrid,
+		"microsoft.logic/workflows":              resource.TypeLogicApp,
 	}
 
 	if resType, ok := mapping[lowerType]; ok {

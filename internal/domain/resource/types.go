@@ -195,6 +195,9 @@ const (
 	TypeAPIManagement Type = "azurerm_api_management"
 	TypeAzureVNet     Type = "azurerm_virtual_network"
 
+	// Azure Observability
+	TypeAppInsights Type = "azurerm_application_insights"
+
 	// Azure Security
 	TypeAzureADB2C    Type = "azurerm_aadb2c_directory"
 	TypeKeyVault      Type = "azurerm_key_vault"

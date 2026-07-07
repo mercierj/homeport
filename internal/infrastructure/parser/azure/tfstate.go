@@ -325,6 +325,9 @@ func mapAzureTerraformType(tfType string) resource.Type {
 		"azurerm_api_management":      resource.TypeAPIManagement,
 		"azurerm_virtual_network":     resource.TypeAzureVNet,
 
+		// Observability
+		"azurerm_application_insights": resource.TypeAppInsights,
+
 		// Security
 		"azurerm_key_vault":        resource.TypeKeyVault,
 		"azurerm_aadb2c_directory": resource.TypeAzureADB2C,

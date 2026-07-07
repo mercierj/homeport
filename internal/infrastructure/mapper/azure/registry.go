@@ -7,6 +7,7 @@ import (
 	"github.com/homeport/homeport/internal/infrastructure/mapper/azure/database"
 	"github.com/homeport/homeport/internal/infrastructure/mapper/azure/messaging"
 	"github.com/homeport/homeport/internal/infrastructure/mapper/azure/networking"
+	"github.com/homeport/homeport/internal/infrastructure/mapper/azure/observability"
 	"github.com/homeport/homeport/internal/infrastructure/mapper/azure/security"
 	"github.com/homeport/homeport/internal/infrastructure/mapper/azure/storage"
 )
@@ -48,6 +49,9 @@ func RegisterAll(registry MapperRegistrar) {
 	registry.Register(networking.NewFrontDoorMapper())
 	registry.Register(networking.NewAPIManagementMapper())
 	registry.Register(networking.NewVNetMapper())
+
+	// Observability mappers
+	registry.Register(observability.NewAppInsightsMapper())
 
 	// Security mappers
 	registry.Register(security.NewADB2CMapper())

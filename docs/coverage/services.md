@@ -110,7 +110,7 @@
 | azure | AKS | full | azurerm_kubernetes_cluster |
 | azure | API Management | full | azurerm_api_management |
 | azure | App Gateway | full | azurerm_application_gateway |
-| azure | App Insights | missing |  |
+| azure | App Insights | full | azurerm_application_insights |
 | azure | App Service | mapped | azurerm_app_service |
 | azure | Azure AD B2C | mapped | azurerm_aadb2c_directory |
 | azure | Azure Cache | mapped | azurerm_redis_cache |
@@ -151,7 +151,6 @@
 | azure | Logic Apps advanced | missing | azurerm_logic_app_workflow, azurerm_logic_app_trigger_http_request |
 | azure | Notification Hubs | missing | azurerm_notification_hub_namespace, azurerm_notification_hub |
 | azure | DevOps Pipelines | missing | azuredevops_build_definition, azuredevops_release_definition |
-| azure | Application Insights | missing | azurerm_application_insights |
 | azure | Automation | missing | azurerm_automation_account, azurerm_automation_runbook |
 | azure | Purview | missing | azurerm_purview_account |
 | azure | Machine Learning | missing | azurerm_machine_learning_workspace |

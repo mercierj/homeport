@@ -272,6 +272,9 @@ var CategoryMapping = map[Type]Category{
 	TypeAzureVNet:     CategoryVPC,
 	TypeAzureFirewall: CategoryFirewall,
 
+	// Azure Observability
+	TypeAppInsights: CategoryTracing,
+
 	// Azure Security
 	TypeAzureADB2C: CategoryAuth,
 	TypeKeyVault:   CategorySecrets,
