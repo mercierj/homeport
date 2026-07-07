@@ -139,11 +139,12 @@ var ResourceMapping = map[resource.Type]StackType{
 	resource.TypeSecretManager:    StackTypeSecrets,     // Secrets consolidate
 	resource.TypeGCPIAM:           StackTypePassthrough, // IAM doesn't map to self-hosted
 
-	// GCP Messaging (4 types)
+	// GCP Messaging
 	resource.TypePubSubTopic:        StackTypeMessaging, // PubSub consolidates
 	resource.TypePubSubSubscription: StackTypeMessaging, // Subscriptions consolidate
 	resource.TypeCloudTasks:         StackTypeMessaging, // Task queues consolidate
 	resource.TypeCloudScheduler:     StackTypeMessaging, // Scheduled jobs consolidate
+	resource.TypeEventarcTrigger:    StackTypeMessaging, // Event routes consolidate with workflow automation
 
 	// ─────────────────────────────────────────────────────
 	// Azure Resource Types (29 types)

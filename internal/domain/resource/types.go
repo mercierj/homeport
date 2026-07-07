@@ -136,6 +136,7 @@ const (
 	TypePubSubSubscription Type = "google_pubsub_subscription"
 	TypeCloudTasks         Type = "google_cloud_tasks_queue"
 	TypeCloudScheduler     Type = "google_cloud_scheduler_job"
+	TypeEventarcTrigger    Type = "google_eventarc_trigger"
 
 	// ─────────────────────────────────────────────────────
 	// Azure Resource Types

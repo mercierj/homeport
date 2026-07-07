@@ -62,4 +62,5 @@ func RegisterAll(registry MapperRegistrar) {
 	registry.Register(messaging.NewPubSubMapper())
 	registry.Register(messaging.NewPubSubSubscriptionMapper())
 	registry.Register(messaging.NewCloudTasksMapper())
+	registry.Register(messaging.NewEventarcMapper())
 }

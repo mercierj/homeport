@@ -212,6 +212,7 @@ var CategoryMapping = map[Type]Category{
 	TypePubSubSubscription: CategoryPubSub,
 	TypeCloudTasks:         CategoryQueue,
 	TypeCloudScheduler:     CategoryPubSub,
+	TypeEventarcTrigger:    CategoryPubSub,
 
 	// ─────────────────────────────────────────────────────
 	// Azure Resource Mappings (Complete)
