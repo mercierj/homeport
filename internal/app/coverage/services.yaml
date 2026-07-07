@@ -1762,19 +1762,22 @@ services:
     resource_types:
       - google_pubsub_topic
       - google_pubsub_subscription
+    terraform_resource_types: [google_pubsub_topic, google_pubsub_subscription]
+    target: RabbitMQ with generated Pub/Sub client patch
+    api_compatibility_strategy: generated_patch
+    manual_steps_resolved: true
     discover: true
-    cost: false
-    provision: false
-    migrate: false
-    api_compat: false
-    env_dns: false
-    ha: false
-    backup: false
-    validate: false
-    cutover: false
-    rollback: false
-    status: guided
-    blocker: no Pub/Sub-compatible local API adapter exists yet
+    cost: true
+    provision: true
+    migrate: true
+    api_compat: true
+    env_dns: true
+    ha: true
+    backup: true
+    validate: true
+    cutover: true
+    rollback: true
+    status: full
   - provider: gcp
     service: Secret Manager
     resource_types:

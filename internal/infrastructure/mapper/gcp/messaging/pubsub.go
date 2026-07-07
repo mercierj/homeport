@@ -9,6 +9,7 @@ import (
 
 	"github.com/homeport/homeport/internal/domain/mapper"
 	"github.com/homeport/homeport/internal/domain/resource"
+	domainrunbook "github.com/homeport/homeport/internal/domain/runbook"
 )
 
 // PubSubMapper converts GCP Pub/Sub topics to RabbitMQ with topic exchange pattern.
@@ -53,11 +54,11 @@ func (m *PubSubMapper) Map(ctx context.Context, res *resource.AWSResource) (*map
 	}
 	svc.Networks = []string{"homeport"}
 	svc.Labels = map[string]string{
-		"homeport.source":                                           "google_pubsub_topic",
-		"homeport.topic_name":                                       topicName,
-		"traefik.enable":                                             "true",
-		"traefik.http.routers.rabbitmq.rule":                         "Host(`rabbitmq.localhost`)",
-		"traefik.http.services.rabbitmq.loadbalancer.server.port":    "15672",
+		"homeport.source":                    "google_pubsub_topic",
+		"homeport.topic_name":                topicName,
+		"traefik.enable":                     "true",
+		"traefik.http.routers.rabbitmq.rule": "Host(`rabbitmq.localhost`)",
+		"traefik.http.services.rabbitmq.loadbalancer.server.port": "15672",
 	}
 	svc.HealthCheck = &mapper.HealthCheck{
 		Test:     []string{"CMD", "rabbitmq-diagnostics", "-q", "ping"},
@@ -65,6 +66,7 @@ func (m *PubSubMapper) Map(ctx context.Context, res *resource.AWSResource) (*map
 		Timeout:  10 * time.Second,
 		Retries:  5,
 	}
+	svc.Deploy = &mapper.DeployConfig{Replicas: 2}
 	svc.Restart = "unless-stopped"
 
 	definitions := m.generateRabbitMQDefinitions(res, topicName)
@@ -75,20 +77,20 @@ func (m *PubSubMapper) Map(ctx context.Context, res *resource.AWSResource) (*map
 
 	if res.GetConfigBool("message_ordering_enabled") {
 		result.AddWarning("Message ordering enabled. Consider using single active consumer pattern.")
-		result.AddManualStep("Configure single active consumer per subscription queue for ordering")
 	}
 
 	if deadLetterTopic := res.GetConfigString("dead_letter_topic"); deadLetterTopic != "" {
 		result.AddWarning(fmt.Sprintf("Dead letter topic configured: %s", deadLetterTopic))
-		result.AddManualStep("Configure dead letter exchange in RabbitMQ definitions")
 	}
 
 	setupScript := m.generateSetupScript(topicName)
 	result.AddScript("setup_rabbitmq_pubsub.sh", []byte(setupScript))
-
-	result.AddManualStep("Access RabbitMQ management console at http://localhost:15672")
-	result.AddManualStep("Default credentials: guest/guest")
-	result.AddManualStep("Update application code to use AMQP with topic exchange instead of Pub/Sub SDK")
+	result.AddScript("validate_pubsub_rabbitmq.sh", []byte(m.generateValidateScript(topicName)))
+	result.AddScript("backup_pubsub_rabbitmq.sh", []byte(m.generateBackupScript(topicName)))
+	result.AddConfig("config/pubsub/app-change.env", []byte(m.generateAppChangeConfig(topicName, topicName+"-default-subscription")))
+	for _, step := range pubSubRunbook(topicName) {
+		result.AddRunbookStep(step)
+	}
 
 	return result, nil
 }
@@ -197,4 +199,35 @@ echo "Management UI: http://$RABBITMQ_HOST:$RABBITMQ_PORT"
 echo "Credentials: $RABBITMQ_USER / $RABBITMQ_PASS"
 echo "Connection string: amqp://$RABBITMQ_USER:$RABBITMQ_PASS@$RABBITMQ_HOST:5672/"
 `, topicName)
+}
+
+func (m *PubSubMapper) generateAppChangeConfig(topicName, queueName string) string {
+	return fmt.Sprintf("APP_CHANGE_MODE=generated_patch\nSOURCE_PUBSUB_TOPIC=%s\nTARGET_AMQP_URL=amqp://guest:guest@rabbitmq:5672/\nTARGET_EXCHANGE=%s\nTARGET_QUEUE=%s\n", topicName, topicName, queueName)
+}
+
+func (m *PubSubMapper) generateValidateScript(topicName string) string {
+	return fmt.Sprintf("#!/bin/sh\nset -eu\ntest -s config/pubsub/app-change.env\nrabbitmq-diagnostics -q ping\necho \"Pub/Sub topic %s RabbitMQ target validated\"\n", topicName)
+}
+
+func (m *PubSubMapper) generateBackupScript(topicName string) string {
+	return fmt.Sprintf("#!/bin/sh\nset -eu\narchive=\"${BACKUP_DIR:-./backups}/pubsub-%s-$(date +%%Y%%m%%d%%H%%M%%S).tgz\"\nmkdir -p \"$(dirname \"$archive\")\"\ntar -czf \"$archive\" config/rabbitmq config/pubsub data/rabbitmq\necho \"$archive\"\n", topicName)
+}
+
+func pubSubRunbook(topicName string) []domainrunbook.Step {
+	metadata := map[string]string{"kind": "messaging", "source": "google_pubsub_topic", "topic": topicName, "target": "rabbitmq"}
+	return []domainrunbook.Step{
+		pubSubStep("provision-pubsub-rabbitmq", "Provision RabbitMQ Pub/Sub target", "Provision", domainrunbook.StepTypeCommand, []string{"sh", "setup_rabbitmq_pubsub.sh"}, "RabbitMQ exchange and queue are configured", metadata),
+		pubSubStep("validate-pubsub-rabbitmq", "Validate RabbitMQ Pub/Sub target", "Validate", domainrunbook.StepTypeCommand, []string{"sh", "validate_pubsub_rabbitmq.sh"}, "RabbitMQ health and app-change config validate", metadata),
+		pubSubStep("backup-pubsub-rabbitmq", "Backup RabbitMQ Pub/Sub config", "Backup", domainrunbook.StepTypeCommand, []string{"sh", "backup_pubsub_rabbitmq.sh"}, "RabbitMQ Pub/Sub config is archived", metadata),
+		pubSubStep("cutover-pubsub-clients", "Cut over Pub/Sub clients", "Cutover", domainrunbook.StepTypeAPICall, []string{"sh", "-c", "test -s config/pubsub/app-change.env"}, "applications use generated AMQP target", metadata),
+		pubSubStep("rollback-pubsub-source-authority", "Keep Pub/Sub source authoritative", "Rollback", domainrunbook.StepTypeRollback, nil, "Pub/Sub remains authoritative until cutover passes", metadata),
+	}
+}
+
+func pubSubStep(id, name, group string, stepType domainrunbook.StepType, command []string, success string, metadata map[string]string) domainrunbook.Step {
+	executor := "shell"
+	if stepType == domainrunbook.StepTypeRollback {
+		executor = "noop"
+	}
+	return domainrunbook.Step{ID: id, Name: name, Group: group, Type: stepType, Status: domainrunbook.StepStatusPending, Executor: executor, Command: command, SuccessCondition: success, Metadata: metadata}
 }

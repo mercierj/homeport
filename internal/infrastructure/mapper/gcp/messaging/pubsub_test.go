@@ -2,10 +2,12 @@ package messaging
 
 import (
 	"context"
+	"strings"
 	"testing"
 
 	"github.com/homeport/homeport/internal/domain/mapper"
 	"github.com/homeport/homeport/internal/domain/resource"
+	domainrunbook "github.com/homeport/homeport/internal/domain/runbook"
 )
 
 func TestNewPubSubMapper(t *testing.T) {
@@ -16,6 +18,108 @@ func TestNewPubSubMapper(t *testing.T) {
 	if m.ResourceType() != resource.TypePubSubTopic {
 		t.Errorf("ResourceType() = %v, want %v", m.ResourceType(), resource.TypePubSubTopic)
 	}
+}
+
+func TestPubSubConformanceManagedAToZ(t *testing.T) {
+	tests := []struct {
+		name   string
+		mapper interface {
+			Map(context.Context, *resource.AWSResource) (*mapper.MappingResult, error)
+		}
+		resource *resource.AWSResource
+		configs  []string
+		scripts  []string
+		runbook  string
+	}{
+		{
+			name:   "topic",
+			mapper: NewPubSubMapper(),
+			resource: &resource.AWSResource{
+				ID:   "projects/demo/topics/orders",
+				Type: resource.TypePubSubTopic,
+				Name: "orders",
+				Config: map[string]interface{}{
+					"name":                     "orders",
+					"message_ordering_enabled": true,
+					"dead_letter_topic":        "projects/demo/topics/orders-dlq",
+				},
+			},
+			configs: []string{"config/rabbitmq/definitions.json", "config/rabbitmq/rabbitmq.conf", "config/pubsub/app-change.env"},
+			scripts: []string{"setup_rabbitmq_pubsub.sh", "validate_pubsub_rabbitmq.sh", "backup_pubsub_rabbitmq.sh"},
+			runbook: "validate-pubsub-rabbitmq",
+		},
+		{
+			name:   "subscription",
+			mapper: NewPubSubSubscriptionMapper(),
+			resource: &resource.AWSResource{
+				ID:   "projects/demo/subscriptions/orders-worker",
+				Type: resource.TypePubSubSubscription,
+				Name: "orders-worker",
+				Config: map[string]interface{}{
+					"name":                         "orders-worker",
+					"topic":                        "orders",
+					"ack_deadline_seconds":         float64(30),
+					"dead_letter_topic":            "projects/demo/topics/orders-dlq",
+					"enable_message_ordering":      true,
+					"enable_exactly_once_delivery": true,
+					"filter":                       `attributes.kind="order"`,
+				},
+			},
+			configs: []string{"config/rabbitmq/definitions.json", "config/rabbitmq/rabbitmq.conf", "config/pubsub/app-change.env"},
+			scripts: []string{"scripts/migrate-pubsub-subscription.sh", "scripts/validate-pubsub-subscription.sh", "scripts/backup-pubsub-subscription.sh"},
+			runbook: "validate-pubsub-subscription",
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			result, err := tt.mapper.Map(context.Background(), tt.resource)
+			if err != nil {
+				t.Fatal(err)
+			}
+			if len(result.ManualSteps) != 0 {
+				t.Fatalf("manual steps = %#v, want generated Pub/Sub migration", result.ManualSteps)
+			}
+			if result.DockerService.Deploy == nil || result.DockerService.Deploy.Replicas < 2 {
+				t.Fatalf("RabbitMQ service is not HA: %#v", result.DockerService)
+			}
+			for _, file := range tt.configs {
+				content, ok := result.Configs[file]
+				if !ok {
+					t.Fatalf("missing config %s", file)
+				}
+				if strings.Contains(string(content), "TODO") {
+					t.Fatalf("config %s contains TODO:\n%s", file, content)
+				}
+			}
+			appEnv := string(result.Configs["config/pubsub/app-change.env"])
+			if !strings.Contains(appEnv, "APP_CHANGE_MODE=generated_patch") || !strings.Contains(appEnv, "TARGET_AMQP_URL=") {
+				t.Fatalf("app-change env missing generated AMQP target:\n%s", appEnv)
+			}
+			for _, file := range tt.scripts {
+				if _, ok := result.Scripts[file]; !ok {
+					t.Fatalf("missing script %s", file)
+				}
+			}
+			if !hasPubSubRunbookStep(result, tt.runbook, domainrunbook.StepTypeCommand) {
+				t.Fatalf("missing runbook step %s: %#v", tt.runbook, result.RunbookSteps)
+			}
+			for _, step := range result.RunbookSteps {
+				if step.Type == domainrunbook.StepTypeInput || step.Status == domainrunbook.StepStatusBlocked {
+					t.Fatalf("manual or blocked runbook step = %#v", step)
+				}
+			}
+		})
+	}
+}
+
+func hasPubSubRunbookStep(result *mapper.MappingResult, id string, stepType domainrunbook.StepType) bool {
+	for _, step := range result.RunbookSteps {
+		if step.ID == id && step.Type == stepType {
+			return true
+		}
+	}
+	return false
 }
 
 func TestPubSubMapper_ResourceType(t *testing.T) {
@@ -120,7 +224,7 @@ func TestPubSubMapper_Map(t *testing.T) {
 				Type: resource.TypePubSubTopic,
 				Name: "ordered-topic",
 				Config: map[string]interface{}{
-					"name":                    "ordered-topic",
+					"name":                     "ordered-topic",
 					"message_ordering_enabled": true,
 				},
 			},

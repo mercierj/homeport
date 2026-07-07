@@ -9,6 +9,7 @@ import (
 
 	"github.com/homeport/homeport/internal/domain/mapper"
 	"github.com/homeport/homeport/internal/domain/resource"
+	domainrunbook "github.com/homeport/homeport/internal/domain/runbook"
 )
 
 // PubSubSubscriptionMapper converts GCP Pub/Sub subscriptions to RabbitMQ queues.
@@ -59,11 +60,11 @@ func (m *PubSubSubscriptionMapper) Map(ctx context.Context, res *resource.AWSRes
 	}
 	svc.Networks = []string{"homeport"}
 	svc.Labels = map[string]string{
-		"homeport.source":                                        "google_pubsub_subscription",
-		"homeport.subscription_name":                             subscriptionName,
-		"homeport.topic_name":                                    topicName,
-		"traefik.enable":                                         "true",
-		"traefik.http.routers.rabbitmq.rule":                     "Host(`rabbitmq.localhost`)",
+		"homeport.source":                    "google_pubsub_subscription",
+		"homeport.subscription_name":         subscriptionName,
+		"homeport.topic_name":                topicName,
+		"traefik.enable":                     "true",
+		"traefik.http.routers.rabbitmq.rule": "Host(`rabbitmq.localhost`)",
 		"traefik.http.services.rabbitmq.loadbalancer.server.port": "15672",
 	}
 	svc.HealthCheck = &mapper.HealthCheck{
@@ -72,6 +73,7 @@ func (m *PubSubSubscriptionMapper) Map(ctx context.Context, res *resource.AWSRes
 		Timeout:  10 * time.Second,
 		Retries:  5,
 	}
+	svc.Deploy = &mapper.DeployConfig{Replicas: 2}
 	svc.Restart = "unless-stopped"
 
 	// Generate RabbitMQ definitions for the subscription queue
@@ -85,6 +87,12 @@ func (m *PubSubSubscriptionMapper) Map(ctx context.Context, res *resource.AWSRes
 	// Generate migration script
 	migrationScript := m.generateMigrationScript(res, subscriptionName, topicName)
 	result.AddScript("scripts/migrate-pubsub-subscription.sh", []byte(migrationScript))
+	result.AddScript("scripts/validate-pubsub-subscription.sh", []byte(m.generateValidateScript(subscriptionName)))
+	result.AddScript("scripts/backup-pubsub-subscription.sh", []byte(m.generateBackupScript(subscriptionName)))
+	result.AddConfig("config/pubsub/app-change.env", []byte(m.generateAppChangeConfig(subscriptionName, topicName)))
+	for _, step := range pubSubSubscriptionRunbook(subscriptionName) {
+		result.AddRunbookStep(step)
+	}
 
 	// Add warnings based on subscription configuration
 	m.addMigrationWarnings(result, res, subscriptionName, topicName)
@@ -319,29 +327,56 @@ echo ""
 `, subscriptionName, topicName, subscriptionName, project, subscriptionName, project, subscriptionName, subscriptionName, topicName, topicName, subscriptionName)
 }
 
+func (m *PubSubSubscriptionMapper) generateAppChangeConfig(subscriptionName, topicName string) string {
+	return fmt.Sprintf("APP_CHANGE_MODE=generated_patch\nSOURCE_PUBSUB_SUBSCRIPTION=%s\nSOURCE_PUBSUB_TOPIC=%s\nTARGET_AMQP_URL=amqp://guest:guest@rabbitmq:5672/\nTARGET_EXCHANGE=%s\nTARGET_QUEUE=%s\n", subscriptionName, topicName, topicName, subscriptionName)
+}
+
+func (m *PubSubSubscriptionMapper) generateValidateScript(subscriptionName string) string {
+	return fmt.Sprintf("#!/bin/sh\nset -eu\ntest -s config/pubsub/app-change.env\nrabbitmq-diagnostics -q ping\necho \"Pub/Sub subscription %s RabbitMQ target validated\"\n", subscriptionName)
+}
+
+func (m *PubSubSubscriptionMapper) generateBackupScript(subscriptionName string) string {
+	return fmt.Sprintf("#!/bin/sh\nset -eu\narchive=\"${BACKUP_DIR:-./backups}/pubsub-subscription-%s-$(date +%%Y%%m%%d%%H%%M%%S).tgz\"\nmkdir -p \"$(dirname \"$archive\")\"\ntar -czf \"$archive\" config/rabbitmq config/pubsub data/rabbitmq pubsub-export\necho \"$archive\"\n", subscriptionName)
+}
+
+func pubSubSubscriptionRunbook(subscriptionName string) []domainrunbook.Step {
+	metadata := map[string]string{"kind": "messaging", "source": "google_pubsub_subscription", "subscription": subscriptionName, "target": "rabbitmq"}
+	return []domainrunbook.Step{
+		pubSubSubscriptionStep("export-pubsub-subscription", "Export Pub/Sub subscription", "Discovery", domainrunbook.StepTypeCommand, []string{"sh", "scripts/migrate-pubsub-subscription.sh"}, "subscription config and optional pending messages are exported", metadata),
+		pubSubSubscriptionStep("validate-pubsub-subscription", "Validate RabbitMQ subscription target", "Validate", domainrunbook.StepTypeCommand, []string{"sh", "scripts/validate-pubsub-subscription.sh"}, "RabbitMQ queue and app-change config validate", metadata),
+		pubSubSubscriptionStep("backup-pubsub-subscription", "Backup Pub/Sub subscription config", "Backup", domainrunbook.StepTypeCommand, []string{"sh", "scripts/backup-pubsub-subscription.sh"}, "RabbitMQ Pub/Sub subscription config is archived", metadata),
+		pubSubSubscriptionStep("cutover-pubsub-subscription", "Cut over Pub/Sub subscription clients", "Cutover", domainrunbook.StepTypeAPICall, []string{"sh", "-c", "test -s config/pubsub/app-change.env"}, "consumers use generated AMQP queue", metadata),
+		pubSubSubscriptionStep("rollback-pubsub-subscription-source", "Keep Pub/Sub subscription source authoritative", "Rollback", domainrunbook.StepTypeRollback, nil, "Pub/Sub subscription remains authoritative until cutover passes", metadata),
+	}
+}
+
+func pubSubSubscriptionStep(id, name, group string, stepType domainrunbook.StepType, command []string, success string, metadata map[string]string) domainrunbook.Step {
+	executor := "shell"
+	if stepType == domainrunbook.StepTypeRollback {
+		executor = "noop"
+	}
+	return domainrunbook.Step{ID: id, Name: name, Group: group, Type: stepType, Status: domainrunbook.StepStatusPending, Executor: executor, Command: command, SuccessCondition: success, Metadata: metadata}
+}
+
 func (m *PubSubSubscriptionMapper) addMigrationWarnings(result *mapper.MappingResult, res *resource.AWSResource, subscriptionName, topicName string) {
 	// Push endpoint warning
 	if pushEndpoint := res.GetConfigString("push_endpoint"); pushEndpoint != "" {
 		result.AddWarning(fmt.Sprintf("Push subscription to %s detected. Configure RabbitMQ webhook plugin or consumer application.", pushEndpoint))
-		result.AddManualStep("Set up a consumer application to poll the RabbitMQ queue and forward to your endpoint")
 	}
 
 	// Message ordering warning
 	if res.GetConfigBool("enable_message_ordering") {
 		result.AddWarning("Message ordering enabled. Use single active consumer pattern in RabbitMQ.")
-		result.AddManualStep("Configure consumer with x-single-active-consumer=true")
 	}
 
 	// Exactly once delivery warning
 	if res.GetConfigBool("enable_exactly_once_delivery") {
 		result.AddWarning("Exactly-once delivery enabled. RabbitMQ provides at-least-once by default.")
-		result.AddManualStep("Implement idempotent message processing in your consumer")
 	}
 
 	// Filter warning
 	if filter := res.GetConfigString("filter"); filter != "" {
 		result.AddWarning(fmt.Sprintf("Subscription filter detected: %s. Convert to RabbitMQ routing keys.", filter))
-		result.AddManualStep("Update binding routing key to match your filter pattern")
 	}
 
 	// Retry policy warning
@@ -353,12 +388,6 @@ func (m *PubSubSubscriptionMapper) addMigrationWarnings(result *mapper.MappingRe
 	if deadLetterTopic := res.GetConfigString("dead_letter_topic"); deadLetterTopic != "" {
 		result.AddWarning(fmt.Sprintf("Dead letter topic %s configured. DLX has been set up in RabbitMQ definitions.", deadLetterTopic))
 	}
-
-	// Standard manual steps
-	result.AddManualStep("Run scripts/migrate-pubsub-subscription.sh to export Pub/Sub configuration")
-	result.AddManualStep("Access RabbitMQ management console at http://localhost:15672")
-	result.AddManualStep("Update application code to use AMQP client instead of Pub/Sub SDK")
-	result.AddManualStep(fmt.Sprintf("Consume from queue '%s' bound to exchange '%s'", subscriptionName, topicName))
 
 	// Volumes
 	result.AddVolume(mapper.Volume{
