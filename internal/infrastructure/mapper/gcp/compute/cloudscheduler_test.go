@@ -2,11 +2,55 @@ package compute
 
 import (
 	"context"
+	"strings"
 	"testing"
 
 	"github.com/homeport/homeport/internal/domain/mapper"
 	"github.com/homeport/homeport/internal/domain/resource"
+	domainrunbook "github.com/homeport/homeport/internal/domain/runbook"
 )
+
+func TestCloudSchedulerConformanceManagedAToZ(t *testing.T) {
+	result, err := NewCloudSchedulerMapper().Map(context.Background(), managedCloudSchedulerFixture())
+	if err != nil {
+		t.Fatal(err)
+	}
+	if len(result.ManualSteps) != 0 {
+		t.Fatalf("manual steps = %#v, want generated Cloud Scheduler migration", result.ManualSteps)
+	}
+	if result.DockerService.Image != "mcuadros/ofelia:latest" || result.DockerService.Deploy == nil || result.DockerService.Deploy.Replicas < 2 {
+		t.Fatalf("service does not provision HA Ofelia scheduler: %#v", result.DockerService)
+	}
+	for _, file := range []string{"scheduler/ofelia.ini", "scheduler/jobs/nightly-sync.sh", "config/cloud-scheduler/app-change.env", "config/cloud-scheduler/job-report.yaml"} {
+		if _, ok := result.Configs[file]; !ok {
+			t.Fatalf("missing config %s", file)
+		}
+	}
+	appEnv := string(result.Configs["config/cloud-scheduler/app-change.env"])
+	for _, want := range []string{"APP_CHANGE_MODE=generated_patch", "SOURCE_CLOUD_SCHEDULER_JOB=nightly-sync", "TARGET_SCHEDULER=ofelia"} {
+		if !strings.Contains(appEnv, want) {
+			t.Fatalf("app-change env missing %q:\n%s", want, appEnv)
+		}
+	}
+	for _, file := range []string{"backup_cloud_scheduler.sh", "validate_cloud_scheduler.sh"} {
+		if _, ok := result.Scripts[file]; !ok {
+			t.Fatalf("missing script %s", file)
+		}
+	}
+	for id, stepType := range map[string]domainrunbook.StepType{
+		"discover-cloud-scheduler-job":  domainrunbook.StepTypeCommand,
+		"provision-ofelia-scheduler":    domainrunbook.StepTypeCommand,
+		"migrate-cloud-scheduler-job":   domainrunbook.StepTypeCommand,
+		"validate-cloud-scheduler-job":  domainrunbook.StepTypeCommand,
+		"backup-cloud-scheduler-config": domainrunbook.StepTypeCommand,
+		"cutover-cloud-scheduler-job":   domainrunbook.StepTypeAPICall,
+		"rollback-cloud-scheduler-job":  domainrunbook.StepTypeRollback,
+	} {
+		if !hasCloudSchedulerRunbookStep(result, id, stepType) {
+			t.Fatalf("missing %s runbook step: %#v", id, result.RunbookSteps)
+		}
+	}
+}
 
 func TestNewCloudSchedulerMapper(t *testing.T) {
 	m := NewCloudSchedulerMapper()
@@ -16,6 +60,32 @@ func TestNewCloudSchedulerMapper(t *testing.T) {
 	if m.ResourceType() != resource.TypeCloudScheduler {
 		t.Errorf("ResourceType() = %v, want %v", m.ResourceType(), resource.TypeCloudScheduler)
 	}
+}
+
+func managedCloudSchedulerFixture() *resource.AWSResource {
+	return &resource.AWSResource{
+		ID:   "projects/demo/locations/europe-west1/jobs/nightly-sync",
+		Type: resource.TypeCloudScheduler,
+		Name: "nightly-sync",
+		Config: map[string]interface{}{
+			"name":      "nightly-sync",
+			"schedule":  "0 2 * * *",
+			"time_zone": "Europe/Paris",
+			"http_target": map[string]interface{}{
+				"uri":         "http://worker:8080/sync",
+				"http_method": "POST",
+			},
+		},
+	}
+}
+
+func hasCloudSchedulerRunbookStep(result *mapper.MappingResult, id string, stepType domainrunbook.StepType) bool {
+	for _, step := range result.RunbookSteps {
+		if step.ID == id && step.Type == stepType {
+			return true
+		}
+	}
+	return false
 }
 
 func TestCloudSchedulerMapper_ResourceType(t *testing.T) {

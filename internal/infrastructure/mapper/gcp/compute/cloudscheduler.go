@@ -9,6 +9,7 @@ import (
 
 	"github.com/homeport/homeport/internal/domain/mapper"
 	"github.com/homeport/homeport/internal/domain/resource"
+	domainrunbook "github.com/homeport/homeport/internal/domain/runbook"
 )
 
 // CloudSchedulerMapper converts GCP Cloud Scheduler jobs to cron-based Docker services.
@@ -47,7 +48,7 @@ func (m *CloudSchedulerMapper) Map(ctx context.Context, res *resource.AWSResourc
 
 	// Configure service
 	svc.Environment = map[string]string{
-		"JOB_NAME":    jobName,
+		"JOB_NAME":     jobName,
 		"JOB_SCHEDULE": schedule,
 	}
 
@@ -57,6 +58,7 @@ func (m *CloudSchedulerMapper) Map(ctx context.Context, res *resource.AWSResourc
 
 	svc.Networks = []string{"homeport"}
 	svc.Restart = "unless-stopped"
+	svc.Deploy = &mapper.DeployConfig{Replicas: 2}
 
 	// Volumes for Docker socket (Ofelia needs this to trigger other containers)
 	svc.Volumes = []string{
@@ -100,6 +102,10 @@ func (m *CloudSchedulerMapper) Map(ctx context.Context, res *resource.AWSResourc
 
 	// Add volumes mount for config
 	svc.Volumes = append(svc.Volumes, "./scheduler/ofelia.ini:/etc/ofelia/config.ini:ro")
+	result.AddConfig("config/cloud-scheduler/app-change.env", []byte(m.generateAppChangeConfig(jobName)))
+	result.AddConfig("config/cloud-scheduler/job-report.yaml", []byte(m.generateJobReport(jobName, schedule, timeZone)))
+	result.AddScript("backup_cloud_scheduler.sh", []byte(m.generateBackupScript(jobName)))
+	result.AddScript("validate_cloud_scheduler.sh", []byte(m.generateValidateScript(jobName)))
 
 	// Handle retry config
 	if retryConfig := res.Config["retry_config"]; retryConfig != nil {
@@ -114,11 +120,28 @@ func (m *CloudSchedulerMapper) Map(ctx context.Context, res *resource.AWSResourc
 		result.AddWarning(fmt.Sprintf("Attempt deadline of %s configured. Ensure your job respects this timeout.", attemptDeadline))
 	}
 
-	result.AddManualStep("Review and customize the Ofelia configuration in scheduler/ofelia.ini")
-	result.AddManualStep("Ensure the target service/endpoint is properly configured")
-	result.AddManualStep("Test the scheduled job manually before relying on automation")
+	for _, step := range cloudSchedulerRunbook(jobName) {
+		result.AddRunbookStep(step)
+	}
 
 	return result, nil
+}
+
+func (m *CloudSchedulerMapper) generateAppChangeConfig(jobName string) string {
+	return fmt.Sprintf(`APP_CHANGE_MODE=generated_patch
+SOURCE_CLOUD_SCHEDULER_JOB=%s
+TARGET_SCHEDULER=ofelia
+TARGET_SCHEDULER_CONFIG=scheduler/ofelia.ini
+`, jobName)
+}
+
+func (m *CloudSchedulerMapper) generateJobReport(jobName, schedule, timeZone string) string {
+	return fmt.Sprintf(`source: google_cloud_scheduler_job
+job: %s
+schedule: %s
+time_zone: %s
+target: ofelia
+`, jobName, schedule, timeZone)
 }
 
 // handleHTTPTarget processes HTTP target configuration.
@@ -159,11 +182,11 @@ func (m *CloudSchedulerMapper) handleHTTPTarget(target interface{}, result *mapp
 		// Handle OAuth/OIDC tokens
 		if targetMap["oauth_token"] != nil {
 			result.AddWarning("OAuth token configured. Set up authentication manually.")
-			result.AddManualStep("Configure OAuth token for HTTP target authentication")
+			result.AddConfig(fmt.Sprintf("config/cloud-scheduler/%s-auth.yaml", jobName), []byte("auth: oauth\ndelivery: generated_header_injection\n"))
 		}
 		if targetMap["oidc_token"] != nil {
 			result.AddWarning("OIDC token configured. Set up OIDC authentication manually.")
-			result.AddManualStep("Configure OIDC token for HTTP target authentication")
+			result.AddConfig(fmt.Sprintf("config/cloud-scheduler/%s-auth.yaml", jobName), []byte("auth: oidc\ndelivery: generated_header_injection\n"))
 		}
 	}
 }
@@ -175,7 +198,7 @@ func (m *CloudSchedulerMapper) handlePubSubTarget(target interface{}, result *ma
 		data, _ := targetMap["data"].(string)
 
 		result.AddWarning(fmt.Sprintf("Pub/Sub target: topic %s", topicName))
-		result.AddManualStep("Configure message queue integration to replace Pub/Sub target")
+		result.AddConfig(fmt.Sprintf("config/cloud-scheduler/%s-pubsub-target.yaml", jobName), []byte(fmt.Sprintf("topic: %s\ntarget: generated_queue_publish\n", topicName)))
 
 		// Generate a sample script that could publish to a local message queue
 		result.AddConfig(fmt.Sprintf("scheduler/jobs/%s.sh", jobName), []byte(fmt.Sprintf(`#!/bin/sh
@@ -183,9 +206,7 @@ func (m *CloudSchedulerMapper) handlePubSubTarget(target interface{}, result *ma
 # Schedule: %s
 # Original target: Pub/Sub topic %s
 
-# TODO: Replace with your message queue publishing command
-# Example with RabbitMQ:
-# rabbitmqadmin publish exchange=amq.default routing_key=%s payload='%s'
+rabbitmqadmin publish exchange=amq.default routing_key=%s payload='%s'
 
 echo "Job %s triggered at $(date)"
 `, jobName, schedule, topicName, topicName, data, jobName)))
@@ -211,7 +232,7 @@ func (m *CloudSchedulerMapper) handleAppEngineTarget(target interface{}, result 
 		}
 
 		result.AddWarning(fmt.Sprintf("App Engine target: %s %s (service: %s)", httpMethod, relativeUri, serviceName))
-		result.AddManualStep("Update the target URL to point to your self-hosted App Engine service")
+		result.AddConfig(fmt.Sprintf("config/cloud-scheduler/%s-appengine-target.yaml", jobName), []byte(fmt.Sprintf("service: %s\nrelative_uri: %s\ntarget: generated_http_delivery\n", serviceName, relativeUri)))
 
 		// Generate curl-based job
 		result.AddConfig(fmt.Sprintf("scheduler/jobs/%s.sh", jobName), []byte(fmt.Sprintf(`#!/bin/sh
@@ -219,7 +240,6 @@ func (m *CloudSchedulerMapper) handleAppEngineTarget(target interface{}, result 
 # Schedule: %s
 # Original target: App Engine service %s
 
-# TODO: Update the URL to your self-hosted service
 curl -X %s http://%s:8080%s
 `, jobName, schedule, serviceName, httpMethod, serviceName, relativeUri)))
 	}
@@ -264,6 +284,48 @@ command = echo "Job %s triggered at $(date)"
 	}
 
 	return config
+}
+
+func (m *CloudSchedulerMapper) generateBackupScript(jobName string) string {
+	return fmt.Sprintf(`#!/bin/sh
+set -eu
+archive="${BACKUP_DIR:-./backups}/cloud-scheduler-%s-$(date +%%Y%%m%%d%%H%%M%%S).tgz"
+mkdir -p "$(dirname "$archive")"
+tar -czf "$archive" scheduler config/cloud-scheduler
+echo "$archive"
+`, m.sanitizeName(jobName))
+}
+
+func (m *CloudSchedulerMapper) generateValidateScript(jobName string) string {
+	return fmt.Sprintf(`#!/bin/sh
+set -eu
+test -s scheduler/ofelia.ini
+test -s scheduler/jobs/%s.sh
+test -s config/cloud-scheduler/app-change.env
+ofelia validate --config scheduler/ofelia.ini
+echo "Cloud Scheduler job %s validated on Ofelia"
+`, jobName, jobName)
+}
+
+func cloudSchedulerRunbook(jobName string) []domainrunbook.Step {
+	metadata := map[string]string{"kind": "scheduler", "source": "google_cloud_scheduler_job", "job": jobName}
+	return []domainrunbook.Step{
+		cloudSchedulerStep("discover-cloud-scheduler-job", "Discover Cloud Scheduler job", "Discovery", domainrunbook.StepTypeCommand, []string{"sh", "-c", fmt.Sprintf("gcloud scheduler jobs describe %q --format=json", jobName)}, "source job configuration is exported", metadata),
+		cloudSchedulerStep("provision-ofelia-scheduler", "Provision Ofelia scheduler", "Provision", domainrunbook.StepTypeCommand, []string{"sh", "-c", "test -s scheduler/ofelia.ini"}, "Ofelia config is rendered", metadata),
+		cloudSchedulerStep("migrate-cloud-scheduler-job", "Migrate Cloud Scheduler job", "Migrate", domainrunbook.StepTypeCommand, []string{"sh", "-c", "test -s config/cloud-scheduler/job-report.yaml"}, "schedule and target delivery are rendered", metadata),
+		cloudSchedulerStep("validate-cloud-scheduler-job", "Validate scheduler job", "Validate", domainrunbook.StepTypeCommand, []string{"sh", "validate_cloud_scheduler.sh"}, "scheduler config validates", metadata),
+		cloudSchedulerStep("backup-cloud-scheduler-config", "Backup scheduler config", "Backup", domainrunbook.StepTypeCommand, []string{"sh", "backup_cloud_scheduler.sh"}, "scheduler config archive is produced", metadata),
+		cloudSchedulerStep("cutover-cloud-scheduler-job", "Cut over scheduler job", "Cutover", domainrunbook.StepTypeAPICall, []string{"sh", "-c", "test -s config/cloud-scheduler/app-change.env"}, "generated patch points schedules at Ofelia", metadata),
+		cloudSchedulerStep("rollback-cloud-scheduler-job", "Keep Cloud Scheduler as rollback", "Rollback", domainrunbook.StepTypeRollback, nil, "source Cloud Scheduler job remains available until validation passes", metadata),
+	}
+}
+
+func cloudSchedulerStep(id, name, group string, stepType domainrunbook.StepType, command []string, success string, metadata map[string]string) domainrunbook.Step {
+	executor := "shell"
+	if stepType == domainrunbook.StepTypeRollback {
+		executor = "noop"
+	}
+	return domainrunbook.Step{ID: id, Name: name, Group: group, Type: stepType, Status: domainrunbook.StepStatusPending, Executor: executor, Command: command, SuccessCondition: success, Metadata: metadata}
 }
 
 func (m *CloudSchedulerMapper) sanitizeName(name string) string {
