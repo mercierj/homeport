@@ -134,7 +134,7 @@
 | azure | Foundry/OpenAI | full | azurerm_cognitive_account |
 | azure | Front Door | full | azurerm_frontdoor |
 | azure | IoT Hub | full | azurerm_iothub |
-| azure | Key Vault | mapped | azurerm_key_vault |
+| azure | Key Vault | full | azurerm_key_vault |
 | azure | Log Analytics | missing |  |
 | azure | Logic Apps | guided | azurerm_logic_app_workflow |
 | azure | Managed Disk | mapped | azurerm_managed_disk |
