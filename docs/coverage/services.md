@@ -77,7 +77,7 @@
 | gcp | Cloud Tasks | full | google_cloud_tasks_queue |
 | gcp | Compute Engine | full | google_compute_instance |
 | gcp | Composer | full | google_composer_environment |
-| gcp | Dataflow | missing |  |
+| gcp | Dataflow | full | google_dataflow_job |
 | gcp | Dataproc | missing |  |
 | gcp | Eventarc | missing |  |
 | gcp | Filestore | mapped | google_filestore_instance |

@@ -178,6 +178,7 @@ var CategoryMapping = map[Type]Category{
 	TypeArtifactRegistryRepository: CategoryContainer,
 	TypeCloudBuildTrigger:          CategoryDevOps,
 	TypeComposerEnvironment:        CategoryDevOps,
+	TypeDataflowJob:                CategoryDevOps,
 
 	// GCP Storage
 	TypeGCSBucket:      CategoryObjectStorage,

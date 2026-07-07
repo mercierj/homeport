@@ -18,9 +18,9 @@ func TestResourceMappingCoverage(t *testing.T) {
 func TestResourceMappingCount(t *testing.T) {
 	// Expected counts from types.go
 	expectedAWS := 63
-	expectedGCP := 30
+	expectedGCP := 31
 	expectedAzure := 29
-	expectedTotal := expectedAWS + expectedGCP + expectedAzure // 122
+	expectedTotal := expectedAWS + expectedGCP + expectedAzure // 123
 
 	actualTotal := len(ResourceMapping)
 	if actualTotal != expectedTotal {
@@ -48,7 +48,7 @@ func TestResourceMappingProviderCounts(t *testing.T) {
 	}
 
 	expectedAWS := 63
-	expectedGCP := 30
+	expectedGCP := 31
 	expectedAzure := 29
 
 	if counts[resource.ProviderAWS] != expectedAWS {
@@ -268,12 +268,12 @@ func TestGetStackTypeForResourceString(t *testing.T) {
 func TestGetResourceMappingStats(t *testing.T) {
 	stats := GetResourceMappingStats()
 
-	if stats.TotalTypes != 122 {
-		t.Errorf("TotalTypes = %d, expected 122", stats.TotalTypes)
+	if stats.TotalTypes != 123 {
+		t.Errorf("TotalTypes = %d, expected 123", stats.TotalTypes)
 	}
 
-	if stats.CoveredTypes != 122 {
-		t.Errorf("CoveredTypes = %d, expected 122", stats.CoveredTypes)
+	if stats.CoveredTypes != 123 {
+		t.Errorf("CoveredTypes = %d, expected 123", stats.CoveredTypes)
 	}
 
 	if len(stats.UncoveredTypes) != 0 {
@@ -289,8 +289,8 @@ func TestGetResourceMappingStats(t *testing.T) {
 	if stats.ByProvider[resource.ProviderAWS] != 63 {
 		t.Errorf("AWS count = %d, expected 63", stats.ByProvider[resource.ProviderAWS])
 	}
-	if stats.ByProvider[resource.ProviderGCP] != 30 {
-		t.Errorf("GCP count = %d, expected 30", stats.ByProvider[resource.ProviderGCP])
+	if stats.ByProvider[resource.ProviderGCP] != 31 {
+		t.Errorf("GCP count = %d, expected 31", stats.ByProvider[resource.ProviderGCP])
 	}
 	if stats.ByProvider[resource.ProviderAzure] != 29 {
 		t.Errorf("Azure count = %d, expected 29", stats.ByProvider[resource.ProviderAzure])
@@ -468,8 +468,8 @@ func TestGetResourceTypesForStackByProvider(t *testing.T) {
 // TestAllResourceTypes verifies AllResourceTypes returns all mapped types.
 func TestAllResourceTypes(t *testing.T) {
 	types := AllResourceTypes()
-	if len(types) != 122 {
-		t.Errorf("AllResourceTypes returned %d types, expected 122", len(types))
+	if len(types) != 123 {
+		t.Errorf("AllResourceTypes returned %d types, expected 123", len(types))
 	}
 
 	// Verify each type is actually in the mapping

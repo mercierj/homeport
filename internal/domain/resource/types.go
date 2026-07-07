@@ -102,6 +102,7 @@ const (
 	TypeArtifactRegistryRepository Type = "google_artifact_registry_repository"
 	TypeCloudBuildTrigger          Type = "google_cloudbuild_trigger"
 	TypeComposerEnvironment        Type = "google_composer_environment"
+	TypeDataflowJob                Type = "google_dataflow_job"
 
 	// GCP Storage
 	TypeGCSBucket      Type = "google_storage_bucket"

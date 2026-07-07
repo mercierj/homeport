@@ -323,6 +323,7 @@ func mapDMTypeToResourceType(dmType string) resource.Type {
 		"artifactregistry.v1.repository": resource.TypeArtifactRegistryRepository,
 		"cloudbuild.v1.trigger":          resource.TypeCloudBuildTrigger,
 		"composer.v1.environment":        resource.TypeComposerEnvironment,
+		"dataflow.v1b3.job":              resource.TypeDataflowJob,
 
 		// Storage
 		"storage.v1.bucket": resource.TypeGCSBucket,
