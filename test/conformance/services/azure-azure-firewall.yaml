@@ -1,0 +1,17 @@
+provider: azure
+service: Azure Firewall
+checks:
+  discover: GOCACHE=/private/tmp/exit-gafam-go-build go test ./internal/infrastructure/mapper/azure/security -run TestFirewallConformanceManagedAToZ
+  cost: GOCACHE=/private/tmp/exit-gafam-go-build go test ./internal/infrastructure/mapper/azure/security -run TestFirewallConformanceManagedAToZ
+  provision: GOCACHE=/private/tmp/exit-gafam-go-build go test ./internal/infrastructure/mapper/azure/security -run TestFirewallConformanceManagedAToZ
+  migrate: GOCACHE=/private/tmp/exit-gafam-go-build go test ./internal/infrastructure/mapper/azure/security -run TestFirewallConformanceManagedAToZ
+  api_compat: GOCACHE=/private/tmp/exit-gafam-go-build go test ./internal/infrastructure/mapper/azure/security -run TestFirewallConformanceManagedAToZ
+  env_dns: GOCACHE=/private/tmp/exit-gafam-go-build go test ./internal/infrastructure/mapper/azure/security -run TestFirewallConformanceManagedAToZ
+  ha: GOCACHE=/private/tmp/exit-gafam-go-build go test ./internal/infrastructure/mapper/azure/security -run TestFirewallConformanceManagedAToZ
+  backup: GOCACHE=/private/tmp/exit-gafam-go-build go test ./internal/infrastructure/mapper/azure/security -run TestFirewallConformanceManagedAToZ
+  validate: GOCACHE=/private/tmp/exit-gafam-go-build go test ./internal/infrastructure/mapper/azure/security -run TestFirewallConformanceManagedAToZ
+  cutover: GOCACHE=/private/tmp/exit-gafam-go-build go test ./internal/infrastructure/mapper/azure/security -run TestFirewallConformanceManagedAToZ
+  rollback: GOCACHE=/private/tmp/exit-gafam-go-build go test ./internal/infrastructure/mapper/azure/security -run TestFirewallConformanceManagedAToZ
+evidence:
+  target: nftables with Suricata policy inspection
+  app_change_mode: generated_patch

@@ -2,10 +2,12 @@ package security
 
 import (
 	"context"
+	"strings"
 	"testing"
 
 	"github.com/homeport/homeport/internal/domain/mapper"
 	"github.com/homeport/homeport/internal/domain/resource"
+	domainrunbook "github.com/homeport/homeport/internal/domain/runbook"
 )
 
 func TestNewFirewallMapper(t *testing.T) {
@@ -26,6 +28,69 @@ func TestFirewallMapper_ResourceType(t *testing.T) {
 	if got != want {
 		t.Errorf("ResourceType() = %v, want %v", got, want)
 	}
+}
+
+func TestFirewallConformanceManagedAToZ(t *testing.T) {
+	result, err := NewFirewallMapper().Map(context.Background(), managedFirewallFixture())
+	if err != nil {
+		t.Fatal(err)
+	}
+	if len(result.ManualSteps) != 0 {
+		t.Fatalf("manual steps = %#v, want generated Azure Firewall migration", result.ManualSteps)
+	}
+	if result.DockerService.Image != "opnsense/opnsense:latest" || result.DockerService.Deploy == nil || result.DockerService.Deploy.Replicas < 2 {
+		t.Fatalf("service does not provision HA firewall target: %#v", result.DockerService)
+	}
+	for _, file := range []string{"config/opnsense/config.xml", "config/firewall/nftables.conf", "config/firewall/suricata.yaml", "config/firewall/app-change.env", "config/firewall/generated-policy.patch"} {
+		if _, ok := result.Configs[file]; !ok {
+			t.Fatalf("missing config %s", file)
+		}
+	}
+	appEnv := string(result.Configs["config/firewall/app-change.env"])
+	for _, want := range []string{"APP_CHANGE_MODE=generated_patch", "SOURCE_AZURE_FIREWALL=checkout-fw", "FIREWALL_TARGET=opnsense"} {
+		if !strings.Contains(appEnv, want) {
+			t.Fatalf("app-change env missing %q:\n%s", want, appEnv)
+		}
+	}
+	for _, file := range []string{"setup_iptables.sh", "validate_firewall.sh", "backup_firewall_config.sh", "cutover_firewall_policy.sh"} {
+		if _, ok := result.Scripts[file]; !ok {
+			t.Fatalf("missing script %s", file)
+		}
+	}
+	for id, stepType := range map[string]domainrunbook.StepType{
+		"render-network-config":             domainrunbook.StepTypeCommand,
+		"render-firewall-rules":             domainrunbook.StepTypeCommand,
+		"validate-network-flows":            domainrunbook.StepTypeCommand,
+		"backup-firewall-config":            domainrunbook.StepTypeCommand,
+		"cutover-firewall-policy":           domainrunbook.StepTypeAPICall,
+		"rollback-network-source-authority": domainrunbook.StepTypeRollback,
+	} {
+		if !hasFirewallRunbookStep(result, id, stepType) {
+			t.Fatalf("missing %s runbook step: %#v", id, result.RunbookSteps)
+		}
+	}
+}
+
+func managedFirewallFixture() *resource.AWSResource {
+	return &resource.AWSResource{
+		ID:   "/subscriptions/demo/resourceGroups/rg/providers/Microsoft.Network/azureFirewalls/checkout-fw",
+		Type: resource.TypeAzureFirewall,
+		Name: "checkout-fw",
+		Config: map[string]interface{}{
+			"name":              "checkout-fw",
+			"sku_tier":          "Premium",
+			"threat_intel_mode": "Alert",
+		},
+	}
+}
+
+func hasFirewallRunbookStep(result *mapper.MappingResult, id string, stepType domainrunbook.StepType) bool {
+	for _, step := range result.RunbookSteps {
+		if step.ID == id && step.Type == stepType {
+			return true
+		}
+	}
+	return false
 }
 
 func TestFirewallMapper_Dependencies(t *testing.T) {
@@ -151,7 +216,7 @@ func TestFirewallMapper_Map(t *testing.T) {
 				Type: resource.TypeAzureFirewall,
 				Name: "intel-fw",
 				Config: map[string]interface{}{
-					"name":             "intel-firewall",
+					"name":              "intel-firewall",
 					"threat_intel_mode": "Alert",
 				},
 			},

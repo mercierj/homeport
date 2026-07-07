@@ -116,7 +116,7 @@
 | azure | Azure Cache | full | azurerm_redis_cache |
 | azure | Azure CDN | full | azurerm_cdn_profile |
 | azure | Azure DNS | full | azurerm_dns_zone |
-| azure | Azure Firewall | mapped | azurerm_firewall |
+| azure | Azure Firewall | full | azurerm_firewall |
 | azure | Azure Functions | mapped | azurerm_function_app |
 | azure | Azure Load Balancer | mapped | azurerm_lb |
 | azure | Azure SQL | mapped | azurerm_mssql_database |
