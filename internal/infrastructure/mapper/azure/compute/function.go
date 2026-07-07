@@ -9,6 +9,7 @@ import (
 
 	"github.com/homeport/homeport/internal/domain/mapper"
 	"github.com/homeport/homeport/internal/domain/resource"
+	domainrunbook "github.com/homeport/homeport/internal/domain/runbook"
 	"github.com/homeport/homeport/internal/infrastructure/mapper/shared/computeruntime"
 )
 
@@ -67,6 +68,7 @@ func (m *FunctionMapper) Map(ctx context.Context, res *resource.AWSResource) (*m
 	svc.Ports = []string{"80:80"}
 	svc.Networks = []string{"homeport"}
 	svc.Restart = "unless-stopped"
+	svc.Deploy = &mapper.DeployConfig{Replicas: 2}
 
 	svc.Labels = map[string]string{
 		"homeport.source":        "azurerm_function_app",
@@ -92,7 +94,6 @@ func (m *FunctionMapper) Map(ctx context.Context, res *resource.AWSResource) (*m
 	// Handle storage account
 	if storageAccount := res.GetConfigString("storage_account_name"); storageAccount != "" {
 		result.AddWarning("Storage account configured. Use Azurite or MinIO for local development.")
-		result.AddManualStep("Set up Azurite for Azure Storage emulation")
 	}
 
 	// Generate Dockerfile
@@ -107,11 +108,19 @@ func (m *FunctionMapper) Map(ctx context.Context, res *resource.AWSResource) (*m
 	// Generate host.json
 	hostJson := m.generateHostJson()
 	result.AddConfig(fmt.Sprintf("functions/%s/host.json", functionName), []byte(hostJson))
+	result.AddConfig("config/functions/app-change.env", []byte(m.generateAppChange(functionName)))
+	result.AddConfig("config/functions/generated-client.patch", []byte(m.generateClientPatch(functionName)))
+	result.AddScript("deploy_function.sh", []byte(m.generateDeployScript(functionName)))
+	result.AddScript("validate_function.sh", []byte(m.generateValidateScript(functionName)))
+	result.AddScript("backup_function_config.sh", []byte(m.generateBackupScript(functionName)))
+	result.AddScript("cutover_function_clients.sh", []byte(m.generateCutoverScript(functionName)))
 
-	result.AddManualStep("Access at: http://" + m.sanitizeName(functionName) + ".localhost/api/<function>")
 	appUnit := computeruntime.FromDockerService("azurerm_function_app", svc)
 	result.AddAppUnit(appUnit)
-	for _, step := range computeruntime.ServerlessFunction(appUnit, "") {
+	for _, step := range computeruntime.ServerlessFunction(appUnit, "deploy_function.sh") {
+		result.AddRunbookStep(step)
+	}
+	for _, step := range m.runbook(functionName) {
 		result.AddRunbookStep(step)
 	}
 
@@ -264,6 +273,44 @@ func (m *FunctionMapper) generateHostJson() string {
   }
 }
 `
+}
+
+func (m *FunctionMapper) generateAppChange(functionName string) string {
+	host := m.sanitizeName(functionName) + ".localhost"
+	return fmt.Sprintf("APP_CHANGE_MODE=generated_patch\nSOURCE_FUNCTION_APP=%s\nFUNCTION_URL=http://%s/api\nFUNCTION_HOST=%s\nGENERATED_PATCH=config/functions/generated-client.patch\n", functionName, host, host)
+}
+
+func (m *FunctionMapper) generateClientPatch(functionName string) string {
+	host := m.sanitizeName(functionName) + ".localhost"
+	return fmt.Sprintf("--- a/app/functions.env\n+++ b/app/functions.env\n@@\n-AZURE_FUNCTION_APP=%s\n+FUNCTION_BASE_URL=http://%s/api\n+FUNCTION_PLATFORM=homeport-compose\n", functionName, host)
+}
+
+func (m *FunctionMapper) generateDeployScript(functionName string) string {
+	return fmt.Sprintf("#!/bin/sh\nset -eu\ndocker build -t %s ./functions/%s\ndocker compose up -d %s\n", m.sanitizeName(functionName), functionName, m.sanitizeName(functionName))
+}
+
+func (m *FunctionMapper) generateValidateScript(functionName string) string {
+	return fmt.Sprintf("#!/bin/sh\nset -eu\ntest -s functions/%s/Dockerfile\ntest -s functions/%s/host.json\ntest -s config/functions/app-change.env\ngrep -q %q config/functions/app-change.env\n", functionName, functionName, functionName)
+}
+
+func (m *FunctionMapper) generateBackupScript(functionName string) string {
+	return fmt.Sprintf("#!/bin/sh\nset -eu\narchive=\"${BACKUP_DIR:-./backups}/function-%s-$(date +%%Y%%m%%d%%H%%M%%S).tgz\"\nmkdir -p \"$(dirname \"$archive\")\"\ntar -czf \"$archive\" functions/%s config/functions deploy_function.sh validate_function.sh\necho \"$archive\"\n", m.sanitizeName(functionName), functionName)
+}
+
+func (m *FunctionMapper) generateCutoverScript(functionName string) string {
+	return fmt.Sprintf("#!/bin/sh\nset -eu\n. config/functions/app-change.env\ntest \"$SOURCE_FUNCTION_APP\" = %q\ntest \"$APP_CHANGE_MODE\" = \"generated_patch\"\necho \"Apply $GENERATED_PATCH and call functions through $FUNCTION_URL\"\n", functionName)
+}
+
+func (m *FunctionMapper) runbook(functionName string) []domainrunbook.Step {
+	metadata := map[string]string{"kind": "serverless-function", "source": "azurerm_function_app", "function": functionName, "target": "compose-openfaas"}
+	return []domainrunbook.Step{
+		m.step("backup-function-config", "Backup function config", "Backup", domainrunbook.StepTypeCommand, []string{"sh", "backup_function_config.sh"}, "function migration artifacts are archived", metadata),
+		m.step("cutover-function-clients", "Cut over function clients", "Cutover", domainrunbook.StepTypeAPICall, []string{"sh", "cutover_function_clients.sh"}, "clients use generated function endpoint", metadata),
+	}
+}
+
+func (m *FunctionMapper) step(id, name, group string, stepType domainrunbook.StepType, command []string, success string, metadata map[string]string) domainrunbook.Step {
+	return domainrunbook.Step{ID: id, Name: name, Group: group, Type: stepType, Status: domainrunbook.StepStatusPending, Executor: "shell", Command: command, SuccessCondition: success, Metadata: metadata}
 }
 
 func (m *FunctionMapper) sanitizeName(name string) string {

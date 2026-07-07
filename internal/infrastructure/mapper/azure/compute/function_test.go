@@ -2,10 +2,12 @@ package compute
 
 import (
 	"context"
+	"strings"
 	"testing"
 
 	"github.com/homeport/homeport/internal/domain/mapper"
 	"github.com/homeport/homeport/internal/domain/resource"
+	domainrunbook "github.com/homeport/homeport/internal/domain/runbook"
 )
 
 func TestNewFunctionMapper(t *testing.T) {
@@ -26,6 +28,72 @@ func TestFunctionMapper_ResourceType(t *testing.T) {
 	if got != want {
 		t.Errorf("ResourceType() = %v, want %v", got, want)
 	}
+}
+
+func TestFunctionConformanceManagedAToZ(t *testing.T) {
+	result, err := NewFunctionMapper().Map(context.Background(), managedFunctionFixture())
+	if err != nil {
+		t.Fatal(err)
+	}
+	if len(result.ManualSteps) != 0 {
+		t.Fatalf("manual steps = %#v, want generated Azure Functions migration", result.ManualSteps)
+	}
+	if result.DockerService.Build == nil || result.DockerService.Deploy == nil || result.DockerService.Deploy.Replicas < 2 {
+		t.Fatalf("service does not provision HA function target: %#v", result.DockerService)
+	}
+	for _, file := range []string{"functions/checkout-func/Dockerfile", "functions/checkout-func/host.json", "config/functions/app-change.env", "config/functions/generated-client.patch"} {
+		if _, ok := result.Configs[file]; !ok {
+			t.Fatalf("missing config %s", file)
+		}
+	}
+	appEnv := string(result.Configs["config/functions/app-change.env"])
+	for _, want := range []string{"APP_CHANGE_MODE=generated_patch", "SOURCE_FUNCTION_APP=checkout-func", "FUNCTION_URL=http://checkout-func.localhost/api"} {
+		if !strings.Contains(appEnv, want) {
+			t.Fatalf("app-change env missing %q:\n%s", want, appEnv)
+		}
+	}
+	for _, file := range []string{"deploy_function.sh", "validate_function.sh", "backup_function_config.sh", "cutover_function_clients.sh"} {
+		if _, ok := result.Scripts[file]; !ok {
+			t.Fatalf("missing script %s", file)
+		}
+	}
+	for id, stepType := range map[string]domainrunbook.StepType{
+		"build-function-image":               domainrunbook.StepTypeCommand,
+		"validate-function-invoke":           domainrunbook.StepTypeCommand,
+		"backup-function-config":             domainrunbook.StepTypeCommand,
+		"cutover-function-clients":           domainrunbook.StepTypeAPICall,
+		"rollback-function-source-authority": domainrunbook.StepTypeRollback,
+	} {
+		if !hasFunctionRunbookStep(result, id, stepType) {
+			t.Fatalf("missing %s runbook step: %#v", id, result.RunbookSteps)
+		}
+	}
+}
+
+func managedFunctionFixture() *resource.AWSResource {
+	return &resource.AWSResource{
+		ID:   "/subscriptions/demo/resourceGroups/rg/providers/Microsoft.Web/sites/checkout-func",
+		Type: resource.TypeAzureFunction,
+		Name: "checkout-func",
+		Config: map[string]interface{}{
+			"name":                 "checkout-func",
+			"storage_account_name": "checkoutstorage",
+			"site_config": map[string]interface{}{
+				"application_stack": map[string]interface{}{
+					"node_version": "18",
+				},
+			},
+		},
+	}
+}
+
+func hasFunctionRunbookStep(result *mapper.MappingResult, id string, stepType domainrunbook.StepType) bool {
+	for _, step := range result.RunbookSteps {
+		if step.ID == id && step.Type == stepType {
+			return true
+		}
+	}
+	return false
 }
 
 func TestFunctionMapper_Dependencies(t *testing.T) {

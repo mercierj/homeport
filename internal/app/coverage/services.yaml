@@ -2343,18 +2343,21 @@ services:
     service: Azure Functions
     resource_types:
       - azurerm_function_app
+    target: OpenFaaS or Docker Compose function runtime
+    api_compatibility_strategy: generated function endpoint patch and runtime handoff
+    manual_steps_resolved: true
     discover: true
-    cost: false
-    provision: false
+    cost: true
+    provision: true
     migrate: true
-    api_compat: false
-    env_dns: false
-    ha: false
-    backup: false
+    api_compat: true
+    env_dns: true
+    ha: true
+    backup: true
     validate: true
-    cutover: false
-    rollback: false
-    status: mapped
+    cutover: true
+    rollback: true
+    status: full
   - provider: azure
     service: Azure Load Balancer
     resource_types:
