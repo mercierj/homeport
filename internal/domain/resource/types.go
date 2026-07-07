@@ -151,6 +151,7 @@ const (
 	TypeCloudMonitoringDashboard   Type = "google_monitoring_dashboard"
 	TypeCloudTraceService          Type = "google_project_service"
 	TypeErrorReportingService      Type = "google_error_reporting_service"
+	TypeProfilerService            Type = "google_profiler_service"
 
 	// ─────────────────────────────────────────────────────
 	// Azure Resource Types

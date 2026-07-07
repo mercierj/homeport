@@ -159,6 +159,7 @@ var ResourceMapping = map[resource.Type]StackType{
 	resource.TypeCloudMonitoringDashboard:   StackTypeObservability, // Dashboards consolidate with Grafana
 	resource.TypeCloudTraceService:          StackTypeObservability, // Traces consolidate with OpenTelemetry/Jaeger
 	resource.TypeErrorReportingService:      StackTypeObservability, // Error reporting consolidates with Sentry
+	resource.TypeProfilerService:            StackTypeObservability, // Profiles consolidate with Pyroscope
 
 	// ─────────────────────────────────────────────────────
 	// Azure Resource Types (29 types)

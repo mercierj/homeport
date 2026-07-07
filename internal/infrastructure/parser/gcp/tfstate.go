@@ -371,8 +371,13 @@ func mapGCPTerraformType(tfType string) resource.Type {
 }
 
 func mapGCPProjectServiceResource(service interface{}, fallback resource.Type) resource.Type {
-	if serviceName, ok := service.(string); ok && strings.EqualFold(serviceName, "clouderrorreporting.googleapis.com") {
-		return resource.TypeErrorReportingService
+	if serviceName, ok := service.(string); ok {
+		switch strings.ToLower(serviceName) {
+		case "clouderrorreporting.googleapis.com":
+			return resource.TypeErrorReportingService
+		case "cloudprofiler.googleapis.com":
+			return resource.TypeProfilerService
+		}
 	}
 	return fallback
 }
