@@ -169,6 +169,7 @@ const (
 	TypeAzureVMWindows         Type = "azurerm_windows_virtual_machine"
 	TypeAzureContainerApp      Type = "azurerm_container_app"
 	TypeAzureContainerRegistry Type = "azurerm_container_registry"
+	TypeAzureFoundryOpenAI     Type = "azurerm_cognitive_account"
 	TypeAzureFunction          Type = "azurerm_function_app"
 	TypeContainerInstance      Type = "azurerm_container_group"
 	TypeAKS                    Type = "azurerm_kubernetes_cluster"

@@ -245,6 +245,7 @@ var CategoryMapping = map[Type]Category{
 	TypeAzureVMWindows:         CategoryCompute,
 	TypeAzureContainerApp:      CategoryContainer,
 	TypeAzureContainerRegistry: CategoryContainer,
+	TypeAzureFoundryOpenAI:     CategoryCompute,
 	TypeAzureFunction:          CategoryServerless,
 	TypeContainerInstance:      CategoryContainer,
 	TypeAKS:                    CategoryKubernetes,

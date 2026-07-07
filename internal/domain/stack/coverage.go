@@ -177,6 +177,7 @@ var ResourceMapping = map[resource.Type]StackType{
 	resource.TypeAzureVMWindows:         StackTypePassthrough, // VMs stay individual
 	resource.TypeAzureContainerApp:      StackTypePassthrough, // Container apps stay individual
 	resource.TypeAzureContainerRegistry: StackTypePassthrough, // Registries stay individual
+	resource.TypeAzureFoundryOpenAI:     StackTypePassthrough, // AI inference accounts stay explicit
 	resource.TypeAzureFunction:          StackTypeCompute,     // Serverless consolidates
 	resource.TypeContainerInstance:      StackTypePassthrough, // Container instances stay individual
 	resource.TypeAKS:                    StackTypePassthrough, // Kubernetes stays individual

@@ -269,6 +269,9 @@ func mapARMTypeToResourceType(armType string) resource.Type {
 		// Observability
 		"microsoft.insights/components": resource.TypeAppInsights,
 
+		// AI/ML
+		"microsoft.cognitiveservices/accounts": resource.TypeAzureFoundryOpenAI,
+
 		// Security
 		"microsoft.keyvault/vaults": resource.TypeKeyVault,
 
