@@ -113,12 +113,14 @@ const (
 	TypeFilestore      Type = "google_filestore_instance"
 
 	// GCP Database
-	TypeCloudSQL    Type = "google_sql_database_instance"
-	TypeFirestore   Type = "google_firestore_database"
-	TypeBigtable    Type = "google_bigtable_instance"
-	TypeMemorystore Type = "google_redis_instance"
-	TypeSpanner     Type = "google_spanner_instance"
-	TypeBigQuery    Type = "google_bigquery_dataset"
+	TypeCloudSQL     Type = "google_sql_database_instance"
+	TypeFirestore    Type = "google_firestore_database"
+	TypeBigtable     Type = "google_bigtable_instance"
+	TypeMemorystore  Type = "google_redis_instance"
+	TypeSpanner      Type = "google_spanner_instance"
+	TypeBigQuery     Type = "google_bigquery_dataset"
+	TypeDataplexLake Type = "google_dataplex_lake"
+	TypeDataplexZone Type = "google_dataplex_zone"
 
 	// GCP Networking
 	TypeCloudLB            Type = "google_compute_backend_service"

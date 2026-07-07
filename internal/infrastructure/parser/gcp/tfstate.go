@@ -327,6 +327,8 @@ func mapGCPTerraformType(tfType string) resource.Type {
 		"google_redis_instance":        resource.TypeMemorystore,
 		"google_spanner_instance":      resource.TypeSpanner,
 		"google_bigquery_dataset":      resource.TypeBigQuery,
+		"google_dataplex_lake":         resource.TypeDataplexLake,
+		"google_dataplex_zone":         resource.TypeDataplexZone,
 
 		// Networking
 		"google_compute_backend_service": resource.TypeCloudLB,

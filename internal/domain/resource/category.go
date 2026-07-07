@@ -189,12 +189,14 @@ var CategoryMapping = map[Type]Category{
 	TypeFilestore:      CategoryFileStorage,
 
 	// GCP Database
-	TypeCloudSQL:    CategorySQLDatabase,
-	TypeFirestore:   CategoryNoSQLDatabase,
-	TypeBigtable:    CategoryNoSQLDatabase,
-	TypeMemorystore: CategoryCache,
-	TypeSpanner:     CategorySQLDatabase,
-	TypeBigQuery:    CategorySQLDatabase,
+	TypeCloudSQL:     CategorySQLDatabase,
+	TypeFirestore:    CategoryNoSQLDatabase,
+	TypeBigtable:     CategoryNoSQLDatabase,
+	TypeMemorystore:  CategoryCache,
+	TypeSpanner:      CategorySQLDatabase,
+	TypeBigQuery:     CategorySQLDatabase,
+	TypeDataplexLake: CategorySQLDatabase,
+	TypeDataplexZone: CategorySQLDatabase,
 
 	// GCP Networking
 	TypeCloudLB:            CategoryLoadBalancer,

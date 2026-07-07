@@ -42,6 +42,8 @@ func RegisterAll(registry MapperRegistrar) {
 	registry.Register(database.NewMemorystoreMapper())
 	registry.Register(database.NewSpannerMapper())
 	registry.Register(database.NewBigQueryMapper())
+	registry.Register(database.NewDataplexLakeMapper())
+	registry.Register(database.NewDataplexZoneMapper())
 
 	// Storage mappers
 	registry.Register(storage.NewGCSMapper())

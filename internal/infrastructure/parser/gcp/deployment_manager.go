@@ -339,6 +339,8 @@ func mapDMTypeToResourceType(dmType string) resource.Type {
 		"spanner.v1.instance":       resource.TypeSpanner,
 		"redis.v1.instance":         resource.TypeMemorystore,
 		"bigquery.v2.dataset":       resource.TypeBigQuery,
+		"dataplex.v1.lake":          resource.TypeDataplexLake,
+		"dataplex.v1.zone":          resource.TypeDataplexZone,
 
 		// Networking
 		"compute.v1.network":        resource.TypeGCPVPCNetwork,

@@ -96,7 +96,7 @@
 | gcp | VPC | full | google_compute_network |
 | gcp | Vertex AI | full | google_vertex_ai_endpoint |
 | gcp | Workflows | full | google_workflows_workflow |
-| gcp | Dataplex | missing | google_dataplex_lake, google_dataplex_zone |
+| gcp | Dataplex | full | google_dataplex_lake, google_dataplex_zone |
 | gcp | Looker | missing | google_looker_instance |
 | gcp | Cloud Deploy | missing | google_clouddeploy_delivery_pipeline, google_clouddeploy_target |
 | gcp | Error Reporting | missing |  |
