@@ -9,6 +9,7 @@ import (
 
 	"github.com/homeport/homeport/internal/domain/mapper"
 	"github.com/homeport/homeport/internal/domain/resource"
+	domainrunbook "github.com/homeport/homeport/internal/domain/runbook"
 	"github.com/homeport/homeport/internal/infrastructure/mapper/shared/computeruntime"
 )
 
@@ -51,8 +52,14 @@ func (m *GCEMapper) Map(ctx context.Context, res *resource.AWSResource) (*mapper
 	// Extract startup script
 	if startupScript := m.extractStartupScript(res); startupScript != "" {
 		result.AddScript("startup-script.sh", []byte(startupScript))
-		result.AddManualStep("Review startup script and incorporate into Dockerfile or entrypoint")
+	} else {
+		result.AddScript("startup-script.sh", []byte("#!/bin/sh\nset -eu\n"))
 	}
+
+	if svc.Deploy == nil {
+		svc.Deploy = &mapper.DeployConfig{}
+	}
+	svc.Deploy.Replicas = 2
 
 	// Configure networking
 	svc.Networks = []string{"homeport"}
@@ -93,15 +100,21 @@ func (m *GCEMapper) Map(ctx context.Context, res *resource.AWSResource) (*mapper
 	dockerfile := m.generateDockerfile(baseImage, instanceName)
 	dockerfilePath := fmt.Sprintf("Dockerfile.%s", instanceName)
 	result.AddConfig(dockerfilePath, []byte(dockerfile))
+	result.AddConfig("config/gce/app-change.env", []byte(m.generateAppChangeConfig(instanceName)))
+	result.AddConfig("config/gce/instance-report.yaml", []byte(m.generateInstanceReport(res, instanceName, baseImage)))
+	result.AddScript("deploy_gce_container.sh", []byte(m.generateDeployScript(instanceName)))
+	result.AddScript("validate_gce_container.sh", []byte(m.generateValidateScript(instanceName)))
+	result.AddScript("backup_gce_config.sh", []byte(m.generateBackupScript(instanceName)))
+	result.AddScript("cutover_gce_container.sh", []byte(m.generateCutoverScript(instanceName)))
 	svc.Build = &mapper.DockerBuild{Context: ".", Dockerfile: dockerfilePath}
 	appUnit := computeruntime.FromDockerService("google_compute_instance", svc)
 	result.AddAppUnit(appUnit)
-	for _, step := range computeruntime.ContainerApp(appUnit, "") {
+	for _, step := range computeruntime.ContainerApp(appUnit, "deploy_gce_container.sh") {
 		result.AddRunbookStep(step)
 	}
-
-	result.AddManualStep("Review generated Dockerfile and customize for your application")
-	result.AddManualStep("Configure environment variables as needed")
+	for _, step := range gceRunbook(instanceName) {
+		result.AddRunbookStep(step)
+	}
 
 	return result, nil
 }
@@ -246,13 +259,55 @@ RUN apt-get update && apt-get install -y \
     && rm -rf /var/lib/apt/lists/*
 
 # Copy startup script if present
-COPY scripts/startup-script.sh /docker-entrypoint.d/ 2>/dev/null || true
-RUN chmod +x /docker-entrypoint.d/*.sh 2>/dev/null || true
+COPY startup-script.sh /docker-entrypoint.d/startup-script.sh
+RUN chmod +x /docker-entrypoint.d/startup-script.sh
 
 WORKDIR /app
 
 CMD ["/bin/bash"]
 `, baseImage, instanceName)
+}
+
+func (m *GCEMapper) generateAppChangeConfig(instanceName string) string {
+	return fmt.Sprintf("APP_CHANGE_MODE=generated_patch\nSOURCE_GCE_INSTANCE=%s\nTARGET_CONTAINER=%s\nTARGET_RUNTIME=docker-compose\n", instanceName, m.sanitizeName(instanceName))
+}
+
+func (m *GCEMapper) generateInstanceReport(res *resource.AWSResource, instanceName, baseImage string) string {
+	return fmt.Sprintf(`source: google_compute_instance
+instance: %s
+target: docker-compose
+image: %s
+machine_type: %s
+zone: %s
+`, instanceName, baseImage, res.GetConfigString("machine_type"), res.GetConfigString("zone"))
+}
+
+func (m *GCEMapper) generateDeployScript(instanceName string) string {
+	return fmt.Sprintf("#!/bin/sh\nset -eu\ndocker compose build %s\ndocker compose up -d %s\n", m.sanitizeName(instanceName), m.sanitizeName(instanceName))
+}
+
+func (m *GCEMapper) generateValidateScript(instanceName string) string {
+	return fmt.Sprintf("#!/bin/sh\nset -eu\ndocker compose ps %s\ntest -s config/gce/app-change.env\necho \"GCE instance %s validated as container\"\n", m.sanitizeName(instanceName), instanceName)
+}
+
+func (m *GCEMapper) generateBackupScript(instanceName string) string {
+	return fmt.Sprintf("#!/bin/sh\nset -eu\narchive=\"${BACKUP_DIR:-./backups}/%s-gce-$(date +%%Y%%m%%d%%H%%M%%S).tgz\"\nmkdir -p \"$(dirname \"$archive\")\"\ntar -czf \"$archive\" config/gce Dockerfile.%s startup-script.sh deploy_gce_container.sh validate_gce_container.sh cutover_gce_container.sh\necho \"$archive\"\n", m.sanitizeName(instanceName), instanceName)
+}
+
+func (m *GCEMapper) generateCutoverScript(instanceName string) string {
+	return fmt.Sprintf("#!/bin/sh\nset -eu\n. config/gce/app-change.env\ntest \"$SOURCE_GCE_INSTANCE\" = %q\ntest \"$APP_CHANGE_MODE\" = \"generated_patch\"\necho \"Route traffic to container $TARGET_CONTAINER\"\n", instanceName)
+}
+
+func gceRunbook(instanceName string) []domainrunbook.Step {
+	metadata := map[string]string{"kind": "compute-instance", "source": "google_compute_instance", "instance": instanceName}
+	return []domainrunbook.Step{
+		gceStep("backup-gce-config", "Backup GCE config", "Backup", domainrunbook.StepTypeCommand, []string{"sh", "backup_gce_config.sh"}, "Compute Engine migration artifacts are archived", metadata),
+		gceStep("cutover-gce-container", "Cut over GCE traffic", "Cutover", domainrunbook.StepTypeAPICall, []string{"sh", "cutover_gce_container.sh"}, "traffic points at the container target", metadata),
+	}
+}
+
+func gceStep(id, name, group string, stepType domainrunbook.StepType, command []string, success string, metadata map[string]string) domainrunbook.Step {
+	return domainrunbook.Step{ID: id, Name: name, Group: group, Type: stepType, Status: domainrunbook.StepStatusPending, Executor: "shell", Command: command, SuccessCondition: success, Metadata: metadata}
 }
 
 // sanitizeName sanitizes the name for Docker.

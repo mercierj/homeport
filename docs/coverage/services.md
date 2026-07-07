@@ -75,7 +75,7 @@
 | gcp | Cloud SQL | full | google_sql_database_instance |
 | gcp | Cloud Storage | full | google_storage_bucket |
 | gcp | Cloud Tasks | full | google_cloud_tasks_queue |
-| gcp | Compute Engine | mapped | google_compute_instance |
+| gcp | Compute Engine | full | google_compute_instance |
 | gcp | Composer | missing |  |
 | gcp | Dataflow | missing |  |
 | gcp | Dataproc | missing |  |

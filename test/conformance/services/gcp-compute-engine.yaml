@@ -1,0 +1,17 @@
+provider: gcp
+service: Compute Engine
+checks:
+  discover: GOCACHE=/private/tmp/exit-gafam-go-build go test ./internal/infrastructure/mapper/gcp/compute -run TestGCEConformanceManagedAToZ
+  cost: GOCACHE=/private/tmp/exit-gafam-go-build go test ./internal/infrastructure/mapper/gcp/compute -run TestGCEConformanceManagedAToZ
+  provision: GOCACHE=/private/tmp/exit-gafam-go-build go test ./internal/infrastructure/mapper/gcp/compute -run TestGCEConformanceManagedAToZ
+  migrate: GOCACHE=/private/tmp/exit-gafam-go-build go test ./internal/infrastructure/mapper/gcp/compute -run TestGCEConformanceManagedAToZ
+  api_compat: GOCACHE=/private/tmp/exit-gafam-go-build go test ./internal/infrastructure/mapper/gcp/compute -run TestGCEConformanceManagedAToZ
+  env_dns: GOCACHE=/private/tmp/exit-gafam-go-build go test ./internal/infrastructure/mapper/gcp/compute -run TestGCEConformanceManagedAToZ
+  ha: GOCACHE=/private/tmp/exit-gafam-go-build go test ./internal/infrastructure/mapper/gcp/compute -run TestGCEConformanceManagedAToZ
+  backup: GOCACHE=/private/tmp/exit-gafam-go-build go test ./internal/infrastructure/mapper/gcp/compute -run TestGCEConformanceManagedAToZ
+  validate: GOCACHE=/private/tmp/exit-gafam-go-build go test ./internal/infrastructure/mapper/gcp/compute -run TestGCEConformanceManagedAToZ
+  cutover: GOCACHE=/private/tmp/exit-gafam-go-build go test ./internal/infrastructure/mapper/gcp/compute -run TestGCEConformanceManagedAToZ
+  rollback: GOCACHE=/private/tmp/exit-gafam-go-build go test ./internal/infrastructure/mapper/gcp/compute -run TestGCEConformanceManagedAToZ
+evidence:
+  target: Docker Compose container with generated Compute Engine client patch
+  app_change_mode: generated_patch

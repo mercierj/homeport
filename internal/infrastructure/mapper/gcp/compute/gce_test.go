@@ -2,11 +2,54 @@ package compute
 
 import (
 	"context"
+	"strings"
 	"testing"
 
 	"github.com/homeport/homeport/internal/domain/mapper"
 	"github.com/homeport/homeport/internal/domain/resource"
+	domainrunbook "github.com/homeport/homeport/internal/domain/runbook"
 )
+
+func TestGCEConformanceManagedAToZ(t *testing.T) {
+	result, err := NewGCEMapper().Map(context.Background(), managedGCEFixture())
+	if err != nil {
+		t.Fatal(err)
+	}
+	if len(result.ManualSteps) != 0 {
+		t.Fatalf("manual steps = %#v, want generated Compute Engine migration", result.ManualSteps)
+	}
+	if result.DockerService.Image != "ubuntu:22.04" || result.DockerService.Deploy == nil || result.DockerService.Deploy.Replicas < 2 {
+		t.Fatalf("service does not provision HA container target: %#v", result.DockerService)
+	}
+	for _, file := range []string{"Dockerfile.web", "config/gce/app-change.env", "config/gce/instance-report.yaml"} {
+		if _, ok := result.Configs[file]; !ok {
+			t.Fatalf("missing config %s", file)
+		}
+	}
+	appEnv := string(result.Configs["config/gce/app-change.env"])
+	for _, want := range []string{"APP_CHANGE_MODE=generated_patch", "SOURCE_GCE_INSTANCE=web", "TARGET_CONTAINER=web", "TARGET_RUNTIME=docker-compose"} {
+		if !strings.Contains(appEnv, want) {
+			t.Fatalf("app-change env missing %q:\n%s", want, appEnv)
+		}
+	}
+	for _, file := range []string{"startup-script.sh", "deploy_gce_container.sh", "validate_gce_container.sh", "backup_gce_config.sh", "cutover_gce_container.sh"} {
+		if _, ok := result.Scripts[file]; !ok {
+			t.Fatalf("missing script %s", file)
+		}
+	}
+	for id, stepType := range map[string]domainrunbook.StepType{
+		"resolve-app-image":                 domainrunbook.StepTypeCommand,
+		"deploy-compose-app":                domainrunbook.StepTypeCommand,
+		"validate-app-health":               domainrunbook.StepTypeCommand,
+		"backup-gce-config":                 domainrunbook.StepTypeCommand,
+		"cutover-gce-container":             domainrunbook.StepTypeAPICall,
+		"rollback-compute-source-authority": domainrunbook.StepTypeRollback,
+	} {
+		if !hasGCERunbookStep(result, id, stepType) {
+			t.Fatalf("missing %s runbook step: %#v", id, result.RunbookSteps)
+		}
+	}
+}
 
 func TestNewGCEMapper(t *testing.T) {
 	m := NewGCEMapper()
@@ -16,6 +59,33 @@ func TestNewGCEMapper(t *testing.T) {
 	if m.ResourceType() != resource.TypeGCEInstance {
 		t.Errorf("ResourceType() = %v, want %v", m.ResourceType(), resource.TypeGCEInstance)
 	}
+}
+
+func managedGCEFixture() *resource.AWSResource {
+	return &resource.AWSResource{
+		ID:   "projects/demo/zones/europe-west1-b/instances/web",
+		Type: resource.TypeGCEInstance,
+		Name: "web",
+		Config: map[string]interface{}{
+			"name":         "web",
+			"machine_type": "n2-standard-2",
+			"zone":         "europe-west1-b",
+			"metadata":     map[string]interface{}{"startup-script": "#!/bin/sh\necho web\n"},
+			"boot_disk": map[string]interface{}{
+				"initialize_params": map[string]interface{}{"image": "ubuntu-2204-jammy-v20231002"},
+			},
+			"attached_disk": []interface{}{map[string]interface{}{"device_name": "data"}},
+		},
+	}
+}
+
+func hasGCERunbookStep(result *mapper.MappingResult, id string, stepType domainrunbook.StepType) bool {
+	for _, step := range result.RunbookSteps {
+		if step.ID == id && step.Type == stepType {
+			return true
+		}
+	}
+	return false
 }
 
 func TestGCEMapper_ResourceType(t *testing.T) {
