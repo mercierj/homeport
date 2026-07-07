@@ -2,11 +2,57 @@ package networking
 
 import (
 	"context"
+	"strings"
 	"testing"
 
 	"github.com/homeport/homeport/internal/domain/mapper"
 	"github.com/homeport/homeport/internal/domain/resource"
+	domainrunbook "github.com/homeport/homeport/internal/domain/runbook"
 )
+
+func TestVPCConformanceManagedAToZ(t *testing.T) {
+	result, err := NewVPCMapper().Map(context.Background(), managedVPCFixture())
+	if err != nil {
+		t.Fatal(err)
+	}
+	if len(result.ManualSteps) != 0 {
+		t.Fatalf("manual steps = %#v, want generated VPC migration", result.ManualSteps)
+	}
+	for _, file := range []string{
+		"docker-compose-networks.yml",
+		"config/vpc/network-mapping.md",
+		"config/vpc/subnetworks.yml",
+		"config/vpc/firewall-rules.md",
+		"config/vpc/app-change.env",
+	} {
+		if _, ok := result.Configs[file]; !ok {
+			t.Fatalf("missing config %s", file)
+		}
+	}
+	appEnv := string(result.Configs["config/vpc/app-change.env"])
+	for _, want := range []string{"APP_CHANGE_MODE=generated_patch", "SOURCE_GCP_VPC=prod-vpc", "TARGET_DOCKER_NETWORK=prod-vpc"} {
+		if !strings.Contains(appEnv, want) {
+			t.Fatalf("app-change env missing %q:\n%s", want, appEnv)
+		}
+	}
+	for _, file := range []string{"export_gcp_vpc.sh", "provision_vpc_network.sh", "validate_vpc_network.sh", "backup_vpc_config.sh", "cutover_vpc_clients.sh"} {
+		if _, ok := result.Scripts[file]; !ok {
+			t.Fatalf("missing script %s", file)
+		}
+	}
+	for id, stepType := range map[string]domainrunbook.StepType{
+		"render-network-config":             domainrunbook.StepTypeCommand,
+		"render-firewall-rules":             domainrunbook.StepTypeCommand,
+		"validate-network-flows":            domainrunbook.StepTypeCommand,
+		"backup-gcp-vpc-config":             domainrunbook.StepTypeCommand,
+		"cutover-gcp-vpc-clients":           domainrunbook.StepTypeAPICall,
+		"rollback-network-source-authority": domainrunbook.StepTypeRollback,
+	} {
+		if !hasVPCRunbookStep(result, id, stepType) {
+			t.Fatalf("missing %s runbook step: %#v", id, result.RunbookSteps)
+		}
+	}
+}
 
 func TestNewVPCMapper(t *testing.T) {
 	m := NewVPCMapper()
@@ -16,6 +62,37 @@ func TestNewVPCMapper(t *testing.T) {
 	if m.ResourceType() != resource.TypeGCPVPCNetwork {
 		t.Errorf("ResourceType() = %v, want %v", m.ResourceType(), resource.TypeGCPVPCNetwork)
 	}
+}
+
+func managedVPCFixture() *resource.AWSResource {
+	return &resource.AWSResource{
+		ID:   "projects/demo/global/networks/prod-vpc",
+		Type: resource.TypeGCPVPCNetwork,
+		Name: "prod-vpc",
+		Config: map[string]interface{}{
+			"name":                    "prod-vpc",
+			"auto_create_subnetworks": true,
+			"routing_mode":            "GLOBAL",
+			"subnetwork": []interface{}{
+				map[string]interface{}{"name": "prod-subnet", "ip_cidr_range": "10.10.0.0/24"},
+			},
+			"firewall": []interface{}{
+				map[string]interface{}{"name": "allow-http", "allowed": "tcp:80"},
+			},
+			"vpn_gateway":              "prod-vpn",
+			"private_ip_google_access": true,
+			"dns_policy":               "internal",
+		},
+	}
+}
+
+func hasVPCRunbookStep(result *mapper.MappingResult, id string, stepType domainrunbook.StepType) bool {
+	for _, step := range result.RunbookSteps {
+		if step.ID == id && step.Type == stepType {
+			return true
+		}
+	}
+	return false
 }
 
 func TestVPCMapper_ResourceType(t *testing.T) {
@@ -177,7 +254,7 @@ func TestVPCMapper_Map(t *testing.T) {
 					"name": "subnet-vpc",
 					"subnetwork": []interface{}{
 						map[string]interface{}{
-							"name":        "subnet-1",
+							"name":          "subnet-1",
 							"ip_cidr_range": "10.0.0.0/24",
 						},
 					},

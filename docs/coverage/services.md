@@ -93,7 +93,7 @@
 | gcp | Secret Manager | full | google_secret_manager_secret |
 | gcp | Spanner | full | google_spanner_instance |
 | gcp | Trace | full | google_project_service |
-| gcp | VPC | mapped | google_compute_network |
+| gcp | VPC | full | google_compute_network |
 | gcp | Vertex AI | missing |  |
 | gcp | Workflows | missing |  |
 | gcp | Dataplex | missing | google_dataplex_lake, google_dataplex_zone |

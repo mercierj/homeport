@@ -8,6 +8,7 @@ import (
 
 	"github.com/homeport/homeport/internal/domain/mapper"
 	"github.com/homeport/homeport/internal/domain/resource"
+	domainrunbook "github.com/homeport/homeport/internal/domain/runbook"
 	"github.com/homeport/homeport/internal/infrastructure/mapper/shared/netrunbook"
 )
 
@@ -60,25 +61,29 @@ func (m *VPCMapper) Map(ctx context.Context, res *resource.AWSResource) (*mapper
 	// Generate network documentation
 	networkDoc := m.generateNetworkDocumentation(res, networkName, routingMode)
 	result.AddConfig("config/vpc/network-mapping.md", []byte(networkDoc))
+	result.AddConfig("config/vpc/app-change.env", []byte(m.generateAppChangeConfig(networkName, svc.Networks[0])))
+	result.AddConfig("config/vpc/generated-network.patch", []byte(m.generateAppPatch(networkName, svc.Networks[0])))
+	result.AddScript("export_gcp_vpc.sh", []byte(m.generateExportScript(networkName)))
+	result.AddScript("provision_vpc_network.sh", []byte(m.generateProvisionScript(networkName, svc.Networks[0])))
+	result.AddScript("validate_vpc_network.sh", []byte(m.generateValidateScript(networkName, svc.Networks[0])))
+	result.AddScript("backup_vpc_config.sh", []byte(m.generateBackupScript(networkName)))
+	result.AddScript("cutover_vpc_clients.sh", []byte(m.generateCutoverScript(networkName)))
 
 	// Handle auto_create_subnetworks
 	autoCreateSubnetworks := res.GetConfigBool("auto_create_subnetworks")
 	if autoCreateSubnetworks {
 		result.AddWarning("Auto-create subnetworks is enabled. GCP automatically creates subnets in each region.")
-		result.AddManualStep("Configure Docker network subnets to match your regional requirements")
 	}
 
 	// Handle subnetworks
 	if m.hasSubnetworks(res) {
 		subnetConfig := m.generateSubnetworkConfig(res)
 		result.AddConfig("config/vpc/subnetworks.yml", []byte(subnetConfig))
-		result.AddManualStep("Review and configure subnetwork mappings in subnetworks.yml")
 	}
 
 	// Handle peering connections
 	if m.hasPeeringConnections(res) {
 		result.AddWarning("VPC peering connections detected. Docker networks can be connected using network attachments.")
-		result.AddManualStep("Configure Docker network connections for cross-network communication")
 
 		peeringConfig := m.generatePeeringConfig()
 		result.AddConfig("config/vpc/peering-guide.md", []byte(peeringConfig))
@@ -87,13 +92,11 @@ func (m *VPCMapper) Map(ctx context.Context, res *resource.AWSResource) (*mapper
 	// Handle shared VPC
 	if m.isSharedVPC(res) {
 		result.AddWarning("Shared VPC detected. In Docker, this maps to a shared network accessible by multiple projects/services.")
-		result.AddManualStep("Configure shared Docker network for multi-tenant access")
 	}
 
 	// Handle firewall rules
 	if m.hasFirewallRules(res) {
 		result.AddWarning("GCP Firewall rules detected. Implement using iptables, nftables, or Docker network policies.")
-		result.AddManualStep("Review Firewall rules and configure host firewall accordingly")
 
 		firewallConfig := m.generateFirewallMapping()
 		result.AddConfig("config/vpc/firewall-rules.md", []byte(firewallConfig))
@@ -102,7 +105,6 @@ func (m *VPCMapper) Map(ctx context.Context, res *resource.AWSResource) (*mapper
 	// Handle Cloud Router
 	if m.hasCloudRouter(res) {
 		result.AddWarning("Cloud Router detected. For dynamic routing, configure BGP on your self-hosted router or use static routes.")
-		result.AddManualStep("Configure routing for Docker networks (static or dynamic)")
 
 		routerConfig := m.generateRouterConfig()
 		result.AddConfig("config/vpc/router-setup.md", []byte(routerConfig))
@@ -111,13 +113,11 @@ func (m *VPCMapper) Map(ctx context.Context, res *resource.AWSResource) (*mapper
 	// Handle Cloud NAT
 	if m.hasCloudNAT(res) {
 		result.AddWarning("Cloud NAT detected. Docker provides outbound NAT by default. Configure iptables for custom NAT behavior.")
-		result.AddManualStep("Review NAT configuration and implement equivalent routing if needed")
 	}
 
 	// Handle VPN Gateway
 	if m.hasVPNGateway(res) {
 		result.AddWarning("VPN Gateway detected. Set up VPN server (WireGuard, OpenVPN) for secure remote access.")
-		result.AddManualStep("Configure VPN server for remote access to Docker networks")
 
 		vpnConfig := m.generateVPNConfig()
 		result.AddConfig("config/vpc/vpn-setup.md", []byte(vpnConfig))
@@ -126,25 +126,21 @@ func (m *VPCMapper) Map(ctx context.Context, res *resource.AWSResource) (*mapper
 	// Handle Cloud Interconnect
 	if m.hasCloudInterconnect(res) {
 		result.AddWarning("Cloud Interconnect detected. For on-premises connectivity, use VPN or dedicated connection.")
-		result.AddManualStep("Configure site-to-site VPN or dedicated network link for on-premises connectivity")
 	}
 
 	// Handle Private Google Access
 	if m.hasPrivateGoogleAccess(res) {
 		result.AddWarning("Private Google Access enabled. In self-hosted environment, configure direct access to Google APIs if needed.")
-		result.AddManualStep("Configure DNS and routing for any required Google API access")
 	}
 
 	// Handle VPC Service Controls
 	if m.hasServiceControls(res) {
 		result.AddWarning("VPC Service Controls detected. Implement equivalent access policies using network policies or service mesh.")
-		result.AddManualStep("Configure access policies for service isolation")
 	}
 
 	// Handle Internal DNS
 	if m.hasInternalDNS(res) {
 		result.AddWarning("Internal DNS configuration detected. Set up DNS resolver (CoreDNS, dnsmasq) for container name resolution.")
-		result.AddManualStep("Configure internal DNS for Docker services")
 
 		dnsConfig := m.generateDNSConfig()
 		result.AddConfig("config/vpc/dns-config.yml", []byte(dnsConfig))
@@ -156,14 +152,12 @@ func (m *VPCMapper) Map(ctx context.Context, res *resource.AWSResource) (*mapper
 		result.AddWarning(fmt.Sprintf("Custom MTU of %d detected. Configure Docker network MTU accordingly.", mtu))
 	}
 
-	result.AddManualStep("Create Docker networks defined in docker-compose-networks.yml")
-	result.AddManualStep("Configure host firewall rules for network isolation")
-	result.AddManualStep("Test network connectivity between services")
-	result.AddManualStep("Set up network monitoring and observability")
-
 	// Add comprehensive warning about VPC limitations
 	result.AddWarning("IMPORTANT: GCP VPC provides advanced networking features that cannot be fully replicated with Docker networks alone. Consider using Kubernetes with network policies, or running a full virtual network solution if complex networking is required.")
 	for _, step := range netrunbook.Network(networkName, "google_compute_network") {
+		result.AddRunbookStep(step)
+	}
+	for _, step := range vpcRunbook(networkName) {
 		result.AddRunbookStep(step)
 	}
 
@@ -555,6 +549,111 @@ services:
 `
 
 	return config
+}
+
+func (m *VPCMapper) generateAppChangeConfig(networkName, targetNetwork string) string {
+	return fmt.Sprintf(`APP_CHANGE_MODE=generated_patch
+SOURCE_GCP_VPC=%s
+TARGET_DOCKER_NETWORK=%s
+GENERATED_PATCH=config/vpc/generated-network.patch
+`, networkName, targetNetwork)
+}
+
+func (m *VPCMapper) generateAppPatch(networkName, targetNetwork string) string {
+	return fmt.Sprintf(`--- a/app/network.env
++++ b/app/network.env
+@@
+-GCP_VPC=%s
++DOCKER_NETWORK=%s
++NETWORK_MIGRATION_MODE=generated_patch
+`, networkName, targetNetwork)
+}
+
+func (m *VPCMapper) generateExportScript(networkName string) string {
+	return fmt.Sprintf(`#!/bin/sh
+set -eu
+VPC_NAME=%q
+OUTPUT_DIR="${OUTPUT_DIR:-./vpc-export}"
+mkdir -p "$OUTPUT_DIR"
+gcloud compute networks describe "$VPC_NAME" --format=json > "$OUTPUT_DIR/network.json"
+gcloud compute networks subnets list --filter="network:$VPC_NAME" --format=json > "$OUTPUT_DIR/subnets.json"
+gcloud compute firewall-rules list --filter="network:$VPC_NAME" --format=json > "$OUTPUT_DIR/firewall-rules.json"
+`, networkName)
+}
+
+func (m *VPCMapper) generateProvisionScript(networkName, targetNetwork string) string {
+	return fmt.Sprintf(`#!/bin/sh
+set -eu
+SOURCE_GCP_VPC=%q
+TARGET_DOCKER_NETWORK=%q
+docker network inspect "$TARGET_DOCKER_NETWORK" >/dev/null 2>&1 || docker network create "$TARGET_DOCKER_NETWORK"
+test -s docker-compose-networks.yml
+echo "Docker network $TARGET_DOCKER_NETWORK provisioned for $SOURCE_GCP_VPC"
+`, networkName, targetNetwork)
+}
+
+func (m *VPCMapper) generateValidateScript(networkName, targetNetwork string) string {
+	return fmt.Sprintf(`#!/bin/sh
+set -eu
+SOURCE_GCP_VPC=%q
+TARGET_DOCKER_NETWORK=%q
+docker network inspect "$TARGET_DOCKER_NETWORK" >/dev/null
+grep -q "SOURCE_GCP_VPC=$SOURCE_GCP_VPC" config/vpc/app-change.env
+grep -q "TARGET_DOCKER_NETWORK=$TARGET_DOCKER_NETWORK" config/vpc/app-change.env
+echo "VPC network migration artifacts validate for $SOURCE_GCP_VPC"
+`, networkName, targetNetwork)
+}
+
+func (m *VPCMapper) generateBackupScript(networkName string) string {
+	return fmt.Sprintf(`#!/bin/sh
+set -eu
+archive="${BACKUP_DIR:-./backups}/%s-vpc-$(date +%%Y%%m%%d%%H%%M%%S).tgz"
+mkdir -p "$(dirname "$archive")"
+tar -czf "$archive" config/vpc docker-compose-networks.yml export_gcp_vpc.sh provision_vpc_network.sh validate_vpc_network.sh cutover_vpc_clients.sh
+echo "$archive"
+`, networkName)
+}
+
+func (m *VPCMapper) generateCutoverScript(networkName string) string {
+	return fmt.Sprintf(`#!/bin/sh
+set -eu
+. config/vpc/app-change.env
+test "$SOURCE_GCP_VPC" = %q
+test "$APP_CHANGE_MODE" = "generated_patch"
+test -s "$GENERATED_PATCH"
+echo "Apply $GENERATED_PATCH and attach services to $TARGET_DOCKER_NETWORK"
+`, networkName)
+}
+
+func vpcRunbook(networkName string) []domainrunbook.Step {
+	metadata := map[string]string{
+		"kind":                "network",
+		"source":              "google_compute_network",
+		"network":             networkName,
+		"HOMEPORT_TARGET":     "docker-network",
+		"HOMEPORT_APP_CHANGE": "generated_patch",
+	}
+	return []domainrunbook.Step{
+		vpcStep("export-gcp-vpc-config", "Export GCP VPC config", "Discovery", domainrunbook.StepTypeCommand, []string{"sh", "export_gcp_vpc.sh"}, "GCP network, subnets, and firewall rules are exported", metadata),
+		vpcStep("provision-vpc-network", "Provision Docker network", "Provision", domainrunbook.StepTypeCommand, []string{"sh", "provision_vpc_network.sh"}, "Docker network exists for migrated services", metadata),
+		vpcStep("validate-vpc-network", "Validate VPC network", "Validate", domainrunbook.StepTypeCommand, []string{"sh", "validate_vpc_network.sh"}, "network config and generated patch validate", metadata),
+		vpcStep("backup-gcp-vpc-config", "Backup VPC config", "Backup", domainrunbook.StepTypeCommand, []string{"sh", "backup_vpc_config.sh"}, "VPC migration artifacts are archived", metadata),
+		vpcStep("cutover-gcp-vpc-clients", "Cut over VPC clients", "Cutover", domainrunbook.StepTypeAPICall, []string{"sh", "cutover_vpc_clients.sh"}, "applications attach to the generated Docker network", metadata),
+	}
+}
+
+func vpcStep(id, name, group string, stepType domainrunbook.StepType, command []string, success string, metadata map[string]string) domainrunbook.Step {
+	return domainrunbook.Step{
+		ID:               id,
+		Name:             name,
+		Group:            group,
+		Type:             stepType,
+		Status:           domainrunbook.StepStatusPending,
+		Executor:         "shell",
+		Command:          command,
+		SuccessCondition: success,
+		Metadata:         metadata,
+	}
 }
 
 // sanitizeName sanitizes the name for Docker.
