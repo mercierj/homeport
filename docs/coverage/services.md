@@ -92,7 +92,7 @@
 | gcp | Pub/Sub | full | google_pubsub_topic, google_pubsub_subscription |
 | gcp | Secret Manager | full | google_secret_manager_secret |
 | gcp | Spanner | full | google_spanner_instance |
-| gcp | Trace | missing |  |
+| gcp | Trace | full | google_project_service |
 | gcp | VPC | mapped | google_compute_network |
 | gcp | Vertex AI | missing |  |
 | gcp | Workflows | missing |  |

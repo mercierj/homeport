@@ -351,6 +351,7 @@ func mapGCPTerraformType(tfType string) resource.Type {
 		"google_logging_project_sink":    resource.TypeCloudLoggingSink,
 		"google_monitoring_alert_policy": resource.TypeCloudMonitoringAlertPolicy,
 		"google_monitoring_dashboard":    resource.TypeCloudMonitoringDashboard,
+		"google_project_service":         resource.TypeCloudTraceService,
 	}
 
 	if resType, ok := mapping[tfType]; ok {

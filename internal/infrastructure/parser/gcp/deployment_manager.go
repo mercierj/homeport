@@ -363,6 +363,7 @@ func mapDMTypeToResourceType(dmType string) resource.Type {
 		"logging.v2.sink":           resource.TypeCloudLoggingSink,
 		"monitoring.v3.alertPolicy": resource.TypeCloudMonitoringAlertPolicy,
 		"monitoring.v1.dashboard":   resource.TypeCloudMonitoringDashboard,
+		"serviceusage.v1.service":   resource.TypeCloudTraceService,
 
 		// Containers
 		"container.v1.cluster": resource.TypeGKE,
