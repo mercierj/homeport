@@ -123,7 +123,7 @@
 | azure | Azure Storage | full | azurerm_storage_container, azurerm_storage_account, azurerm_storage_share |
 | azure | Azure VNet | full | azurerm_virtual_network |
 | azure | Azure VM | full | azurerm_linux_virtual_machine, azurerm_windows_virtual_machine |
-| azure | Container Apps | missing |  |
+| azure | Container Apps | full | azurerm_container_app |
 | azure | Container Instances | mapped | azurerm_container_group |
 | azure | Container Registry | missing |  |
 | azure | Cosmos DB | guided | azurerm_cosmosdb_account |

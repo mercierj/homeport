@@ -22,6 +22,7 @@ func RegisterAll(registry MapperRegistrar) {
 	// Compute mappers
 	registry.Register(compute.NewVMMapper())
 	registry.Register(compute.NewWindowsVMMapper())
+	registry.Register(compute.NewContainerAppMapper())
 	registry.Register(compute.NewFunctionMapper())
 	registry.Register(compute.NewAKSMapper())
 	registry.Register(compute.NewContainerInstanceMapper())

@@ -172,9 +172,10 @@ var ResourceMapping = map[resource.Type]StackType{
 	// Azure Resource Types (29 types)
 	// ─────────────────────────────────────────────────────
 
-	// Azure Compute (6 types) - Passthrough except serverless
+	// Azure Compute (7 types) - Passthrough except serverless
 	resource.TypeAzureVM:           StackTypePassthrough, // VMs stay individual
 	resource.TypeAzureVMWindows:    StackTypePassthrough, // VMs stay individual
+	resource.TypeAzureContainerApp: StackTypePassthrough, // Container apps stay individual
 	resource.TypeAzureFunction:     StackTypeCompute,     // Serverless consolidates
 	resource.TypeContainerInstance: StackTypePassthrough, // Container instances stay individual
 	resource.TypeAKS:               StackTypePassthrough, // Kubernetes stays individual
@@ -214,6 +215,9 @@ var ResourceMapping = map[resource.Type]StackType{
 	resource.TypeEventHub:        StackTypeMessaging, // Event Hubs consolidate
 	resource.TypeEventGrid:       StackTypeMessaging, // Event Grid consolidates
 	resource.TypeLogicApp:        StackTypeMessaging, // Logic Apps consolidate (workflow/integration)
+
+	// Azure Observability
+	resource.TypeAppInsights: StackTypeObservability, // Telemetry consolidates with OpenTelemetry
 }
 
 // GetStackTypeForResource returns the StackType for a given resource.Type.

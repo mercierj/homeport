@@ -227,6 +227,7 @@ func DefaultMapping() *ResourceStackMapping {
 
 			// Container orchestration
 			"azurerm_kubernetes_cluster":   true, // AKS
+			"azurerm_container_app":        true,
 			"azurerm_container_group":      true,
 			"azurerm_container_registry":   true,
 
