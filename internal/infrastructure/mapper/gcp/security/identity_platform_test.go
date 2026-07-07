@@ -6,7 +6,50 @@ import (
 
 	"github.com/homeport/homeport/internal/domain/mapper"
 	"github.com/homeport/homeport/internal/domain/resource"
+	domainrunbook "github.com/homeport/homeport/internal/domain/runbook"
 )
+
+func TestIdentityPlatformConformanceManagedAToZ(t *testing.T) {
+	result, err := NewIdentityPlatformMapper().Map(context.Background(), managedIdentityPlatformFixture())
+	if err != nil {
+		t.Fatal(err)
+	}
+	if len(result.ManualSteps) != 0 {
+		t.Fatalf("manual steps = %#v, want generated Identity Platform migration", result.ManualSteps)
+	}
+	if result.DockerService.Image != "quay.io/keycloak/keycloak:23.0" || result.DockerService.Deploy == nil || result.DockerService.Deploy.Replicas < 2 {
+		t.Fatalf("service does not provision HA Keycloak target: %#v", result.DockerService)
+	}
+	for _, file := range []string{"config/keycloak/realm.json", "config/identity-platform/app-change.env", "config/identity-platform/migration.env"} {
+		if _, ok := result.Configs[file]; !ok {
+			t.Fatalf("missing config %s", file)
+		}
+	}
+	appEnv := string(result.Configs["config/identity-platform/app-change.env"])
+	for _, want := range []string{"APP_CHANGE_MODE=generated_patch", "SOURCE_IDENTITY_PLATFORM_PROJECT=demo", "TARGET_AUTH_PROVIDER=keycloak"} {
+		if !containsIdentity(appEnv, want) {
+			t.Fatalf("app-change env missing %q:\n%s", want, appEnv)
+		}
+	}
+	for _, file := range []string{"setup_keycloak.sh", "migrate_users.sh", "export_identity_platform_users.sh", "import_identity_platform_keycloak.sh", "validate_identity_platform_keycloak.sh", "backup_identity_platform_config.sh", "cutover_identity_platform_clients.sh"} {
+		if _, ok := result.Scripts[file]; !ok {
+			t.Fatalf("missing script %s", file)
+		}
+	}
+	for id, stepType := range map[string]domainrunbook.StepType{
+		"export-identity-platform-users":      domainrunbook.StepTypeCommand,
+		"provision-keycloak-identity":         domainrunbook.StepTypeCommand,
+		"migrate-identity-platform-users":     domainrunbook.StepTypeCommand,
+		"validate-identity-platform-keycloak": domainrunbook.StepTypeCommand,
+		"backup-identity-platform-config":     domainrunbook.StepTypeCommand,
+		"cutover-identity-platform-clients":   domainrunbook.StepTypeAPICall,
+		"rollback-identity-platform-source":   domainrunbook.StepTypeRollback,
+	} {
+		if !hasIdentityPlatformRunbookStep(result, id, stepType) {
+			t.Fatalf("missing %s runbook step: %#v", id, result.RunbookSteps)
+		}
+	}
+}
 
 func TestNewIdentityPlatformMapper(t *testing.T) {
 	m := NewIdentityPlatformMapper()
@@ -251,6 +294,30 @@ func TestIdentityPlatformMapper_generateRealmConfig(t *testing.T) {
 	if !containsIdentity(config, "my-project") {
 		t.Error("Realm config should contain project ID")
 	}
+}
+
+func managedIdentityPlatformFixture() *resource.AWSResource {
+	return &resource.AWSResource{
+		ID:   "projects/demo/identity-platform",
+		Type: resource.TypeIdentityPlatform,
+		Name: "demo",
+		Config: map[string]interface{}{
+			"project": "demo",
+			"sign_in": map[string]interface{}{
+				"email": map[string]interface{}{"enabled": true},
+			},
+			"mfa": map[string]interface{}{"state": "ENABLED"},
+		},
+	}
+}
+
+func hasIdentityPlatformRunbookStep(result *mapper.MappingResult, id string, stepType domainrunbook.StepType) bool {
+	for _, step := range result.RunbookSteps {
+		if step.ID == id && step.Type == stepType {
+			return true
+		}
+	}
+	return false
 }
 
 // containsIdentity is a helper to check if a string contains a substring
