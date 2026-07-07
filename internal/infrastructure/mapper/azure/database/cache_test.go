@@ -2,10 +2,12 @@ package database
 
 import (
 	"context"
+	"strings"
 	"testing"
 
 	"github.com/homeport/homeport/internal/domain/mapper"
 	"github.com/homeport/homeport/internal/domain/resource"
+	domainrunbook "github.com/homeport/homeport/internal/domain/runbook"
 )
 
 func TestNewCacheMapper(t *testing.T) {
@@ -26,6 +28,74 @@ func TestCacheMapper_ResourceType(t *testing.T) {
 	if got != want {
 		t.Errorf("ResourceType() = %v, want %v", got, want)
 	}
+}
+
+func TestCacheConformanceManagedAToZ(t *testing.T) {
+	result, err := NewCacheMapper().Map(context.Background(), managedCacheFixture())
+	if err != nil {
+		t.Fatal(err)
+	}
+	if len(result.ManualSteps) != 0 {
+		t.Fatalf("manual steps = %#v, want generated Azure Cache migration", result.ManualSteps)
+	}
+	if result.DockerService.Image != "redis:7-alpine" || result.DockerService.Deploy == nil || result.DockerService.Deploy.Replicas < 2 {
+		t.Fatalf("service does not provision HA Redis target: %#v", result.DockerService)
+	}
+	for _, file := range []string{"config/redis/redis.conf", "config/redis/app-change.env", "config/redis/tls.env", "config/redis/generated-client.patch"} {
+		if _, ok := result.Configs[file]; !ok {
+			t.Fatalf("missing config %s", file)
+		}
+	}
+	appEnv := string(result.Configs["config/redis/app-change.env"])
+	for _, want := range []string{"APP_CHANGE_MODE=generated_patch", "SOURCE_AZURE_CACHE=checkout-cache", "REDIS_HOST=redis"} {
+		if !strings.Contains(appEnv, want) {
+			t.Fatalf("app-change env missing %q:\n%s", want, appEnv)
+		}
+	}
+	for _, file := range []string{"migrate_azure_cache.sh", "validate_redis.sh", "backup_redis.sh", "cutover_redis_clients.sh"} {
+		if _, ok := result.Scripts[file]; !ok {
+			t.Fatalf("missing script %s", file)
+		}
+	}
+	for id, stepType := range map[string]domainrunbook.StepType{
+		"configure-redis-tls":             domainrunbook.StepTypeCommand,
+		"generate-redis-auth":             domainrunbook.StepTypeCommand,
+		"sync-redis-data":                 domainrunbook.StepTypeCommand,
+		"validate-redis-migration":        domainrunbook.StepTypeCommand,
+		"validate-redis-failover":         domainrunbook.StepTypeCommand,
+		"backup-redis-target":             domainrunbook.StepTypeCommand,
+		"cutover-redis-clients":           domainrunbook.StepTypeAPICall,
+		"rollback-redis-source-authority": domainrunbook.StepTypeRollback,
+	} {
+		if !hasCacheRunbookStep(result, id, stepType) {
+			t.Fatalf("missing %s runbook step: %#v", id, result.RunbookSteps)
+		}
+	}
+}
+
+func managedCacheFixture() *resource.AWSResource {
+	return &resource.AWSResource{
+		ID:   "/subscriptions/demo/resourceGroups/rg/providers/Microsoft.Cache/Redis/checkout-cache",
+		Type: resource.TypeAzureCache,
+		Name: "checkout-cache",
+		Config: map[string]interface{}{
+			"name":                "checkout-cache",
+			"capacity":            float64(1),
+			"sku_name":            "Premium",
+			"family":              "P",
+			"redis_version":       "7",
+			"enable_non_ssl_port": false,
+		},
+	}
+}
+
+func hasCacheRunbookStep(result *mapper.MappingResult, id string, stepType domainrunbook.StepType) bool {
+	for _, step := range result.RunbookSteps {
+		if step.ID == id && step.Type == stepType {
+			return true
+		}
+	}
+	return false
 }
 
 func TestCacheMapper_Dependencies(t *testing.T) {

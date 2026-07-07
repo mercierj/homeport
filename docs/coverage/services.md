@@ -113,7 +113,7 @@
 | azure | App Insights | full | azurerm_application_insights |
 | azure | App Service | full | azurerm_app_service |
 | azure | Azure AD B2C | full | azurerm_aadb2c_directory |
-| azure | Azure Cache | mapped | azurerm_redis_cache |
+| azure | Azure Cache | full | azurerm_redis_cache |
 | azure | Azure CDN | mapped | azurerm_cdn_profile |
 | azure | Azure DNS | mapped | azurerm_dns_zone |
 | azure | Azure Firewall | mapped | azurerm_firewall |

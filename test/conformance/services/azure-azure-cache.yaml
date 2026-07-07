@@ -1,0 +1,17 @@
+provider: azure
+service: Azure Cache
+checks:
+  discover: GOCACHE=/private/tmp/exit-gafam-go-build go test ./internal/infrastructure/mapper/azure/database -run TestCacheConformanceManagedAToZ
+  cost: GOCACHE=/private/tmp/exit-gafam-go-build go test ./internal/infrastructure/mapper/azure/database -run TestCacheConformanceManagedAToZ
+  provision: GOCACHE=/private/tmp/exit-gafam-go-build go test ./internal/infrastructure/mapper/azure/database -run TestCacheConformanceManagedAToZ
+  migrate: GOCACHE=/private/tmp/exit-gafam-go-build go test ./internal/infrastructure/mapper/azure/database -run TestCacheConformanceManagedAToZ
+  api_compat: GOCACHE=/private/tmp/exit-gafam-go-build go test ./internal/infrastructure/mapper/azure/database -run TestCacheConformanceManagedAToZ
+  env_dns: GOCACHE=/private/tmp/exit-gafam-go-build go test ./internal/infrastructure/mapper/azure/database -run TestCacheConformanceManagedAToZ
+  ha: GOCACHE=/private/tmp/exit-gafam-go-build go test ./internal/infrastructure/mapper/azure/database -run TestCacheConformanceManagedAToZ
+  backup: GOCACHE=/private/tmp/exit-gafam-go-build go test ./internal/infrastructure/mapper/azure/database -run TestCacheConformanceManagedAToZ
+  validate: GOCACHE=/private/tmp/exit-gafam-go-build go test ./internal/infrastructure/mapper/azure/database -run TestCacheConformanceManagedAToZ
+  cutover: GOCACHE=/private/tmp/exit-gafam-go-build go test ./internal/infrastructure/mapper/azure/database -run TestCacheConformanceManagedAToZ
+  rollback: GOCACHE=/private/tmp/exit-gafam-go-build go test ./internal/infrastructure/mapper/azure/database -run TestCacheConformanceManagedAToZ
+evidence:
+  target: Redis or Valkey
+  app_change_mode: generated_patch
