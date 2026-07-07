@@ -2,10 +2,12 @@ package compute
 
 import (
 	"context"
+	"strings"
 	"testing"
 
 	"github.com/homeport/homeport/internal/domain/mapper"
 	"github.com/homeport/homeport/internal/domain/resource"
+	domainrunbook "github.com/homeport/homeport/internal/domain/runbook"
 )
 
 func TestNewAppServiceMapper(t *testing.T) {
@@ -26,6 +28,80 @@ func TestAppServiceMapper_ResourceType(t *testing.T) {
 	if got != want {
 		t.Errorf("ResourceType() = %v, want %v", got, want)
 	}
+}
+
+func TestAppServiceConformanceManagedAToZ(t *testing.T) {
+	result, err := NewAppServiceMapper().Map(context.Background(), managedAppServiceFixture())
+	if err != nil {
+		t.Fatal(err)
+	}
+	if len(result.ManualSteps) != 0 {
+		t.Fatalf("manual steps = %#v, want generated App Service migration", result.ManualSteps)
+	}
+	if result.DockerService.Build == nil || result.DockerService.Deploy == nil || result.DockerService.Deploy.Replicas < 2 {
+		t.Fatalf("service does not provision HA build target: %#v", result.DockerService)
+	}
+	for _, file := range []string{"apps/checkout-web/Dockerfile", "apps/checkout-web/docker-compose.override.yml", "config/app-service/app-change.env", "config/app-service/generated-client.patch"} {
+		if _, ok := result.Configs[file]; !ok {
+			t.Fatalf("missing config %s", file)
+		}
+	}
+	appEnv := string(result.Configs["config/app-service/app-change.env"])
+	for _, want := range []string{"APP_CHANGE_MODE=generated_patch", "SOURCE_APP_SERVICE=checkout-web", "APP_SERVICE_URL=http://checkout-web.localhost"} {
+		if !strings.Contains(appEnv, want) {
+			t.Fatalf("app-change env missing %q:\n%s", want, appEnv)
+		}
+	}
+	for _, file := range []string{"deploy_app_service.sh", "validate_app_service.sh", "backup_app_service_config.sh", "cutover_app_service_clients.sh"} {
+		if _, ok := result.Scripts[file]; !ok {
+			t.Fatalf("missing script %s", file)
+		}
+	}
+	for id, stepType := range map[string]domainrunbook.StepType{
+		"resolve-app-image":                 domainrunbook.StepTypeCommand,
+		"deploy-compose-app":                domainrunbook.StepTypeCommand,
+		"validate-app-health":               domainrunbook.StepTypeCommand,
+		"backup-app-service-config":         domainrunbook.StepTypeCommand,
+		"cutover-app-service-clients":       domainrunbook.StepTypeAPICall,
+		"rollback-compute-source-authority": domainrunbook.StepTypeRollback,
+	} {
+		if !hasAppServiceRunbookStep(result, id, stepType) {
+			t.Fatalf("missing %s runbook step: %#v", id, result.RunbookSteps)
+		}
+	}
+}
+
+func managedAppServiceFixture() *resource.AWSResource {
+	return &resource.AWSResource{
+		ID:   "/subscriptions/demo/resourceGroups/rg/providers/Microsoft.Web/sites/checkout-web",
+		Type: resource.TypeAppService,
+		Name: "checkout-web",
+		Config: map[string]interface{}{
+			"name":                "checkout-web",
+			"app_service_plan_id": "premium-p1v3",
+			"site_config": map[string]interface{}{
+				"application_stack": map[string]interface{}{
+					"node_version": "20",
+				},
+			},
+			"app_settings": map[string]interface{}{
+				"APP_ENV": "prod",
+			},
+			"connection_string": []interface{}{
+				map[string]interface{}{"name": "DefaultConnection", "type": "PostgreSQL", "value": "Server=postgres"},
+			},
+			"storage_account": map[string]interface{}{"name": "content"},
+		},
+	}
+}
+
+func hasAppServiceRunbookStep(result *mapper.MappingResult, id string, stepType domainrunbook.StepType) bool {
+	for _, step := range result.RunbookSteps {
+		if step.ID == id && step.Type == stepType {
+			return true
+		}
+	}
+	return false
 }
 
 func TestAppServiceMapper_Dependencies(t *testing.T) {

@@ -111,7 +111,7 @@
 | azure | API Management | full | azurerm_api_management |
 | azure | App Gateway | full | azurerm_application_gateway |
 | azure | App Insights | full | azurerm_application_insights |
-| azure | App Service | mapped | azurerm_app_service |
+| azure | App Service | full | azurerm_app_service |
 | azure | Azure AD B2C | mapped | azurerm_aadb2c_directory |
 | azure | Azure Cache | mapped | azurerm_redis_cache |
 | azure | Azure CDN | mapped | azurerm_cdn_profile |

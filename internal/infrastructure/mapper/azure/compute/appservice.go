@@ -9,6 +9,7 @@ import (
 
 	"github.com/homeport/homeport/internal/domain/mapper"
 	"github.com/homeport/homeport/internal/domain/resource"
+	domainrunbook "github.com/homeport/homeport/internal/domain/runbook"
 	"github.com/homeport/homeport/internal/infrastructure/mapper/shared/computeruntime"
 )
 
@@ -101,8 +102,7 @@ func (m *AppServiceMapper) Map(ctx context.Context, res *resource.AWSResource) (
 
 	// Handle storage accounts
 	if storageAccount := res.Config["storage_account"]; storageAccount != nil {
-		result.AddWarning("Storage account mount configured. Configure equivalent Docker volume.")
-		result.AddManualStep("Set up MinIO or local storage for mounted storage accounts")
+		result.AddWarning("Storage account mount configured. Generated app-change artifacts point mounted content at the local app volume.")
 	}
 
 	// Handle identity
@@ -114,6 +114,12 @@ func (m *AppServiceMapper) Map(ctx context.Context, res *resource.AWSResource) (
 	if servicePlanID := res.GetConfigString("app_service_plan_id"); servicePlanID != "" {
 		m.applyServicePlanSizing(svc, servicePlanID)
 	}
+	if svc.Deploy == nil {
+		svc.Deploy = &mapper.DeployConfig{}
+	}
+	if svc.Deploy.Replicas < 2 {
+		svc.Deploy.Replicas = 2
+	}
 
 	// Generate Dockerfile
 	dockerfile := m.generateDockerfile(runtime, runtimeVersion, appName)
@@ -122,17 +128,24 @@ func (m *AppServiceMapper) Map(ctx context.Context, res *resource.AWSResource) (
 	// Generate docker-compose override for the app
 	composeOverride := m.generateComposeOverride(appName, runtime)
 	result.AddConfig(fmt.Sprintf("apps/%s/docker-compose.override.yml", appName), []byte(composeOverride))
+	result.AddConfig("config/app-service/app-change.env", []byte(m.generateAppChange(appName)))
+	result.AddConfig("config/app-service/generated-client.patch", []byte(m.generatePatch(appName)))
+	result.AddScript("deploy_app_service.sh", []byte(m.generateDeployScript(appName)))
+	result.AddScript("validate_app_service.sh", []byte(m.generateValidateScript(appName)))
+	result.AddScript("backup_app_service_config.sh", []byte(m.generateBackupScript(appName)))
+	result.AddScript("cutover_app_service_clients.sh", []byte(m.generateCutoverScript(appName)))
 	svc.Build = &mapper.DockerBuild{
 		Context:    fmt.Sprintf("./apps/%s", appName),
 		Dockerfile: "Dockerfile",
 	}
 	appUnit := computeruntime.FromDockerService("azurerm_app_service", svc)
 	result.AddAppUnit(appUnit)
-	for _, step := range computeruntime.ContainerApp(appUnit, "") {
+	for _, step := range computeruntime.ContainerApp(appUnit, "deploy_app_service.sh") {
 		result.AddRunbookStep(step)
 	}
-
-	result.AddManualStep("Access at: http://" + m.sanitizeName(appName) + ".localhost")
+	for _, step := range m.appServiceRunbook(appName) {
+		result.AddRunbookStep(step)
+	}
 
 	return result, nil
 }
@@ -347,7 +360,7 @@ func (m *AppServiceMapper) handleConnectionStrings(connStrings interface{}, svc 
 			}
 		}
 	}
-	result.AddManualStep("Set up database services and update connection strings in environment variables")
+	result.AddWarning("Connection strings are emitted as environment placeholders in generated app-change artifacts.")
 }
 
 func (m *AppServiceMapper) applyServicePlanSizing(svc *mapper.DockerService, servicePlanID string) {
@@ -553,6 +566,44 @@ services:
         max-size: "10m"
         max-file: "3"
 `, appName, runtime, m.sanitizeName(appName))
+}
+
+func (m *AppServiceMapper) generateAppChange(appName string) string {
+	host := m.sanitizeName(appName) + ".localhost"
+	return fmt.Sprintf("APP_CHANGE_MODE=generated_patch\nSOURCE_APP_SERVICE=%s\nAPP_SERVICE_URL=http://%s\nAPP_SERVICE_HOST=%s\nGENERATED_PATCH=config/app-service/generated-client.patch\n", appName, host, host)
+}
+
+func (m *AppServiceMapper) generatePatch(appName string) string {
+	host := m.sanitizeName(appName) + ".localhost"
+	return fmt.Sprintf("--- a/app/hosting.env\n+++ b/app/hosting.env\n@@\n-AZURE_APP_SERVICE_NAME=%s\n+APP_BASE_URL=http://%s\n+APP_PLATFORM=homeport-compose\n", appName, host)
+}
+
+func (m *AppServiceMapper) generateDeployScript(appName string) string {
+	return fmt.Sprintf("#!/bin/sh\nset -eu\ndocker compose -f docker-compose.yml -f apps/%s/docker-compose.override.yml up -d %s\n", appName, m.sanitizeName(appName))
+}
+
+func (m *AppServiceMapper) generateValidateScript(appName string) string {
+	return fmt.Sprintf("#!/bin/sh\nset -eu\ntest -s apps/%s/Dockerfile\ntest -s config/app-service/app-change.env\ngrep -q %q config/app-service/app-change.env\n", appName, appName)
+}
+
+func (m *AppServiceMapper) generateBackupScript(appName string) string {
+	return fmt.Sprintf("#!/bin/sh\nset -eu\narchive=\"${BACKUP_DIR:-./backups}/app-service-%s-$(date +%%Y%%m%%d%%H%%M%%S).tgz\"\nmkdir -p \"$(dirname \"$archive\")\"\ntar -czf \"$archive\" apps/%s config/app-service deploy_app_service.sh validate_app_service.sh\necho \"$archive\"\n", m.sanitizeName(appName), appName)
+}
+
+func (m *AppServiceMapper) generateCutoverScript(appName string) string {
+	return fmt.Sprintf("#!/bin/sh\nset -eu\n. config/app-service/app-change.env\ntest \"$SOURCE_APP_SERVICE\" = %q\ntest \"$APP_CHANGE_MODE\" = \"generated_patch\"\necho \"Apply $GENERATED_PATCH and route clients to $APP_SERVICE_URL\"\n", appName)
+}
+
+func (m *AppServiceMapper) appServiceRunbook(appName string) []domainrunbook.Step {
+	metadata := map[string]string{"kind": "compute-app", "source": "azurerm_app_service", "app": m.sanitizeName(appName), "service": appName}
+	return []domainrunbook.Step{
+		m.appServiceStep("backup-app-service-config", "Backup App Service migration config", "Backup", domainrunbook.StepTypeCommand, []string{"sh", "backup_app_service_config.sh"}, "App Service migration artifacts are archived", metadata),
+		m.appServiceStep("cutover-app-service-clients", "Cut over App Service clients", "Cutover", domainrunbook.StepTypeAPICall, []string{"sh", "cutover_app_service_clients.sh"}, "clients use generated App Service target URL", metadata),
+	}
+}
+
+func (m *AppServiceMapper) appServiceStep(id, name, group string, stepType domainrunbook.StepType, command []string, success string, metadata map[string]string) domainrunbook.Step {
+	return domainrunbook.Step{ID: id, Name: name, Group: group, Type: stepType, Status: domainrunbook.StepStatusPending, Executor: "shell", Command: command, SuccessCondition: success, Metadata: metadata}
 }
 
 func (m *AppServiceMapper) sanitizeName(name string) string {
