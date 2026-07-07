@@ -9,6 +9,7 @@ import (
 
 	"github.com/homeport/homeport/internal/domain/mapper"
 	"github.com/homeport/homeport/internal/domain/resource"
+	domainrunbook "github.com/homeport/homeport/internal/domain/runbook"
 )
 
 // EventGridMapper converts Azure Event Grid topics to n8n.
@@ -56,11 +57,11 @@ func (m *EventGridMapper) Map(ctx context.Context, res *resource.AWSResource) (*
 	}
 	svc.Networks = []string{"homeport"}
 	svc.Labels = map[string]string{
-		"homeport.source":                                       "azurerm_eventgrid_topic",
-		"homeport.topic_name":                                   topicName,
-		"traefik.enable":                                         "true",
-		"traefik.http.routers.n8n.rule":                          "Host(`n8n.localhost`)",
-		"traefik.http.services.n8n.loadbalancer.server.port":     "5678",
+		"homeport.source":               "azurerm_eventgrid_topic",
+		"homeport.topic_name":           topicName,
+		"traefik.enable":                "true",
+		"traefik.http.routers.n8n.rule": "Host(`n8n.localhost`)",
+		"traefik.http.services.n8n.loadbalancer.server.port": "5678",
 	}
 	svc.HealthCheck = &mapper.HealthCheck{
 		Test:     []string{"CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://localhost:5678/healthz"},
@@ -69,24 +70,26 @@ func (m *EventGridMapper) Map(ctx context.Context, res *resource.AWSResource) (*
 		Retries:  5,
 	}
 	svc.Restart = "unless-stopped"
+	svc.Deploy = &mapper.DeployConfig{Replicas: 2}
 
 	// Handle input schema
 	if inputSchema := res.GetConfigString("input_schema"); inputSchema != "" {
 		result.AddWarning("Custom input schema detected. Configure webhook validation in n8n.")
-		result.AddManualStep("Set up JSON schema validation in n8n webhook node")
 	}
 
 	workflowTemplate := m.generateWorkflowTemplate(topicName)
 	result.AddConfig("config/n8n/workflows/eventgrid_workflow.json", []byte(workflowTemplate))
+	result.AddConfig("config/eventgrid/app-change.env", []byte(m.generateAppChange(topicName)))
+	result.AddConfig("config/eventgrid/generated-client.patch", []byte(m.generateClientPatch(topicName)))
 
 	setupScript := m.generateSetupScript(topicName)
 	result.AddScript("setup_n8n_eventgrid.sh", []byte(setupScript))
-
-	result.AddManualStep("Access n8n at http://localhost:5678")
-	result.AddManualStep("Default credentials: admin/admin")
-	result.AddManualStep("Import workflow template from config/n8n/workflows/")
-	result.AddManualStep(fmt.Sprintf("Webhook URL: http://localhost:5678/webhook/%s", topicName))
-	result.AddManualStep("Update application code to send events to n8n webhooks")
+	result.AddScript("validate_eventgrid_delivery.sh", []byte(m.generateValidationScript(topicName)))
+	result.AddScript("backup_eventgrid_config.sh", []byte(m.generateBackupScript(topicName)))
+	result.AddScript("cutover_eventgrid_clients.sh", []byte(m.generateCutoverScript(topicName)))
+	for _, step := range eventGridRunbook(topicName) {
+		result.AddRunbookStep(step)
+	}
 
 	return result, nil
 }
@@ -193,4 +196,70 @@ echo '  "data": { "key": "value" },'
 echo '  "dataVersion": "1.0"'
 echo '}'
 `, topicName, topicName)
+}
+
+func (m *EventGridMapper) generateAppChange(topicName string) string {
+	return fmt.Sprintf("APP_CHANGE_MODE=generated_patch\nSOURCE_EVENT_GRID_TOPIC=%s\nTARGET_EVENTGRID_WEBHOOK=http://n8n:5678/webhook/%s\nEVENTGRID_ROUTE_PATH=/webhook/%s\n", topicName, topicName, topicName)
+}
+
+func (m *EventGridMapper) generateClientPatch(topicName string) string {
+	return fmt.Sprintf(`diff --git a/config/eventgrid/client.env b/config/eventgrid/client.env
+new file mode 100644
+--- /dev/null
++++ b/config/eventgrid/client.env
+@@
++EVENTGRID_TOPIC=%s
++EVENTGRID_ENDPOINT=http://n8n:5678/webhook/%s
++EVENTGRID_DELIVERY_MODE=webhook
+`, topicName, topicName)
+}
+
+func (m *EventGridMapper) generateValidationScript(topicName string) string {
+	return fmt.Sprintf(`#!/bin/sh
+set -eu
+test -s config/n8n/workflows/eventgrid_workflow.json
+test -s config/eventgrid/app-change.env
+grep -q %q config/n8n/workflows/eventgrid_workflow.json
+grep -q "TARGET_EVENTGRID_WEBHOOK=http://n8n:5678/webhook/%s" config/eventgrid/app-change.env
+`, topicName, topicName)
+}
+
+func (m *EventGridMapper) generateBackupScript(topicName string) string {
+	return fmt.Sprintf(`#!/bin/sh
+set -eu
+archive="${BACKUP_DIR:-./backups}/eventgrid-%s-$(date +%%Y%%m%%d%%H%%M%%S).tgz"
+mkdir -p "$(dirname "$archive")"
+tar -czf "$archive" config/eventgrid config/n8n/workflows/eventgrid_workflow.json
+echo "$archive"
+`, topicName)
+}
+
+func (m *EventGridMapper) generateCutoverScript(topicName string) string {
+	return fmt.Sprintf(`#!/bin/sh
+set -eu
+. config/eventgrid/app-change.env
+test "$SOURCE_EVENT_GRID_TOPIC" = %q
+test "$APP_CHANGE_MODE" = "generated_patch"
+test -s config/eventgrid/generated-client.patch
+echo "Apply config/eventgrid/generated-client.patch and deliver Event Grid traffic to $TARGET_EVENTGRID_WEBHOOK"
+`, topicName)
+}
+
+func eventGridRunbook(topicName string) []domainrunbook.Step {
+	metadata := map[string]string{"kind": "messaging", "source": "azurerm_eventgrid_topic", "topic": topicName, "target": "n8n-webhook"}
+	return []domainrunbook.Step{
+		eventGridStep("provision-eventgrid-target", "Provision Event Grid webhook target", "Provision", domainrunbook.StepTypeCommand, []string{"sh", "setup_n8n_eventgrid.sh"}, "n8n webhook workflow is ready", metadata),
+		eventGridStep("validate-eventgrid-delivery", "Validate Event Grid delivery", "Validate", domainrunbook.StepTypeCommand, []string{"sh", "validate_eventgrid_delivery.sh"}, "Event Grid workflow and handoff config validate", metadata),
+		eventGridStep("backup-eventgrid-config", "Backup Event Grid config", "Backup", domainrunbook.StepTypeCommand, []string{"sh", "backup_eventgrid_config.sh"}, "Event Grid migration artifacts are archived", metadata),
+		eventGridStep("cutover-eventgrid-clients", "Cut over Event Grid clients", "Cutover", domainrunbook.StepTypeAPICall, []string{"sh", "cutover_eventgrid_clients.sh"}, "clients use generated Event Grid webhook target", metadata),
+		eventGridStep("rollback-eventgrid-source", "Keep Event Grid source authoritative", "Rollback", domainrunbook.StepTypeRollback, nil, "Azure Event Grid remains authoritative until delivery validation passes", metadata),
+	}
+}
+
+func eventGridStep(id, name, group string, stepType domainrunbook.StepType, command []string, success string, metadata map[string]string) domainrunbook.Step {
+	executor := "shell"
+	if stepType == domainrunbook.StepTypeRollback {
+		executor = "noop"
+	}
+	return domainrunbook.Step{ID: id, Name: name, Group: group, Type: stepType, Status: domainrunbook.StepStatusPending, Executor: executor, Command: command, SuccessCondition: success, Metadata: metadata}
 }
