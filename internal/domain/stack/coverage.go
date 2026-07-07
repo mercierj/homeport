@@ -121,14 +121,15 @@ var ResourceMapping = map[resource.Type]StackType{
 	resource.TypeFilestore:      StackTypeStorage,     // File storage consolidates
 
 	// GCP Database (6 types)
-	resource.TypeCloudSQL:     StackTypeDatabase, // SQL databases consolidate
-	resource.TypeFirestore:    StackTypeDatabase, // NoSQL consolidates
-	resource.TypeBigtable:     StackTypeDatabase, // Wide-column consolidates
-	resource.TypeMemorystore:  StackTypeCache,    // Cache consolidates
-	resource.TypeSpanner:      StackTypeDatabase, // Distributed SQL consolidates
-	resource.TypeBigQuery:     StackTypeDatabase, // Analytical SQL consolidates
-	resource.TypeDataplexLake: StackTypeDatabase, // Data catalog metadata consolidates
-	resource.TypeDataplexZone: StackTypeDatabase, // Data catalog zones consolidate
+	resource.TypeCloudSQL:       StackTypeDatabase, // SQL databases consolidate
+	resource.TypeFirestore:      StackTypeDatabase, // NoSQL consolidates
+	resource.TypeBigtable:       StackTypeDatabase, // Wide-column consolidates
+	resource.TypeMemorystore:    StackTypeCache,    // Cache consolidates
+	resource.TypeSpanner:        StackTypeDatabase, // Distributed SQL consolidates
+	resource.TypeBigQuery:       StackTypeDatabase, // Analytical SQL consolidates
+	resource.TypeDataplexLake:   StackTypeDatabase, // Data catalog metadata consolidates
+	resource.TypeDataplexZone:   StackTypeDatabase, // Data catalog zones consolidate
+	resource.TypeLookerInstance: StackTypeDatabase, // BI dashboards consolidate with analytical datastores
 
 	// GCP Networking (6 types) - All passthrough
 	resource.TypeCloudLB:            StackTypePassthrough, // Load balancers stay individual

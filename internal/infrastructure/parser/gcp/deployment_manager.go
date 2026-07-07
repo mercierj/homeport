@@ -341,6 +341,7 @@ func mapDMTypeToResourceType(dmType string) resource.Type {
 		"bigquery.v2.dataset":       resource.TypeBigQuery,
 		"dataplex.v1.lake":          resource.TypeDataplexLake,
 		"dataplex.v1.zone":          resource.TypeDataplexZone,
+		"looker.v1.instance":        resource.TypeLookerInstance,
 
 		// Networking
 		"compute.v1.network":        resource.TypeGCPVPCNetwork,
