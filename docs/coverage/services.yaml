@@ -2631,18 +2631,21 @@ services:
     service: Front Door
     resource_types:
       - azurerm_frontdoor
+    target: Traefik and Varnish edge cache
+    api_compatibility_strategy: generated edge routing, cache, app-change, and cutover artifacts
+    manual_steps_resolved: true
     discover: true
-    cost: false
-    provision: false
+    cost: true
+    provision: true
     migrate: true
-    api_compat: false
-    env_dns: false
-    ha: false
-    backup: false
+    api_compat: true
+    env_dns: true
+    ha: true
+    backup: true
     validate: true
-    cutover: false
-    rollback: false
-    status: mapped
+    cutover: true
+    rollback: true
+    status: full
   - provider: azure
     service: IoT Hub
     resource_types: []

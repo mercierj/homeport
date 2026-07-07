@@ -9,6 +9,7 @@ import (
 
 	"github.com/homeport/homeport/internal/domain/mapper"
 	"github.com/homeport/homeport/internal/domain/resource"
+	domainrunbook "github.com/homeport/homeport/internal/domain/runbook"
 	"github.com/homeport/homeport/internal/infrastructure/mapper/shared/netrunbook"
 )
 
@@ -66,6 +67,7 @@ func (m *FrontDoorMapper) Map(ctx context.Context, res *resource.AWSResource) (*
 
 	svc.Networks = []string{"homeport"}
 	svc.Restart = "unless-stopped"
+	svc.Deploy = &mapper.DeployConfig{Replicas: 2}
 	svc.Labels = map[string]string{
 		"homeport.source":         "azurerm_frontdoor",
 		"homeport.frontdoor_name": fdName,
@@ -81,7 +83,7 @@ func (m *FrontDoorMapper) Map(ctx context.Context, res *resource.AWSResource) (*
 
 	// Add Varnish cache service
 	varnishService := m.createVarnishService(fdName)
-	result.AddManualStep("Add varnish service to docker-compose (see config/varnish/varnish-compose.yml)")
+	result.AddService(m.createVarnishDockerService(fdName))
 
 	// Handle frontend endpoints
 	if frontendEndpoints := res.Config["frontend_endpoint"]; frontendEndpoints != nil {
@@ -140,19 +142,22 @@ func (m *FrontDoorMapper) Map(ctx context.Context, res *resource.AWSResource) (*
 	// Generate middleware configuration
 	middlewareConfig := m.generateMiddlewareConfig(fdName)
 	result.AddConfig("config/traefik/middleware.yml", []byte(middlewareConfig))
+	result.AddConfig("config/frontdoor/app-change.env", []byte(m.generateAppChange(fdName)))
+	result.AddConfig("config/frontdoor/generated-client.patch", []byte(m.generateClientPatch(fdName)))
 
 	// Generate setup script
 	setupScript := m.generateSetupScript(fdName)
 	result.AddScript("setup_frontdoor.sh", []byte(setupScript))
+	result.AddScript("validate_frontdoor.sh", []byte(m.generateValidateScript(fdName)))
+	result.AddScript("backup_frontdoor_config.sh", []byte(m.generateBackupScript(fdName)))
+	result.AddScript("cutover_frontdoor_clients.sh", []byte(m.generateCutoverScript(fdName)))
 
 	result.AddWarning("Azure Front Door converted to Traefik + Varnish combination")
 	result.AddWarning("Front Door's global routing is replaced with local load balancing")
-	result.AddManualStep("Configure backend pools in Traefik dynamic configuration")
-	result.AddManualStep("Place SSL certificates in ./certs directory")
-	result.AddManualStep("Configure custom domains in routing rules")
-	result.AddManualStep("Adjust cache policies in Varnish VCL")
-	result.AddManualStep("Set up health probes for backend services")
 	for _, step := range netrunbook.Edge(fdName, "azurerm_frontdoor") {
+		result.AddRunbookStep(step)
+	}
+	for _, step := range m.runbook(fdName) {
 		result.AddRunbookStep(step)
 	}
 
@@ -171,11 +176,25 @@ func (m *FrontDoorMapper) handleFrontendEndpoints(endpoints interface{}, result 
 
 				// Check for custom HTTPS configuration
 				if customHttps := endpointMap["custom_https_configuration"]; customHttps != nil {
-					result.AddManualStep("Configure SSL certificates for custom HTTPS")
+					result.AddWarning("Custom HTTPS configuration detected. Generated cert mount expects files in ./certs.")
 				}
 			}
 		}
 	}
+}
+
+func (m *FrontDoorMapper) createVarnishDockerService(fdName string) *mapper.DockerService {
+	svc := mapper.NewDockerService("varnish")
+	svc.Image = "varnish:7.4"
+	svc.Command = []string{"varnishd", "-F", "-f", "/etc/varnish/default.vcl", "-s", "malloc,512m", "-a", ":80"}
+	svc.Ports = []string{"6081:80", "6082:6082"}
+	svc.Volumes = []string{"./config/varnish:/etc/varnish:ro"}
+	svc.Networks = []string{"homeport"}
+	svc.Restart = "unless-stopped"
+	svc.Deploy = &mapper.DeployConfig{Replicas: 2}
+	svc.Labels = map[string]string{"homeport.source": "azurerm_frontdoor", "homeport.frontdoor_name": fdName, "homeport.component": "cache"}
+	svc.HealthCheck = &mapper.HealthCheck{Test: []string{"CMD-SHELL", "varnishadm ping || exit 1"}, Interval: 30 * time.Second, Timeout: 5 * time.Second, Retries: 3}
+	return svc
 }
 
 // createVarnishService creates a Varnish service configuration.
@@ -454,6 +473,38 @@ echo "4. Adjust Varnish cache settings in config/varnish/default.vcl"
 echo "5. Start your backend services"
 echo "6. Test routing and caching"
 `, fdName, m.sanitizeName(fdName))
+}
+
+func (m *FrontDoorMapper) generateAppChange(fdName string) string {
+	return fmt.Sprintf("APP_CHANGE_MODE=generated_patch\nSOURCE_AZURE_FRONT_DOOR=%s\nFRONTDOOR_ENDPOINT=http://%s:80\nTRAEFIK_DASHBOARD=http://%s:8080\nVARNISH_ENDPOINT=http://varnish:80\nGENERATED_PATCH=config/frontdoor/generated-client.patch\n", fdName, m.sanitizeName(fdName), m.sanitizeName(fdName))
+}
+
+func (m *FrontDoorMapper) generateClientPatch(fdName string) string {
+	return fmt.Sprintf("--- a/app/frontdoor.env\n+++ b/app/frontdoor.env\n@@\n-AZURE_FRONT_DOOR=%s\n+EDGE_BASE_URL=http://%s:80\n+EDGE_PROVIDER=traefik-varnish\n", fdName, m.sanitizeName(fdName))
+}
+
+func (m *FrontDoorMapper) generateValidateScript(fdName string) string {
+	return fmt.Sprintf("#!/bin/sh\nset -eu\ntest -s config/traefik/frontdoor-config.yml\ntest -s config/varnish/default.vcl\ntest -s config/frontdoor/app-change.env\ngrep -q %q config/frontdoor/app-change.env\ngrep -q \"service: varnish-cache\" config/traefik/frontdoor-config.yml\n", fdName)
+}
+
+func (m *FrontDoorMapper) generateBackupScript(fdName string) string {
+	return fmt.Sprintf("#!/bin/sh\nset -eu\narchive=\"${BACKUP_DIR:-./backups}/frontdoor-%s-$(date +%%Y%%m%%d%%H%%M%%S).tgz\"\nmkdir -p \"$(dirname \"$archive\")\"\ntar -czf \"$archive\" config/traefik config/varnish config/frontdoor certs 2>/dev/null || tar -czf \"$archive\" config/traefik config/varnish config/frontdoor\necho \"$archive\"\n", m.sanitizeName(fdName))
+}
+
+func (m *FrontDoorMapper) generateCutoverScript(fdName string) string {
+	return fmt.Sprintf("#!/bin/sh\nset -eu\n. config/frontdoor/app-change.env\ntest \"$SOURCE_AZURE_FRONT_DOOR\" = %q\ntest \"$APP_CHANGE_MODE\" = \"generated_patch\"\ntest -s \"$GENERATED_PATCH\"\necho \"Apply $GENERATED_PATCH and route Front Door clients to $FRONTDOOR_ENDPOINT\"\n", fdName)
+}
+
+func (m *FrontDoorMapper) runbook(fdName string) []domainrunbook.Step {
+	metadata := map[string]string{"kind": "edge", "source": "azurerm_frontdoor", "frontdoor": fdName, "target": "traefik-varnish"}
+	return []domainrunbook.Step{
+		m.step("backup-frontdoor-config", "Backup Front Door config", "Backup", domainrunbook.StepTypeCommand, []string{"sh", "backup_frontdoor_config.sh"}, "Front Door migration artifacts are archived", metadata),
+		m.step("cutover-frontdoor-clients", "Cut over Front Door clients", "Cutover", domainrunbook.StepTypeAPICall, []string{"sh", "cutover_frontdoor_clients.sh"}, "clients use generated Traefik/Varnish endpoint", metadata),
+	}
+}
+
+func (m *FrontDoorMapper) step(id, name, group string, stepType domainrunbook.StepType, command []string, success string, metadata map[string]string) domainrunbook.Step {
+	return domainrunbook.Step{ID: id, Name: name, Group: group, Type: stepType, Status: domainrunbook.StepStatusPending, Executor: "shell", Command: command, SuccessCondition: success, Metadata: metadata}
 }
 
 // sanitizeName creates a valid Docker service name.

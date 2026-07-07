@@ -132,7 +132,7 @@
 | azure | Event Grid | full | azurerm_eventgrid_topic |
 | azure | Event Hubs | full | azurerm_eventhub |
 | azure | Foundry/OpenAI | full | azurerm_cognitive_account |
-| azure | Front Door | mapped | azurerm_frontdoor |
+| azure | Front Door | full | azurerm_frontdoor |
 | azure | IoT Hub | missing |  |
 | azure | Key Vault | mapped | azurerm_key_vault |
 | azure | Log Analytics | missing |  |

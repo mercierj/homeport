@@ -2,11 +2,60 @@ package networking
 
 import (
 	"context"
+	"strings"
 	"testing"
 
 	"github.com/homeport/homeport/internal/domain/mapper"
 	"github.com/homeport/homeport/internal/domain/resource"
+	domainrunbook "github.com/homeport/homeport/internal/domain/runbook"
 )
+
+func TestFrontDoorConformanceManagedAToZ(t *testing.T) {
+	result, err := NewFrontDoorMapper().Map(context.Background(), managedFrontDoorFixture())
+	if err != nil {
+		t.Fatal(err)
+	}
+	if len(result.ManualSteps) != 0 {
+		t.Fatalf("manual steps = %#v, want generated Front Door migration", result.ManualSteps)
+	}
+	if result.DockerService.Image != "traefik:v2.10" || result.DockerService.Deploy == nil || result.DockerService.Deploy.Replicas < 2 {
+		t.Fatalf("service does not provision HA Traefik target: %#v", result.DockerService)
+	}
+	if !hasFrontDoorService(result, "varnish:7.4") {
+		t.Fatalf("missing generated Varnish cache service: %#v", result.AdditionalServices)
+	}
+	for _, file := range []string{"config/traefik/frontdoor-config.yml", "config/varnish/default.vcl", "config/frontdoor/app-change.env", "config/frontdoor/generated-client.patch"} {
+		if _, ok := result.Configs[file]; !ok {
+			t.Fatalf("missing config %s", file)
+		}
+	}
+	traefikConfig := string(result.Configs["config/traefik/frontdoor-config.yml"])
+	if !strings.Contains(traefikConfig, "service: varnish-cache") {
+		t.Fatalf("Traefik config does not route to Varnish:\n%s", traefikConfig)
+	}
+	appEnv := string(result.Configs["config/frontdoor/app-change.env"])
+	for _, want := range []string{"APP_CHANGE_MODE=generated_patch", "SOURCE_AZURE_FRONT_DOOR=checkout-frontdoor", "FRONTDOOR_ENDPOINT=http://checkout-frontdoor:80"} {
+		if !strings.Contains(appEnv, want) {
+			t.Fatalf("app-change env missing %q:\n%s", want, appEnv)
+		}
+	}
+	for _, file := range []string{"setup_frontdoor.sh", "validate_frontdoor.sh", "backup_frontdoor_config.sh", "cutover_frontdoor_clients.sh"} {
+		if _, ok := result.Scripts[file]; !ok {
+			t.Fatalf("missing script %s", file)
+		}
+	}
+	for id, stepType := range map[string]domainrunbook.StepType{
+		"render-edge-cache-config":       domainrunbook.StepTypeCommand,
+		"validate-cache-behavior":        domainrunbook.StepTypeCommand,
+		"backup-frontdoor-config":        domainrunbook.StepTypeCommand,
+		"cutover-frontdoor-clients":      domainrunbook.StepTypeAPICall,
+		"rollback-edge-source-authority": domainrunbook.StepTypeRollback,
+	} {
+		if !hasFrontDoorRunbookStep(result, id, stepType) {
+			t.Fatalf("missing %s runbook step: %#v", id, result.RunbookSteps)
+		}
+	}
+}
 
 func TestNewFrontDoorMapper(t *testing.T) {
 	m := NewFrontDoorMapper()
@@ -16,6 +65,51 @@ func TestNewFrontDoorMapper(t *testing.T) {
 	if m.ResourceType() != resource.TypeFrontDoor {
 		t.Errorf("ResourceType() = %v, want %v", m.ResourceType(), resource.TypeFrontDoor)
 	}
+}
+
+func managedFrontDoorFixture() *resource.AWSResource {
+	return &resource.AWSResource{
+		ID:   "/subscriptions/demo/resourceGroups/rg/providers/Microsoft.Network/frontDoors/checkout-frontdoor",
+		Type: resource.TypeFrontDoor,
+		Name: "checkout-frontdoor",
+		Config: map[string]interface{}{
+			"name": "checkout-frontdoor",
+			"frontend_endpoint": []interface{}{
+				map[string]interface{}{
+					"name":      "checkout",
+					"host_name": "checkout.example.com",
+				},
+			},
+			"backend_pool": []interface{}{
+				map[string]interface{}{"name": "checkout-origin"},
+			},
+			"routing_rule": []interface{}{
+				map[string]interface{}{
+					"name":               "checkout",
+					"accepted_protocols": []interface{}{"Http", "Https"},
+					"patterns_to_match":  []interface{}{"/*"},
+				},
+			},
+		},
+	}
+}
+
+func hasFrontDoorRunbookStep(result *mapper.MappingResult, id string, stepType domainrunbook.StepType) bool {
+	for _, step := range result.RunbookSteps {
+		if step.ID == id && step.Type == stepType {
+			return true
+		}
+	}
+	return false
+}
+
+func hasFrontDoorService(result *mapper.MappingResult, image string) bool {
+	for _, svc := range result.AdditionalServices {
+		if svc.Image == image {
+			return true
+		}
+	}
+	return false
 }
 
 func TestFrontDoorMapper_ResourceType(t *testing.T) {
