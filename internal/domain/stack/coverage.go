@@ -113,6 +113,7 @@ var ResourceMapping = map[resource.Type]StackType{
 	resource.TypeDataflowJob:                StackTypePassthrough, // Data processing jobs stay explicit
 	resource.TypeDataprocCluster:            StackTypePassthrough, // Spark clusters stay explicit
 	resource.TypeVertexAIEndpoint:           StackTypePassthrough, // ML inference endpoints stay explicit
+	resource.TypeWorkflowsWorkflow:          StackTypeMessaging,   // Workflows consolidate with event orchestration
 
 	// GCP Storage (3 types)
 	resource.TypeGCSBucket:      StackTypeStorage,     // Object storage consolidates

@@ -105,6 +105,7 @@ const (
 	TypeDataflowJob                Type = "google_dataflow_job"
 	TypeDataprocCluster            Type = "google_dataproc_cluster"
 	TypeVertexAIEndpoint           Type = "google_vertex_ai_endpoint"
+	TypeWorkflowsWorkflow          Type = "google_workflows_workflow"
 
 	// GCP Storage
 	TypeGCSBucket      Type = "google_storage_bucket"

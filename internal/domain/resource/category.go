@@ -181,6 +181,7 @@ var CategoryMapping = map[Type]Category{
 	TypeDataflowJob:                CategoryDevOps,
 	TypeDataprocCluster:            CategoryDevOps,
 	TypeVertexAIEndpoint:           CategoryCompute,
+	TypeWorkflowsWorkflow:          CategoryMessaging,
 
 	// GCP Storage
 	TypeGCSBucket:      CategoryObjectStorage,

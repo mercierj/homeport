@@ -326,6 +326,7 @@ func mapDMTypeToResourceType(dmType string) resource.Type {
 		"dataflow.v1b3.job":              resource.TypeDataflowJob,
 		"dataproc.v1.cluster":            resource.TypeDataprocCluster,
 		"aiplatform.v1.endpoint":         resource.TypeVertexAIEndpoint,
+		"workflows.v1.workflow":          resource.TypeWorkflowsWorkflow,
 		"eventarc.v1.trigger":            resource.TypeEventarcTrigger,
 
 		// Storage

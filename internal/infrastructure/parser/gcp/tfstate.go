@@ -313,6 +313,7 @@ func mapGCPTerraformType(tfType string) resource.Type {
 		"google_dataflow_job":                 resource.TypeDataflowJob,
 		"google_dataproc_cluster":             resource.TypeDataprocCluster,
 		"google_vertex_ai_endpoint":           resource.TypeVertexAIEndpoint,
+		"google_workflows_workflow":           resource.TypeWorkflowsWorkflow,
 
 		// Storage
 		"google_storage_bucket":     resource.TypeGCSBucket,
