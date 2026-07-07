@@ -222,7 +222,8 @@ var ResourceMapping = map[resource.Type]StackType{
 	resource.TypeAzureDatabricks:  StackTypePassthrough, // Spark workspaces stay individual
 
 	// Azure Observability
-	resource.TypeAppInsights: StackTypeObservability, // Telemetry consolidates with OpenTelemetry
+	resource.TypeAppInsights:       StackTypeObservability, // Telemetry consolidates with OpenTelemetry
+	resource.TypeAzureLogAnalytics: StackTypeObservability, // Logs consolidate with Loki/OpenTelemetry
 }
 
 // GetStackTypeForResource returns the StackType for a given resource.Type.

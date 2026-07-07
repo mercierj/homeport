@@ -331,7 +331,8 @@ func mapAzureTerraformType(tfType string) resource.Type {
 		"azurerm_virtual_network":     resource.TypeAzureVNet,
 
 		// Observability
-		"azurerm_application_insights": resource.TypeAppInsights,
+		"azurerm_application_insights":    resource.TypeAppInsights,
+		"azurerm_log_analytics_workspace": resource.TypeAzureLogAnalytics,
 
 		// Security
 		"azurerm_key_vault":        resource.TypeKeyVault,

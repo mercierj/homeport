@@ -278,7 +278,8 @@ var CategoryMapping = map[Type]Category{
 	TypeAzureFirewall: CategoryFirewall,
 
 	// Azure Observability
-	TypeAppInsights: CategoryTracing,
+	TypeAppInsights:       CategoryTracing,
+	TypeAzureLogAnalytics: CategoryLogging,
 
 	// Azure Security
 	TypeAzureADB2C: CategoryAuth,

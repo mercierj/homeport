@@ -135,7 +135,7 @@
 | azure | Front Door | full | azurerm_frontdoor |
 | azure | IoT Hub | full | azurerm_iothub |
 | azure | Key Vault | full | azurerm_key_vault |
-| azure | Log Analytics | missing |  |
+| azure | Log Analytics | full | azurerm_log_analytics_workspace |
 | azure | Logic Apps | guided | azurerm_logic_app_workflow |
 | azure | Managed Disk | mapped | azurerm_managed_disk |
 | azure | Monitor | missing |  |

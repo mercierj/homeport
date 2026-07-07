@@ -58,6 +58,7 @@ func RegisterAll(registry MapperRegistrar) {
 
 	// Observability mappers
 	registry.Register(observability.NewAppInsightsMapper())
+	registry.Register(observability.NewLogAnalyticsMapper())
 
 	// Security mappers
 	registry.Register(security.NewADB2CMapper())

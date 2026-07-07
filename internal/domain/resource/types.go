@@ -199,7 +199,8 @@ const (
 	TypeAzureVNet     Type = "azurerm_virtual_network"
 
 	// Azure Observability
-	TypeAppInsights Type = "azurerm_application_insights"
+	TypeAppInsights       Type = "azurerm_application_insights"
+	TypeAzureLogAnalytics Type = "azurerm_log_analytics_workspace"
 
 	// Azure DevOps / Integration
 	TypeAzureDataFactory Type = "azurerm_data_factory"

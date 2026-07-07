@@ -267,7 +267,8 @@ func mapARMTypeToResourceType(armType string) resource.Type {
 		"microsoft.network/virtualnetworks":     resource.TypeAzureVNet,
 
 		// Observability
-		"microsoft.insights/components": resource.TypeAppInsights,
+		"microsoft.insights/components":            resource.TypeAppInsights,
+		"microsoft.operationalinsights/workspaces": resource.TypeAzureLogAnalytics,
 
 		// AI/ML
 		"microsoft.cognitiveservices/accounts": resource.TypeAzureFoundryOpenAI,
