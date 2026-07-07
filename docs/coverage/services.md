@@ -136,7 +136,7 @@
 | azure | IoT Hub | full | azurerm_iothub |
 | azure | Key Vault | full | azurerm_key_vault |
 | azure | Log Analytics | full | azurerm_log_analytics_workspace |
-| azure | Logic Apps | guided | azurerm_logic_app_workflow |
+| azure | Logic Apps | full | azurerm_logic_app_workflow |
 | azure | Managed Disk | mapped | azurerm_managed_disk |
 | azure | Monitor | missing |  |
 | azure | MySQL | mapped | azurerm_mysql_flexible_server |

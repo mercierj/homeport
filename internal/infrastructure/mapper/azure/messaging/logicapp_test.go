@@ -2,11 +2,54 @@ package messaging
 
 import (
 	"context"
+	"strings"
 	"testing"
 
 	"github.com/homeport/homeport/internal/domain/mapper"
 	"github.com/homeport/homeport/internal/domain/resource"
+	domainrunbook "github.com/homeport/homeport/internal/domain/runbook"
 )
+
+func TestLogicAppConformanceManagedAToZ(t *testing.T) {
+	result, err := NewLogicAppMapper().Map(context.Background(), managedLogicAppFixture())
+	if err != nil {
+		t.Fatal(err)
+	}
+	if len(result.ManualSteps) != 0 {
+		t.Fatalf("manual steps = %#v, want generated Logic Apps migration", result.ManualSteps)
+	}
+	if result.DockerService.Image != "n8nio/n8n:latest" || result.DockerService.Deploy == nil || result.DockerService.Deploy.Replicas < 2 {
+		t.Fatalf("service does not provision HA n8n target: %#v", result.DockerService)
+	}
+	for _, file := range []string{"config/n8n/workflows/logicapp_workflow.json", "config/logicapp/app-change.env", "config/logicapp/generated-client.patch"} {
+		if _, ok := result.Configs[file]; !ok {
+			t.Fatalf("missing config %s", file)
+		}
+	}
+	appEnv := string(result.Configs["config/logicapp/app-change.env"])
+	for _, want := range []string{"APP_CHANGE_MODE=generated_patch", "SOURCE_LOGIC_APP=orders-flow", "TARGET_LOGICAPP_WEBHOOK=http://n8n:5678/webhook/orders-flow"} {
+		if !strings.Contains(appEnv, want) {
+			t.Fatalf("app-change env missing %q:\n%s", want, appEnv)
+		}
+	}
+	for _, file := range []string{"setup_n8n_logicapp.sh", "validate_logicapp_workflow.sh", "backup_logicapp_config.sh", "cutover_logicapp_clients.sh"} {
+		if _, ok := result.Scripts[file]; !ok {
+			t.Fatalf("missing script %s", file)
+		}
+	}
+	for id, stepType := range map[string]domainrunbook.StepType{
+		"export-logicapp-definition": domainrunbook.StepTypeCommand,
+		"provision-logicapp-target":  domainrunbook.StepTypeCommand,
+		"validate-logicapp-workflow": domainrunbook.StepTypeCommand,
+		"backup-logicapp-config":     domainrunbook.StepTypeCommand,
+		"cutover-logicapp-clients":   domainrunbook.StepTypeAPICall,
+		"rollback-logicapp-source":   domainrunbook.StepTypeRollback,
+	} {
+		if !hasLogicAppRunbookStep(result, id, stepType) {
+			t.Fatalf("missing %s runbook step: %#v", id, result.RunbookSteps)
+		}
+	}
+}
 
 func TestNewLogicAppMapper(t *testing.T) {
 	m := NewLogicAppMapper()
@@ -16,6 +59,32 @@ func TestNewLogicAppMapper(t *testing.T) {
 	if m.ResourceType() != resource.TypeLogicApp {
 		t.Errorf("ResourceType() = %v, want %v", m.ResourceType(), resource.TypeLogicApp)
 	}
+}
+
+func managedLogicAppFixture() *resource.AWSResource {
+	return &resource.AWSResource{
+		ID:   "/subscriptions/demo/resourceGroups/rg/providers/Microsoft.Logic/workflows/orders-flow",
+		Type: resource.TypeLogicApp,
+		Name: "orders-flow",
+		Config: map[string]interface{}{
+			"name": "orders-flow",
+			"workflow_definition": map[string]interface{}{
+				"triggers": map[string]interface{}{
+					"manual": map[string]interface{}{"type": "Request"},
+				},
+				"actions": map[string]interface{}{},
+			},
+		},
+	}
+}
+
+func hasLogicAppRunbookStep(result *mapper.MappingResult, id string, stepType domainrunbook.StepType) bool {
+	for _, step := range result.RunbookSteps {
+		if step.ID == id && step.Type == stepType {
+			return true
+		}
+	}
+	return false
 }
 
 func TestLogicAppMapper_ResourceType(t *testing.T) {

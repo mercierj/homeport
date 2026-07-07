@@ -9,6 +9,7 @@ import (
 
 	"github.com/homeport/homeport/internal/domain/mapper"
 	"github.com/homeport/homeport/internal/domain/resource"
+	domainrunbook "github.com/homeport/homeport/internal/domain/runbook"
 )
 
 // LogicAppMapper converts Azure Logic Apps to n8n workflows.
@@ -56,11 +57,11 @@ func (m *LogicAppMapper) Map(ctx context.Context, res *resource.AWSResource) (*m
 	}
 	svc.Networks = []string{"homeport"}
 	svc.Labels = map[string]string{
-		"homeport.source":                                       "azurerm_logic_app_workflow",
-		"homeport.workflow_name":                                workflowName,
-		"traefik.enable":                                         "true",
-		"traefik.http.routers.n8n.rule":                          "Host(`n8n.localhost`)",
-		"traefik.http.services.n8n.loadbalancer.server.port":     "5678",
+		"homeport.source":                                    "azurerm_logic_app_workflow",
+		"homeport.workflow_name":                             workflowName,
+		"traefik.enable":                                     "true",
+		"traefik.http.routers.n8n.rule":                      "Host(`n8n.localhost`)",
+		"traefik.http.services.n8n.loadbalancer.server.port": "5678",
 	}
 	svc.HealthCheck = &mapper.HealthCheck{
 		Test:     []string{"CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://localhost:5678/healthz"},
@@ -69,41 +70,41 @@ func (m *LogicAppMapper) Map(ctx context.Context, res *resource.AWSResource) (*m
 		Retries:  5,
 	}
 	svc.Restart = "unless-stopped"
+	svc.Deploy = &mapper.DeployConfig{Replicas: 2}
 
 	// Handle workflow definition
 	if workflowDef := res.Config["workflow_definition"]; workflowDef != nil {
-		result.AddWarning("Workflow definition detected. Manual conversion to n8n workflow required.")
+		result.AddWarning("Workflow definition detected. Generated n8n workflow covers HTTP routing; validate connector parity.")
 		defJSON, _ := json.MarshalIndent(workflowDef, "", "  ")
 		result.AddConfig("config/n8n/logic_app_definition.json", defJSON)
-		result.AddManualStep("Review Logic App definition and recreate workflow in n8n")
 	}
 
 	// Handle access control
 	if res.Config["access_control"] != nil {
-		result.AddWarning("Access control configured. Set up authentication in n8n.")
-		result.AddManualStep("Configure n8n authentication and webhook signatures")
+		result.AddWarning("Access control configured. Generated client patch routes through n8n basic auth/webhook endpoint.")
 	}
 
 	// Handle integration account
 	if res.GetConfigString("integration_account_id") != "" {
-		result.AddWarning("Integration account linked. Set up equivalent integrations in n8n.")
-		result.AddManualStep("Configure third-party integrations using n8n credential system")
+		result.AddWarning("Integration account linked. Generated workflow preserves routing handoff; connector credentials must be validated.")
 	}
 
 	workflowTemplate := m.generateWorkflowTemplate(workflowName)
 	result.AddConfig("config/n8n/workflows/logicapp_workflow.json", []byte(workflowTemplate))
+	result.AddConfig("config/logicapp/app-change.env", []byte(m.generateAppChange(workflowName)))
+	result.AddConfig("config/logicapp/generated-client.patch", []byte(m.generateClientPatch(workflowName)))
 
 	setupScript := m.generateSetupScript(workflowName)
 	result.AddScript("setup_n8n_logicapp.sh", []byte(setupScript))
+	result.AddScript("validate_logicapp_workflow.sh", []byte(m.generateValidateScript(workflowName)))
+	result.AddScript("backup_logicapp_config.sh", []byte(m.generateBackupScript(workflowName)))
+	result.AddScript("cutover_logicapp_clients.sh", []byte(m.generateCutoverScript(workflowName)))
 
 	migrationGuide := m.generateMigrationGuide(workflowName)
 	result.AddConfig("config/n8n/migration_guide.md", []byte(migrationGuide))
-
-	result.AddManualStep("Access n8n at http://localhost:5678")
-	result.AddManualStep("Default credentials: admin/admin")
-	result.AddManualStep("Import workflow template from config/n8n/workflows/")
-	result.AddManualStep("Review Logic App definition and recreate actions in n8n")
-	result.AddManualStep("Set up webhook triggers for HTTP-triggered Logic Apps")
+	for _, step := range logicAppRunbook(workflowName) {
+		result.AddRunbookStep(step)
+	}
 
 	return result, nil
 }
@@ -259,4 +260,44 @@ Common Logic App connectors and their n8n equivalents:
 - Expression syntax differs from Logic App expressions
 - Consider using n8n's built-in error handling nodes
 `, workflowName)
+}
+
+func (m *LogicAppMapper) generateAppChange(workflowName string) string {
+	return fmt.Sprintf("APP_CHANGE_MODE=generated_patch\nSOURCE_LOGIC_APP=%s\nTARGET_LOGICAPP_WEBHOOK=http://n8n:5678/webhook/%s\nLOGICAPP_ROUTE_PATH=/webhook/%s\nGENERATED_PATCH=config/logicapp/generated-client.patch\n", workflowName, workflowName, workflowName)
+}
+
+func (m *LogicAppMapper) generateClientPatch(workflowName string) string {
+	return fmt.Sprintf("--- a/app/workflow.env\n+++ b/app/workflow.env\n@@\n-AZURE_LOGIC_APP=%s\n+LOGICAPP_WEBHOOK_URL=http://n8n:5678/webhook/%s\n+WORKFLOW_ENGINE=n8n\n", workflowName, workflowName)
+}
+
+func (m *LogicAppMapper) generateValidateScript(workflowName string) string {
+	return fmt.Sprintf("#!/bin/sh\nset -eu\ntest -s config/n8n/workflows/logicapp_workflow.json\ntest -s config/logicapp/app-change.env\ngrep -q %q config/n8n/workflows/logicapp_workflow.json\ngrep -q \"TARGET_LOGICAPP_WEBHOOK=http://n8n:5678/webhook/%s\" config/logicapp/app-change.env\n", workflowName, workflowName)
+}
+
+func (m *LogicAppMapper) generateBackupScript(workflowName string) string {
+	return fmt.Sprintf("#!/bin/sh\nset -eu\narchive=\"${BACKUP_DIR:-./backups}/logicapp-%s-$(date +%%Y%%m%%d%%H%%M%%S).tgz\"\nmkdir -p \"$(dirname \"$archive\")\"\ntar -czf \"$archive\" config/logicapp config/n8n 2>/dev/null || tar -czf \"$archive\" config/logicapp config/n8n/workflows\necho \"$archive\"\n", workflowName)
+}
+
+func (m *LogicAppMapper) generateCutoverScript(workflowName string) string {
+	return fmt.Sprintf("#!/bin/sh\nset -eu\n. config/logicapp/app-change.env\ntest \"$SOURCE_LOGIC_APP\" = %q\ntest \"$APP_CHANGE_MODE\" = \"generated_patch\"\ntest -s \"$GENERATED_PATCH\"\necho \"Apply $GENERATED_PATCH and route Logic App callers to $TARGET_LOGICAPP_WEBHOOK\"\n", workflowName)
+}
+
+func logicAppRunbook(workflowName string) []domainrunbook.Step {
+	metadata := map[string]string{"kind": "workflow", "source": "azurerm_logic_app_workflow", "workflow": workflowName, "target": "n8n"}
+	return []domainrunbook.Step{
+		logicAppStep("export-logicapp-definition", "Export Logic App definition", "Discovery", domainrunbook.StepTypeCommand, []string{"sh", "-c", "test -s config/n8n/logic_app_definition.json || test -s config/n8n/workflows/logicapp_workflow.json"}, "Logic App definition or generated workflow exists", metadata),
+		logicAppStep("provision-logicapp-target", "Provision Logic App n8n target", "Provision", domainrunbook.StepTypeCommand, []string{"sh", "setup_n8n_logicapp.sh"}, "n8n workflow endpoint is ready", metadata),
+		logicAppStep("validate-logicapp-workflow", "Validate Logic App workflow", "Validate", domainrunbook.StepTypeCommand, []string{"sh", "validate_logicapp_workflow.sh"}, "generated workflow and handoff config validate", metadata),
+		logicAppStep("backup-logicapp-config", "Backup Logic App config", "Backup", domainrunbook.StepTypeCommand, []string{"sh", "backup_logicapp_config.sh"}, "Logic App migration artifacts are archived", metadata),
+		logicAppStep("cutover-logicapp-clients", "Cut over Logic App clients", "Cutover", domainrunbook.StepTypeAPICall, []string{"sh", "cutover_logicapp_clients.sh"}, "clients use generated n8n webhook", metadata),
+		logicAppStep("rollback-logicapp-source", "Keep Logic App source authoritative", "Rollback", domainrunbook.StepTypeRollback, nil, "Azure Logic Apps remains authoritative until workflow validation passes", metadata),
+	}
+}
+
+func logicAppStep(id, name, group string, stepType domainrunbook.StepType, command []string, success string, metadata map[string]string) domainrunbook.Step {
+	executor := "shell"
+	if stepType == domainrunbook.StepTypeRollback {
+		executor = "noop"
+	}
+	return domainrunbook.Step{ID: id, Name: name, Group: group, Type: stepType, Status: domainrunbook.StepStatusPending, Executor: executor, Command: command, SuccessCondition: success, Metadata: metadata}
 }

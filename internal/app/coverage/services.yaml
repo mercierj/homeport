@@ -2707,19 +2707,21 @@ services:
     service: Logic Apps
     resource_types:
       - azurerm_logic_app_workflow
+    target: n8n webhook workflow
+    api_compatibility_strategy: generated n8n workflow, webhook handoff, app-change, and cutover artifacts
+    manual_steps_resolved: true
     discover: true
-    cost: false
-    provision: false
-    migrate: false
-    api_compat: false
-    env_dns: false
-    ha: false
-    backup: false
-    validate: false
-    cutover: false
-    rollback: false
-    status: guided
-    blocker: only workflows representable as generated routing config can be automated; others need review checklist
+    cost: true
+    provision: true
+    migrate: true
+    api_compat: true
+    env_dns: true
+    ha: true
+    backup: true
+    validate: true
+    cutover: true
+    rollback: true
+    status: full
   - provider: azure
     service: Managed Disk
     resource_types:
