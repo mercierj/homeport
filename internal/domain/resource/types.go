@@ -138,6 +138,9 @@ const (
 	TypeCloudScheduler     Type = "google_cloud_scheduler_job"
 	TypeEventarcTrigger    Type = "google_eventarc_trigger"
 
+	// GCP Observability
+	TypeCloudLoggingSink Type = "google_logging_project_sink"
+
 	// ─────────────────────────────────────────────────────
 	// Azure Resource Types
 	// ─────────────────────────────────────────────────────

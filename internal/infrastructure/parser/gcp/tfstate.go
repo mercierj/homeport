@@ -346,6 +346,9 @@ func mapGCPTerraformType(tfType string) resource.Type {
 		"google_cloud_tasks_queue":   resource.TypeCloudTasks,
 		"google_cloud_scheduler_job": resource.TypeCloudScheduler,
 		"google_eventarc_trigger":    resource.TypeEventarcTrigger,
+
+		// Observability
+		"google_logging_project_sink": resource.TypeCloudLoggingSink,
 	}
 
 	if resType, ok := mapping[tfType]; ok {

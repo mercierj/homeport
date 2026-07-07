@@ -359,6 +359,9 @@ func mapDMTypeToResourceType(dmType string) resource.Type {
 		"cloudscheduler.v1.job":  resource.TypeCloudScheduler,
 		"cloudtasks.v2.queue":    resource.TypeCloudTasks,
 
+		// Observability
+		"logging.v2.sink": resource.TypeCloudLoggingSink,
+
 		// Containers
 		"container.v1.cluster": resource.TypeGKE,
 	}

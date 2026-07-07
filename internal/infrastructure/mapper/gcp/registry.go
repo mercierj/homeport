@@ -8,6 +8,7 @@ import (
 	"github.com/homeport/homeport/internal/infrastructure/mapper/gcp/devops"
 	"github.com/homeport/homeport/internal/infrastructure/mapper/gcp/messaging"
 	"github.com/homeport/homeport/internal/infrastructure/mapper/gcp/networking"
+	"github.com/homeport/homeport/internal/infrastructure/mapper/gcp/observability"
 	"github.com/homeport/homeport/internal/infrastructure/mapper/gcp/security"
 	"github.com/homeport/homeport/internal/infrastructure/mapper/gcp/storage"
 )
@@ -63,4 +64,7 @@ func RegisterAll(registry MapperRegistrar) {
 	registry.Register(messaging.NewPubSubSubscriptionMapper())
 	registry.Register(messaging.NewCloudTasksMapper())
 	registry.Register(messaging.NewEventarcMapper())
+
+	// Observability mappers
+	registry.Register(observability.NewCloudLoggingMapper())
 }

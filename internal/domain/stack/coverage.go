@@ -146,6 +146,9 @@ var ResourceMapping = map[resource.Type]StackType{
 	resource.TypeCloudScheduler:     StackTypeMessaging, // Scheduled jobs consolidate
 	resource.TypeEventarcTrigger:    StackTypeMessaging, // Event routes consolidate with workflow automation
 
+	// GCP Observability
+	resource.TypeCloudLoggingSink: StackTypeObservability, // Logs consolidate with Loki/Promtail
+
 	// ─────────────────────────────────────────────────────
 	// Azure Resource Types (29 types)
 	// ─────────────────────────────────────────────────────
