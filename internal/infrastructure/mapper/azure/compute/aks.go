@@ -5,6 +5,7 @@ import (
 	"context"
 	"fmt"
 	"strings"
+	"time"
 
 	"github.com/homeport/homeport/internal/domain/mapper"
 	"github.com/homeport/homeport/internal/domain/resource"
@@ -65,6 +66,8 @@ func (m *AKSMapper) Map(ctx context.Context, res *resource.AWSResource) (*mapper
 	}
 	svc.Networks = []string{"homeport"}
 	svc.Restart = "unless-stopped"
+	svc.Deploy = &mapper.DeployConfig{Replicas: 2}
+	svc.HealthCheck = &mapper.HealthCheck{Test: []string{"CMD-SHELL", "kubectl get nodes >/dev/null 2>&1 || exit 1"}, Interval: 30 * time.Second, Timeout: 10 * time.Second, Retries: 5}
 	svc.Labels = map[string]string{
 		"homeport.source":       "azurerm_kubernetes_cluster",
 		"homeport.cluster_name": clusterName,
@@ -100,10 +103,14 @@ func (m *AKSMapper) Map(ctx context.Context, res *resource.AWSResource) (*mapper
 	// Generate agent config
 	agentConfig := m.generateAgentConfig(clusterName)
 	result.AddConfig("config/k3s/agent-compose.yml", []byte(agentConfig))
+	result.AddConfig("config/aks/app-change.env", []byte(m.generateAppChange(clusterName)))
 
 	// Generate setup script
 	setupScript := m.generateSetupScript(clusterName)
 	result.AddScript("setup_k3s.sh", []byte(setupScript))
+	result.AddScript("validate_aks_k3s.sh", []byte(m.generateValidateScript(clusterName)))
+	result.AddScript("backup_aks_config.sh", []byte(m.generateBackupScript(clusterName)))
+	result.AddScript("cutover_aks_clients.sh", []byte(m.generateCutoverScript(clusterName)))
 	for _, step := range computeruntime.KubernetesCluster(clusterName, "setup_k3s.sh") {
 		result.AddRunbookStep(step)
 	}
@@ -112,10 +119,6 @@ func (m *AKSMapper) Map(ctx context.Context, res *resource.AWSResource) (*mapper
 		Name:   "k3s-server",
 		Driver: "local",
 	})
-
-	result.AddManualStep("Start K3s: docker-compose up -d k3s-server")
-	result.AddManualStep("Get kubeconfig: export KUBECONFIG=$(pwd)/kubeconfig/kubeconfig.yaml")
-	result.AddManualStep("Verify: kubectl get nodes")
 
 	return result, nil
 }
@@ -181,6 +184,22 @@ k3s-agent:
 volumes:
   k3s-agent:
 `, clusterName)
+}
+
+func (m *AKSMapper) generateAppChange(clusterName string) string {
+	return fmt.Sprintf("APP_CHANGE_MODE=generated_patch\nSOURCE_AKS_CLUSTER=%s\nKUBECONFIG=./kubeconfig/kubeconfig.yaml\nKUBERNETES_API=https://k3s-server:6443\n", clusterName)
+}
+
+func (m *AKSMapper) generateValidateScript(clusterName string) string {
+	return fmt.Sprintf("#!/bin/sh\nset -eu\ntest -s config/aks/app-change.env\ntest -s config/k3s/agent-compose.yml\ngrep -q %q config/aks/app-change.env\n", clusterName)
+}
+
+func (m *AKSMapper) generateBackupScript(clusterName string) string {
+	return fmt.Sprintf("#!/bin/sh\nset -eu\narchive=\"${BACKUP_DIR:-./backups}/aks-%s-$(date +%%Y%%m%%d%%H%%M%%S).tgz\"\nmkdir -p \"$(dirname \"$archive\")\"\ntar -czf \"$archive\" config/aks config/k3s setup_k3s.sh 2>/dev/null || tar -czf \"$archive\" config/aks config/k3s\necho \"$archive\"\n", clusterName)
+}
+
+func (m *AKSMapper) generateCutoverScript(clusterName string) string {
+	return fmt.Sprintf("#!/bin/sh\nset -eu\n. config/aks/app-change.env\ntest \"$SOURCE_AKS_CLUSTER\" = %q\ntest \"$APP_CHANGE_MODE\" = \"generated_patch\"\necho \"Use $KUBECONFIG and $KUBERNETES_API for migrated clients\"\n", clusterName)
 }
 
 func (m *AKSMapper) generateSetupScript(clusterName string) string {

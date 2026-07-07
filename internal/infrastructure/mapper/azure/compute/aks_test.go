@@ -2,10 +2,12 @@ package compute
 
 import (
 	"context"
+	"strings"
 	"testing"
 
 	"github.com/homeport/homeport/internal/domain/mapper"
 	"github.com/homeport/homeport/internal/domain/resource"
+	domainrunbook "github.com/homeport/homeport/internal/domain/runbook"
 )
 
 func TestNewAKSMapper(t *testing.T) {
@@ -16,6 +18,67 @@ func TestNewAKSMapper(t *testing.T) {
 	if m.ResourceType() != resource.TypeAKS {
 		t.Errorf("ResourceType() = %v, want %v", m.ResourceType(), resource.TypeAKS)
 	}
+}
+
+func TestAKSConformanceManagedAToZ(t *testing.T) {
+	result, err := NewAKSMapper().Map(context.Background(), managedAKSFixture())
+	if err != nil {
+		t.Fatal(err)
+	}
+	if len(result.ManualSteps) != 0 {
+		t.Fatalf("manual steps = %#v, want generated AKS migration", result.ManualSteps)
+	}
+	if result.DockerService.Image != "rancher/k3s:v1.29.0-k3s1" || result.DockerService.Deploy == nil || result.DockerService.Deploy.Replicas < 2 {
+		t.Fatalf("service does not provision HA K3s target: %#v", result.DockerService)
+	}
+	for _, file := range []string{"config/k3s/agent-compose.yml", "config/aks/app-change.env"} {
+		if _, ok := result.Configs[file]; !ok {
+			t.Fatalf("missing config %s", file)
+		}
+	}
+	appEnv := string(result.Configs["config/aks/app-change.env"])
+	for _, want := range []string{"APP_CHANGE_MODE=generated_patch", "SOURCE_AKS_CLUSTER=checkout-aks", "KUBECONFIG=./kubeconfig/kubeconfig.yaml"} {
+		if !strings.Contains(appEnv, want) {
+			t.Fatalf("app-change env missing %q:\n%s", want, appEnv)
+		}
+	}
+	for _, file := range []string{"setup_k3s.sh", "validate_aks_k3s.sh", "backup_aks_config.sh", "cutover_aks_clients.sh"} {
+		if _, ok := result.Scripts[file]; !ok {
+			t.Fatalf("missing script %s", file)
+		}
+	}
+	for id, stepType := range map[string]domainrunbook.StepType{
+		"export-kubernetes-workloads":          domainrunbook.StepTypeCommand,
+		"provision-k3s-cluster":                domainrunbook.StepTypeCommand,
+		"apply-kubernetes-workloads":           domainrunbook.StepTypeCommand,
+		"validate-kubernetes-workloads":        domainrunbook.StepTypeCommand,
+		"rollback-kubernetes-source-authority": domainrunbook.StepTypeRollback,
+	} {
+		if !hasAKSRunbookStep(result, id, stepType) {
+			t.Fatalf("missing %s runbook step: %#v", id, result.RunbookSteps)
+		}
+	}
+}
+
+func managedAKSFixture() *resource.AWSResource {
+	return &resource.AWSResource{
+		ID:   "/subscriptions/demo/resourceGroups/rg/providers/Microsoft.ContainerService/managedClusters/checkout-aks",
+		Type: resource.TypeAKS,
+		Name: "checkout-aks",
+		Config: map[string]interface{}{
+			"name":               "checkout-aks",
+			"kubernetes_version": "1.29",
+		},
+	}
+}
+
+func hasAKSRunbookStep(result *mapper.MappingResult, id string, stepType domainrunbook.StepType) bool {
+	for _, step := range result.RunbookSteps {
+		if step.ID == id && step.Type == stepType {
+			return true
+		}
+	}
+	return false
 }
 
 func TestAKSMapper_ResourceType(t *testing.T) {
