@@ -2,10 +2,12 @@ package networking
 
 import (
 	"context"
+	"strings"
 	"testing"
 
 	"github.com/homeport/homeport/internal/domain/mapper"
 	"github.com/homeport/homeport/internal/domain/resource"
+	domainrunbook "github.com/homeport/homeport/internal/domain/runbook"
 )
 
 func TestNewCDNMapper(t *testing.T) {
@@ -26,6 +28,91 @@ func TestCDNMapper_ResourceType(t *testing.T) {
 	if got != want {
 		t.Errorf("ResourceType() = %v, want %v", got, want)
 	}
+}
+
+func TestCDNConformanceManagedAToZ(t *testing.T) {
+	result, err := NewCDNMapper().Map(context.Background(), managedCDNFixture())
+	if err != nil {
+		t.Fatal(err)
+	}
+	if len(result.ManualSteps) != 0 {
+		t.Fatalf("manual steps = %#v, want generated Azure CDN migration", result.ManualSteps)
+	}
+	if result.DockerService.Image != "varnish:7.4" || result.DockerService.Deploy == nil || result.DockerService.Deploy.Replicas < 2 {
+		t.Fatalf("service does not provision HA Varnish target: %#v", result.DockerService)
+	}
+	if !hasCDNService(result, "caddy:2.8-alpine") {
+		t.Fatalf("missing generated Caddy edge service: %#v", result.AdditionalServices)
+	}
+	for _, file := range []string{"config/varnish/default.vcl", "config/caddy/Caddyfile", "config/cdn/app-change.env", "config/cdn/generated-client.patch"} {
+		if _, ok := result.Configs[file]; !ok {
+			t.Fatalf("missing config %s", file)
+		}
+	}
+	vcl := string(result.Configs["config/varnish/default.vcl"])
+	if !strings.Contains(vcl, `.host = "origin.example.com"`) {
+		t.Fatalf("VCL does not include generated origin:\n%s", vcl)
+	}
+	appEnv := string(result.Configs["config/cdn/app-change.env"])
+	for _, want := range []string{"APP_CHANGE_MODE=generated_patch", "SOURCE_AZURE_CDN=checkout-cdn", "CDN_ENDPOINT=http://caddy:80"} {
+		if !strings.Contains(appEnv, want) {
+			t.Fatalf("app-change env missing %q:\n%s", want, appEnv)
+		}
+	}
+	for _, file := range []string{"setup_cdn.sh", "validate_cdn.sh", "backup_cdn_config.sh", "cutover_cdn_clients.sh", "purge_cdn_cache.sh"} {
+		if _, ok := result.Scripts[file]; !ok {
+			t.Fatalf("missing script %s", file)
+		}
+	}
+	for id, stepType := range map[string]domainrunbook.StepType{
+		"render-edge-cache-config":       domainrunbook.StepTypeCommand,
+		"validate-cache-behavior":        domainrunbook.StepTypeCommand,
+		"backup-cdn-config":              domainrunbook.StepTypeCommand,
+		"cutover-cdn-clients":            domainrunbook.StepTypeAPICall,
+		"rollback-edge-source-authority": domainrunbook.StepTypeRollback,
+	} {
+		if !hasCDNRunbookStep(result, id, stepType) {
+			t.Fatalf("missing %s runbook step: %#v", id, result.RunbookSteps)
+		}
+	}
+}
+
+func managedCDNFixture() *resource.AWSResource {
+	return &resource.AWSResource{
+		ID:   "/subscriptions/demo/resourceGroups/rg/providers/Microsoft.Cdn/profiles/checkout-cdn",
+		Type: resource.TypeAzureCDN,
+		Name: "checkout-cdn",
+		Config: map[string]interface{}{
+			"name": "checkout-cdn",
+			"sku":  "Standard_Microsoft",
+			"endpoint": []interface{}{
+				map[string]interface{}{
+					"name":             "checkout",
+					"origin_host_name": "origin.example.com",
+					"origin_path":      "/assets",
+					"custom_domain":    "cdn.example.com",
+				},
+			},
+		},
+	}
+}
+
+func hasCDNRunbookStep(result *mapper.MappingResult, id string, stepType domainrunbook.StepType) bool {
+	for _, step := range result.RunbookSteps {
+		if step.ID == id && step.Type == stepType {
+			return true
+		}
+	}
+	return false
+}
+
+func hasCDNService(result *mapper.MappingResult, image string) bool {
+	for _, svc := range result.AdditionalServices {
+		if svc.Image == image {
+			return true
+		}
+	}
+	return false
 }
 
 func TestCDNMapper_Dependencies(t *testing.T) {

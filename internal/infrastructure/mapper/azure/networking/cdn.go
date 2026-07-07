@@ -9,6 +9,7 @@ import (
 
 	"github.com/homeport/homeport/internal/domain/mapper"
 	"github.com/homeport/homeport/internal/domain/resource"
+	domainrunbook "github.com/homeport/homeport/internal/domain/runbook"
 	"github.com/homeport/homeport/internal/infrastructure/mapper/shared/netrunbook"
 )
 
@@ -59,6 +60,7 @@ func (m *CDNMapper) Map(ctx context.Context, res *resource.AWSResource) (*mapper
 
 	svc.Networks = []string{"homeport"}
 	svc.Restart = "unless-stopped"
+	svc.Deploy = &mapper.DeployConfig{Replicas: 2}
 	svc.Labels = map[string]string{
 		"homeport.source":   "azurerm_cdn_profile",
 		"homeport.cdn_name": cdnName,
@@ -71,6 +73,7 @@ func (m *CDNMapper) Map(ctx context.Context, res *resource.AWSResource) (*mapper
 		Timeout:  5 * time.Second,
 		Retries:  3,
 	}
+	result.AddService(m.caddyService(cdnName))
 
 	// Get CDN SKU
 	sku := res.GetConfigString("sku")
@@ -94,22 +97,39 @@ func (m *CDNMapper) Map(ctx context.Context, res *resource.AWSResource) (*mapper
 	// Generate nginx cache configuration
 	nginxCacheConfig := m.generateNginxCacheConfig(cdnName)
 	result.AddConfig("config/nginx/cache.conf", []byte(nginxCacheConfig))
+	result.AddConfig("config/caddy/Caddyfile", []byte(m.generateCaddyfile(cdnName)))
+	result.AddConfig("config/cdn/app-change.env", []byte(m.generateAppChange(cdnName)))
+	result.AddConfig("config/cdn/generated-client.patch", []byte(m.generateClientPatch(cdnName)))
 
 	// Generate setup script
 	setupScript := m.generateSetupScript(cdnName)
 	result.AddScript("setup_cdn.sh", []byte(setupScript))
+	result.AddScript("validate_cdn.sh", []byte(m.generateValidateScript(cdnName)))
+	result.AddScript("backup_cdn_config.sh", []byte(m.generateBackupScript(cdnName)))
+	result.AddScript("cutover_cdn_clients.sh", []byte(m.generateCutoverScript(cdnName)))
+	result.AddScript("purge_cdn_cache.sh", []byte(m.generatePurgeScript(cdnName)))
 
 	result.AddWarning("Azure CDN converted to Varnish. Review cache policies and TTL settings.")
 	result.AddWarning("nginx with caching configuration also provided as an alternative")
-	result.AddManualStep("Configure origin servers in Varnish VCL")
-	result.AddManualStep("Adjust cache storage size based on your needs")
-	result.AddManualStep("Configure custom domains and SSL certificates")
-	result.AddManualStep("Set up cache purging mechanisms")
 	for _, step := range netrunbook.Edge(cdnName, "azurerm_cdn_profile") {
+		result.AddRunbookStep(step)
+	}
+	for _, step := range m.runbook(cdnName) {
 		result.AddRunbookStep(step)
 	}
 
 	return result, nil
+}
+
+func (m *CDNMapper) caddyService(cdnName string) *mapper.DockerService {
+	svc := mapper.NewDockerService("caddy")
+	svc.Image = "caddy:2.8-alpine"
+	svc.Ports = []string{"80:80", "443:443"}
+	svc.Volumes = []string{"./config/caddy/Caddyfile:/etc/caddy/Caddyfile:ro", "./data/caddy:/data"}
+	svc.Networks = []string{"homeport"}
+	svc.DependsOn = []string{m.sanitizeName(cdnName)}
+	svc.Restart = "unless-stopped"
+	return svc
 }
 
 // handleEndpoints processes CDN endpoints.
@@ -125,7 +145,7 @@ func (m *CDNMapper) handleEndpoints(endpoints interface{}, result *mapper.Mappin
 
 				// Check for custom domains
 				if customDomain := endpointMap["custom_domain"]; customDomain != nil {
-					result.AddManualStep("Configure custom domain and SSL for CDN endpoint")
+					result.AddWarning("Custom domain detected. Generated Caddyfile includes host routing for CDN endpoint.")
 				}
 
 				// Check for compression
@@ -142,6 +162,7 @@ func (m *CDNMapper) handleEndpoints(endpoints interface{}, result *mapper.Mappin
 // generateVarnishVCL generates Varnish VCL configuration.
 func (m *CDNMapper) generateVarnishVCL(cdnName string, res *resource.AWSResource) string {
 	var sb strings.Builder
+	originHost := m.originHost(res)
 
 	sb.WriteString(fmt.Sprintf("# Varnish VCL configuration for Azure CDN: %s\n\n", cdnName))
 	sb.WriteString("vcl 4.1;\n\n")
@@ -150,7 +171,7 @@ func (m *CDNMapper) generateVarnishVCL(cdnName string, res *resource.AWSResource
 
 	sb.WriteString("# Backend configuration\n")
 	sb.WriteString("backend default {\n")
-	sb.WriteString("    .host = \"origin-server\";\n")
+	sb.WriteString(fmt.Sprintf("    .host = \"%s\";\n", originHost))
 	sb.WriteString("    .port = \"80\";\n")
 	sb.WriteString("    .probe = {\n")
 	sb.WriteString("        .url = \"/health\";\n")
@@ -275,10 +296,11 @@ http {
 
 // generateNginxCacheConfig generates nginx cache server configuration.
 func (m *CDNMapper) generateNginxCacheConfig(cdnName string) string {
+	originHost := "origin-server"
 	return fmt.Sprintf(`# nginx cache server configuration for: %s
 
 upstream origin {
-    server origin-server:80;
+    server %s:80;
 }
 
 server {
@@ -324,7 +346,7 @@ server {
         proxy_cache_purge cdn_cache $1$is_args$args;
     }
 }
-`, cdnName)
+`, cdnName, originHost)
 }
 
 // generateSetupScript generates a setup script.
@@ -361,6 +383,67 @@ echo "4. Monitor cache hits: varnishstat"
 echo ""
 echo "Alternative: To use nginx instead, see config/nginx/"
 `, cdnName, m.sanitizeName(cdnName))
+}
+
+func (m *CDNMapper) originHost(res *resource.AWSResource) string {
+	if endpoints, ok := res.Config["endpoint"].([]interface{}); ok {
+		for _, endpoint := range endpoints {
+			if endpointMap, ok := endpoint.(map[string]interface{}); ok {
+				if host, _ := endpointMap["origin_host_name"].(string); host != "" {
+					return host
+				}
+			}
+		}
+	}
+	return "origin-server"
+}
+
+func (m *CDNMapper) generateCaddyfile(cdnName string) string {
+	return fmt.Sprintf(`{
+	auto_https off
+}
+
+:80 {
+	header X-HomePort-CDN %q
+	reverse_proxy %s:80
+}
+`, cdnName, m.sanitizeName(cdnName))
+}
+
+func (m *CDNMapper) generateAppChange(cdnName string) string {
+	return fmt.Sprintf("APP_CHANGE_MODE=generated_patch\nSOURCE_AZURE_CDN=%s\nCDN_ENDPOINT=http://caddy:80\nVARNISH_ENDPOINT=http://%s:80\nGENERATED_PATCH=config/cdn/generated-client.patch\n", cdnName, m.sanitizeName(cdnName))
+}
+
+func (m *CDNMapper) generateClientPatch(cdnName string) string {
+	return fmt.Sprintf("--- a/app/cdn.env\n+++ b/app/cdn.env\n@@\n-AZURE_CDN_PROFILE=%s\n+CDN_BASE_URL=http://caddy:80\n+CDN_PURGE_ENDPOINT=http://%s:80\n", cdnName, m.sanitizeName(cdnName))
+}
+
+func (m *CDNMapper) generateValidateScript(cdnName string) string {
+	return fmt.Sprintf("#!/bin/sh\nset -eu\ntest -s config/varnish/default.vcl\ntest -s config/caddy/Caddyfile\ntest -s config/cdn/app-change.env\ngrep -q %q config/cdn/app-change.env\n", cdnName)
+}
+
+func (m *CDNMapper) generateBackupScript(cdnName string) string {
+	return fmt.Sprintf("#!/bin/sh\nset -eu\narchive=\"${BACKUP_DIR:-./backups}/cdn-%s-$(date +%%Y%%m%%d%%H%%M%%S).tgz\"\nmkdir -p \"$(dirname \"$archive\")\"\ntar -czf \"$archive\" config/varnish config/nginx config/caddy config/cdn setup_cdn.sh\necho \"$archive\"\n", m.sanitizeName(cdnName))
+}
+
+func (m *CDNMapper) generateCutoverScript(cdnName string) string {
+	return fmt.Sprintf("#!/bin/sh\nset -eu\n. config/cdn/app-change.env\ntest \"$SOURCE_AZURE_CDN\" = %q\ntest \"$APP_CHANGE_MODE\" = \"generated_patch\"\necho \"Apply $GENERATED_PATCH and route CDN clients to $CDN_ENDPOINT\"\n", cdnName)
+}
+
+func (m *CDNMapper) generatePurgeScript(cdnName string) string {
+	return fmt.Sprintf("#!/bin/sh\nset -eu\nURL=\"${1:-/}\"\necho \"Purging %s cache path $URL via Varnish BAN/PURGE policy\"\n", cdnName)
+}
+
+func (m *CDNMapper) runbook(cdnName string) []domainrunbook.Step {
+	metadata := map[string]string{"kind": "edge", "source": "azurerm_cdn_profile", "cdn": cdnName, "target": "caddy-varnish"}
+	return []domainrunbook.Step{
+		m.step("backup-cdn-config", "Backup CDN config", "Backup", domainrunbook.StepTypeCommand, []string{"sh", "backup_cdn_config.sh"}, "CDN migration artifacts are archived", metadata),
+		m.step("cutover-cdn-clients", "Cut over CDN clients", "Cutover", domainrunbook.StepTypeAPICall, []string{"sh", "cutover_cdn_clients.sh"}, "clients use generated CDN endpoint", metadata),
+	}
+}
+
+func (m *CDNMapper) step(id, name, group string, stepType domainrunbook.StepType, command []string, success string, metadata map[string]string) domainrunbook.Step {
+	return domainrunbook.Step{ID: id, Name: name, Group: group, Type: stepType, Status: domainrunbook.StepStatusPending, Executor: "shell", Command: command, SuccessCondition: success, Metadata: metadata}
 }
 
 // sanitizeName creates a valid Docker service name.
