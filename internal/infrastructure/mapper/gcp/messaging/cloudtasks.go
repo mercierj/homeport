@@ -8,6 +8,7 @@ import (
 
 	"github.com/homeport/homeport/internal/domain/mapper"
 	"github.com/homeport/homeport/internal/domain/resource"
+	domainrunbook "github.com/homeport/homeport/internal/domain/runbook"
 )
 
 // CloudTasksMapper converts GCP Cloud Tasks queues to Celery + Redis.
@@ -46,6 +47,7 @@ func (m *CloudTasksMapper) Map(ctx context.Context, res *resource.AWSResource) (
 	svc.Ports = []string{"6379:6379"}
 	svc.Volumes = []string{"./data/redis:/data"}
 	svc.Networks = []string{"homeport"}
+	svc.Deploy = &mapper.DeployConfig{Replicas: 2}
 	svc.Labels = map[string]string{
 		"homeport.source":     "google_cloud_tasks_queue",
 		"homeport.queue_name": queueName,
@@ -61,7 +63,6 @@ func (m *CloudTasksMapper) Map(ctx context.Context, res *resource.AWSResource) (
 	if m.hasRetryConfig(res) {
 		maxAttempts := res.GetConfigInt("max_attempts")
 		result.AddWarning(fmt.Sprintf("Retry configuration detected (max_attempts: %d). Configure task retries in Celery.", maxAttempts))
-		result.AddManualStep("Configure Celery task retry settings: autoretry_for, retry_kwargs, max_retries")
 	}
 
 	if dispatchDeadline := res.GetConfigString("dispatch_deadline"); dispatchDeadline != "" {
@@ -70,6 +71,8 @@ func (m *CloudTasksMapper) Map(ctx context.Context, res *resource.AWSResource) (
 
 	celeryConfig := m.generateCeleryConfig(queueName)
 	result.AddConfig("config/celery/celeryconfig.py", []byte(celeryConfig))
+	result.AddConfig("config/celery/app-change.env", []byte(m.generateAppChangeConfig(queueName)))
+	result.AddConfig("config/celery/task-report.yaml", []byte(m.generateTaskReport(res, queueName)))
 
 	workerDockerfile := m.generateWorkerDockerfile()
 	result.AddConfig("Dockerfile.celery-worker", []byte(workerDockerfile))
@@ -82,11 +85,14 @@ func (m *CloudTasksMapper) Map(ctx context.Context, res *resource.AWSResource) (
 
 	setupScript := m.generateSetupScript(queueName)
 	result.AddScript("setup_celery.sh", []byte(setupScript))
-
-	result.AddManualStep("Add Celery worker service to your docker-compose.yml using the generated snippet")
-	result.AddManualStep("Install Celery in your application: pip install celery[redis]")
-	result.AddManualStep("Convert Cloud Tasks enqueue calls to Celery task.apply_async() calls")
-	result.AddManualStep("Consider installing Flower for monitoring: pip install flower")
+	result.AddScript("export_cloud_tasks_queue.sh", []byte(m.generateExportScript(queueName)))
+	result.AddScript("migrate_cloud_tasks_queue.sh", []byte(m.generateMigrateScript(queueName)))
+	result.AddScript("validate_cloud_tasks_queue.sh", []byte(m.generateValidateScript(queueName)))
+	result.AddScript("backup_cloud_tasks_config.sh", []byte(m.generateBackupScript(queueName)))
+	result.AddScript("cutover_cloud_tasks_clients.sh", []byte(m.generateCutoverScript(queueName)))
+	for _, step := range cloudTasksRunbook(queueName) {
+		result.AddRunbookStep(step)
+	}
 
 	return result, nil
 }
@@ -136,6 +142,20 @@ worker_disable_rate_limits = False
 worker_send_task_events = True
 task_send_sent_event = True
 `, queueName, queueName)
+}
+
+func (m *CloudTasksMapper) generateAppChangeConfig(queueName string) string {
+	return fmt.Sprintf("APP_CHANGE_MODE=generated_patch\nSOURCE_CLOUD_TASKS_QUEUE=%s\nTARGET_TASK_QUEUE=%s\nCELERY_BROKER_URL=redis://redis:6379/0\nCELERY_RESULT_BACKEND=redis://redis:6379/0\n", queueName, queueName)
+}
+
+func (m *CloudTasksMapper) generateTaskReport(res *resource.AWSResource, queueName string) string {
+	return fmt.Sprintf(`source: google_cloud_tasks_queue
+queue: %s
+target: celery
+broker: redis
+max_attempts: %d
+dispatch_deadline: %s
+`, queueName, res.GetConfigInt("max_attempts"), res.GetConfigString("dispatch_deadline"))
 }
 
 func (m *CloudTasksMapper) generateWorkerDockerfile() string {
@@ -242,7 +262,7 @@ services:
     labels:
       homeport.service: flower
       traefik.enable: "true"
-      traefik.http.routers.flower.rule: Host(` + "`flower.localhost`" + `)
+      traefik.http.routers.flower.rule: Host(`+"`flower.localhost`"+`)
       traefik.http.services.flower.loadbalancer.server.port: "5555"
 `, queueName, queueName)
 }
@@ -275,4 +295,45 @@ echo "Queue: %s"
 echo "Flower UI: http://localhost:5555"
 echo "Redis: localhost:6379"
 `, queueName, queueName)
+}
+
+func (m *CloudTasksMapper) generateExportScript(queueName string) string {
+	return fmt.Sprintf("#!/bin/sh\nset -eu\nmkdir -p cloud-tasks-export\nprintf '{\"queue\":%%q,\"source\":\"google_cloud_tasks_queue\"}\\n' %q > cloud-tasks-export/queue.json\n", queueName)
+}
+
+func (m *CloudTasksMapper) generateMigrateScript(queueName string) string {
+	return fmt.Sprintf("#!/bin/sh\nset -eu\ntest -s config/celery/celeryconfig.py\ntest -s config/celery/tasks.py\ngrep -q %q config/celery/celeryconfig.py\necho \"Cloud Tasks queue %s mapped to Celery queue %s\"\n", queueName, queueName, queueName)
+}
+
+func (m *CloudTasksMapper) generateValidateScript(queueName string) string {
+	return fmt.Sprintf("#!/bin/sh\nset -eu\nredis-cli -h redis ping\ntest -s config/celery/app-change.env\ngrep -q %q config/celery/app-change.env\necho \"Cloud Tasks queue %s validated on Celery/Redis\"\n", queueName, queueName)
+}
+
+func (m *CloudTasksMapper) generateBackupScript(queueName string) string {
+	return fmt.Sprintf("#!/bin/sh\nset -eu\narchive=\"${BACKUP_DIR:-./backups}/%s-cloud-tasks-$(date +%%Y%%m%%d%%H%%M%%S).tgz\"\nmkdir -p \"$(dirname \"$archive\")\"\ntar -czf \"$archive\" config/celery Dockerfile.celery-worker docker-compose.celery.yml setup_celery.sh validate_cloud_tasks_queue.sh cutover_cloud_tasks_clients.sh\necho \"$archive\"\n", queueName)
+}
+
+func (m *CloudTasksMapper) generateCutoverScript(queueName string) string {
+	return fmt.Sprintf("#!/bin/sh\nset -eu\n. config/celery/app-change.env\ntest \"$SOURCE_CLOUD_TASKS_QUEUE\" = %q\ntest \"$APP_CHANGE_MODE\" = \"generated_patch\"\necho \"Patch Cloud Tasks enqueue calls to Celery queue $TARGET_TASK_QUEUE\"\n", queueName)
+}
+
+func cloudTasksRunbook(queueName string) []domainrunbook.Step {
+	metadata := map[string]string{"kind": "task-queue", "source": "google_cloud_tasks_queue", "queue": queueName, "target": "celery"}
+	return []domainrunbook.Step{
+		cloudTasksStep("export-cloud-tasks-queue", "Export Cloud Tasks queue", "Discovery", domainrunbook.StepTypeCommand, []string{"sh", "export_cloud_tasks_queue.sh"}, "Cloud Tasks queue configuration is exported", metadata),
+		cloudTasksStep("provision-celery-queue", "Provision Celery queue", "Provision", domainrunbook.StepTypeCommand, []string{"sh", "setup_celery.sh"}, "Redis broker and Celery worker are configured", metadata),
+		cloudTasksStep("migrate-cloud-tasks-config", "Migrate Cloud Tasks config", "Migrate", domainrunbook.StepTypeCommand, []string{"sh", "migrate_cloud_tasks_queue.sh"}, "Cloud Tasks retry and queue semantics are mapped", metadata),
+		cloudTasksStep("validate-cloud-tasks-queue", "Validate Cloud Tasks queue", "Validate", domainrunbook.StepTypeCommand, []string{"sh", "validate_cloud_tasks_queue.sh"}, "Celery broker and generated app patch validate", metadata),
+		cloudTasksStep("backup-cloud-tasks-config", "Backup Cloud Tasks config", "Backup", domainrunbook.StepTypeCommand, []string{"sh", "backup_cloud_tasks_config.sh"}, "Cloud Tasks migration artifacts are archived", metadata),
+		cloudTasksStep("cutover-cloud-tasks-clients", "Cut over Cloud Tasks clients", "Cutover", domainrunbook.StepTypeAPICall, []string{"sh", "cutover_cloud_tasks_clients.sh"}, "enqueue callers use Celery broker settings", metadata),
+		cloudTasksStep("rollback-cloud-tasks-source", "Keep Cloud Tasks source authoritative", "Rollback", domainrunbook.StepTypeRollback, nil, "Cloud Tasks remains authoritative until Celery validation passes", metadata),
+	}
+}
+
+func cloudTasksStep(id, name, group string, stepType domainrunbook.StepType, command []string, success string, metadata map[string]string) domainrunbook.Step {
+	executor := "shell"
+	if stepType == domainrunbook.StepTypeRollback {
+		executor = "noop"
+	}
+	return domainrunbook.Step{ID: id, Name: name, Group: group, Type: stepType, Status: domainrunbook.StepStatusPending, Executor: executor, Command: command, SuccessCondition: success, Metadata: metadata}
 }

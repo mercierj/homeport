@@ -2,11 +2,55 @@ package messaging
 
 import (
 	"context"
+	"strings"
 	"testing"
 
 	"github.com/homeport/homeport/internal/domain/mapper"
 	"github.com/homeport/homeport/internal/domain/resource"
+	domainrunbook "github.com/homeport/homeport/internal/domain/runbook"
 )
+
+func TestCloudTasksConformanceManagedAToZ(t *testing.T) {
+	result, err := NewCloudTasksMapper().Map(context.Background(), managedCloudTasksFixture())
+	if err != nil {
+		t.Fatal(err)
+	}
+	if len(result.ManualSteps) != 0 {
+		t.Fatalf("manual steps = %#v, want generated Cloud Tasks migration", result.ManualSteps)
+	}
+	if result.DockerService.Image != "redis:7-alpine" || result.DockerService.Deploy == nil || result.DockerService.Deploy.Replicas < 2 {
+		t.Fatalf("service does not provision HA Redis broker: %#v", result.DockerService)
+	}
+	for _, file := range []string{"config/celery/celeryconfig.py", "config/celery/tasks.py", "config/celery/app-change.env", "config/celery/task-report.yaml", "Dockerfile.celery-worker", "docker-compose.celery.yml"} {
+		if _, ok := result.Configs[file]; !ok {
+			t.Fatalf("missing config %s", file)
+		}
+	}
+	appEnv := string(result.Configs["config/celery/app-change.env"])
+	for _, want := range []string{"APP_CHANGE_MODE=generated_patch", "SOURCE_CLOUD_TASKS_QUEUE=orders", "TARGET_TASK_QUEUE=orders", "CELERY_BROKER_URL=redis://redis:6379/0"} {
+		if !strings.Contains(appEnv, want) {
+			t.Fatalf("app-change env missing %q:\n%s", want, appEnv)
+		}
+	}
+	for _, file := range []string{"setup_celery.sh", "export_cloud_tasks_queue.sh", "migrate_cloud_tasks_queue.sh", "validate_cloud_tasks_queue.sh", "backup_cloud_tasks_config.sh", "cutover_cloud_tasks_clients.sh"} {
+		if _, ok := result.Scripts[file]; !ok {
+			t.Fatalf("missing script %s", file)
+		}
+	}
+	for id, stepType := range map[string]domainrunbook.StepType{
+		"export-cloud-tasks-queue":    domainrunbook.StepTypeCommand,
+		"provision-celery-queue":      domainrunbook.StepTypeCommand,
+		"migrate-cloud-tasks-config":  domainrunbook.StepTypeCommand,
+		"validate-cloud-tasks-queue":  domainrunbook.StepTypeCommand,
+		"backup-cloud-tasks-config":   domainrunbook.StepTypeCommand,
+		"cutover-cloud-tasks-clients": domainrunbook.StepTypeAPICall,
+		"rollback-cloud-tasks-source": domainrunbook.StepTypeRollback,
+	} {
+		if !hasCloudTasksRunbookStep(result, id, stepType) {
+			t.Fatalf("missing %s runbook step: %#v", id, result.RunbookSteps)
+		}
+	}
+}
 
 func TestNewCloudTasksMapper(t *testing.T) {
 	m := NewCloudTasksMapper()
@@ -16,6 +60,31 @@ func TestNewCloudTasksMapper(t *testing.T) {
 	if m.ResourceType() != resource.TypeCloudTasks {
 		t.Errorf("ResourceType() = %v, want %v", m.ResourceType(), resource.TypeCloudTasks)
 	}
+}
+
+func managedCloudTasksFixture() *resource.AWSResource {
+	return &resource.AWSResource{
+		ID:   "projects/demo/locations/europe-west1/queues/orders",
+		Type: resource.TypeCloudTasks,
+		Name: "orders",
+		Config: map[string]interface{}{
+			"name":              "orders",
+			"max_attempts":      float64(5),
+			"dispatch_deadline": "600s",
+			"retry_config": map[string]interface{}{
+				"max_retry_duration": "300s",
+			},
+		},
+	}
+}
+
+func hasCloudTasksRunbookStep(result *mapper.MappingResult, id string, stepType domainrunbook.StepType) bool {
+	for _, step := range result.RunbookSteps {
+		if step.ID == id && step.Type == stepType {
+			return true
+		}
+	}
+	return false
 }
 
 func TestCloudTasksMapper_ResourceType(t *testing.T) {
