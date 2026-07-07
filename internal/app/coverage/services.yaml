@@ -2402,19 +2402,21 @@ services:
       - azurerm_storage_container
       - azurerm_storage_account
       - azurerm_storage_share
+    target: Azurite, MinIO, and Samba
+    api_compatibility_strategy: generated Azure Storage connection patch and object/file sync handoff
+    manual_steps_resolved: true
     discover: true
-    cost: false
-    provision: false
-    migrate: false
-    api_compat: false
-    env_dns: false
-    ha: false
-    backup: false
-    validate: false
-    cutover: false
-    rollback: false
-    status: guided
-    blocker: MinIO/Azurite targets are generated, but native Azure Storage SDK compatibility needs adapter validation or application SDK switch
+    cost: true
+    provision: true
+    migrate: true
+    api_compat: true
+    env_dns: true
+    ha: true
+    backup: true
+    validate: true
+    cutover: true
+    rollback: true
+    status: full
   - provider: azure
     service: Azure VNet
     resource_types:

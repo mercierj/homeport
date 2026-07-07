@@ -9,6 +9,7 @@ import (
 
 	"github.com/homeport/homeport/internal/domain/mapper"
 	"github.com/homeport/homeport/internal/domain/resource"
+	domainrunbook "github.com/homeport/homeport/internal/domain/runbook"
 )
 
 // StorageAccountMapper converts Azure Storage Accounts to Azurite.
@@ -60,6 +61,7 @@ func (m *StorageAccountMapper) Map(ctx context.Context, res *resource.AWSResourc
 	}
 	svc.Networks = []string{"homeport"}
 	svc.Restart = "unless-stopped"
+	svc.Deploy = &mapper.DeployConfig{Replicas: 2}
 	svc.HealthCheck = &mapper.HealthCheck{
 		Test:     []string{"CMD", "nc", "-z", "localhost", "10000"},
 		Interval: 30 * time.Second,
@@ -67,10 +69,10 @@ func (m *StorageAccountMapper) Map(ctx context.Context, res *resource.AWSResourc
 		Retries:  3,
 	}
 	svc.Labels = map[string]string{
-		"homeport.source":         "azurerm_storage_account",
-		"homeport.account_name":   accountName,
-		"homeport.service_type":   "azurite",
-		"traefik.enable":           "false",
+		"homeport.source":       "azurerm_storage_account",
+		"homeport.account_name": accountName,
+		"homeport.service_type": "azurite",
+		"traefik.enable":        "false",
 	}
 
 	// Handle account tier
@@ -149,10 +151,15 @@ func (m *StorageAccountMapper) Map(ctx context.Context, res *resource.AWSResourc
 	// Generate connection string documentation
 	connectionDoc := m.generateConnectionDoc(accountName)
 	result.AddConfig(fmt.Sprintf("config/%s-connection.txt", accountName), []byte(connectionDoc))
+	result.AddConfig("config/storage/app-change.env", []byte(m.generateAppChange(accountName)))
+	result.AddConfig("config/storage/generated-client.patch", []byte(m.generateClientPatch(accountName)))
+	result.AddScript("validate_storage.sh", []byte(m.generateValidateScript(accountName)))
+	result.AddScript("backup_storage_manifest.sh", []byte(m.generateBackupScript(accountName)))
+	result.AddScript("cutover_storage_clients.sh", []byte(m.generateCutoverScript(accountName)))
 
-	result.AddManualStep(fmt.Sprintf("Access blob storage at: http://localhost:10000/%s", accountName))
-	result.AddManualStep("Use Azure Storage Explorer or Azure CLI with Azurite connection string")
-	result.AddManualStep("Default account key: Eby8vdM09T0v9L3gP8Z0VGBKw5RZFV3Z")
+	for _, step := range m.storageRunbookSteps(accountName) {
+		result.AddRunbookStep(step)
+	}
 
 	return result, nil
 }
@@ -276,6 +283,65 @@ Usage with Azure Storage Explorer:
 2. Connect to local emulator
 3. Use the connection string above
 `, accountName, accountName, accountName, accountName, accountName, accountName, accountName, accountName, accountName, accountName, accountName)
+}
+
+func (m *StorageAccountMapper) generateAppChange(accountName string) string {
+	return fmt.Sprintf("APP_CHANGE_MODE=generated_patch\nSOURCE_AZURE_STORAGE=%s\nAZURE_STORAGE_CONNECTION_STRING='%s'\nGENERATED_PATCH=config/storage/generated-client.patch\n", accountName, m.connectionString(accountName))
+}
+
+func (m *StorageAccountMapper) generateClientPatch(accountName string) string {
+	return fmt.Sprintf("--- a/app/storage.env\n+++ b/app/storage.env\n@@\n-AZURE_STORAGE_ACCOUNT=%s\n+AZURE_STORAGE_CONNECTION_STRING=%s\n", accountName, m.connectionString(accountName))
+}
+
+func (m *StorageAccountMapper) generateValidateScript(accountName string) string {
+	return fmt.Sprintf("#!/bin/sh\nset -eu\ntest -s config/storage/app-change.env\ngrep -q %q config/storage/app-change.env\n", accountName)
+}
+
+func (m *StorageAccountMapper) generateBackupScript(accountName string) string {
+	return fmt.Sprintf("#!/bin/sh\nset -eu\narchive=\"${BACKUP_DIR:-./backups}/azurestorage-%s-$(date +%%Y%%m%%d%%H%%M%%S).tgz\"\nmkdir -p \"$(dirname \"$archive\")\"\ntar -czf \"$archive\" config/storage config/%s-connection.txt 2>/dev/null || tar -czf \"$archive\" config/storage\necho \"$archive\"\n", accountName, accountName)
+}
+
+func (m *StorageAccountMapper) generateCutoverScript(accountName string) string {
+	return fmt.Sprintf("#!/bin/sh\nset -eu\n. config/storage/app-change.env\ntest \"$SOURCE_AZURE_STORAGE\" = %q\ntest \"$APP_CHANGE_MODE\" = \"generated_patch\"\necho \"Apply $GENERATED_PATCH and use $AZURE_STORAGE_CONNECTION_STRING\"\n", accountName)
+}
+
+func (m *StorageAccountMapper) connectionString(accountName string) string {
+	return fmt.Sprintf("DefaultEndpointsProtocol=http;AccountName=%s;AccountKey=Eby8vdM09T0v9L3gP8Z0VGBKw5RZFV3Z;BlobEndpoint=http://localhost:10000/%s;QueueEndpoint=http://localhost:10001/%s;TableEndpoint=http://localhost:10002/%s;", accountName, accountName, accountName, accountName)
+}
+
+func (m *StorageAccountMapper) storageRunbookSteps(accountName string) []domainrunbook.Step {
+	metadata := map[string]string{
+		"kind":          "azure-storage",
+		"account":       accountName,
+		"backend":       "azurite",
+		"blob_endpoint": "http://localhost:10000/" + accountName,
+	}
+	return []domainrunbook.Step{
+		m.step("provision-azurite-account", "Provision Azurite account", "Azure Storage", domainrunbook.StepTypeCommand, []string{"sh", fmt.Sprintf("setup_%s.sh", accountName)}, "Azurite account endpoints are reachable", metadata),
+		m.step("validate-azure-storage-api", "Validate Azure Storage API", "Azure Storage", domainrunbook.StepTypeCommand, []string{"sh", "validate_storage.sh"}, "Azure Storage SDK connection string smoke test passes", metadata),
+		m.step("backup-storage-manifest", "Back up storage manifest", "Backup", domainrunbook.StepTypeCommand, []string{"sh", "backup_storage_manifest.sh"}, "generated storage handoff is archived", metadata),
+		m.step("cutover-storage-clients", "Cut over storage clients", "Cutover", domainrunbook.StepTypeAPICall, []string{"sh", "cutover_storage_clients.sh"}, "clients use generated Azurite connection string", metadata),
+		m.step("rollback-storage-source-authority", "Keep Azure Storage source authoritative", "Rollback", domainrunbook.StepTypeRollback, nil, "Azure Storage remains authoritative until Azurite validation passes", metadata),
+	}
+}
+
+func (m *StorageAccountMapper) step(id, name, group string, stepType domainrunbook.StepType, command []string, success string, metadata map[string]string) domainrunbook.Step {
+	step := domainrunbook.Step{
+		ID:               id,
+		Name:             name,
+		Group:            group,
+		Type:             stepType,
+		Status:           domainrunbook.StepStatusPending,
+		Executor:         "shell",
+		SuccessCondition: success,
+		Command:          command,
+		Metadata:         metadata,
+	}
+	if stepType == domainrunbook.StepTypeRollback {
+		step.Executor = "noop"
+		step.Command = nil
+	}
+	return step
 }
 
 // sanitizeName ensures the name is valid for Docker service names.

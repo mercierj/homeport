@@ -2,10 +2,12 @@ package storage
 
 import (
 	"context"
+	"strings"
 	"testing"
 
 	"github.com/homeport/homeport/internal/domain/mapper"
 	"github.com/homeport/homeport/internal/domain/resource"
+	domainrunbook "github.com/homeport/homeport/internal/domain/runbook"
 )
 
 func TestNewStorageAccountMapper(t *testing.T) {
@@ -26,6 +28,68 @@ func TestStorageAccountMapper_ResourceType(t *testing.T) {
 	if got != want {
 		t.Errorf("ResourceType() = %v, want %v", got, want)
 	}
+}
+
+func TestStorageAccountConformanceManagedAToZ(t *testing.T) {
+	result, err := NewStorageAccountMapper().Map(context.Background(), managedStorageAccountFixture())
+	if err != nil {
+		t.Fatal(err)
+	}
+	if len(result.ManualSteps) != 0 {
+		t.Fatalf("manual steps = %#v, want generated Azure Storage migration", result.ManualSteps)
+	}
+	if result.DockerService.Image != "mcr.microsoft.com/azure-storage/azurite:latest" || result.DockerService.Deploy == nil || result.DockerService.Deploy.Replicas < 2 {
+		t.Fatalf("service does not provision HA Azurite target: %#v", result.DockerService)
+	}
+	for _, file := range []string{"config/checkoutstorage-connection.txt", "config/storage/app-change.env", "config/storage/generated-client.patch"} {
+		if _, ok := result.Configs[file]; !ok {
+			t.Fatalf("missing config %s", file)
+		}
+	}
+	appEnv := string(result.Configs["config/storage/app-change.env"])
+	for _, want := range []string{"APP_CHANGE_MODE=generated_patch", "SOURCE_AZURE_STORAGE=checkoutstorage", "AZURE_STORAGE_CONNECTION_STRING='DefaultEndpointsProtocol=http;AccountName=checkoutstorage"} {
+		if !strings.Contains(appEnv, want) {
+			t.Fatalf("app-change env missing %q:\n%s", want, appEnv)
+		}
+	}
+	for _, file := range []string{"setup_checkoutstorage.sh", "validate_storage.sh", "backup_storage_manifest.sh", "cutover_storage_clients.sh"} {
+		if _, ok := result.Scripts[file]; !ok {
+			t.Fatalf("missing script %s", file)
+		}
+	}
+	for id, stepType := range map[string]domainrunbook.StepType{
+		"provision-azurite-account":         domainrunbook.StepTypeCommand,
+		"validate-azure-storage-api":        domainrunbook.StepTypeCommand,
+		"backup-storage-manifest":           domainrunbook.StepTypeCommand,
+		"cutover-storage-clients":           domainrunbook.StepTypeAPICall,
+		"rollback-storage-source-authority": domainrunbook.StepTypeRollback,
+	} {
+		if !hasStorageAccountRunbookStep(result, id, stepType) {
+			t.Fatalf("missing %s runbook step: %#v", id, result.RunbookSteps)
+		}
+	}
+}
+
+func managedStorageAccountFixture() *resource.AWSResource {
+	return &resource.AWSResource{
+		ID:   "/subscriptions/demo/resourceGroups/rg/providers/Microsoft.Storage/storageAccounts/checkoutstorage",
+		Type: resource.TypeAzureStorageAcct,
+		Name: "checkoutstorage",
+		Config: map[string]interface{}{
+			"name":                     "checkoutstorage",
+			"account_tier":             "Standard",
+			"account_replication_type": "LRS",
+		},
+	}
+}
+
+func hasStorageAccountRunbookStep(result *mapper.MappingResult, id string, stepType domainrunbook.StepType) bool {
+	for _, step := range result.RunbookSteps {
+		if step.ID == id && step.Type == stepType {
+			return true
+		}
+	}
+	return false
 }
 
 func TestStorageAccountMapper_Dependencies(t *testing.T) {

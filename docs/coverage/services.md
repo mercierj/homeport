@@ -120,7 +120,7 @@
 | azure | Azure Functions | full | azurerm_function_app |
 | azure | Azure Load Balancer | full | azurerm_lb |
 | azure | Azure SQL | full | azurerm_mssql_database |
-| azure | Azure Storage | guided | azurerm_storage_container, azurerm_storage_account, azurerm_storage_share |
+| azure | Azure Storage | full | azurerm_storage_container, azurerm_storage_account, azurerm_storage_share |
 | azure | Azure VNet | mapped | azurerm_virtual_network |
 | azure | Azure VM | mapped | azurerm_linux_virtual_machine, azurerm_windows_virtual_machine |
 | azure | Container Apps | missing |  |
