@@ -186,6 +186,7 @@ var CategoryMapping = map[Type]Category{
 	TypeTPUNode:                     CategoryCompute,
 	TypeTPUV2VM:                     CategoryCompute,
 	TypeVertexAIEndpoint:            CategoryCompute,
+	TypeVisionAIService:             CategoryCompute,
 	TypeWorkflowsWorkflow:           CategoryMessaging,
 
 	// GCP Storage

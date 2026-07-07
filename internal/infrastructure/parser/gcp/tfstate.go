@@ -380,6 +380,8 @@ func mapGCPProjectServiceResource(service interface{}, fallback resource.Type) r
 			return resource.TypeErrorReportingService
 		case "cloudprofiler.googleapis.com":
 			return resource.TypeProfilerService
+		case "vision.googleapis.com", "visionai.googleapis.com":
+			return resource.TypeVisionAIService
 		}
 	}
 	return fallback

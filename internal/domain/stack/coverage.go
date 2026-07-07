@@ -118,6 +118,7 @@ var ResourceMapping = map[resource.Type]StackType{
 	resource.TypeTPUNode:                     StackTypePassthrough, // Accelerator jobs stay explicit
 	resource.TypeTPUV2VM:                     StackTypePassthrough, // Accelerator VMs stay explicit
 	resource.TypeVertexAIEndpoint:            StackTypePassthrough, // ML inference endpoints stay explicit
+	resource.TypeVisionAIService:             StackTypePassthrough, // Vision API clients get explicit generated patches
 	resource.TypeWorkflowsWorkflow:           StackTypeMessaging,   // Workflows consolidate with event orchestration
 
 	// GCP Storage (3 types)

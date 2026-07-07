@@ -103,7 +103,7 @@
 | gcp | Profiler | full | google_profiler_service |
 | gcp | TPU | full | google_tpu_node, google_tpu_v2_vm |
 | gcp | Document AI | full | google_document_ai_processor |
-| gcp | Vision AI | missing |  |
+| gcp | Vision AI | full | google_vision_ai_service |
 | gcp | Speech-to-Text | missing | google_speech_custom_class, google_speech_phrase_set |
 | gcp | Translation | missing |  |
 | azure | AI Search | missing |  |
