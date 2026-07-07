@@ -101,6 +101,7 @@ const (
 	TypeAppEngine                  Type = "google_app_engine_application"
 	TypeArtifactRegistryRepository Type = "google_artifact_registry_repository"
 	TypeCloudBuildTrigger          Type = "google_cloudbuild_trigger"
+	TypeComposerEnvironment        Type = "google_composer_environment"
 
 	// GCP Storage
 	TypeGCSBucket      Type = "google_storage_bucket"

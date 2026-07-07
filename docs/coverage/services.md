@@ -76,7 +76,7 @@
 | gcp | Cloud Storage | full | google_storage_bucket |
 | gcp | Cloud Tasks | full | google_cloud_tasks_queue |
 | gcp | Compute Engine | full | google_compute_instance |
-| gcp | Composer | missing |  |
+| gcp | Composer | full | google_composer_environment |
 | gcp | Dataflow | missing |  |
 | gcp | Dataproc | missing |  |
 | gcp | Eventarc | missing |  |
