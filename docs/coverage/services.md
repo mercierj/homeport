@@ -130,7 +130,7 @@
 | azure | Data Factory | full | azurerm_data_factory |
 | azure | Databricks | full | azurerm_databricks_workspace |
 | azure | Event Grid | full | azurerm_eventgrid_topic |
-| azure | Event Hubs | guided | azurerm_eventhub |
+| azure | Event Hubs | full | azurerm_eventhub |
 | azure | Foundry/OpenAI | missing |  |
 | azure | Front Door | mapped | azurerm_frontdoor |
 | azure | IoT Hub | missing |  |

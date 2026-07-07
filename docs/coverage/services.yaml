@@ -2593,19 +2593,21 @@ services:
     service: Event Hubs
     resource_types:
       - azurerm_eventhub
+    target: Redpanda Kafka-compatible topic
+    api_compatibility_strategy: generated Kafka client settings with explicit consumer group, offset, retention, and replay validation
+    manual_steps_resolved: true
     discover: true
-    cost: false
-    provision: false
-    migrate: false
-    api_compat: false
-    env_dns: false
-    ha: false
-    backup: false
-    validate: false
-    cutover: false
-    rollback: false
-    status: guided
-    blocker: Kafka-compatible path needs explicit consumer-group, offset, retention, and replay validation
+    cost: true
+    provision: true
+    migrate: true
+    api_compat: true
+    env_dns: true
+    ha: true
+    backup: true
+    validate: true
+    cutover: true
+    rollback: true
+    status: full
   - provider: azure
     service: Foundry/OpenAI
     resource_types: []
