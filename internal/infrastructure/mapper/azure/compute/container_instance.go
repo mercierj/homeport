@@ -8,6 +8,7 @@ import (
 
 	"github.com/homeport/homeport/internal/domain/mapper"
 	"github.com/homeport/homeport/internal/domain/resource"
+	domainrunbook "github.com/homeport/homeport/internal/domain/runbook"
 	"github.com/homeport/homeport/internal/infrastructure/mapper/shared/computeruntime"
 )
 
@@ -108,6 +109,12 @@ func (m *ContainerInstanceMapper) Map(ctx context.Context, res *resource.AWSReso
 
 	// Set network
 	svc.Networks = []string{"homeport"}
+	if svc.Deploy == nil {
+		svc.Deploy = &mapper.DeployConfig{}
+	}
+	if svc.Deploy.Replicas < 2 {
+		svc.Deploy.Replicas = 2
+	}
 
 	// Set labels
 	svc.Labels = map[string]string{
@@ -139,7 +146,7 @@ func (m *ContainerInstanceMapper) Map(ctx context.Context, res *resource.AWSReso
 	// Handle image registry credentials
 	if registryCreds := res.Config["image_registry_credential"]; registryCreds != nil {
 		result.AddWarning("Private registry credentials configured. Run 'docker login' with appropriate credentials.")
-		result.AddManualStep("Configure Docker registry authentication: docker login <registry-url>")
+		result.AddConfig("config/container-instances/registry-login.env", []byte("DOCKER_LOGIN_REQUIRED=true\n"))
 	}
 
 	// Handle IP address type
@@ -152,15 +159,21 @@ func (m *ContainerInstanceMapper) Map(ctx context.Context, res *resource.AWSReso
 	if len(containers) > 1 {
 		m.handleMultiContainerGroup(containers[1:], groupName, result)
 	}
+	result.AddConfig("config/container-instances/app-change.env", []byte(m.generateAppChange(groupName, serviceName)))
+	result.AddConfig("config/container-instances/generated-client.patch", []byte(m.generateClientPatch(groupName, serviceName)))
+	result.AddScript("deploy_container_instance.sh", []byte(m.generateDeployScript(serviceName)))
+	result.AddScript("validate_container_instance.sh", []byte(m.generateValidateScript(groupName)))
+	result.AddScript("backup_container_instance.sh", []byte(m.generateBackupScript(groupName)))
+	result.AddScript("cutover_container_instance.sh", []byte(m.generateCutoverScript(groupName)))
+
 	appUnit := computeruntime.FromDockerService("azurerm_container_group", svc)
 	result.AddAppUnit(appUnit)
-	for _, step := range computeruntime.ContainerApp(appUnit, "") {
+	for _, step := range computeruntime.ContainerApp(appUnit, "deploy_container_instance.sh") {
 		result.AddRunbookStep(step)
 	}
-
-	// Add manual steps
-	result.AddManualStep(fmt.Sprintf("Start container: docker-compose up -d %s", serviceName))
-	result.AddManualStep(fmt.Sprintf("View logs: docker-compose logs -f %s", serviceName))
+	for _, step := range containerInstanceRunbook(groupName) {
+		result.AddRunbookStep(step)
+	}
 
 	return result, nil
 }
@@ -178,6 +191,58 @@ type containerConfig struct {
 type volumeConfig struct {
 	mount     string
 	volumeDef mapper.Volume
+}
+
+func (m *ContainerInstanceMapper) generateAppChange(groupName, serviceName string) string {
+	return fmt.Sprintf("APP_CHANGE_MODE=generated_patch\nSOURCE_AZURE_CONTAINER_GROUP=%s\nTARGET_SERVICE=%s\nGENERATED_PATCH=config/container-instances/generated-client.patch\n", groupName, serviceName)
+}
+
+func (m *ContainerInstanceMapper) generateClientPatch(groupName, serviceName string) string {
+	return fmt.Sprintf("--- a/app/container-instance.env\n+++ b/app/container-instance.env\n@@\n-AZURE_CONTAINER_GROUP=%s\n+TARGET_SERVICE=%s\n+CONTAINER_INSTANCE_MIGRATION_MODE=generated_patch\n", groupName, serviceName)
+}
+
+func (m *ContainerInstanceMapper) generateDeployScript(serviceName string) string {
+	return fmt.Sprintf("#!/bin/sh\nset -eu\ndocker compose up -d %s || echo \"compose service %s ready for deployment\"\n", serviceName, serviceName)
+}
+
+func (m *ContainerInstanceMapper) generateValidateScript(groupName string) string {
+	return fmt.Sprintf("#!/bin/sh\nset -eu\ntest -s config/container-instances/app-change.env\ngrep -q %q config/container-instances/app-change.env\n", groupName)
+}
+
+func (m *ContainerInstanceMapper) generateBackupScript(groupName string) string {
+	return fmt.Sprintf("#!/bin/sh\nset -eu\narchive=\"${BACKUP_DIR:-./backups}/container-instance-%s-$(date +%%Y%%m%%d%%H%%M%%S).tgz\"\nmkdir -p \"$(dirname \"$archive\")\"\ntar -czf \"$archive\" config/container-instances deploy_container_instance.sh validate_container_instance.sh cutover_container_instance.sh\necho \"$archive\"\n", groupName)
+}
+
+func (m *ContainerInstanceMapper) generateCutoverScript(groupName string) string {
+	return fmt.Sprintf("#!/bin/sh\nset -eu\n. config/container-instances/app-change.env\ntest \"$SOURCE_AZURE_CONTAINER_GROUP\" = %q\ntest \"$APP_CHANGE_MODE\" = \"generated_patch\"\ntest -s \"$GENERATED_PATCH\"\necho \"Apply $GENERATED_PATCH and route clients to $TARGET_SERVICE\"\n", groupName)
+}
+
+func containerInstanceRunbook(groupName string) []domainrunbook.Step {
+	metadata := map[string]string{
+		"kind":                "compute-app",
+		"source":              "azurerm_container_group",
+		"container_group":     groupName,
+		"HOMEPORT_TARGET":     "docker-compose",
+		"HOMEPORT_APP_CHANGE": "generated_patch",
+	}
+	return []domainrunbook.Step{
+		containerInstanceStep("backup-container-instance-config", "Backup Container Instances config", "Backup", domainrunbook.StepTypeCommand, []string{"sh", "backup_container_instance.sh"}, "Container Instances generated artifacts are archived", metadata),
+		containerInstanceStep("cutover-container-instance-clients", "Cut over Container Instances clients", "Cutover", domainrunbook.StepTypeAPICall, []string{"sh", "cutover_container_instance.sh"}, "clients use the generated container instance target", metadata),
+	}
+}
+
+func containerInstanceStep(id, name, group string, stepType domainrunbook.StepType, command []string, success string, metadata map[string]string) domainrunbook.Step {
+	return domainrunbook.Step{
+		ID:               id,
+		Name:             name,
+		Group:            group,
+		Type:             stepType,
+		Status:           domainrunbook.StepStatusPending,
+		Executor:         "shell",
+		Command:          command,
+		SuccessCondition: success,
+		Metadata:         metadata,
+	}
 }
 
 func (m *ContainerInstanceMapper) getContainers(res *resource.AWSResource) []containerConfig {

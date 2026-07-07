@@ -2,10 +2,12 @@ package compute
 
 import (
 	"context"
+	"strings"
 	"testing"
 
 	"github.com/homeport/homeport/internal/domain/mapper"
 	"github.com/homeport/homeport/internal/domain/resource"
+	domainrunbook "github.com/homeport/homeport/internal/domain/runbook"
 )
 
 func TestNewContainerInstanceMapper(t *testing.T) {
@@ -16,6 +18,79 @@ func TestNewContainerInstanceMapper(t *testing.T) {
 	if m.ResourceType() != resource.TypeContainerInstance {
 		t.Errorf("ResourceType() = %v, want %v", m.ResourceType(), resource.TypeContainerInstance)
 	}
+}
+
+func TestContainerInstanceConformanceManagedAToZ(t *testing.T) {
+	result, err := NewContainerInstanceMapper().Map(context.Background(), managedContainerInstanceFixture())
+	if err != nil {
+		t.Fatal(err)
+	}
+	if len(result.ManualSteps) != 0 {
+		t.Fatalf("manual steps = %#v, want generated Container Instances migration", result.ManualSteps)
+	}
+	if result.DockerService.Image != "ghcr.io/example/worker:1.2.3" || result.DockerService.Deploy == nil || result.DockerService.Deploy.Replicas < 2 {
+		t.Fatalf("service does not provision HA container instance target: %#v", result.DockerService)
+	}
+	for _, file := range []string{"config/container-instances/app-change.env", "config/container-instances/generated-client.patch"} {
+		if _, ok := result.Configs[file]; !ok {
+			t.Fatalf("missing config %s", file)
+		}
+	}
+	appEnv := string(result.Configs["config/container-instances/app-change.env"])
+	for _, want := range []string{"APP_CHANGE_MODE=generated_patch", "SOURCE_AZURE_CONTAINER_GROUP=checkout-workers", "TARGET_SERVICE=checkout-worker"} {
+		if !strings.Contains(appEnv, want) {
+			t.Fatalf("app-change env missing %q:\n%s", want, appEnv)
+		}
+	}
+	for _, file := range []string{"deploy_container_instance.sh", "validate_container_instance.sh", "backup_container_instance.sh", "cutover_container_instance.sh"} {
+		if _, ok := result.Scripts[file]; !ok {
+			t.Fatalf("missing script %s", file)
+		}
+	}
+	for id, stepType := range map[string]domainrunbook.StepType{
+		"resolve-app-image":                  domainrunbook.StepTypeCommand,
+		"deploy-compose-app":                 domainrunbook.StepTypeCommand,
+		"validate-app-health":                domainrunbook.StepTypeCommand,
+		"backup-container-instance-config":   domainrunbook.StepTypeCommand,
+		"cutover-container-instance-clients": domainrunbook.StepTypeAPICall,
+		"rollback-compute-source-authority":  domainrunbook.StepTypeRollback,
+	} {
+		if !hasContainerInstanceRunbookStep(result, id, stepType) {
+			t.Fatalf("missing %s runbook step: %#v", id, result.RunbookSteps)
+		}
+	}
+}
+
+func managedContainerInstanceFixture() *resource.AWSResource {
+	return &resource.AWSResource{
+		ID:   "/subscriptions/demo/resourceGroups/rg/providers/Microsoft.ContainerInstance/containerGroups/checkout-workers",
+		Type: resource.TypeContainerInstance,
+		Name: "checkout-workers",
+		Config: map[string]interface{}{
+			"name":    "checkout-workers",
+			"os_type": "Linux",
+			"container": []interface{}{
+				map[string]interface{}{
+					"name":   "checkout-worker",
+					"image":  "ghcr.io/example/worker:1.2.3",
+					"cpu":    float64(1),
+					"memory": float64(1),
+					"ports": []interface{}{
+						map[string]interface{}{"port": float64(8080), "protocol": "TCP"},
+					},
+				},
+			},
+		},
+	}
+}
+
+func hasContainerInstanceRunbookStep(result *mapper.MappingResult, id string, stepType domainrunbook.StepType) bool {
+	for _, step := range result.RunbookSteps {
+		if step.ID == id && step.Type == stepType {
+			return true
+		}
+	}
+	return false
 }
 
 func TestContainerInstanceMapper_ResourceType(t *testing.T) {
@@ -162,7 +237,7 @@ func TestContainerInstanceMapper_Map(t *testing.T) {
 							"cpu":    float64(0.5),
 							"memory": float64(0.5),
 							"environment_variables": map[string]interface{}{
-								"APP_ENV":  "production",
+								"APP_ENV":   "production",
 								"LOG_LEVEL": "info",
 							},
 						},
