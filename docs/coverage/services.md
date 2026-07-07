@@ -98,7 +98,7 @@
 | gcp | Workflows | full | google_workflows_workflow |
 | gcp | Dataplex | full | google_dataplex_lake, google_dataplex_zone |
 | gcp | Looker | full | google_looker_instance |
-| gcp | Cloud Deploy | missing | google_clouddeploy_delivery_pipeline, google_clouddeploy_target |
+| gcp | Cloud Deploy | full | google_clouddeploy_delivery_pipeline, google_clouddeploy_target |
 | gcp | Error Reporting | missing |  |
 | gcp | Profiler | missing |  |
 | gcp | TPU | missing | google_tpu_node, google_tpu_v2_vm |

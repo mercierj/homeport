@@ -170,18 +170,20 @@ var CategoryMapping = map[Type]Category{
 	// ─────────────────────────────────────────────────────
 
 	// GCP Compute
-	TypeGCEInstance:                CategoryCompute,
-	TypeCloudRun:                   CategoryContainer,
-	TypeCloudFunction:              CategoryServerless,
-	TypeGKE:                        CategoryKubernetes,
-	TypeAppEngine:                  CategoryCompute,
-	TypeArtifactRegistryRepository: CategoryContainer,
-	TypeCloudBuildTrigger:          CategoryDevOps,
-	TypeComposerEnvironment:        CategoryDevOps,
-	TypeDataflowJob:                CategoryDevOps,
-	TypeDataprocCluster:            CategoryDevOps,
-	TypeVertexAIEndpoint:           CategoryCompute,
-	TypeWorkflowsWorkflow:          CategoryMessaging,
+	TypeGCEInstance:                 CategoryCompute,
+	TypeCloudRun:                    CategoryContainer,
+	TypeCloudFunction:               CategoryServerless,
+	TypeGKE:                         CategoryKubernetes,
+	TypeAppEngine:                   CategoryCompute,
+	TypeArtifactRegistryRepository:  CategoryContainer,
+	TypeCloudBuildTrigger:           CategoryDevOps,
+	TypeCloudDeployDeliveryPipeline: CategoryDevOps,
+	TypeCloudDeployTarget:           CategoryDevOps,
+	TypeComposerEnvironment:         CategoryDevOps,
+	TypeDataflowJob:                 CategoryDevOps,
+	TypeDataprocCluster:             CategoryDevOps,
+	TypeVertexAIEndpoint:            CategoryCompute,
+	TypeWorkflowsWorkflow:           CategoryMessaging,
 
 	// GCP Storage
 	TypeGCSBucket:      CategoryObjectStorage,

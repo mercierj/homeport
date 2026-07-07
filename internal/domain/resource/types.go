@@ -94,18 +94,20 @@ const (
 	// ─────────────────────────────────────────────────────
 
 	// GCP Compute
-	TypeGCEInstance                Type = "google_compute_instance"
-	TypeCloudRun                   Type = "google_cloud_run_service"
-	TypeCloudFunction              Type = "google_cloudfunctions_function"
-	TypeGKE                        Type = "google_container_cluster"
-	TypeAppEngine                  Type = "google_app_engine_application"
-	TypeArtifactRegistryRepository Type = "google_artifact_registry_repository"
-	TypeCloudBuildTrigger          Type = "google_cloudbuild_trigger"
-	TypeComposerEnvironment        Type = "google_composer_environment"
-	TypeDataflowJob                Type = "google_dataflow_job"
-	TypeDataprocCluster            Type = "google_dataproc_cluster"
-	TypeVertexAIEndpoint           Type = "google_vertex_ai_endpoint"
-	TypeWorkflowsWorkflow          Type = "google_workflows_workflow"
+	TypeGCEInstance                 Type = "google_compute_instance"
+	TypeCloudRun                    Type = "google_cloud_run_service"
+	TypeCloudFunction               Type = "google_cloudfunctions_function"
+	TypeGKE                         Type = "google_container_cluster"
+	TypeAppEngine                   Type = "google_app_engine_application"
+	TypeArtifactRegistryRepository  Type = "google_artifact_registry_repository"
+	TypeCloudBuildTrigger           Type = "google_cloudbuild_trigger"
+	TypeCloudDeployDeliveryPipeline Type = "google_clouddeploy_delivery_pipeline"
+	TypeCloudDeployTarget           Type = "google_clouddeploy_target"
+	TypeComposerEnvironment         Type = "google_composer_environment"
+	TypeDataflowJob                 Type = "google_dataflow_job"
+	TypeDataprocCluster             Type = "google_dataproc_cluster"
+	TypeVertexAIEndpoint            Type = "google_vertex_ai_endpoint"
+	TypeWorkflowsWorkflow           Type = "google_workflows_workflow"
 
 	// GCP Storage
 	TypeGCSBucket      Type = "google_storage_bucket"

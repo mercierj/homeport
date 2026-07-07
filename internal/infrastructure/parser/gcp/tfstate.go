@@ -302,18 +302,20 @@ func (p *TFStateParser) shouldIncludeResource(res *resource.Resource, opts *pars
 func mapGCPTerraformType(tfType string) resource.Type {
 	mapping := map[string]resource.Type{
 		// Compute
-		"google_compute_instance":             resource.TypeGCEInstance,
-		"google_cloud_run_service":            resource.TypeCloudRun,
-		"google_cloudfunctions_function":      resource.TypeCloudFunction,
-		"google_container_cluster":            resource.TypeGKE,
-		"google_app_engine_application":       resource.TypeAppEngine,
-		"google_artifact_registry_repository": resource.TypeArtifactRegistryRepository,
-		"google_cloudbuild_trigger":           resource.TypeCloudBuildTrigger,
-		"google_composer_environment":         resource.TypeComposerEnvironment,
-		"google_dataflow_job":                 resource.TypeDataflowJob,
-		"google_dataproc_cluster":             resource.TypeDataprocCluster,
-		"google_vertex_ai_endpoint":           resource.TypeVertexAIEndpoint,
-		"google_workflows_workflow":           resource.TypeWorkflowsWorkflow,
+		"google_compute_instance":              resource.TypeGCEInstance,
+		"google_cloud_run_service":             resource.TypeCloudRun,
+		"google_cloudfunctions_function":       resource.TypeCloudFunction,
+		"google_container_cluster":             resource.TypeGKE,
+		"google_app_engine_application":        resource.TypeAppEngine,
+		"google_artifact_registry_repository":  resource.TypeArtifactRegistryRepository,
+		"google_cloudbuild_trigger":            resource.TypeCloudBuildTrigger,
+		"google_clouddeploy_delivery_pipeline": resource.TypeCloudDeployDeliveryPipeline,
+		"google_clouddeploy_target":            resource.TypeCloudDeployTarget,
+		"google_composer_environment":          resource.TypeComposerEnvironment,
+		"google_dataflow_job":                  resource.TypeDataflowJob,
+		"google_dataproc_cluster":              resource.TypeDataprocCluster,
+		"google_vertex_ai_endpoint":            resource.TypeVertexAIEndpoint,
+		"google_workflows_workflow":            resource.TypeWorkflowsWorkflow,
 
 		// Storage
 		"google_storage_bucket":     resource.TypeGCSBucket,

@@ -317,17 +317,19 @@ func mapDMTypeToResourceType(dmType string) resource.Type {
 
 	mapping := map[string]resource.Type{
 		// Compute
-		"compute.v1.instance":            resource.TypeGCEInstance,
-		"compute.v1.instancetemplate":    resource.TypeGCEInstance,
-		"compute.beta.instance":          resource.TypeGCEInstance,
-		"artifactregistry.v1.repository": resource.TypeArtifactRegistryRepository,
-		"cloudbuild.v1.trigger":          resource.TypeCloudBuildTrigger,
-		"composer.v1.environment":        resource.TypeComposerEnvironment,
-		"dataflow.v1b3.job":              resource.TypeDataflowJob,
-		"dataproc.v1.cluster":            resource.TypeDataprocCluster,
-		"aiplatform.v1.endpoint":         resource.TypeVertexAIEndpoint,
-		"workflows.v1.workflow":          resource.TypeWorkflowsWorkflow,
-		"eventarc.v1.trigger":            resource.TypeEventarcTrigger,
+		"compute.v1.instance":             resource.TypeGCEInstance,
+		"compute.v1.instancetemplate":     resource.TypeGCEInstance,
+		"compute.beta.instance":           resource.TypeGCEInstance,
+		"artifactregistry.v1.repository":  resource.TypeArtifactRegistryRepository,
+		"cloudbuild.v1.trigger":           resource.TypeCloudBuildTrigger,
+		"clouddeploy.v1.deliverypipeline": resource.TypeCloudDeployDeliveryPipeline,
+		"clouddeploy.v1.target":           resource.TypeCloudDeployTarget,
+		"composer.v1.environment":         resource.TypeComposerEnvironment,
+		"dataflow.v1b3.job":               resource.TypeDataflowJob,
+		"dataproc.v1.cluster":             resource.TypeDataprocCluster,
+		"aiplatform.v1.endpoint":          resource.TypeVertexAIEndpoint,
+		"workflows.v1.workflow":           resource.TypeWorkflowsWorkflow,
+		"eventarc.v1.trigger":             resource.TypeEventarcTrigger,
 
 		// Storage
 		"storage.v1.bucket": resource.TypeGCSBucket,

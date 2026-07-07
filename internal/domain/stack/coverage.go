@@ -102,18 +102,20 @@ var ResourceMapping = map[resource.Type]StackType{
 	// ─────────────────────────────────────────────────────
 
 	// GCP Compute (5 types) - Passthrough except serverless
-	resource.TypeGCEInstance:                StackTypePassthrough, // VMs stay individual
-	resource.TypeCloudRun:                   StackTypePassthrough, // Container platform stays individual
-	resource.TypeCloudFunction:              StackTypeCompute,     // Serverless consolidates
-	resource.TypeGKE:                        StackTypePassthrough, // Kubernetes stays individual
-	resource.TypeAppEngine:                  StackTypePassthrough, // App Engine stays individual
-	resource.TypeArtifactRegistryRepository: StackTypePassthrough, // Registries remain individual infrastructure
-	resource.TypeCloudBuildTrigger:          StackTypePassthrough, // Build triggers stay individual
-	resource.TypeComposerEnvironment:        StackTypeMessaging,   // Workflow orchestration consolidates
-	resource.TypeDataflowJob:                StackTypePassthrough, // Data processing jobs stay explicit
-	resource.TypeDataprocCluster:            StackTypePassthrough, // Spark clusters stay explicit
-	resource.TypeVertexAIEndpoint:           StackTypePassthrough, // ML inference endpoints stay explicit
-	resource.TypeWorkflowsWorkflow:          StackTypeMessaging,   // Workflows consolidate with event orchestration
+	resource.TypeGCEInstance:                 StackTypePassthrough, // VMs stay individual
+	resource.TypeCloudRun:                    StackTypePassthrough, // Container platform stays individual
+	resource.TypeCloudFunction:               StackTypeCompute,     // Serverless consolidates
+	resource.TypeGKE:                         StackTypePassthrough, // Kubernetes stays individual
+	resource.TypeAppEngine:                   StackTypePassthrough, // App Engine stays individual
+	resource.TypeArtifactRegistryRepository:  StackTypePassthrough, // Registries remain individual infrastructure
+	resource.TypeCloudBuildTrigger:           StackTypePassthrough, // Build triggers stay individual
+	resource.TypeCloudDeployDeliveryPipeline: StackTypePassthrough, // Deployment pipelines stay explicit
+	resource.TypeCloudDeployTarget:           StackTypePassthrough, // Deployment targets stay explicit
+	resource.TypeComposerEnvironment:         StackTypeMessaging,   // Workflow orchestration consolidates
+	resource.TypeDataflowJob:                 StackTypePassthrough, // Data processing jobs stay explicit
+	resource.TypeDataprocCluster:             StackTypePassthrough, // Spark clusters stay explicit
+	resource.TypeVertexAIEndpoint:            StackTypePassthrough, // ML inference endpoints stay explicit
+	resource.TypeWorkflowsWorkflow:           StackTypeMessaging,   // Workflows consolidate with event orchestration
 
 	// GCP Storage (3 types)
 	resource.TypeGCSBucket:      StackTypeStorage,     // Object storage consolidates

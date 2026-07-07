@@ -30,6 +30,8 @@ func RegisterAll(registry MapperRegistrar) {
 	registry.Register(compute.NewArtifactRegistryMapper())
 	registry.Register(compute.NewVertexAIMapper())
 	registry.Register(devops.NewCloudBuildMapper())
+	registry.Register(devops.NewCloudDeployPipelineMapper())
+	registry.Register(devops.NewCloudDeployTargetMapper())
 	registry.Register(devops.NewComposerMapper())
 	registry.Register(devops.NewDataflowMapper())
 	registry.Register(devops.NewDataprocMapper())
