@@ -180,6 +180,7 @@ var CategoryMapping = map[Type]Category{
 	TypeComposerEnvironment:        CategoryDevOps,
 	TypeDataflowJob:                CategoryDevOps,
 	TypeDataprocCluster:            CategoryDevOps,
+	TypeVertexAIEndpoint:           CategoryCompute,
 
 	// GCP Storage
 	TypeGCSBucket:      CategoryObjectStorage,

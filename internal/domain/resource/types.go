@@ -104,6 +104,7 @@ const (
 	TypeComposerEnvironment        Type = "google_composer_environment"
 	TypeDataflowJob                Type = "google_dataflow_job"
 	TypeDataprocCluster            Type = "google_dataproc_cluster"
+	TypeVertexAIEndpoint           Type = "google_vertex_ai_endpoint"
 
 	// GCP Storage
 	TypeGCSBucket      Type = "google_storage_bucket"

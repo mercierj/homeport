@@ -94,7 +94,7 @@
 | gcp | Spanner | full | google_spanner_instance |
 | gcp | Trace | full | google_project_service |
 | gcp | VPC | full | google_compute_network |
-| gcp | Vertex AI | missing |  |
+| gcp | Vertex AI | full | google_vertex_ai_endpoint |
 | gcp | Workflows | missing |  |
 | gcp | Dataplex | missing | google_dataplex_lake, google_dataplex_zone |
 | gcp | Looker | missing | google_looker_instance |
