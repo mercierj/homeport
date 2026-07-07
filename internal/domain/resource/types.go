@@ -187,12 +187,13 @@ const (
 	TypeAzureCache    Type = "azurerm_redis_cache"
 
 	// Azure Networking
-	TypeAzureLB    Type = "azurerm_lb"
-	TypeAppGateway Type = "azurerm_application_gateway"
-	TypeAzureDNS   Type = "azurerm_dns_zone"
-	TypeAzureCDN   Type = "azurerm_cdn_profile"
-	TypeFrontDoor  Type = "azurerm_frontdoor"
-	TypeAzureVNet  Type = "azurerm_virtual_network"
+	TypeAzureLB       Type = "azurerm_lb"
+	TypeAppGateway    Type = "azurerm_application_gateway"
+	TypeAzureDNS      Type = "azurerm_dns_zone"
+	TypeAzureCDN      Type = "azurerm_cdn_profile"
+	TypeFrontDoor     Type = "azurerm_frontdoor"
+	TypeAPIManagement Type = "azurerm_api_management"
+	TypeAzureVNet     Type = "azurerm_virtual_network"
 
 	// Azure Security
 	TypeAzureADB2C    Type = "azurerm_aadb2c_directory"

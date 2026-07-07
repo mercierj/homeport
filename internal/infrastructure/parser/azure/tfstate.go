@@ -322,6 +322,7 @@ func mapAzureTerraformType(tfType string) resource.Type {
 		"azurerm_dns_zone":            resource.TypeAzureDNS,
 		"azurerm_cdn_profile":         resource.TypeAzureCDN,
 		"azurerm_frontdoor":           resource.TypeFrontDoor,
+		"azurerm_api_management":      resource.TypeAPIManagement,
 		"azurerm_virtual_network":     resource.TypeAzureVNet,
 
 		// Security

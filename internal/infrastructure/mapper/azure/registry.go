@@ -46,6 +46,7 @@ func RegisterAll(registry MapperRegistrar) {
 	registry.Register(networking.NewDNSMapper())
 	registry.Register(networking.NewCDNMapper())
 	registry.Register(networking.NewFrontDoorMapper())
+	registry.Register(networking.NewAPIManagementMapper())
 	registry.Register(networking.NewVNetMapper())
 
 	// Security mappers

@@ -108,7 +108,7 @@
 | gcp | Translation | full | google_translation_service |
 | azure | AI Search | full | azurerm_search_service |
 | azure | AKS | full | azurerm_kubernetes_cluster |
-| azure | API Management | missing |  |
+| azure | API Management | full | azurerm_api_management |
 | azure | App Gateway | mapped | azurerm_application_gateway |
 | azure | App Insights | missing |  |
 | azure | App Service | mapped | azurerm_app_service |

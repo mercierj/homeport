@@ -194,13 +194,14 @@ var ResourceMapping = map[resource.Type]StackType{
 	resource.TypeCosmosDB:      StackTypeDatabase,    // NoSQL consolidates
 	resource.TypeAzureCache:    StackTypeCache,       // Cache consolidates
 
-	// Azure Networking (6 types) - All passthrough
-	resource.TypeAzureLB:    StackTypePassthrough, // Load balancers stay individual
-	resource.TypeAppGateway: StackTypePassthrough, // Application gateways stay individual
-	resource.TypeAzureDNS:   StackTypePassthrough, // DNS stays individual
-	resource.TypeAzureCDN:   StackTypePassthrough, // CDN stays individual
-	resource.TypeFrontDoor:  StackTypePassthrough, // Front Door stays individual
-	resource.TypeAzureVNet:  StackTypePassthrough, // VNet stays individual
+	// Azure Networking (7 types) - All passthrough
+	resource.TypeAzureLB:       StackTypePassthrough, // Load balancers stay individual
+	resource.TypeAppGateway:    StackTypePassthrough, // Application gateways stay individual
+	resource.TypeAzureDNS:      StackTypePassthrough, // DNS stays individual
+	resource.TypeAzureCDN:      StackTypePassthrough, // CDN stays individual
+	resource.TypeFrontDoor:     StackTypePassthrough, // Front Door stays individual
+	resource.TypeAPIManagement: StackTypePassthrough, // API gateways stay explicit
+	resource.TypeAzureVNet:     StackTypePassthrough, // VNet stays individual
 
 	// Azure Security (3 types)
 	resource.TypeAzureADB2C:    StackTypeAuth,        // Auth consolidates

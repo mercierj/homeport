@@ -268,6 +268,7 @@ var CategoryMapping = map[Type]Category{
 	TypeAzureDNS:      CategoryDNS,
 	TypeAzureCDN:      CategoryCDN,
 	TypeFrontDoor:     CategoryCDN,
+	TypeAPIManagement: CategoryAPIGateway,
 	TypeAzureVNet:     CategoryVPC,
 	TypeAzureFirewall: CategoryFirewall,
 
