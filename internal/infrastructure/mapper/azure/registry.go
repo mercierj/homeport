@@ -30,6 +30,7 @@ func RegisterAll(registry MapperRegistrar) {
 	registry.Register(compute.NewContainerInstanceMapper())
 	registry.Register(compute.NewAppServiceMapper())
 	registry.Register(devops.NewDataFactoryMapper())
+	registry.Register(devops.NewDatabricksMapper())
 
 	// Storage mappers
 	registry.Register(storage.NewBlobMapper())

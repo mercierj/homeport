@@ -128,7 +128,7 @@
 | azure | Container Registry | full | azurerm_container_registry |
 | azure | Cosmos DB | full | azurerm_cosmosdb_account |
 | azure | Data Factory | full | azurerm_data_factory |
-| azure | Databricks | missing |  |
+| azure | Databricks | full | azurerm_databricks_workspace |
 | azure | Event Grid | guided | azurerm_eventgrid_topic |
 | azure | Event Hubs | guided | azurerm_eventhub |
 | azure | Foundry/OpenAI | missing |  |

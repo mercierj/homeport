@@ -250,6 +250,7 @@ var CategoryMapping = map[Type]Category{
 	TypeAKS:                    CategoryKubernetes,
 	TypeAppService:             CategoryCompute,
 	TypeAzureDataFactory:       CategoryMessaging,
+	TypeAzureDatabricks:        CategoryCompute,
 
 	// Azure Storage
 	TypeBlobStorage:      CategoryObjectStorage,

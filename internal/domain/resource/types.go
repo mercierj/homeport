@@ -202,6 +202,7 @@ const (
 
 	// Azure DevOps / Integration
 	TypeAzureDataFactory Type = "azurerm_data_factory"
+	TypeAzureDatabricks  Type = "azurerm_databricks_workspace"
 
 	// Azure Security
 	TypeAzureADB2C    Type = "azurerm_aadb2c_directory"

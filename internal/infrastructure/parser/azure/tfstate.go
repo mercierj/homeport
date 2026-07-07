@@ -303,6 +303,7 @@ func mapAzureTerraformType(tfType string) resource.Type {
 		"azurerm_linux_web_app":           resource.TypeAppService,
 		"azurerm_windows_web_app":         resource.TypeAppService,
 		"azurerm_data_factory":            resource.TypeAzureDataFactory,
+		"azurerm_databricks_workspace":    resource.TypeAzureDatabricks,
 
 		// Storage
 		"azurerm_storage_account":   resource.TypeAzureStorageAcct,

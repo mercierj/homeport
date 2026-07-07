@@ -2553,20 +2553,23 @@ services:
     status: full
   - provider: azure
     service: Databricks
-    resource_types: []
-    discover: false
-    cost: false
-    provision: false
-    migrate: false
-    api_compat: false
-    env_dns: false
-    ha: false
-    backup: false
-    validate: false
-    cutover: false
-    rollback: false
-    status: missing
-    blocker: not modeled yet
+    resource_types:
+      - azurerm_databricks_workspace
+    target: Apache Spark
+    api_compatibility_strategy: generated Spark launcher patch and Databricks jobs handoff
+    manual_steps_resolved: true
+    discover: true
+    cost: true
+    provision: true
+    migrate: true
+    api_compat: true
+    env_dns: true
+    ha: true
+    backup: true
+    validate: true
+    cutover: true
+    rollback: true
+    status: full
   - provider: azure
     service: Event Grid
     resource_types:
