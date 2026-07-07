@@ -8,6 +8,7 @@ import (
 
 	"github.com/homeport/homeport/internal/domain/mapper"
 	"github.com/homeport/homeport/internal/domain/resource"
+	domainrunbook "github.com/homeport/homeport/internal/domain/runbook"
 	"github.com/homeport/homeport/internal/infrastructure/mapper/shared/computeruntime"
 )
 
@@ -65,6 +66,7 @@ func (m *GKEMapper) Map(ctx context.Context, res *resource.AWSResource) (*mapper
 	}
 	svc.Networks = []string{"homeport"}
 	svc.Restart = "unless-stopped"
+	svc.Deploy = &mapper.DeployConfig{Replicas: 2}
 	svc.Labels = map[string]string{
 		"homeport.source":       "google_container_cluster",
 		"homeport.cluster_name": clusterName,
@@ -100,11 +102,22 @@ func (m *GKEMapper) Map(ctx context.Context, res *resource.AWSResource) (*mapper
 	// Generate agent configuration
 	agentConfig := m.generateAgentConfig(clusterName)
 	result.AddConfig("config/k3s/agent-compose.yml", []byte(agentConfig))
+	result.AddConfig("config/gke/app-change.env", []byte(m.generateAppChangeConfig(clusterName)))
+	result.AddConfig("config/gke/migration.env", []byte(m.generateMigrationConfig(res, clusterName)))
+	result.AddConfig("config/gke/workload-export.env", []byte(m.generateWorkloadExportConfig(clusterName)))
 
 	// Generate setup script
 	setupScript := m.generateSetupScript(clusterName)
 	result.AddScript("setup_k3s.sh", []byte(setupScript))
+	result.AddScript("export_gke_workloads.sh", []byte(m.generateExportScript(clusterName)))
+	result.AddScript("apply_k3s_workloads.sh", []byte(m.generateApplyScript(clusterName)))
+	result.AddScript("validate_k3s_cluster.sh", []byte(m.generateValidateScript(clusterName)))
+	result.AddScript("backup_gke_config.sh", []byte(m.generateBackupScript(clusterName)))
+	result.AddScript("cutover_gke_clients.sh", []byte(m.generateCutoverScript(clusterName)))
 	for _, step := range computeruntime.KubernetesCluster(clusterName, "setup_k3s.sh") {
+		result.AddRunbookStep(step)
+	}
+	for _, step := range gkeCutoverRunbook(clusterName) {
 		result.AddRunbookStep(step)
 	}
 
@@ -112,10 +125,6 @@ func (m *GKEMapper) Map(ctx context.Context, res *resource.AWSResource) (*mapper
 		Name:   "k3s-server",
 		Driver: "local",
 	})
-
-	result.AddManualStep("Wait for K3s: docker-compose logs -f k3s-server")
-	result.AddManualStep("Get kubeconfig: export KUBECONFIG=$(pwd)/kubeconfig/kubeconfig.yaml")
-	result.AddManualStep("Verify: kubectl get nodes")
 
 	return result, nil
 }
@@ -184,6 +193,61 @@ k3s-agent:
 volumes:
   k3s-agent:
 `, clusterName)
+}
+
+func (m *GKEMapper) generateAppChangeConfig(clusterName string) string {
+	return fmt.Sprintf("APP_CHANGE_MODE=generated_patch\nSOURCE_GKE_CLUSTER=%s\nTARGET_KUBECONFIG=./kubeconfig/kubeconfig.yaml\nTARGET_K8S_CONTEXT=k3s-%s\n", clusterName, clusterName)
+}
+
+func (m *GKEMapper) generateMigrationConfig(res *resource.AWSResource, clusterName string) string {
+	return fmt.Sprintf("SOURCE_GKE_CLUSTER=%s\nSOURCE_LOCATION=%s\nSOURCE_VERSION=%s\nTARGET_DISTRIBUTION=k3s\n", clusterName, res.GetConfigString("location"), res.GetConfigString("min_master_version"))
+}
+
+func (m *GKEMapper) generateWorkloadExportConfig(clusterName string) string {
+	return fmt.Sprintf("SOURCE_GKE_CLUSTER=%s\nEXPORT_PATH=./gke-export\nTARGET_MANIFEST_PATH=./k3s-manifests\n", clusterName)
+}
+
+func (m *GKEMapper) generateExportScript(clusterName string) string {
+	return fmt.Sprintf("#!/bin/sh\nset -eu\nmkdir -p gke-export\nkubectl --context %q get ns,deploy,svc,ingress,configmap,secret,pvc -A -o yaml > gke-export/workloads.yaml\n", clusterName)
+}
+
+func (m *GKEMapper) generateApplyScript(clusterName string) string {
+	return fmt.Sprintf("#!/bin/sh\nset -eu\ntest -s gke-export/workloads.yaml\nkubectl --kubeconfig ./kubeconfig/kubeconfig.yaml apply -f gke-export/workloads.yaml\necho \"GKE cluster %s workloads applied to K3s\"\n", clusterName)
+}
+
+func (m *GKEMapper) generateValidateScript(clusterName string) string {
+	return fmt.Sprintf("#!/bin/sh\nset -eu\ntest -s config/gke/app-change.env\nkubectl --kubeconfig ./kubeconfig/kubeconfig.yaml get nodes\nkubectl --kubeconfig ./kubeconfig/kubeconfig.yaml get deploy,svc -A\necho \"GKE cluster %s validated on K3s\"\n", clusterName)
+}
+
+func (m *GKEMapper) generateBackupScript(clusterName string) string {
+	return fmt.Sprintf("#!/bin/sh\nset -eu\narchive=\"${BACKUP_DIR:-./backups}/gke-%s-$(date +%%Y%%m%%d%%H%%M%%S).tgz\"\nmkdir -p \"$(dirname \"$archive\")\"\ntar -czf \"$archive\" config/gke config/k3s gke-export kubeconfig\necho \"$archive\"\n", sanitizeGKEName(clusterName))
+}
+
+func (m *GKEMapper) generateCutoverScript(clusterName string) string {
+	return fmt.Sprintf("#!/bin/sh\nset -eu\n. config/gke/app-change.env\ntest \"$SOURCE_GKE_CLUSTER\" = %q\ntest \"$APP_CHANGE_MODE\" = \"generated_patch\"\necho \"Patch Kubernetes clients and CI deploy jobs to $TARGET_KUBECONFIG\"\n", clusterName)
+}
+
+func gkeCutoverRunbook(clusterName string) []domainrunbook.Step {
+	metadata := map[string]string{"kind": "kubernetes", "source": "google_container_cluster", "cluster": clusterName, "target": "k3s"}
+	return []domainrunbook.Step{
+		gkeStep("backup-gke-config", "Backup GKE config", "Backup", domainrunbook.StepTypeCommand, []string{"sh", "backup_gke_config.sh"}, "GKE migration artifacts are archived", metadata),
+		gkeStep("cutover-gke-clients", "Cut over GKE clients", "Cutover", domainrunbook.StepTypeAPICall, []string{"sh", "cutover_gke_clients.sh"}, "clients and deploy jobs use K3s kubeconfig", metadata),
+	}
+}
+
+func gkeStep(id, name, group string, stepType domainrunbook.StepType, command []string, success string, metadata map[string]string) domainrunbook.Step {
+	return domainrunbook.Step{ID: id, Name: name, Group: group, Type: stepType, Status: domainrunbook.StepStatusPending, Executor: "shell", Command: command, SuccessCondition: success, Metadata: metadata}
+}
+
+func sanitizeGKEName(value string) string {
+	value = strings.ToLower(value)
+	value = strings.ReplaceAll(value, "_", "-")
+	value = strings.ReplaceAll(value, "/", "-")
+	value = strings.Trim(value, "-")
+	if value == "" {
+		return "cluster"
+	}
+	return value
 }
 
 func (m *GKEMapper) generateSetupScript(clusterName string) string {
