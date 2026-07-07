@@ -125,7 +125,7 @@
 | azure | Azure VM | full | azurerm_linux_virtual_machine, azurerm_windows_virtual_machine |
 | azure | Container Apps | full | azurerm_container_app |
 | azure | Container Instances | full | azurerm_container_group |
-| azure | Container Registry | missing |  |
+| azure | Container Registry | full | azurerm_container_registry |
 | azure | Cosmos DB | guided | azurerm_cosmosdb_account |
 | azure | Data Factory | missing |  |
 | azure | Databricks | missing |  |

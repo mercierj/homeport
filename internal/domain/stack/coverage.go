@@ -173,13 +173,14 @@ var ResourceMapping = map[resource.Type]StackType{
 	// ─────────────────────────────────────────────────────
 
 	// Azure Compute (7 types) - Passthrough except serverless
-	resource.TypeAzureVM:           StackTypePassthrough, // VMs stay individual
-	resource.TypeAzureVMWindows:    StackTypePassthrough, // VMs stay individual
-	resource.TypeAzureContainerApp: StackTypePassthrough, // Container apps stay individual
-	resource.TypeAzureFunction:     StackTypeCompute,     // Serverless consolidates
-	resource.TypeContainerInstance: StackTypePassthrough, // Container instances stay individual
-	resource.TypeAKS:               StackTypePassthrough, // Kubernetes stays individual
-	resource.TypeAppService:        StackTypePassthrough, // App Service stays individual
+	resource.TypeAzureVM:                StackTypePassthrough, // VMs stay individual
+	resource.TypeAzureVMWindows:         StackTypePassthrough, // VMs stay individual
+	resource.TypeAzureContainerApp:      StackTypePassthrough, // Container apps stay individual
+	resource.TypeAzureContainerRegistry: StackTypePassthrough, // Registries stay individual
+	resource.TypeAzureFunction:          StackTypeCompute,     // Serverless consolidates
+	resource.TypeContainerInstance:      StackTypePassthrough, // Container instances stay individual
+	resource.TypeAKS:                    StackTypePassthrough, // Kubernetes stays individual
+	resource.TypeAppService:             StackTypePassthrough, // App Service stays individual
 
 	// Azure Storage (4 types)
 	resource.TypeBlobStorage:      StackTypeStorage,     // Object storage consolidates

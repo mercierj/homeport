@@ -296,6 +296,7 @@ func mapAzureTerraformType(tfType string) resource.Type {
 		"azurerm_linux_function_app":      resource.TypeAzureFunction,
 		"azurerm_windows_function_app":    resource.TypeAzureFunction,
 		"azurerm_container_app":           resource.TypeAzureContainerApp,
+		"azurerm_container_registry":      resource.TypeAzureContainerRegistry,
 		"azurerm_container_group":         resource.TypeContainerInstance,
 		"azurerm_kubernetes_cluster":      resource.TypeAKS,
 		"azurerm_app_service":             resource.TypeAppService,

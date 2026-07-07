@@ -241,13 +241,14 @@ var CategoryMapping = map[Type]Category{
 	// ─────────────────────────────────────────────────────
 
 	// Azure Compute
-	TypeAzureVM:           CategoryCompute,
-	TypeAzureVMWindows:    CategoryCompute,
-	TypeAzureContainerApp: CategoryContainer,
-	TypeAzureFunction:     CategoryServerless,
-	TypeContainerInstance: CategoryContainer,
-	TypeAKS:               CategoryKubernetes,
-	TypeAppService:        CategoryCompute,
+	TypeAzureVM:                CategoryCompute,
+	TypeAzureVMWindows:         CategoryCompute,
+	TypeAzureContainerApp:      CategoryContainer,
+	TypeAzureContainerRegistry: CategoryContainer,
+	TypeAzureFunction:          CategoryServerless,
+	TypeContainerInstance:      CategoryContainer,
+	TypeAKS:                    CategoryKubernetes,
+	TypeAppService:             CategoryCompute,
 
 	// Azure Storage
 	TypeBlobStorage:      CategoryObjectStorage,

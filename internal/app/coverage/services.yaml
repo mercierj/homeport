@@ -2496,20 +2496,23 @@ services:
     status: full
   - provider: azure
     service: Container Registry
-    resource_types: []
-    discover: false
-    cost: false
-    provision: false
-    migrate: false
-    api_compat: false
-    env_dns: false
-    ha: false
-    backup: false
-    validate: false
-    cutover: false
-    rollback: false
-    status: missing
-    blocker: not modeled yet
+    resource_types:
+      - azurerm_container_registry
+    target: OCI Distribution registry
+    api_compatibility_strategy: generated image reference patch and registry mirror handoff
+    manual_steps_resolved: true
+    discover: true
+    cost: true
+    provision: true
+    migrate: true
+    api_compat: true
+    env_dns: true
+    ha: true
+    backup: true
+    validate: true
+    cutover: true
+    rollback: true
+    status: full
   - provider: azure
     service: Cosmos DB
     resource_types:

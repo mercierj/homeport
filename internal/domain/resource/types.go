@@ -165,13 +165,14 @@ const (
 	// ─────────────────────────────────────────────────────
 
 	// Azure Compute
-	TypeAzureVM           Type = "azurerm_linux_virtual_machine"
-	TypeAzureVMWindows    Type = "azurerm_windows_virtual_machine"
-	TypeAzureContainerApp Type = "azurerm_container_app"
-	TypeAzureFunction     Type = "azurerm_function_app"
-	TypeContainerInstance Type = "azurerm_container_group"
-	TypeAKS               Type = "azurerm_kubernetes_cluster"
-	TypeAppService        Type = "azurerm_app_service"
+	TypeAzureVM                Type = "azurerm_linux_virtual_machine"
+	TypeAzureVMWindows         Type = "azurerm_windows_virtual_machine"
+	TypeAzureContainerApp      Type = "azurerm_container_app"
+	TypeAzureContainerRegistry Type = "azurerm_container_registry"
+	TypeAzureFunction          Type = "azurerm_function_app"
+	TypeContainerInstance      Type = "azurerm_container_group"
+	TypeAKS                    Type = "azurerm_kubernetes_cluster"
+	TypeAppService             Type = "azurerm_app_service"
 
 	// Azure Storage
 	TypeBlobStorage      Type = "azurerm_storage_container"
