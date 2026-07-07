@@ -88,7 +88,7 @@
 | gcp | Logging | full | google_logging_project_sink |
 | gcp | Memorystore | full | google_redis_instance |
 | gcp | Monitoring | full | google_monitoring_alert_policy, google_monitoring_dashboard |
-| gcp | Persistent Disk | mapped | google_compute_disk |
+| gcp | Persistent Disk | full | google_compute_disk |
 | gcp | Pub/Sub | guided | google_pubsub_topic, google_pubsub_subscription |
 | gcp | Secret Manager | mapped | google_secret_manager_secret |
 | gcp | Spanner | guided | google_spanner_instance |

@@ -43,9 +43,13 @@ func BlockStorage(name, provider, snapshotID string) []domainrunbook.Step {
 	if snapshotID != "" {
 		metadata["snapshot_id"] = snapshotID
 	}
+	syncScript := "sync_ebs_volume.sh"
+	if provider == "gcp" {
+		syncScript = "sync_persistent_disk.sh"
+	}
 	return []domainrunbook.Step{
 		command("discover-block-snapshot", "Discover block storage snapshot", "Block Storage", []string{"sh", "-c", "echo snapshot discovery required for " + shellQuote(name)}, "snapshot identified or export limitation recorded", metadata),
-		command("export-import-block-data", "Export or stream block data", "Block Storage", []string{"sh", "sync_ebs_volume.sh"}, "snapshot export or helper VM stream completed", metadata),
+		command("export-import-block-data", "Export or stream block data", "Block Storage", []string{"sh", syncScript}, "snapshot export or helper VM stream completed", metadata),
 		command("validate-block-mount", "Validate block storage mount", "Block Storage", []string{"sh", "-c", "docker volume inspect " + shellQuote(name) + " >/dev/null"}, "filesystem mounts and used bytes match expectation", metadata),
 	}
 }

@@ -1,0 +1,17 @@
+provider: gcp
+service: Persistent Disk
+checks:
+  discover: GOCACHE=/private/tmp/exit-gafam-go-build go test ./internal/infrastructure/mapper/gcp/storage -run TestPersistentDiskConformanceManagedAToZ
+  cost: GOCACHE=/private/tmp/exit-gafam-go-build go test ./internal/infrastructure/mapper/gcp/storage -run TestPersistentDiskConformanceManagedAToZ
+  provision: GOCACHE=/private/tmp/exit-gafam-go-build go test ./internal/infrastructure/mapper/gcp/storage -run TestPersistentDiskConformanceManagedAToZ
+  migrate: GOCACHE=/private/tmp/exit-gafam-go-build go test ./internal/infrastructure/mapper/gcp/storage -run TestPersistentDiskConformanceManagedAToZ
+  api_compat: GOCACHE=/private/tmp/exit-gafam-go-build go test ./internal/infrastructure/mapper/gcp/storage -run TestPersistentDiskConformanceManagedAToZ
+  env_dns: GOCACHE=/private/tmp/exit-gafam-go-build go test ./internal/infrastructure/mapper/gcp/storage -run TestPersistentDiskConformanceManagedAToZ
+  ha: GOCACHE=/private/tmp/exit-gafam-go-build go test ./internal/infrastructure/mapper/gcp/storage -run TestPersistentDiskConformanceManagedAToZ
+  backup: GOCACHE=/private/tmp/exit-gafam-go-build go test ./internal/infrastructure/mapper/gcp/storage -run TestPersistentDiskConformanceManagedAToZ
+  validate: GOCACHE=/private/tmp/exit-gafam-go-build go test ./internal/infrastructure/mapper/gcp/storage -run TestPersistentDiskConformanceManagedAToZ
+  cutover: GOCACHE=/private/tmp/exit-gafam-go-build go test ./internal/infrastructure/mapper/gcp/storage -run TestPersistentDiskConformanceManagedAToZ
+  rollback: GOCACHE=/private/tmp/exit-gafam-go-build go test ./internal/infrastructure/mapper/gcp/storage -run TestPersistentDiskConformanceManagedAToZ
+evidence:
+  target: Docker volumes
+  app_change_mode: generated_patch

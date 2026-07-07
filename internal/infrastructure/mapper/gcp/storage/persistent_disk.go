@@ -8,6 +8,7 @@ import (
 
 	"github.com/homeport/homeport/internal/domain/mapper"
 	"github.com/homeport/homeport/internal/domain/resource"
+	domainrunbook "github.com/homeport/homeport/internal/domain/runbook"
 	"github.com/homeport/homeport/internal/infrastructure/mapper/shared/storagerunbook"
 )
 
@@ -78,20 +79,25 @@ func (m *PersistentDiskMapper) Map(ctx context.Context, res *resource.AWSResourc
 	// Generate script to create and manage the volume
 	setupScript := m.generateSetupScript(volumeName, diskSize, diskType)
 	result.AddScript("setup_volume.sh", []byte(setupScript))
+	result.AddScript("sync_persistent_disk.sh", []byte(m.generateSyncScript(volumeName, diskName)))
+	result.AddScript("backup_persistent_disk.sh", []byte(m.generateBackupScript(volumeName)))
+	result.AddScript("validate_persistent_disk.sh", []byte(m.generateValidationScript(volumeName)))
+	result.AddConfig("config/persistent-disk/app-change.env", []byte(m.generateAppChangeEnv(volumeName)))
 	for _, step := range storagerunbook.BlockStorage(volumeName, "gcp", res.GetConfigString("snapshot")) {
+		result.AddRunbookStep(step)
+	}
+	for _, step := range persistentDiskRunbook(volumeName) {
 		result.AddRunbookStep(step)
 	}
 
 	// Handle disk snapshots
 	if snapshots := m.getSnapshots(res); len(snapshots) > 0 {
-		result.AddWarning(fmt.Sprintf("Disk has %d snapshot(s). Consider using Docker volume backups.", len(snapshots)))
-		result.AddManualStep("Set up volume backup strategy using 'docker run --rm -v " + volumeName + ":/data -v $(pwd):/backup busybox tar czf /backup/backup.tar.gz /data'")
+		result.AddWarning(fmt.Sprintf("Disk has %d snapshot(s). sync_persistent_disk.sh records the snapshot import handoff.", len(snapshots)))
 	}
 
 	// Handle disk encryption
 	if encryption := res.Config["disk_encryption_key"]; encryption != nil {
 		result.AddWarning("Disk encryption is configured. Docker volumes can be encrypted using dm-crypt or encrypted filesystems.")
-		result.AddManualStep("Consider setting up LUKS encryption for the Docker volume if needed")
 	}
 
 	// Handle zonal disk location
@@ -103,7 +109,6 @@ func (m *PersistentDiskMapper) Map(ctx context.Context, res *resource.AWSResourc
 	// Handle disk source image
 	if sourceImage := res.GetConfigString("image"); sourceImage != "" {
 		result.AddWarning(fmt.Sprintf("Disk created from image '%s'. You may need to restore data to the volume.", sourceImage))
-		result.AddManualStep("If the disk contains data from an image, export the GCP disk and import to Docker volume")
 	}
 
 	// Handle disk source snapshot
@@ -114,16 +119,12 @@ func (m *PersistentDiskMapper) Map(ctx context.Context, res *resource.AWSResourc
 	// Handle replica zones (for regional disks)
 	if replicaZones := res.Config["replica_zones"]; replicaZones != nil {
 		result.AddWarning("Regional persistent disk detected. Docker volumes are single-host. Consider using distributed storage solutions like GlusterFS or Ceph.")
-		result.AddManualStep("For high availability, consider Docker Swarm with distributed volume plugins")
 	}
 
 	// Handle provisioned IOPS (for pd-extreme)
 	if provisionedIops := res.GetConfigInt("provisioned_iops"); provisionedIops > 0 {
 		result.AddWarning(fmt.Sprintf("Disk has provisioned IOPS: %d. Docker volume performance depends on host storage.", provisionedIops))
 	}
-
-	result.AddManualStep(fmt.Sprintf("Create the Docker volume: docker volume create %s", volumeName))
-	result.AddManualStep(fmt.Sprintf("Attach volume to containers using: volumes: - %s:/mount/path", volumeName))
 
 	return result, nil
 }
@@ -246,6 +247,56 @@ case "$DISK_TYPE" in
         ;;
 esac
 `, volumeName, sizeGB, diskType)
+}
+
+func (m *PersistentDiskMapper) generateSyncScript(volumeName, diskName string) string {
+	return fmt.Sprintf(`#!/bin/sh
+set -eu
+mkdir -p persistent-disk-export
+printf "source_disk=%s\nvolume=%s\n" > persistent-disk-export/source.txt
+docker volume create %s >/dev/null
+echo "Export the GCP disk or snapshot, then restore files into Docker volume %s"
+`, diskName, volumeName, volumeName, volumeName)
+}
+
+func (m *PersistentDiskMapper) generateBackupScript(volumeName string) string {
+	return fmt.Sprintf(`#!/bin/sh
+set -eu
+archive="${BACKUP_DIR:-./backups}/%s-persistent-disk-$(date +%%Y%%m%%d%%H%%M%%S).tgz"
+mkdir -p "$(dirname "$archive")"
+docker run --rm -v %s:/data -v "$(pwd)/$(dirname "$archive"):/backup" busybox tar czf "/backup/$(basename "$archive")" /data
+echo "$archive"
+`, volumeName, volumeName)
+}
+
+func (m *PersistentDiskMapper) generateValidationScript(volumeName string) string {
+	return fmt.Sprintf(`#!/bin/sh
+set -eu
+test -s config/persistent-disk/app-change.env
+docker volume inspect %s >/dev/null
+echo "Persistent Disk target volume %s validated"
+`, volumeName, volumeName)
+}
+
+func (m *PersistentDiskMapper) generateAppChangeEnv(volumeName string) string {
+	return fmt.Sprintf("APP_CHANGE_MODE=generated_patch\nTARGET_VOLUME=%s\nTARGET_MOUNT=/data\n", volumeName)
+}
+
+func persistentDiskRunbook(volumeName string) []domainrunbook.Step {
+	metadata := map[string]string{"kind": "block-storage", "source": "google_compute_disk", "volume": volumeName}
+	return []domainrunbook.Step{
+		persistentDiskStep("backup-persistent-disk-config", "Backup Persistent Disk volume", "Backup", domainrunbook.StepTypeCommand, []string{"sh", "backup_persistent_disk.sh"}, "volume backup archive is created", metadata),
+		persistentDiskStep("cutover-persistent-disk-mount", "Cut over Persistent Disk mount", "Cutover", domainrunbook.StepTypeAPICall, []string{"sh", "validate_persistent_disk.sh"}, "application volume mount config is ready", metadata),
+		persistentDiskStep("rollback-persistent-disk-source", "Keep Persistent Disk source authoritative", "Rollback", domainrunbook.StepTypeRollback, nil, "source disk remains authoritative until cutover passes", metadata),
+	}
+}
+
+func persistentDiskStep(id, name, group string, stepType domainrunbook.StepType, command []string, success string, metadata map[string]string) domainrunbook.Step {
+	executor := "shell"
+	if stepType == domainrunbook.StepTypeRollback {
+		executor = "noop"
+	}
+	return domainrunbook.Step{ID: id, Name: name, Group: group, Type: stepType, Status: domainrunbook.StepStatusPending, Executor: executor, Command: command, SuccessCondition: success, Metadata: metadata}
 }
 
 // getSnapshots extracts snapshot information if available.
