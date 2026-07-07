@@ -9,6 +9,7 @@ import (
 
 	"github.com/homeport/homeport/internal/domain/mapper"
 	"github.com/homeport/homeport/internal/domain/resource"
+	domainrunbook "github.com/homeport/homeport/internal/domain/runbook"
 	"github.com/homeport/homeport/internal/infrastructure/mapper/shared/netrunbook"
 )
 
@@ -63,6 +64,7 @@ func (m *LBMapper) Map(ctx context.Context, res *resource.AWSResource) (*mapper.
 
 	svc.Networks = []string{"homeport"}
 	svc.Restart = "unless-stopped"
+	svc.Deploy = &mapper.DeployConfig{Replicas: 2}
 	svc.Labels = map[string]string{
 		"homeport.source":  "azurerm_lb",
 		"homeport.lb_name": lbName,
@@ -109,17 +111,22 @@ func (m *LBMapper) Map(ctx context.Context, res *resource.AWSResource) (*mapper.
 	// Generate HAProxy alternative configuration
 	haproxyConfig := m.generateHAProxyConfig(lbName, lbRules, healthProbes)
 	result.AddConfig("config/haproxy/haproxy.cfg", []byte(haproxyConfig))
+	result.AddConfig("config/lb/app-change.env", []byte(m.generateAppChange(lbName)))
+	result.AddConfig("config/lb/generated-client.patch", []byte(m.generateClientPatch(lbName)))
 
 	// Generate setup script
 	setupScript := m.generateSetupScript(lbName)
 	result.AddScript("setup_lb.sh", []byte(setupScript))
+	result.AddScript("validate_lb.sh", []byte(m.generateValidateScript(lbName)))
+	result.AddScript("backup_lb_config.sh", []byte(m.generateBackupScript(lbName)))
+	result.AddScript("cutover_lb_routes.sh", []byte(m.generateCutoverScript(lbName)))
 
 	result.AddWarning("Azure Load Balancer converted to Traefik. Review backend configurations.")
 	result.AddWarning("HAProxy configuration also provided as an alternative in config/haproxy/")
-	result.AddManualStep("Configure backend service endpoints in Traefik dynamic configuration")
-	result.AddManualStep("Update health probe settings to match your services")
-	result.AddManualStep("Configure SSL certificates if using HTTPS")
 	for _, step := range netrunbook.Routing(lbName, "azurerm_lb") {
+		result.AddRunbookStep(step)
+	}
+	for _, step := range m.runbook(lbName) {
 		result.AddRunbookStep(step)
 	}
 
@@ -281,6 +288,38 @@ echo "1. Configure backend services in config/traefik/lb-config.yml"
 echo "2. Start your backend services"
 echo "3. Verify load balancing: curl http://localhost"
 `, lbName, m.sanitizeName(lbName))
+}
+
+func (m *LBMapper) generateAppChange(lbName string) string {
+	return fmt.Sprintf("APP_CHANGE_MODE=generated_patch\nSOURCE_AZURE_LB=%s\nTRAEFIK_ENTRYPOINT=websecure\nTRAEFIK_CONFIG=config/traefik/lb-config.yml\nHAPROXY_CONFIG=config/haproxy/haproxy.cfg\nGENERATED_PATCH=config/lb/generated-client.patch\n", lbName)
+}
+
+func (m *LBMapper) generateClientPatch(lbName string) string {
+	return fmt.Sprintf("--- a/app/load-balancer.env\n+++ b/app/load-balancer.env\n@@\n-AZURE_LOAD_BALANCER=%s\n+LOAD_BALANCER_BACKEND=traefik\n+TRAEFIK_CONFIG=config/traefik/lb-config.yml\n", lbName)
+}
+
+func (m *LBMapper) generateValidateScript(lbName string) string {
+	return fmt.Sprintf("#!/bin/sh\nset -eu\ntest -s config/traefik/lb-config.yml\ntest -s config/haproxy/haproxy.cfg\ntest -s config/lb/app-change.env\ngrep -q %q config/lb/app-change.env\n", lbName)
+}
+
+func (m *LBMapper) generateBackupScript(lbName string) string {
+	return fmt.Sprintf("#!/bin/sh\nset -eu\narchive=\"${BACKUP_DIR:-./backups}/lb-%s-$(date +%%Y%%m%%d%%H%%M%%S).tgz\"\nmkdir -p \"$(dirname \"$archive\")\"\ntar -czf \"$archive\" config/traefik config/haproxy config/lb setup_lb.sh validate_lb.sh\necho \"$archive\"\n", m.sanitizeName(lbName))
+}
+
+func (m *LBMapper) generateCutoverScript(lbName string) string {
+	return fmt.Sprintf("#!/bin/sh\nset -eu\n. config/lb/app-change.env\ntest \"$SOURCE_AZURE_LB\" = %q\ntest \"$APP_CHANGE_MODE\" = \"generated_patch\"\necho \"Apply $GENERATED_PATCH and route traffic through Traefik $TRAEFIK_ENTRYPOINT\"\n", lbName)
+}
+
+func (m *LBMapper) runbook(lbName string) []domainrunbook.Step {
+	metadata := map[string]string{"kind": "routing", "source": "azurerm_lb", "lb": lbName, "target": "traefik-haproxy"}
+	return []domainrunbook.Step{
+		m.step("backup-lb-config", "Backup load balancer config", "Backup", domainrunbook.StepTypeCommand, []string{"sh", "backup_lb_config.sh"}, "load balancer migration artifacts are archived", metadata),
+		m.step("cutover-lb-routes", "Cut over load balancer routes", "Cutover", domainrunbook.StepTypeAPICall, []string{"sh", "cutover_lb_routes.sh"}, "traffic routes through generated Traefik endpoint", metadata),
+	}
+}
+
+func (m *LBMapper) step(id, name, group string, stepType domainrunbook.StepType, command []string, success string, metadata map[string]string) domainrunbook.Step {
+	return domainrunbook.Step{ID: id, Name: name, Group: group, Type: stepType, Status: domainrunbook.StepStatusPending, Executor: "shell", Command: command, SuccessCondition: success, Metadata: metadata}
 }
 
 // sanitizeName creates a valid Docker service name.

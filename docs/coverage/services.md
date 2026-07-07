@@ -118,7 +118,7 @@
 | azure | Azure DNS | full | azurerm_dns_zone |
 | azure | Azure Firewall | full | azurerm_firewall |
 | azure | Azure Functions | full | azurerm_function_app |
-| azure | Azure Load Balancer | mapped | azurerm_lb |
+| azure | Azure Load Balancer | full | azurerm_lb |
 | azure | Azure SQL | mapped | azurerm_mssql_database |
 | azure | Azure Storage | guided | azurerm_storage_container, azurerm_storage_account, azurerm_storage_share |
 | azure | Azure VNet | mapped | azurerm_virtual_network |

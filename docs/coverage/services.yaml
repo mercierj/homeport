@@ -2362,18 +2362,21 @@ services:
     service: Azure Load Balancer
     resource_types:
       - azurerm_lb
+    target: HAProxy or MetalLB
+    api_compatibility_strategy: generated Traefik/HAProxy route patch and cutover handoff
+    manual_steps_resolved: true
     discover: true
-    cost: false
-    provision: false
+    cost: true
+    provision: true
     migrate: true
-    api_compat: false
-    env_dns: false
-    ha: false
-    backup: false
+    api_compat: true
+    env_dns: true
+    ha: true
+    backup: true
     validate: true
-    cutover: false
-    rollback: false
-    status: mapped
+    cutover: true
+    rollback: true
+    status: full
   - provider: azure
     service: Azure SQL
     resource_types:

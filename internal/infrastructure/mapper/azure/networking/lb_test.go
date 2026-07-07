@@ -2,10 +2,12 @@ package networking
 
 import (
 	"context"
+	"strings"
 	"testing"
 
 	"github.com/homeport/homeport/internal/domain/mapper"
 	"github.com/homeport/homeport/internal/domain/resource"
+	domainrunbook "github.com/homeport/homeport/internal/domain/runbook"
 )
 
 func TestNewLBMapper(t *testing.T) {
@@ -26,6 +28,69 @@ func TestLBMapper_ResourceType(t *testing.T) {
 	if got != want {
 		t.Errorf("ResourceType() = %v, want %v", got, want)
 	}
+}
+
+func TestLBConformanceManagedAToZ(t *testing.T) {
+	result, err := NewLBMapper().Map(context.Background(), managedLBFixture())
+	if err != nil {
+		t.Fatal(err)
+	}
+	if len(result.ManualSteps) != 0 {
+		t.Fatalf("manual steps = %#v, want generated Azure Load Balancer migration", result.ManualSteps)
+	}
+	if result.DockerService.Image != "traefik:v2.10" || result.DockerService.Deploy == nil || result.DockerService.Deploy.Replicas < 2 {
+		t.Fatalf("service does not provision HA Traefik target: %#v", result.DockerService)
+	}
+	for _, file := range []string{"config/traefik/lb-config.yml", "config/haproxy/haproxy.cfg", "config/lb/app-change.env", "config/lb/generated-client.patch"} {
+		if _, ok := result.Configs[file]; !ok {
+			t.Fatalf("missing config %s", file)
+		}
+	}
+	appEnv := string(result.Configs["config/lb/app-change.env"])
+	for _, want := range []string{"APP_CHANGE_MODE=generated_patch", "SOURCE_AZURE_LB=checkout-lb", "TRAEFIK_ENTRYPOINT=websecure"} {
+		if !strings.Contains(appEnv, want) {
+			t.Fatalf("app-change env missing %q:\n%s", want, appEnv)
+		}
+	}
+	for _, file := range []string{"setup_lb.sh", "validate_lb.sh", "backup_lb_config.sh", "cutover_lb_routes.sh"} {
+		if _, ok := result.Scripts[file]; !ok {
+			t.Fatalf("missing script %s", file)
+		}
+	}
+	for id, stepType := range map[string]domainrunbook.StepType{
+		"render-traefik-routes":             domainrunbook.StepTypeCommand,
+		"validate-route-table":              domainrunbook.StepTypeCommand,
+		"backup-lb-config":                  domainrunbook.StepTypeCommand,
+		"cutover-lb-routes":                 domainrunbook.StepTypeAPICall,
+		"rollback-routing-source-authority": domainrunbook.StepTypeRollback,
+	} {
+		if !hasLBRunbookStep(result, id, stepType) {
+			t.Fatalf("missing %s runbook step: %#v", id, result.RunbookSteps)
+		}
+	}
+}
+
+func managedLBFixture() *resource.AWSResource {
+	return &resource.AWSResource{
+		ID:   "/subscriptions/demo/resourceGroups/rg/providers/Microsoft.Network/loadBalancers/checkout-lb",
+		Type: resource.TypeAzureLB,
+		Name: "checkout-lb",
+		Config: map[string]interface{}{
+			"name": "checkout-lb",
+			"probe": []interface{}{
+				map[string]interface{}{"protocol": "Http", "port": float64(8080), "request_path": "/health"},
+			},
+		},
+	}
+}
+
+func hasLBRunbookStep(result *mapper.MappingResult, id string, stepType domainrunbook.StepType) bool {
+	for _, step := range result.RunbookSteps {
+		if step.ID == id && step.Type == stepType {
+			return true
+		}
+	}
+	return false
 }
 
 func TestLBMapper_Dependencies(t *testing.T) {
