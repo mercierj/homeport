@@ -147,7 +147,9 @@ var ResourceMapping = map[resource.Type]StackType{
 	resource.TypeEventarcTrigger:    StackTypeMessaging, // Event routes consolidate with workflow automation
 
 	// GCP Observability
-	resource.TypeCloudLoggingSink: StackTypeObservability, // Logs consolidate with Loki/Promtail
+	resource.TypeCloudLoggingSink:           StackTypeObservability, // Logs consolidate with Loki/Promtail
+	resource.TypeCloudMonitoringAlertPolicy: StackTypeObservability, // Alerts consolidate with Prometheus/Alertmanager
+	resource.TypeCloudMonitoringDashboard:   StackTypeObservability, // Dashboards consolidate with Grafana
 
 	// ─────────────────────────────────────────────────────
 	// Azure Resource Types (29 types)

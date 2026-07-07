@@ -360,7 +360,9 @@ func mapDMTypeToResourceType(dmType string) resource.Type {
 		"cloudtasks.v2.queue":    resource.TypeCloudTasks,
 
 		// Observability
-		"logging.v2.sink": resource.TypeCloudLoggingSink,
+		"logging.v2.sink":           resource.TypeCloudLoggingSink,
+		"monitoring.v3.alertPolicy": resource.TypeCloudMonitoringAlertPolicy,
+		"monitoring.v1.dashboard":   resource.TypeCloudMonitoringDashboard,
 
 		// Containers
 		"container.v1.cluster": resource.TypeGKE,

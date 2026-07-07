@@ -348,7 +348,9 @@ func mapGCPTerraformType(tfType string) resource.Type {
 		"google_eventarc_trigger":    resource.TypeEventarcTrigger,
 
 		// Observability
-		"google_logging_project_sink": resource.TypeCloudLoggingSink,
+		"google_logging_project_sink":    resource.TypeCloudLoggingSink,
+		"google_monitoring_alert_policy": resource.TypeCloudMonitoringAlertPolicy,
+		"google_monitoring_dashboard":    resource.TypeCloudMonitoringDashboard,
 	}
 
 	if resType, ok := mapping[tfType]; ok {

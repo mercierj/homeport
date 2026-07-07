@@ -215,7 +215,9 @@ var CategoryMapping = map[Type]Category{
 	TypeEventarcTrigger:    CategoryPubSub,
 
 	// GCP Observability
-	TypeCloudLoggingSink: CategoryLogging,
+	TypeCloudLoggingSink:           CategoryLogging,
+	TypeCloudMonitoringAlertPolicy: CategoryMonitoring,
+	TypeCloudMonitoringDashboard:   CategoryMonitoring,
 
 	// ─────────────────────────────────────────────────────
 	// Azure Resource Mappings (Complete)

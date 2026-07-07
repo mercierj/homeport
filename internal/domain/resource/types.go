@@ -139,7 +139,9 @@ const (
 	TypeEventarcTrigger    Type = "google_eventarc_trigger"
 
 	// GCP Observability
-	TypeCloudLoggingSink Type = "google_logging_project_sink"
+	TypeCloudLoggingSink           Type = "google_logging_project_sink"
+	TypeCloudMonitoringAlertPolicy Type = "google_monitoring_alert_policy"
+	TypeCloudMonitoringDashboard   Type = "google_monitoring_dashboard"
 
 	// ─────────────────────────────────────────────────────
 	// Azure Resource Types
