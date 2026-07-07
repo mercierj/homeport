@@ -90,7 +90,7 @@
 | gcp | Monitoring | full | google_monitoring_alert_policy, google_monitoring_dashboard |
 | gcp | Persistent Disk | full | google_compute_disk |
 | gcp | Pub/Sub | full | google_pubsub_topic, google_pubsub_subscription |
-| gcp | Secret Manager | mapped | google_secret_manager_secret |
+| gcp | Secret Manager | full | google_secret_manager_secret |
 | gcp | Spanner | guided | google_spanner_instance |
 | gcp | Trace | missing |  |
 | gcp | VPC | mapped | google_compute_network |

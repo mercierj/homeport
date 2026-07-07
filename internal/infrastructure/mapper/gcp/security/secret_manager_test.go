@@ -7,6 +7,7 @@ import (
 
 	"github.com/homeport/homeport/internal/domain/mapper"
 	"github.com/homeport/homeport/internal/domain/resource"
+	domainrunbook "github.com/homeport/homeport/internal/domain/runbook"
 )
 
 func TestNewSecretManagerMapper(t *testing.T) {
@@ -17,6 +18,74 @@ func TestNewSecretManagerMapper(t *testing.T) {
 	if m.ResourceType() != resource.TypeSecretManager {
 		t.Errorf("ResourceType() = %v, want %v", m.ResourceType(), resource.TypeSecretManager)
 	}
+}
+
+func TestSecretManagerConformanceManagedAToZ(t *testing.T) {
+	result, err := NewSecretManagerMapper().Map(context.Background(), managedSecretManagerFixture())
+	if err != nil {
+		t.Fatal(err)
+	}
+	if len(result.ManualSteps) != 0 {
+		t.Fatalf("manual steps = %#v, want generated Secret Manager migration", result.ManualSteps)
+	}
+	if result.DockerService.Deploy == nil || result.DockerService.Deploy.Replicas < 2 {
+		t.Fatalf("Vault service is not HA: %#v", result.DockerService)
+	}
+	for _, file := range []string{"config/vault/config.hcl", "config/vault/app-change.env"} {
+		if _, ok := result.Configs[file]; !ok {
+			t.Fatalf("missing config %s", file)
+		}
+	}
+	appEnv := string(result.Configs["config/vault/app-change.env"])
+	for _, want := range []string{"APP_CHANGE_MODE=generated_patch", "SOURCE_SECRET=orders-api-key", "VAULT_PATH=gcp-secrets/data/orders-api-key"} {
+		if !strings.Contains(appEnv, want) {
+			t.Fatalf("app-change env missing %q:\n%s", want, appEnv)
+		}
+	}
+	for _, file := range []string{"init_vault.sh", "migrate_secret.sh", "validate_secret_vault.sh", "backup_secret_vault.sh"} {
+		if _, ok := result.Scripts[file]; !ok {
+			t.Fatalf("missing script %s", file)
+		}
+	}
+	for id, stepType := range map[string]domainrunbook.StepType{
+		"init-vault-secret-target":         domainrunbook.StepTypeCommand,
+		"migrate-secret-to-vault":          domainrunbook.StepTypeCommand,
+		"validate-secret-vault":            domainrunbook.StepTypeCommand,
+		"backup-secret-vault":              domainrunbook.StepTypeCommand,
+		"cutover-secret-clients":           domainrunbook.StepTypeAPICall,
+		"rollback-secret-source-authority": domainrunbook.StepTypeRollback,
+	} {
+		if !hasSecretManagerRunbookStep(result, id, stepType) {
+			t.Fatalf("missing %s runbook step: %#v", id, result.RunbookSteps)
+		}
+	}
+}
+
+func managedSecretManagerFixture() *resource.AWSResource {
+	return &resource.AWSResource{
+		ID:   "projects/demo/secrets/orders-api-key",
+		Type: resource.TypeSecretManager,
+		Name: "orders-api-key",
+		Config: map[string]interface{}{
+			"secret_id": "orders-api-key",
+			"project":   "demo",
+			"replication": map[string]interface{}{
+				"automatic": true,
+			},
+			"labels": map[string]interface{}{
+				"team": "platform",
+			},
+		},
+	}
+}
+
+func hasSecretManagerRunbookStep(result *mapper.MappingResult, id string, stepType domainrunbook.StepType) bool {
+	for _, step := range result.RunbookSteps {
+		if step.ID == id && step.Type == stepType {
+			return true
+		}
+	}
+	return false
 }
 
 func TestSecretManagerMapper_ResourceType(t *testing.T) {
