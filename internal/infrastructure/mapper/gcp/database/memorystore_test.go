@@ -2,10 +2,12 @@ package database
 
 import (
 	"context"
+	"strings"
 	"testing"
 
 	"github.com/homeport/homeport/internal/domain/mapper"
 	"github.com/homeport/homeport/internal/domain/resource"
+	domainrunbook "github.com/homeport/homeport/internal/domain/runbook"
 )
 
 func TestNewMemorystoreMapper(t *testing.T) {
@@ -16,6 +18,79 @@ func TestNewMemorystoreMapper(t *testing.T) {
 	if m.ResourceType() != resource.TypeMemorystore {
 		t.Errorf("ResourceType() = %v, want %v", m.ResourceType(), resource.TypeMemorystore)
 	}
+}
+
+func TestMemorystoreConformanceManagedAToZ(t *testing.T) {
+	result, err := NewMemorystoreMapper().Map(context.Background(), managedMemorystoreFixture())
+	if err != nil {
+		t.Fatal(err)
+	}
+	if len(result.ManualSteps) != 0 {
+		t.Fatalf("manual steps = %#v, want generated Memorystore migration", result.ManualSteps)
+	}
+	if result.DockerService.Deploy == nil || result.DockerService.Deploy.Replicas < 2 {
+		t.Fatalf("service does not provision HA Redis target: %#v", result.DockerService.Deploy)
+	}
+	if result.DockerService.Image != "redis:7.0-alpine" {
+		t.Fatalf("image = %s, want normalized Redis image", result.DockerService.Image)
+	}
+	for _, file := range []string{"config/redis/redis.conf", "config/redis/app-change.env", "config/redis/ha.env"} {
+		if _, ok := result.Configs[file]; !ok {
+			t.Fatalf("missing config %s", file)
+		}
+	}
+	appEnv := string(result.Configs["config/redis/app-change.env"])
+	for _, want := range []string{"SOURCE_INSTANCE=orders-cache", "TARGET_ENDPOINT=redis:6379", "APP_CHANGE_MODE=generated_patch"} {
+		if !strings.Contains(appEnv, want) {
+			t.Fatalf("app-change env missing %q:\n%s", want, appEnv)
+		}
+	}
+	for _, file := range []string{"migrate_memorystore.sh", "backup_memorystore_config.sh", "validate_redis.sh"} {
+		if _, ok := result.Scripts[file]; !ok {
+			t.Fatalf("missing script %s", file)
+		}
+	}
+	for id, stepType := range map[string]domainrunbook.StepType{
+		"generate-redis-auth":             domainrunbook.StepTypeCommand,
+		"sync-redis-data":                 domainrunbook.StepTypeCommand,
+		"validate-redis-migration":        domainrunbook.StepTypeCommand,
+		"validate-redis-failover":         domainrunbook.StepTypeCommand,
+		"backup-memorystore-config":       domainrunbook.StepTypeCommand,
+		"cutover-memorystore-endpoint":    domainrunbook.StepTypeAPICall,
+		"rollback-redis-source-authority": domainrunbook.StepTypeRollback,
+	} {
+		if !hasMemorystoreRunbookStep(result, id, stepType) {
+			t.Fatalf("missing %s runbook step: %#v", id, result.RunbookSteps)
+		}
+	}
+	for _, step := range result.RunbookSteps {
+		if step.Type == domainrunbook.StepTypeInput {
+			t.Fatalf("manual input runbook step = %#v, want executable conformance", step)
+		}
+	}
+}
+
+func managedMemorystoreFixture() *resource.AWSResource {
+	return &resource.AWSResource{
+		ID:   "projects/demo/locations/us-central1/instances/orders-cache",
+		Type: resource.TypeMemorystore,
+		Name: "orders-cache",
+		Config: map[string]interface{}{
+			"name":           "orders-cache",
+			"memory_size_gb": float64(4),
+			"redis_version":  "REDIS_7_0",
+			"tier":           "STANDARD_HA",
+		},
+	}
+}
+
+func hasMemorystoreRunbookStep(result *mapper.MappingResult, id string, stepType domainrunbook.StepType) bool {
+	for _, step := range result.RunbookSteps {
+		if step.ID == id && step.Type == stepType {
+			return true
+		}
+	}
+	return false
 }
 
 func TestMemorystoreMapper_ResourceType(t *testing.T) {
@@ -132,10 +207,9 @@ func TestMemorystoreMapper_Map(t *testing.T) {
 				if result == nil {
 					t.Fatal("Map() returned nil result")
 				}
-				// Should have warning about HA tier
 				hasHAWarning := false
 				for _, w := range result.Warnings {
-					if contains(w, "Standard HA tier") {
+					if strings.Contains(w, "Standard HA tier") {
 						hasHAWarning = true
 						break
 					}
@@ -185,18 +259,4 @@ func TestMemorystoreMapper_Map(t *testing.T) {
 			}
 		})
 	}
-}
-
-// contains is a helper function to check if a string contains a substring
-func contains(s, substr string) bool {
-	return len(s) >= len(substr) && (s == substr || len(s) > 0 && containsHelper(s, substr))
-}
-
-func containsHelper(s, substr string) bool {
-	for i := 0; i <= len(s)-len(substr); i++ {
-		if s[i:i+len(substr)] == substr {
-			return true
-		}
-	}
-	return false
 }

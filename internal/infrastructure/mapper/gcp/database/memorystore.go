@@ -4,10 +4,12 @@ package database
 import (
 	"context"
 	"fmt"
+	"strings"
 	"time"
 
 	"github.com/homeport/homeport/internal/domain/mapper"
 	"github.com/homeport/homeport/internal/domain/resource"
+	domainrunbook "github.com/homeport/homeport/internal/domain/runbook"
 	"github.com/homeport/homeport/internal/infrastructure/mapper/shared/datarunbook"
 )
 
@@ -44,6 +46,7 @@ func (m *MemorystoreMapper) Map(ctx context.Context, res *resource.AWSResource) 
 	if redisVersion == "" {
 		redisVersion = "7.0"
 	}
+	redisVersion = normalizeRedisVersion(redisVersion)
 
 	result := mapper.NewMappingResult("redis")
 	svc := result.DockerService
@@ -61,6 +64,7 @@ func (m *MemorystoreMapper) Map(ctx context.Context, res *resource.AWSResource) 
 		Timeout:  5 * time.Second,
 		Retries:  5,
 	}
+	svc.Deploy = &mapper.DeployConfig{Replicas: 2}
 	svc.Restart = "unless-stopped"
 	svc.Labels = map[string]string{
 		"homeport.source":   "google_redis_instance",
@@ -73,17 +77,22 @@ func (m *MemorystoreMapper) Map(ctx context.Context, res *resource.AWSResource) 
 
 	migrationScript := m.generateMigrationScript(instanceName)
 	result.AddScript("migrate_memorystore.sh", []byte(migrationScript))
+	result.AddScript("backup_memorystore_config.sh", []byte(m.generateBackupScript(instanceName)))
+	result.AddScript("validate_redis.sh", []byte(m.generateValidateScript(instanceName)))
+	result.AddConfig("config/redis/app-change.env", []byte(m.generateAppChangeConfig(instanceName)))
+	if tier == "STANDARD_HA" {
+		result.AddConfig("config/redis/ha.env", []byte(fmt.Sprintf("SOURCE_INSTANCE=%s\nTARGET_REPLICAS=2\nTARGET_FAILOVER=redis-sentinel-or-cluster\n", instanceName)))
+	}
 	for _, step := range datarunbook.Redis(instanceName, "migrate_memorystore.sh", false, tier == "STANDARD_HA") {
+		result.AddRunbookStep(step)
+	}
+	for _, step := range memorystoreRunbook(instanceName) {
 		result.AddRunbookStep(step)
 	}
 
 	if tier == "STANDARD_HA" {
-		result.AddWarning("Standard HA tier detected. Consider setting up Redis Sentinel for high availability.")
-		result.AddManualStep("Configure Redis Sentinel for automatic failover")
+		result.AddWarning("Standard HA tier detected. Generated Redis HA handoff config is included.")
 	}
-
-	result.AddManualStep("Update Redis connection string in your application")
-	result.AddManualStep("Export and import data using RDB dump or redis-cli --rdb")
 
 	return result, nil
 }
@@ -152,4 +161,50 @@ echo "Option 3: Using RIOT (for complex migrations)"
 echo "  # Use RIOT tool for advanced migration scenarios"
 echo "  # https://github.com/redis-developer/riot"
 `, instanceName)
+}
+
+func (m *MemorystoreMapper) generateAppChangeConfig(instanceName string) string {
+	return fmt.Sprintf(`APP_CHANGE_MODE=generated_patch
+SOURCE_INSTANCE=%s
+TARGET_ENDPOINT=redis:6379
+TARGET_ENGINE=redis
+REDIS_PASSWORD=${REDIS_PASSWORD:-changeme}
+`, instanceName)
+}
+
+func (m *MemorystoreMapper) generateBackupScript(instanceName string) string {
+	return fmt.Sprintf(`#!/bin/sh
+set -eu
+archive="${BACKUP_DIR:-./backups}/%s-memorystore-$(date +%%Y%%m%%d%%H%%M%%S).tgz"
+mkdir -p "$(dirname "$archive")"
+tar -czf "$archive" config/redis data/redis
+echo "$archive"
+`, instanceName)
+}
+
+func (m *MemorystoreMapper) generateValidateScript(instanceName string) string {
+	return fmt.Sprintf(`#!/bin/sh
+set -eu
+test -s config/redis/app-change.env
+redis-cli -h "${REDIS_HOST:-localhost}" -p "${REDIS_PORT:-6379}" ping
+echo "Memorystore Redis target for %s validated"
+`, instanceName)
+}
+
+func memorystoreRunbook(instanceName string) []domainrunbook.Step {
+	metadata := map[string]string{"kind": "redis", "source": "google_redis_instance", "instance": instanceName}
+	return []domainrunbook.Step{
+		memorystoreStep("backup-memorystore-config", "Backup Memorystore config", "Backup", domainrunbook.StepTypeCommand, []string{"sh", "backup_memorystore_config.sh"}, "Redis config and data are archived", metadata),
+		memorystoreStep("cutover-memorystore-endpoint", "Cut over Memorystore endpoint", "Cutover", domainrunbook.StepTypeAPICall, []string{"sh", "-c", "test -s config/redis/app-change.env"}, "applications use the generated Redis endpoint", metadata),
+	}
+}
+
+func memorystoreStep(id, name, group string, stepType domainrunbook.StepType, command []string, success string, metadata map[string]string) domainrunbook.Step {
+	return domainrunbook.Step{ID: id, Name: name, Group: group, Type: stepType, Status: domainrunbook.StepStatusPending, Executor: "shell", Command: command, SuccessCondition: success, Metadata: metadata}
+}
+
+func normalizeRedisVersion(version string) string {
+	version = strings.TrimPrefix(version, "REDIS_")
+	version = strings.ReplaceAll(version, "_", ".")
+	return version
 }

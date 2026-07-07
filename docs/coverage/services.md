@@ -86,7 +86,7 @@
 | gcp | IAM | full | google_project_iam_member |
 | gcp | Identity Platform | full | google_identity_platform_config |
 | gcp | Logging | full | google_logging_project_sink |
-| gcp | Memorystore | mapped | google_redis_instance |
+| gcp | Memorystore | full | google_redis_instance |
 | gcp | Monitoring | missing |  |
 | gcp | Persistent Disk | mapped | google_compute_disk |
 | gcp | Pub/Sub | guided | google_pubsub_topic, google_pubsub_subscription |
