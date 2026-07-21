@@ -8,14 +8,14 @@ Expose the smallest Azure Databricks-compatible surface needed to migrate the le
 
 - Initial supported surface: Microsoft.Databricks/workspaces/read, Microsoft.Databricks/workspaces/write, Microsoft.Databricks/workspaces/delete.
 - Actions explicitly not supported first: Databricks console-only workflows, account billing, quota purchase flows, and managed cross-region failover controls outside `Microsoft.Databricks/workspaces/read` and its paired read/list calls.
-- Ledger resource types: no resource type currently modeled in the ledger.
+- Ledger resource types: `azurerm_databricks_workspace`
 - First concrete resource model to add: service-specific model with import id, region/location, labels/tags, backend target id, lifecycle state, and owner principal.
 - Provider errors: map Databricks authorization failures to Azure access-denied codes, missing `planned resource model` records to not-found codes, duplicate imports to conflict/already-exists, invalid mapped fields to validation errors, backend saturation to throttle/quota responses, and unexpected `azure/databricks` failures to provider internal-error shapes with request ids.
 - Pagination/idempotency/tags: list/read calls expose provider tokens where the API has them; mutating calls persist idempotency keys or operation ids; tags/labels round-trip on planned resource model.
 
 ## Backend
 
-- Backend: Apache Spark on Kubernetes.
+- Backend: Apache Spark.
 - Storage and metadata: Databricks state lives in `Apache Spark on Kubernetes`; HomePort stores provider identifiers for `planned resource model`, source import ids, authz bindings, generated artifact checksums, backup references, and audit events.
 - Secrets/keys/tokens: issue HomePort-scoped credentials from the identity/secrets layer; store provider source credentials only as encrypted migration inputs.
 - Runtime/provisioning: provision `Apache Spark on Kubernetes` with generated `artifacts/compat/azure/databricks/backend.yaml`, health endpoint, persistence volume, backup job, endpoint route, and teardown script for `azure/databricks`.

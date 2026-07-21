@@ -8,13 +8,13 @@ Expose the smallest Azure Azure Storage-compatible surface needed to migrate the
 
 - Initial supported surface: Microsoft.Storage/storageAccounts/read, Microsoft.Storage/storageAccounts/write, Microsoft.Storage/storageAccounts/delete.
 - Actions explicitly not supported first: Azure Storage console-only workflows, account billing, quota purchase flows, and managed cross-region failover controls outside `Microsoft.Storage/storageAccounts/read` and its paired read/list calls.
-- Ledger resource types: `azurerm_storage_container`, `azurerm_storage_account`, `azurerm_storage_share`.
+- Ledger resource types: `azurerm_storage_container`, `azurerm_storage_account`, `azurerm_storage_share`
 - Provider errors: map Azure Storage authorization failures to Azure access-denied codes, missing `azurerm_storage_container` records to not-found codes, duplicate imports to conflict/already-exists, invalid mapped fields to validation errors, backend saturation to throttle/quota responses, and unexpected `azure/azure-storage` failures to provider internal-error shapes with request ids.
 - Pagination/idempotency/tags: list/read calls expose provider tokens where the API has them; mutating calls persist idempotency keys or operation ids; tags/labels round-trip on `azurerm_storage_container`.
 
 ## Backend
 
-- Backend: MinIO and Azurite.
+- Backend: Azurite, MinIO, and Samba.
 - Storage and metadata: Azure Storage state lives in `MinIO and Azurite`; HomePort stores provider identifiers for `azurerm_storage_container`, source import ids, authz bindings, generated artifact checksums, backup references, and audit events.
 - Secrets/keys/tokens: issue HomePort-scoped credentials from the identity/secrets layer; store provider source credentials only as encrypted migration inputs.
 - Runtime/provisioning: provision `MinIO and Azurite` with generated `artifacts/compat/azure/azure-storage/backend.yaml`, health endpoint, persistence volume, backup job, endpoint route, and teardown script for `azure/azure-storage`.

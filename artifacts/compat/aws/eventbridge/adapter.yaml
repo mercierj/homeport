@@ -1,0 +1,32 @@
+adapter:
+  provider: aws
+  service: eventbridge
+  route: /compat/aws/eventbridge
+  target: n8n
+  actions:
+    put_rule: events:PutRule
+    describe_rule: events:DescribeRule
+    list_rules: events:ListRules
+    put_events: events:PutEvents
+    manage_targets: events:PutTargets,ListTargetsByRule,ListRuleNamesByTarget,RemoveTargets
+    enable_disable_rule: events:EnableRule,DisableRule
+    delete_rule: events:DeleteRule
+    manage_tags: events:TagResource,ListTagsForResource,UntagResource
+  resource:
+    patterns:
+      - arn:aws:events:us-east-1:000000000000:rule/{id}
+      - arn:aws:events:us-east-1:000000000000:rule/{event-bus}/{id}
+  errors:
+    AccessDeniedException: denied authorization decision
+    ResourceNotFoundException: missing rule resource
+    LimitExceededException: rule quota exceeded
+    ValidationException: invalid event or rule request
+    InvalidEventPatternException: invalid EventPattern JSON
+    InvalidToken: invalid pagination token
+    UnsupportedOperation: unsupported EventBridge action
+    InternalException: unexpected adapter failure
+  quota:
+    option: WithEventBridgeRuleQuota
+  pagination:
+    rules: [Limit, NextToken]
+    targets: [Limit, NextToken]

@@ -12,19 +12,19 @@ import (
 	domainrunbook "github.com/homeport/homeport/internal/domain/runbook"
 )
 
-// PubSubSubscriptionMapper converts GCP Pub/Sub subscriptions to RabbitMQ queues.
+// PubSubSubscriptionMapper converts GCP Pub/Sub subscriptions to NATS JetStream consumers.
 type PubSubSubscriptionMapper struct {
 	*mapper.BaseMapper
 }
 
-// NewPubSubSubscriptionMapper creates a new Pub/Sub subscription to RabbitMQ mapper.
+// NewPubSubSubscriptionMapper creates a new Pub/Sub subscription to NATS JetStream mapper.
 func NewPubSubSubscriptionMapper() *PubSubSubscriptionMapper {
 	return &PubSubSubscriptionMapper{
 		BaseMapper: mapper.NewBaseMapper(resource.TypePubSubSubscription, nil),
 	}
 }
 
-// Map converts a Pub/Sub subscription to a RabbitMQ queue bound to a topic exchange.
+// Map converts a Pub/Sub subscription to a NATS JetStream consumer.
 func (m *PubSubSubscriptionMapper) Map(ctx context.Context, res *resource.AWSResource) (*mapper.MappingResult, error) {
 	if err := m.Validate(res); err != nil {
 		return nil, err
@@ -34,218 +34,70 @@ func (m *PubSubSubscriptionMapper) Map(ctx context.Context, res *resource.AWSRes
 	if subscriptionName == "" {
 		subscriptionName = res.Name
 	}
-
 	topicName := res.GetConfigString("topic")
 	ackDeadlineSec := res.GetConfigInt("ack_deadline_seconds")
 	if ackDeadlineSec == 0 {
-		ackDeadlineSec = 10 // Default Pub/Sub ack deadline
+		ackDeadlineSec = 10
 	}
 
-	result := mapper.NewMappingResult("rabbitmq")
+	result := mapper.NewMappingResult("nats")
 	svc := result.DockerService
-
-	svc.Image = "rabbitmq:3.12-management-alpine"
-	svc.Environment = map[string]string{
-		"RABBITMQ_DEFAULT_USER": "${RABBITMQ_USER:-guest}",
-		"RABBITMQ_DEFAULT_PASS": "${RABBITMQ_PASSWORD:-guest}",
-	}
-	svc.Ports = []string{
-		"5672:5672",   // AMQP
-		"15672:15672", // Management UI
-	}
-	svc.Volumes = []string{
-		"./data/rabbitmq:/var/lib/rabbitmq",
-		"./config/rabbitmq/definitions.json:/etc/rabbitmq/definitions.json",
-		"./config/rabbitmq/rabbitmq.conf:/etc/rabbitmq/rabbitmq.conf",
-	}
+	svc.Image = "nats:2.10-alpine"
+	svc.Environment = map[string]string{"NATS_CLUSTER_NAME": "homeport-cluster"}
+	svc.Ports = []string{"4222:4222", "8222:8222", "6222:6222"}
+	svc.Volumes = []string{"./data/nats:/data", "./config/nats/nats.conf:/etc/nats/nats.conf"}
+	svc.Command = []string{"-c", "/etc/nats/nats.conf"}
 	svc.Networks = []string{"homeport"}
 	svc.Labels = map[string]string{
-		"homeport.source":                    "google_pubsub_subscription",
-		"homeport.subscription_name":         subscriptionName,
-		"homeport.topic_name":                topicName,
-		"traefik.enable":                     "true",
-		"traefik.http.routers.rabbitmq.rule": "Host(`rabbitmq.localhost`)",
-		"traefik.http.services.rabbitmq.loadbalancer.server.port": "15672",
+		"homeport.source":                "google_pubsub_subscription",
+		"homeport.subscription_name":     subscriptionName,
+		"homeport.topic_name":            topicName,
+		"homeport.target":                "nats-jetstream",
+		"traefik.enable":                 "true",
+		"traefik.http.routers.nats.rule": "Host(`nats.localhost`)",
+		"traefik.http.services.nats.loadbalancer.server.port": "8222",
 	}
 	svc.HealthCheck = &mapper.HealthCheck{
-		Test:     []string{"CMD", "rabbitmq-diagnostics", "-q", "ping"},
+		Test:     []string{"CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://localhost:8222/healthz"},
 		Interval: 30 * time.Second,
 		Timeout:  10 * time.Second,
 		Retries:  5,
 	}
-	svc.Deploy = &mapper.DeployConfig{Replicas: 2}
+	svc.Deploy = &mapper.DeployConfig{Replicas: 3}
 	svc.Restart = "unless-stopped"
 
-	// Generate RabbitMQ definitions for the subscription queue
-	definitions := m.generateDefinitions(res, subscriptionName, topicName, ackDeadlineSec)
-	result.AddConfig("config/rabbitmq/definitions.json", []byte(definitions))
-
-	// Generate RabbitMQ config
-	rabbitConfig := m.generateRabbitConfig()
-	result.AddConfig("config/rabbitmq/rabbitmq.conf", []byte(rabbitConfig))
-
-	// Generate migration script
-	migrationScript := m.generateMigrationScript(res, subscriptionName, topicName)
-	result.AddScript("scripts/migrate-pubsub-subscription.sh", []byte(migrationScript))
+	result.AddConfig("config/nats/nats.conf", []byte(generatePubSubNATSConfig(topicName)))
+	result.AddConfig("config/nats/pubsub-consumer.json", []byte(m.generateConsumerConfig(res, subscriptionName, topicName, ackDeadlineSec)))
+	result.AddConfig("config/pubsub/app-change.env", []byte(m.generateAppChangeConfig(subscriptionName, topicName)))
+	result.AddScript("scripts/migrate-pubsub-subscription.sh", []byte(m.generateMigrationScript(res, subscriptionName, topicName)))
 	result.AddScript("scripts/validate-pubsub-subscription.sh", []byte(m.generateValidateScript(subscriptionName)))
 	result.AddScript("scripts/backup-pubsub-subscription.sh", []byte(m.generateBackupScript(subscriptionName)))
-	result.AddConfig("config/pubsub/app-change.env", []byte(m.generateAppChangeConfig(subscriptionName, topicName)))
+	result.AddScript("scripts/cutover-pubsub-subscription.sh", []byte(m.generateCutoverScript(subscriptionName)))
 	for _, step := range pubSubSubscriptionRunbook(subscriptionName) {
 		result.AddRunbookStep(step)
 	}
-
-	// Add warnings based on subscription configuration
-	m.addMigrationWarnings(result, res, subscriptionName, topicName)
+	m.addMigrationWarnings(result, res)
 
 	return result, nil
 }
 
-func (m *PubSubSubscriptionMapper) generateDefinitions(res *resource.AWSResource, subscriptionName, topicName string, ackDeadlineSec int) string {
-	// Convert ack deadline to RabbitMQ consumer timeout (milliseconds)
-	consumerTimeout := ackDeadlineSec * 1000
-
-	// Build queue arguments
-	queueArgs := map[string]interface{}{
-		"x-consumer-timeout": consumerTimeout,
+func (m *PubSubSubscriptionMapper) generateConsumerConfig(res *resource.AWSResource, subscriptionName, topicName string, ackDeadlineSec int) string {
+	config := map[string]interface{}{
+		"stream_name":     pubSubStreamName(topicName),
+		"durable_name":    pubSubStreamName(subscriptionName),
+		"filter_subject":  fmt.Sprintf("pubsub.%s.>", topicName),
+		"deliver_policy":  "all",
+		"ack_policy":      "explicit",
+		"ack_wait":        fmt.Sprintf("%ds", ackDeadlineSec),
+		"max_deliver":     5,
+		"replay_policy":   "instant",
+		"source_resource": "google_pubsub_subscription",
 	}
-
-	// Handle dead letter configuration
-	deadLetterTopic := res.GetConfigString("dead_letter_topic")
-	if deadLetterTopic != "" {
-		queueArgs["x-dead-letter-exchange"] = fmt.Sprintf("%s.dlx", topicName)
-		queueArgs["x-dead-letter-routing-key"] = "dead-letter"
+	if filter := res.GetConfigString("filter"); filter != "" {
+		config["pubsub_filter"] = filter
 	}
-
-	// Handle message retention
-	retentionDuration := res.GetConfigString("message_retention_duration")
-	if retentionDuration != "" {
-		// Default to 7 days if we can't parse
-		queueArgs["x-message-ttl"] = 604800000 // 7 days in ms
-	}
-
-	// Build definitions
-	definitions := map[string]interface{}{
-		"rabbit_version":   "3.12.0",
-		"rabbitmq_version": "3.12.0",
-		"users": []map[string]interface{}{
-			{
-				"name":              "guest",
-				"password_hash":     "guest",
-				"hashing_algorithm": "rabbit_password_hashing_sha256",
-				"tags":              []string{"administrator"},
-			},
-		},
-		"vhosts": []map[string]interface{}{
-			{"name": "/"},
-		},
-		"permissions": []map[string]interface{}{
-			{
-				"user":      "guest",
-				"vhost":     "/",
-				"configure": ".*",
-				"write":     ".*",
-				"read":      ".*",
-			},
-		},
-		"exchanges": []map[string]interface{}{
-			{
-				"name":        topicName,
-				"vhost":       "/",
-				"type":        "topic",
-				"durable":     true,
-				"auto_delete": false,
-				"internal":    false,
-				"arguments":   map[string]interface{}{},
-			},
-		},
-		"queues": []map[string]interface{}{
-			{
-				"name":        subscriptionName,
-				"vhost":       "/",
-				"durable":     true,
-				"auto_delete": false,
-				"arguments":   queueArgs,
-			},
-		},
-		"bindings": []map[string]interface{}{
-			{
-				"source":           topicName,
-				"vhost":            "/",
-				"destination":      subscriptionName,
-				"destination_type": "queue",
-				"routing_key":      "#", // Match all messages (Pub/Sub default behavior)
-				"arguments":        map[string]interface{}{},
-			},
-		},
-	}
-
-	// Add dead letter exchange if configured
-	if deadLetterTopic != "" {
-		exchanges := definitions["exchanges"].([]map[string]interface{})
-		exchanges = append(exchanges, map[string]interface{}{
-			"name":        fmt.Sprintf("%s.dlx", topicName),
-			"vhost":       "/",
-			"type":        "direct",
-			"durable":     true,
-			"auto_delete": false,
-			"internal":    false,
-			"arguments":   map[string]interface{}{},
-		})
-		definitions["exchanges"] = exchanges
-
-		queues := definitions["queues"].([]map[string]interface{})
-		queues = append(queues, map[string]interface{}{
-			"name":        fmt.Sprintf("%s.dlq", subscriptionName),
-			"vhost":       "/",
-			"durable":     true,
-			"auto_delete": false,
-			"arguments":   map[string]interface{}{},
-		})
-		definitions["queues"] = queues
-
-		bindings := definitions["bindings"].([]map[string]interface{})
-		bindings = append(bindings, map[string]interface{}{
-			"source":           fmt.Sprintf("%s.dlx", topicName),
-			"vhost":            "/",
-			"destination":      fmt.Sprintf("%s.dlq", subscriptionName),
-			"destination_type": "queue",
-			"routing_key":      "dead-letter",
-			"arguments":        map[string]interface{}{},
-		})
-		definitions["bindings"] = bindings
-	}
-
-	data, _ := json.MarshalIndent(definitions, "", "  ")
-	return string(data)
-}
-
-func (m *PubSubSubscriptionMapper) generateRabbitConfig() string {
-	return `# RabbitMQ Configuration
-# Generated for Pub/Sub subscription migration
-
-# Load definitions on startup
-load_definitions = /etc/rabbitmq/definitions.json
-
-# Management plugin settings
-management.load_definitions = /etc/rabbitmq/definitions.json
-
-# Consumer acknowledgement timeout (matches Pub/Sub ack deadline)
-consumer_timeout = 1800000
-
-# Enable message persistence
-queue_master_locator = min-masters
-
-# Logging
-log.console = true
-log.console.level = info
-
-# Memory settings
-vm_memory_high_watermark.relative = 0.6
-vm_memory_high_watermark_paging_ratio = 0.8
-
-# Disk space settings
-disk_free_limit.relative = 1.0
-`
+	content, _ := json.MarshalIndent(config, "", "  ")
+	return string(content)
 }
 
 func (m *PubSubSubscriptionMapper) generateMigrationScript(res *resource.AWSResource, subscriptionName, topicName string) string {
@@ -253,99 +105,76 @@ func (m *PubSubSubscriptionMapper) generateMigrationScript(res *resource.AWSReso
 	if project == "" {
 		project = "<YOUR_PROJECT_ID>"
 	}
-
-	return fmt.Sprintf(`#!/bin/bash
-# Pub/Sub Subscription Migration Script
-# Subscription: %s
-# Topic: %s
-
-set -e
-
-echo "============================================"
-echo "Pub/Sub Subscription to RabbitMQ Migration"
-echo "============================================"
-echo ""
-
-# Export subscription configuration from GCP
-echo "Step 1: Exporting subscription configuration..."
+	return fmt.Sprintf(`#!/bin/sh
+set -eu
 mkdir -p ./pubsub-export
-
-gcloud pubsub subscriptions describe %s \
-  --project=%s \
-  --format=json > ./pubsub-export/subscription-config.json
-
-echo "Subscription configuration exported."
-
-# Export pending messages (optional)
-echo ""
-echo "Step 2: Exporting pending messages (optional)..."
-echo "Note: This pulls messages without acknowledging them."
-echo "Run the following to export pending messages:"
-echo ""
-echo "  gcloud pubsub subscriptions pull %s \\"
-echo "    --project=%s \\"
-echo "    --limit=1000 \\"
-echo "    --format=json > ./pubsub-export/pending-messages.json"
-echo ""
-
-# Start RabbitMQ
-echo "Step 3: Starting RabbitMQ..."
-docker-compose up -d rabbitmq
-
-# Wait for RabbitMQ to be ready
-echo "Waiting for RabbitMQ to be ready..."
-until docker-compose exec rabbitmq rabbitmq-diagnostics -q ping 2>/dev/null; do
-  sleep 2
-done
-echo "RabbitMQ is ready."
-
-# Import messages (if exported)
-if [ -f "./pubsub-export/pending-messages.json" ]; then
-  echo ""
-  echo "Step 4: Importing pending messages..."
-  # Note: You'll need to transform the messages and publish them
-  echo "Use the RabbitMQ management API or a client library to import messages."
-  echo "See: http://localhost:15672"
-fi
-
-echo ""
-echo "============================================"
-echo "Migration Complete!"
-echo "============================================"
-echo ""
-echo "Subscription: %s -> Queue: %s"
-echo "Topic: %s -> Exchange: %s"
-echo ""
-echo "RabbitMQ Management: http://localhost:15672"
-echo "AMQP Connection: amqp://guest:guest@localhost:5672/"
-echo ""
-echo "Update your application to:"
-echo "  1. Connect to RabbitMQ instead of Pub/Sub"
-echo "  2. Consume from queue: %s"
-echo "  3. Use AMQP client library (e.g., amqplib, pika, bunny)"
-echo ""
-`, subscriptionName, topicName, subscriptionName, project, subscriptionName, project, subscriptionName, subscriptionName, topicName, topicName, subscriptionName)
+gcloud pubsub subscriptions describe %s --project=%s --format=json > ./pubsub-export/subscription-config.json
+test -s config/nats/pubsub-consumer.json
+echo "Pub/Sub subscription %s mapped to NATS JetStream consumer %s on pubsub.%s.>"
+`, subscriptionName, project, subscriptionName, pubSubStreamName(subscriptionName), topicName)
 }
 
 func (m *PubSubSubscriptionMapper) generateAppChangeConfig(subscriptionName, topicName string) string {
-	return fmt.Sprintf("APP_CHANGE_MODE=generated_patch\nSOURCE_PUBSUB_SUBSCRIPTION=%s\nSOURCE_PUBSUB_TOPIC=%s\nTARGET_AMQP_URL=amqp://guest:guest@rabbitmq:5672/\nTARGET_EXCHANGE=%s\nTARGET_QUEUE=%s\n", subscriptionName, topicName, topicName, subscriptionName)
+	return fmt.Sprintf(`APP_CHANGE_MODE=adapter
+SOURCE_PUBSUB_SUBSCRIPTION=%s
+SOURCE_PUBSUB_TOPIC=%s
+PUBSUB_EMULATOR_HOST=http://homeport:8080/api/v1/compat/gcp/pub-sub
+HOMEPORT_COMPAT_BACKEND=nats-jetstream
+HOMEPORT_COMPAT_PROTOCOL=gcp-pubsub
+NATS_URL=nats://nats:4222
+NATS_SUBJECT=pubsub.%s.>
+NATS_CONSUMER=%s
+`, subscriptionName, topicName, topicName, pubSubStreamName(subscriptionName))
 }
 
 func (m *PubSubSubscriptionMapper) generateValidateScript(subscriptionName string) string {
-	return fmt.Sprintf("#!/bin/sh\nset -eu\ntest -s config/pubsub/app-change.env\nrabbitmq-diagnostics -q ping\necho \"Pub/Sub subscription %s RabbitMQ target validated\"\n", subscriptionName)
+	return fmt.Sprintf(`#!/bin/sh
+set -eu
+curl -fsS http://localhost:8222/healthz >/tmp/homeport-nats-pubsub-subscription-health.txt
+test -s config/nats/nats.conf
+test -s config/nats/pubsub-consumer.json
+grep -q %q config/nats/pubsub-consumer.json
+test -s config/pubsub/app-change.env
+grep -q "HOMEPORT_COMPAT_BACKEND=nats-jetstream" config/pubsub/app-change.env
+`, pubSubStreamName(subscriptionName))
 }
 
 func (m *PubSubSubscriptionMapper) generateBackupScript(subscriptionName string) string {
-	return fmt.Sprintf("#!/bin/sh\nset -eu\narchive=\"${BACKUP_DIR:-./backups}/pubsub-subscription-%s-$(date +%%Y%%m%%d%%H%%M%%S).tgz\"\nmkdir -p \"$(dirname \"$archive\")\"\ntar -czf \"$archive\" config/rabbitmq config/pubsub data/rabbitmq pubsub-export\necho \"$archive\"\n", subscriptionName)
+	return fmt.Sprintf(`#!/bin/sh
+set -eu
+archive="${BACKUP_DIR:-./backups}/pubsub-subscription-%s-nats-$(date +%%Y%%m%%d%%H%%M%%S).tgz"
+mkdir -p "$(dirname "$archive")"
+tar -czf "$archive" config/nats config/pubsub scripts/migrate-pubsub-subscription.sh scripts/validate-pubsub-subscription.sh scripts/cutover-pubsub-subscription.sh pubsub-export
+echo "$archive"
+`, subscriptionName)
+}
+
+func (m *PubSubSubscriptionMapper) generateCutoverScript(subscriptionName string) string {
+	return fmt.Sprintf(`#!/bin/sh
+set -eu
+. config/pubsub/app-change.env
+test "$SOURCE_PUBSUB_SUBSCRIPTION" = %q
+test "$APP_CHANGE_MODE" = "adapter"
+test "$HOMEPORT_COMPAT_BACKEND" = "nats-jetstream"
+echo "Use PUBSUB_EMULATOR_HOST=$PUBSUB_EMULATOR_HOST for Pub/Sub subscription clients"
+`, subscriptionName)
 }
 
 func pubSubSubscriptionRunbook(subscriptionName string) []domainrunbook.Step {
-	metadata := map[string]string{"kind": "messaging", "source": "google_pubsub_subscription", "subscription": subscriptionName, "target": "rabbitmq"}
+	metadata := map[string]string{
+		"kind":                    "messaging",
+		"source":                  "google_pubsub_subscription",
+		"subscription":            subscriptionName,
+		"target":                  "nats-jetstream",
+		"HOMEPORT_COMPAT_BACKEND": "nats-jetstream",
+		"PUBSUB_EMULATOR_HOST":    "http://homeport:8080/api/v1/compat/gcp/pub-sub",
+		"NATS_CONSUMER":           pubSubStreamName(subscriptionName),
+	}
 	return []domainrunbook.Step{
-		pubSubSubscriptionStep("export-pubsub-subscription", "Export Pub/Sub subscription", "Discovery", domainrunbook.StepTypeCommand, []string{"sh", "scripts/migrate-pubsub-subscription.sh"}, "subscription config and optional pending messages are exported", metadata),
-		pubSubSubscriptionStep("validate-pubsub-subscription", "Validate RabbitMQ subscription target", "Validate", domainrunbook.StepTypeCommand, []string{"sh", "scripts/validate-pubsub-subscription.sh"}, "RabbitMQ queue and app-change config validate", metadata),
-		pubSubSubscriptionStep("backup-pubsub-subscription", "Backup Pub/Sub subscription config", "Backup", domainrunbook.StepTypeCommand, []string{"sh", "scripts/backup-pubsub-subscription.sh"}, "RabbitMQ Pub/Sub subscription config is archived", metadata),
-		pubSubSubscriptionStep("cutover-pubsub-subscription", "Cut over Pub/Sub subscription clients", "Cutover", domainrunbook.StepTypeAPICall, []string{"sh", "-c", "test -s config/pubsub/app-change.env"}, "consumers use generated AMQP queue", metadata),
+		pubSubSubscriptionStep("export-pubsub-subscription", "Export Pub/Sub subscription", "Discovery", domainrunbook.StepTypeCommand, []string{"sh", "scripts/migrate-pubsub-subscription.sh"}, "subscription config is exported and consumer mapping exists", metadata),
+		pubSubSubscriptionStep("validate-pubsub-subscription-adapter", "Validate Pub/Sub subscription adapter", "Validate", domainrunbook.StepTypeCommand, []string{"sh", "scripts/validate-pubsub-subscription.sh"}, "NATS health and Pub/Sub subscription adapter config validate", metadata),
+		pubSubSubscriptionStep("backup-pubsub-subscription", "Backup Pub/Sub subscription config", "Backup", domainrunbook.StepTypeCommand, []string{"sh", "scripts/backup-pubsub-subscription.sh"}, "Pub/Sub subscription and NATS migration artifacts are archived", metadata),
+		pubSubSubscriptionStep("cutover-pubsub-subscription", "Cut over Pub/Sub subscription clients", "Cutover", domainrunbook.StepTypeAPICall, []string{"sh", "scripts/cutover-pubsub-subscription.sh"}, "Pub/Sub clients use HomePort compatibility endpoint", metadata),
 		pubSubSubscriptionStep("rollback-pubsub-subscription-source", "Keep Pub/Sub subscription source authoritative", "Rollback", domainrunbook.StepTypeRollback, nil, "Pub/Sub subscription remains authoritative until cutover passes", metadata),
 	}
 }
@@ -358,40 +187,24 @@ func pubSubSubscriptionStep(id, name, group string, stepType domainrunbook.StepT
 	return domainrunbook.Step{ID: id, Name: name, Group: group, Type: stepType, Status: domainrunbook.StepStatusPending, Executor: executor, Command: command, SuccessCondition: success, Metadata: metadata}
 }
 
-func (m *PubSubSubscriptionMapper) addMigrationWarnings(result *mapper.MappingResult, res *resource.AWSResource, subscriptionName, topicName string) {
-	// Push endpoint warning
+func (m *PubSubSubscriptionMapper) addMigrationWarnings(result *mapper.MappingResult, res *resource.AWSResource) {
 	if pushEndpoint := res.GetConfigString("push_endpoint"); pushEndpoint != "" {
-		result.AddWarning(fmt.Sprintf("Push subscription to %s detected. Configure RabbitMQ webhook plugin or consumer application.", pushEndpoint))
+		result.AddWarning(fmt.Sprintf("Push subscription to %s detected. Keep webhook delivery behind the Pub/Sub compatibility adapter.", pushEndpoint))
 	}
-
-	// Message ordering warning
 	if res.GetConfigBool("enable_message_ordering") {
-		result.AddWarning("Message ordering enabled. Use single active consumer pattern in RabbitMQ.")
+		result.AddWarning("Message ordering enabled. Generated JetStream consumer uses explicit ack policy.")
 	}
-
-	// Exactly once delivery warning
 	if res.GetConfigBool("enable_exactly_once_delivery") {
-		result.AddWarning("Exactly-once delivery enabled. RabbitMQ provides at-least-once by default.")
+		result.AddWarning("Exactly-once delivery enabled. JetStream consumer config is durable, but provider parity still needs contract tests.")
 	}
-
-	// Filter warning
 	if filter := res.GetConfigString("filter"); filter != "" {
-		result.AddWarning(fmt.Sprintf("Subscription filter detected: %s. Convert to RabbitMQ routing keys.", filter))
+		result.AddWarning(fmt.Sprintf("Subscription filter captured for adapter-side evaluation: %s", filter))
 	}
-
-	// Retry policy warning
 	if res.Config["retry_policy"] != nil {
-		result.AddWarning("Retry policy configured. Configure RabbitMQ dead letter exchange for failed messages.")
+		result.AddWarning("Retry policy configured. Generated JetStream max_deliver seed requires provider contract validation.")
 	}
-
-	// Dead letter topic warning
 	if deadLetterTopic := res.GetConfigString("dead_letter_topic"); deadLetterTopic != "" {
-		result.AddWarning(fmt.Sprintf("Dead letter topic %s configured. DLX has been set up in RabbitMQ definitions.", deadLetterTopic))
+		result.AddWarning(fmt.Sprintf("Dead letter topic %s captured; durable delivery parity remains a backend contract gap.", deadLetterTopic))
 	}
-
-	// Volumes
-	result.AddVolume(mapper.Volume{
-		Name:   "rabbitmq-data",
-		Driver: "local",
-	})
+	result.AddVolume(mapper.Volume{Name: "nats-data", Driver: "local"})
 }

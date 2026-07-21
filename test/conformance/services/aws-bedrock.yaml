@@ -14,4 +14,4 @@ checks:
   rollback: GOCACHE=/private/tmp/exit-gafam-go-build go test ./internal/infrastructure/mapper/compute -run TestBedrockConformanceManagedAToZ
 evidence:
   target: Ollama Bedrock adapter
-  app_change_mode: adapter
+  app_change_mode: generated_patch

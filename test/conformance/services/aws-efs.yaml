@@ -5,7 +5,7 @@ checks:
   cost: GOCACHE=/private/tmp/exit-gafam-go-build go test ./internal/infrastructure/mapper/storage -run TestEFSConformanceManagedAToZ
   provision: GOCACHE=/private/tmp/exit-gafam-go-build go test ./internal/infrastructure/mapper/storage -run TestEFSConformanceManagedAToZ
   migrate: GOCACHE=/private/tmp/exit-gafam-go-build go test ./internal/infrastructure/mapper/storage -run TestEFSConformanceManagedAToZ
-  api_compat: GOCACHE=/private/tmp/exit-gafam-go-build go test ./internal/infrastructure/mapper/storage -run TestEFSConformanceManagedAToZ
+  api_compat: GOCACHE=/private/tmp/exit-gafam-go-build go test ./test/compat -run EFS
   env_dns: GOCACHE=/private/tmp/exit-gafam-go-build go test ./internal/infrastructure/mapper/storage -run TestEFSConformanceManagedAToZ
   ha: GOCACHE=/private/tmp/exit-gafam-go-build go test ./internal/infrastructure/mapper/storage -run TestEFSConformanceManagedAToZ
   backup: GOCACHE=/private/tmp/exit-gafam-go-build go test ./internal/infrastructure/mapper/storage -run TestEFSConformanceManagedAToZ
@@ -14,4 +14,5 @@ checks:
   rollback: GOCACHE=/private/tmp/exit-gafam-go-build go test ./internal/infrastructure/mapper/storage -run TestEFSConformanceManagedAToZ
 evidence:
   target: NFS server
-  app_change_mode: generated_patch
+  app_change_mode: adapter
+  api_compat_covers: sdk_lifecycle,aws_cli_smoke,terraform_smoke,boto3_smoke,lifecycle_configuration_read,file_system_pagination,mount_targets,mount_target_count,mount_target_pagination,access_points,access_point_pagination,dependency_lifecycle

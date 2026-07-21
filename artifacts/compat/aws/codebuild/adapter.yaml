@@ -1,0 +1,23 @@
+adapter:
+  provider: aws
+  service: codebuild
+  route: /compat/aws/codebuild
+  actions:
+    create: codebuild:CreateProject
+    batch_get: codebuild:BatchGetProjects
+    list: codebuild:ListProjects
+    update: codebuild:UpdateProject
+    delete: codebuild:DeleteProject
+  resource:
+    pattern: arn:aws:codebuild:us-east-1:000000000000:project/{id}
+  errors:
+    InvalidInputException: invalid request or list token
+    ResourceAlreadyExistsException: duplicate project
+    ResourceNotFoundException: missing project
+    AccountLimitExceededException: configured project quota exceeded
+    AccessDeniedException: denied authorization decision
+    InternalError: authorizer failure
+  pagination:
+    projects: [nextToken, sortOrder]
+  quota:
+    option: WithCodeBuildProjectQuota

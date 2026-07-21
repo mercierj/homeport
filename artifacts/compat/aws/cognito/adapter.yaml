@@ -1,0 +1,34 @@
+adapter:
+  provider: aws
+  service: cognito
+  route: /compat/aws/cognito
+  target: keycloak
+  actions:
+    create_user_pool: cognito-idp:CreateUserPool
+    describe_user_pool: cognito-idp:DescribeUserPool
+    list_user_pools: cognito-idp:ListUserPools
+    update_user_pool: cognito-idp:UpdateUserPool
+    delete_user_pool: cognito-idp:DeleteUserPool
+    get_mfa_config: cognito-idp:GetUserPoolMfaConfig
+    manage_clients: cognito-idp:CreateUserPoolClient,DescribeUserPoolClient,ListUserPoolClients,UpdateUserPoolClient,DeleteUserPoolClient
+    manage_domains: cognito-idp:CreateUserPoolDomain,DescribeUserPoolDomain,DeleteUserPoolDomain
+    manage_users: cognito-idp:AdminCreateUser,AdminGetUser,ListUsers,AdminDeleteUser
+    manage_groups: cognito-idp:CreateGroup,GetGroup,ListGroups,UpdateGroup,DeleteGroup,AdminAddUserToGroup,AdminListGroupsForUser,AdminRemoveUserFromGroup
+    manage_tags: cognito-idp:TagResource,ListTagsForResource,UntagResource
+  resource:
+    pattern: arn:aws:cognito-idp:{region}:{account}:userpool/{id}
+  errors:
+    NotAuthorizedException: denied authorization decision
+    ResourceNotFoundException: missing user-pool resource
+    LimitExceededException: user-pool quota exceeded
+    InvalidParameterException: invalid request or pagination field
+    UsernameExistsException: duplicate user
+    GroupExistsException: duplicate group
+    UnsupportedOperation: unsupported Cognito action
+    InternalErrorException: unexpected adapter failure
+  quota:
+    option: WithCognitoUserPoolQuota
+  pagination:
+    user_pools: [MaxResults, NextToken]
+    users: [Limit, PaginationToken]
+    groups: [Limit, NextToken]

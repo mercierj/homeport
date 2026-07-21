@@ -8,13 +8,13 @@ Expose the smallest GCP Spanner-compatible surface needed to migrate the ledger 
 
 - Initial supported surface: spanner.projects.instances.create -> spanner.projects.instances.get -> spanner.projects.instances.list -> spanner.projects.instances.update -> spanner.projects.instances.delete.
 - Actions explicitly not supported first: Spanner console-only workflows, account billing, quota purchase flows, and managed cross-region failover controls outside `spanner.projects.instances.create` and its paired read/list calls.
-- Ledger resource types: `google_spanner_instance`.
+- Ledger resource types: `google_spanner_instance`
 - Provider errors: map Spanner authorization failures to GCP access-denied codes, missing `google_spanner_instance` records to not-found codes, duplicate imports to conflict/already-exists, invalid mapped fields to validation errors, backend saturation to throttle/quota responses, and unexpected `gcp/spanner` failures to provider internal-error shapes with request ids.
 - Pagination/idempotency/tags: list/read calls expose provider tokens where the API has them; mutating calls persist idempotency keys or operation ids; tags/labels round-trip on `google_spanner_instance`.
 
 ## Backend
 
-- Backend: CockroachDB.
+- Backend: CockroachDB with generated PostgreSQL client patch.
 - Storage and metadata: Spanner state lives in `CockroachDB`; HomePort stores provider identifiers for `google_spanner_instance`, source import ids, authz bindings, generated artifact checksums, backup references, and audit events.
 - Secrets/keys/tokens: issue HomePort-scoped credentials from the identity/secrets layer; store provider source credentials only as encrypted migration inputs.
 - Runtime/provisioning: provision `CockroachDB` with generated `artifacts/compat/gcp/spanner/backend.yaml`, health endpoint, persistence volume, backup job, endpoint route, and teardown script for `gcp/spanner`.

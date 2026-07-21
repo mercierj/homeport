@@ -1,0 +1,24 @@
+version: 1
+provider: aws
+service: ecr
+route: /compat/aws/ecr
+actions:
+  create: ecr:CreateRepository
+  describe: ecr:DescribeRepositories
+  list_images: ecr:ListImages
+  delete: ecr:DeleteRepository
+resource:
+  pattern: arn:aws:ecr:{region}:{account}:repository/{id}
+errors:
+  AccessDeniedException: denied authorization decision
+  RepositoryAlreadyExistsException: duplicate repository
+  RepositoryNotFoundException: missing repository
+  InvalidParameterException: invalid request
+  LimitExceededException: repository quota exceeded
+  ServerException: unexpected adapter failure
+pagination:
+  token: nextToken
+  methods:
+    - DescribeRepositories
+quota:
+  max_repositories_default: 100

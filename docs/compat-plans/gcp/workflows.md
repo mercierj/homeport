@@ -8,14 +8,14 @@ Expose the smallest GCP Workflows-compatible surface needed to migrate the ledge
 
 - Initial supported surface: workflows.projects.locations.workflows.create -> workflows.projects.locations.workflows.get -> workflows.projects.locations.workflows.list -> workflows.projects.locations.workflows.patch -> workflows.projects.locations.workflows.delete; executions.create/list.
 - Actions explicitly not supported first: Workflows console-only workflows, account billing, quota purchase flows, and managed cross-region failover controls outside `workflows.projects.locations.workflows.create` and its paired read/list calls.
-- Ledger resource types: no resource type currently modeled in the ledger.
+- Ledger resource types: `google_workflows_workflow`
 - First concrete resource model to add: service-specific model with import id, region/location, labels/tags, backend target id, lifecycle state, and owner principal.
 - Provider errors: map Workflows authorization failures to GCP access-denied codes, missing `planned resource model` records to not-found codes, duplicate imports to conflict/already-exists, invalid mapped fields to validation errors, backend saturation to throttle/quota responses, and unexpected `gcp/workflows` failures to provider internal-error shapes with request ids.
 - Pagination/idempotency/tags: list/read calls expose provider tokens where the API has them; mutating calls persist idempotency keys or operation ids; tags/labels round-trip on the planned resource model.
 
 ## Backend
 
-- Backend: Temporal workflows.
+- Backend: Temporal.
 - Storage and metadata: Workflows state lives in `Temporal workflows`; HomePort stores provider identifiers for `planned resource model`, source import ids, authz bindings, generated artifact checksums, backup references, and audit events.
 - Secrets/keys/tokens: issue HomePort-scoped credentials from the identity/secrets layer; store provider source credentials only as encrypted migration inputs.
 - Runtime/provisioning: provision `Temporal workflows` with generated `artifacts/compat/gcp/workflows/backend.yaml`, health endpoint, persistence volume, backup job, endpoint route, and teardown script for `gcp/workflows`.

@@ -1,0 +1,37 @@
+adapter:
+  provider: aws
+  service: s3
+  route: /compat/aws/s3
+  protocol: s3-rest-xml
+  actions:
+    create: s3:CreateBucket
+    head: s3:HeadBucket
+    put: s3:PutObject
+    get: s3:GetObject
+    delete: s3:DeleteObject
+  resource:
+    bucket_pattern: arn:aws:s3:{region}:{account}:s3/{bucket}
+    object_pattern: arn:aws:s3:{region}:{account}:s3/{bucket}/{key}
+  errors:
+    AccessDenied: denied authorization decision
+    NoSuchBucket: missing bucket resource
+    NoSuchKey: missing object resource
+    BucketAlreadyOwnedByYou: duplicate bucket create
+    InvalidRequest: malformed request or invalid mapped field
+    SlowDown: object quota exceeded
+    InternalError: authorizer failure
+  pagination:
+    max_keys: max-keys
+    continuation_token: continuation-token
+  idempotency:
+    header: X-Idempotency-Key
+    methods:
+      - CreateBucket
+      - PutObject
+      - PutBucketTagging
+  quota:
+    object_quota: configurable; default unlimited
+  unsupported:
+    - persistent_minio_backend
+    - cutover
+    - rollback

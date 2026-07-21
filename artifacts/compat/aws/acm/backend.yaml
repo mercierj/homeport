@@ -1,0 +1,15 @@
+backend:
+  provider: aws
+  service: acm
+  target: traefik-acme
+  runtime:
+    image: traefik:v3
+    health_path: /ping
+  persistence:
+    volume: acm-traefik-data
+    mount_path: /data
+  backup:
+    schedule: daily
+    command: tar -czf /backup/traefik-acme.tgz /data
+  endpoint:
+    route: /compat/aws/acm

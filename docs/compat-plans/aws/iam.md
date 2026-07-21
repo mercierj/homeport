@@ -6,9 +6,9 @@ Expose the smallest AWS IAM-compatible surface needed to migrate the ledger reso
 
 ## Provider API Surface
 
-- Initial supported surface: iam:CreateRole, iam:GetRole, iam:ListRoles, iam:UpdateRole, iam:DeleteRole.
+- Initial supported surface: iam roles, inline and managed policies with versions, instance profiles, and role tags.
 - Actions explicitly not supported first: IAM console-only workflows, account billing, quota purchase flows, and managed cross-region failover controls outside `iam:CreateRole` and its paired read/list calls.
-- Ledger resource types: `aws_iam_role`.
+- Ledger resource types: `aws_iam_role`
 - Provider errors: map IAM authorization failures to AWS access-denied codes, missing `aws_iam_role` records to not-found codes, duplicate imports to conflict/already-exists, invalid mapped fields to validation errors, backend saturation to throttle/quota responses, and unexpected `aws/iam` failures to provider internal-error shapes with request ids.
 - Pagination/idempotency/tags: list/read calls expose provider tokens where the API has them; mutating calls persist idempotency keys or operation ids; tags/labels round-trip on `aws_iam_role`.
 
@@ -22,7 +22,7 @@ Expose the smallest AWS IAM-compatible surface needed to migrate the ledger reso
 ## Authz Model
 
 - Principal: HomePort subject mapped from AWS user/role/service account/managed identity/session token.
-- Actions: iam:CreateRole, iam:GetRole, iam:ListRoles, iam:UpdateRole, iam:DeleteRole.
+- Actions: iam:CreateRole, iam:GetRole, iam:ListRoles, iam:UpdateRole, iam:DeleteRole, role policy operations, managed policy/version operations, instance-profile operations, iam:ListRoleTags, iam:TagRole, iam:UntagRole.
 - Resource: arn:aws:iam:{region}:{account}:iam/{id}.
 - Context: evaluate IAM calls with tenant/project/account, provider region/location, `arn:aws:iam:{region}:{account}:iam/{id}`, source IP, request id, user agent, tags/labels on `aws_iam_role`, credential age, and MFA/managed-identity claims when the source provider supplies them.
 - Evaluation: call `Authorize(principal, action, resource, context)` before each mutating operation and each data-plane read/write.
@@ -46,13 +46,14 @@ Expose the smallest AWS IAM-compatible surface needed to migrate the ledger reso
 ## Contract Tests
 
 - AWS SDK for Go v2 exercises CreateRole -> GetRole -> ListRoles -> UpdateRole -> DeleteRole against `/compat/aws/iam` and asserts provider-shaped request, response, error, authz, retry, and pagination behavior.
+- Terraform applies and destroys `aws_iam_role` with tags through a provider IAM endpoint override, including empty inline, attached-policy, and instance-profile read-back.
 - Fixture import covers `aws_iam_role` from `aws/iam`.
 - Negative cases: denied principal, missing resource, malformed request, duplicate/conflict, expired credential, backend timeout, and quota/throttle.
 - Cross-service case: one allowed and one denied call pass through the central authorization engine and emit audit events.
 
 ## Compatibility Level
 
-- Current level: L3 - ledger migration path is complete; provider SDK/REST conformance still blocks L4.
+- Current level: L3 seed - AWS SDK, AWS CLI, and Terraform endpoint-override checks cover the local IAM adapter, but Keycloak durability and full acceptance gates still block L4.
 - Target level: L4 after `test/conformance/services/aws-iam.yaml` passes in CI.
 - Blocking gaps: `test/conformance/services/aws-iam.yaml` must prove provider error, pagination, idempotency, authz, quota, and audit behavior before promotion.
 - Path to close gaps: generate backend artifacts, implement the endpoint mapping above, add `test/conformance/services/aws-iam.yaml`, then promote only when that manifest passes in CI.

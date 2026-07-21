@@ -1,0 +1,24 @@
+adapter:
+  provider: aws
+  service: stepfunctions
+  route: /compat/aws/stepfunctions
+  actions:
+    create: states:CreateStateMachine
+    describe: states:DescribeStateMachine
+    list: states:ListStateMachines
+    update: states:UpdateStateMachine
+    delete: states:DeleteStateMachine
+  resource:
+    pattern: arn:aws:states:us-east-1:000000000000:stateMachine:{id}
+  errors:
+    InvalidDefinition: invalid request
+    StateMachineAlreadyExists: duplicate state machine
+    StateMachineDoesNotExist: missing state machine
+    StateMachineLimitExceeded: configured state-machine quota exceeded
+    AccessDeniedException: denied authorization decision
+    InternalError: authorizer failure
+    InvalidAction: unsupported action
+  pagination:
+    state_machines: [maxResults, nextToken]
+  quota:
+    option: WithStepFunctionsStateMachineQuota

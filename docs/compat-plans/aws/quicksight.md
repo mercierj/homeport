@@ -8,7 +8,7 @@ Expose the smallest AWS QuickSight-compatible surface needed to migrate the ledg
 
 - Initial supported surface: quicksight:CreateDashboard, quicksight:DescribeDashboard, quicksight:ListDashboards, quicksight:UpdateDashboard, quicksight:DeleteDashboard.
 - Actions explicitly not supported first: QuickSight console-only workflows, account billing, quota purchase flows, and managed cross-region failover controls outside `quicksight:CreateDashboard` and its paired read/list calls.
-- Ledger resource types: `aws_quicksight_dashboard`.
+- Ledger resource types: `aws_quicksight_dashboard`
 - Provider errors: map QuickSight authorization failures to AWS access-denied codes, missing `aws_quicksight_dashboard` records to not-found codes, duplicate imports to conflict/already-exists, invalid mapped fields to validation errors, backend saturation to throttle/quota responses, and unexpected `aws/quicksight` failures to provider internal-error shapes with request ids.
 - Pagination/idempotency/tags: list/read calls expose provider tokens where the API has them; mutating calls persist idempotency keys or operation ids; tags/labels round-trip on `aws_quicksight_dashboard`.
 

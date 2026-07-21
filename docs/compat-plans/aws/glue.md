@@ -8,7 +8,7 @@ Expose the smallest AWS Glue-compatible surface needed to migrate the ledger res
 
 - Initial supported surface: glue:CreateTable, glue:GetTable, glue:GetTables, glue:UpdateTable, glue:DeleteTable.
 - Actions explicitly not supported first: Glue console-only workflows, account billing, quota purchase flows, and managed cross-region failover controls outside `glue:CreateTable` and its paired read/list calls.
-- Ledger resource types: `aws_glue_catalog_database`.
+- Ledger resource types: `aws_glue_catalog_database`
 - Provider errors: map Glue authorization failures to AWS access-denied codes, missing `aws_glue_catalog_database` records to not-found codes, duplicate imports to conflict/already-exists, invalid mapped fields to validation errors, backend saturation to throttle/quota responses, and unexpected `aws/glue` failures to provider internal-error shapes with request ids.
 - Pagination/idempotency/tags: list/read calls expose provider tokens where the API has them; mutating calls persist idempotency keys or operation ids; tags/labels round-trip on `aws_glue_catalog_database`.
 

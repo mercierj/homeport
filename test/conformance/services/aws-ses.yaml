@@ -1,17 +1,18 @@
 provider: aws
 service: SES
 checks:
-  discover: GOCACHE=/private/tmp/exit-gafam-go-build go test ./internal/infrastructure/mapper/messaging -run TestSESConformanceManagedAToZ
-  cost: GOCACHE=/private/tmp/exit-gafam-go-build go test ./internal/infrastructure/mapper/messaging -run TestSESConformanceManagedAToZ
-  provision: GOCACHE=/private/tmp/exit-gafam-go-build go test ./internal/infrastructure/mapper/messaging -run TestSESConformanceManagedAToZ
-  migrate: GOCACHE=/private/tmp/exit-gafam-go-build go test ./internal/infrastructure/mapper/messaging -run TestSESConformanceManagedAToZ
-  api_compat: GOCACHE=/private/tmp/exit-gafam-go-build go test ./internal/infrastructure/mapper/messaging -run TestSESConformanceManagedAToZ
-  env_dns: GOCACHE=/private/tmp/exit-gafam-go-build go test ./internal/infrastructure/mapper/messaging -run TestSESConformanceManagedAToZ
-  ha: GOCACHE=/private/tmp/exit-gafam-go-build go test ./internal/infrastructure/mapper/messaging -run TestSESConformanceManagedAToZ
-  backup: GOCACHE=/private/tmp/exit-gafam-go-build go test ./internal/infrastructure/mapper/messaging -run TestSESConformanceManagedAToZ
-  validate: GOCACHE=/private/tmp/exit-gafam-go-build go test ./internal/infrastructure/mapper/messaging -run TestSESConformanceManagedAToZ
-  cutover: GOCACHE=/private/tmp/exit-gafam-go-build go test ./internal/infrastructure/mapper/messaging -run TestSESConformanceManagedAToZ
-  rollback: GOCACHE=/private/tmp/exit-gafam-go-build go test ./internal/infrastructure/mapper/messaging -run TestSESConformanceManagedAToZ
+  discover: sh -c 'echo "SES discover gate is not covered by the endpoint-override seed" >&2; exit 1'
+  cost: sh -c 'echo "SES cost gate is not covered by the endpoint-override seed" >&2; exit 1'
+  provision: sh -c 'echo "SES provision gate is not covered by the endpoint-override seed" >&2; exit 1'
+  migrate: sh -c 'echo "SES migrate gate is not covered by the endpoint-override seed" >&2; exit 1'
+  api_compat: GOCACHE=/private/tmp/exit-gafam-go-build go test ./test/compat -run SES
+  env_dns: sh -c 'echo "SES env_dns gate is not covered by the endpoint-override seed" >&2; exit 1'
+  ha: sh -c 'echo "SES ha gate is not covered by the endpoint-override seed" >&2; exit 1'
+  backup: sh -c 'echo "SES backup gate is not covered by the endpoint-override seed" >&2; exit 1'
+  validate: sh -c 'echo "SES validate gate is not covered by the endpoint-override seed" >&2; exit 1'
+  cutover: sh -c 'echo "SES cutover gate is not covered by the endpoint-override seed" >&2; exit 1'
+  rollback: sh -c 'echo "SES rollback gate is not covered by the endpoint-override seed" >&2; exit 1'
 evidence:
-  target: Postal
-  app_change_mode: generated_patch
+  target: Postal with HomePort SES compatibility adapter
+  app_change_mode: adapter
+  api_compat_covers: sdk_lifecycle,aws_cli_smoke,terraform_smoke,boto3_smoke,sesv2_identity_tags,dkim,identity_policies,send_email,send_raw_email,template_lifecycle,templated_email,bulk_templated_email,provider_errors,pagination,quota,authz,audit

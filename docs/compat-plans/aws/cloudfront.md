@@ -8,7 +8,7 @@ Expose the smallest AWS CloudFront-compatible surface needed to migrate the ledg
 
 - Initial supported surface: cloudfront:CreateDistribution, cloudfront:GetDistribution, cloudfront:ListDistributions, cloudfront:UpdateDistribution, cloudfront:DeleteDistribution.
 - Actions explicitly not supported first: CloudFront console-only workflows, account billing, quota purchase flows, and managed cross-region failover controls outside `cloudfront:CreateDistribution` and its paired read/list calls.
-- Ledger resource types: `aws_cloudfront_distribution`.
+- Ledger resource types: `aws_cloudfront_distribution`
 - Provider errors: map CloudFront authorization failures to AWS access-denied codes, missing `aws_cloudfront_distribution` records to not-found codes, duplicate imports to conflict/already-exists, invalid mapped fields to validation errors, backend saturation to throttle/quota responses, and unexpected `aws/cloudfront` failures to provider internal-error shapes with request ids.
 - Pagination/idempotency/tags: list/read calls expose provider tokens where the API has them; mutating calls persist idempotency keys or operation ids; tags/labels round-trip on `aws_cloudfront_distribution`.
 

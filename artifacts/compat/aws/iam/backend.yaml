@@ -1,0 +1,15 @@
+backend:
+  provider: aws
+  service: iam
+  target: keycloak
+  runtime:
+    image: quay.io/keycloak/keycloak:latest
+    command: start-dev
+  persistence:
+    volume: iam-keycloak-data
+    mount_path: /opt/keycloak/data
+  backup:
+    schedule: daily
+    command: kc.sh export --dir /tmp/keycloak-export
+  endpoint:
+    route: /compat/aws/iam

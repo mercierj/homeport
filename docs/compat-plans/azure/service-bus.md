@@ -8,13 +8,13 @@ Expose the smallest Azure Service Bus-compatible surface needed to migrate the l
 
 - Initial supported surface: Microsoft.ServiceBus/namespaces/queues/read, Microsoft.ServiceBus/namespaces/queues/write, Microsoft.ServiceBus/namespaces/queues/delete.
 - Actions explicitly not supported first: Service Bus console-only workflows, account billing, quota purchase flows, and managed cross-region failover controls outside `Microsoft.ServiceBus/namespaces/queues/read` and its paired read/list calls.
-- Ledger resource types: `azurerm_servicebus_namespace`, `azurerm_servicebus_queue`.
+- Ledger resource types: `azurerm_servicebus_namespace`, `azurerm_servicebus_queue`
 - Provider errors: map Service Bus authorization failures to Azure access-denied codes, missing `azurerm_servicebus_namespace` records to not-found codes, duplicate imports to conflict/already-exists, invalid mapped fields to validation errors, backend saturation to throttle/quota responses, and unexpected `azure/service-bus` failures to provider internal-error shapes with request ids.
 - Pagination/idempotency/tags: list/read calls expose provider tokens where the API has them; mutating calls persist idempotency keys or operation ids; tags/labels round-trip on `azurerm_servicebus_namespace`.
 
 ## Backend
 
-- Backend: RabbitMQ with AMQP compatibility.
+- Backend: Not selected in `docs/coverage/services.yaml`.
 - Storage and metadata: Service Bus state lives in `RabbitMQ with AMQP compatibility`; HomePort stores provider identifiers for `azurerm_servicebus_namespace`, source import ids, authz bindings, generated artifact checksums, backup references, and audit events.
 - Secrets/keys/tokens: issue HomePort-scoped credentials from the identity/secrets layer; store provider source credentials only as encrypted migration inputs.
 - Runtime/provisioning: provision `RabbitMQ with AMQP compatibility` with generated `artifacts/compat/azure/service-bus/backend.yaml`, health endpoint, persistence volume, backup job, endpoint route, and teardown script for `azure/service-bus`.
@@ -52,7 +52,7 @@ Expose the smallest Azure Service Bus-compatible surface needed to migrate the l
 
 ## Compatibility Level
 
-- Current level: L2 - resource mapping exists, but backend selection and provider contract tests are incomplete.
+- Current level: L2 - resource mapping and a local queue API adapter seed exist, but backend artifacts, backend selection, and provider contract tests are incomplete.
 - Target level: L3 after backend artifacts, adapter mappings, and conformance tests are implemented.
-- Blocking gaps: no Azure Service Bus-compatible local API adapter exists yet; `test/conformance/services/azure-service-bus.yaml` must prove provider error, pagination, idempotency, authz, quota, and audit behavior before promotion.
-- Path to close gaps: generate backend artifacts, implement the endpoint mapping above, add `test/conformance/services/azure-service-bus.yaml`, then promote only when that manifest passes in CI.
+- Blocking gaps: `test/conformance/services/azure-service-bus.yaml` must prove provider error, pagination, idempotency, authz, quota, and audit behavior before promotion.
+- Path to close gaps: generate backend artifacts, extend the queue adapter contract above, add `test/conformance/services/azure-service-bus.yaml`, then promote only when that manifest passes in CI.

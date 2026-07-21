@@ -8,7 +8,7 @@ Expose the smallest AWS OpenSearch-compatible surface needed to migrate the ledg
 
 - Initial supported surface: es:CreateDomain, es:DescribeDomain, es:ListDomainNames, es:UpdateDomainConfig, es:DeleteDomain.
 - Actions explicitly not supported first: OpenSearch console-only workflows, account billing, quota purchase flows, and managed cross-region failover controls outside `es:CreateDomain` and its paired read/list calls.
-- Ledger resource types: `aws_opensearch_domain`.
+- Ledger resource types: `aws_opensearch_domain`
 - Provider errors: map OpenSearch authorization failures to AWS access-denied codes, missing `aws_opensearch_domain` records to not-found codes, duplicate imports to conflict/already-exists, invalid mapped fields to validation errors, backend saturation to throttle/quota responses, and unexpected `aws/opensearch` failures to provider internal-error shapes with request ids.
 - Pagination/idempotency/tags: list/read calls expose provider tokens where the API has them; mutating calls persist idempotency keys or operation ids; tags/labels round-trip on `aws_opensearch_domain`.
 

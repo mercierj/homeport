@@ -8,7 +8,7 @@ Expose the smallest AWS Config-compatible surface needed to migrate the ledger r
 
 - Initial supported surface: config:PutConfigRule, config:DescribeConfigRules, config:GetComplianceDetailsByConfigRule, config:DeleteConfigRule.
 - Actions explicitly not supported first: Config console-only workflows, account billing, quota purchase flows, and managed cross-region failover controls outside `config:PutConfigRule` and its paired read/list calls.
-- Ledger resource types: `aws_config_config_rule`.
+- Ledger resource types: `aws_config_config_rule`
 - Provider errors: map Config authorization failures to AWS access-denied codes, missing `aws_config_config_rule` records to not-found codes, duplicate imports to conflict/already-exists, invalid mapped fields to validation errors, backend saturation to throttle/quota responses, and unexpected `aws/config` failures to provider internal-error shapes with request ids.
 - Pagination/idempotency/tags: list/read calls expose provider tokens where the API has them; mutating calls persist idempotency keys or operation ids; tags/labels round-trip on `aws_config_config_rule`.
 

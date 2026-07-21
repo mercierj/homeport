@@ -6,9 +6,9 @@ Expose the smallest AWS Lambda-compatible surface needed to migrate the ledger r
 
 ## Provider API Surface
 
-- Initial supported surface: lambda:CreateFunction, lambda:GetFunction, lambda:Invoke, lambda:UpdateFunctionCode, lambda:DeleteFunction.
+- Initial supported surface: lambda:CreateFunction, lambda:GetFunction, lambda:ListFunctions, lambda:Invoke, lambda:UpdateFunctionCode, lambda:DeleteFunction, and function tag operations.
 - Actions explicitly not supported first: Lambda console-only workflows, account billing, quota purchase flows, and managed cross-region failover controls outside `lambda:CreateFunction` and its paired read/list calls.
-- Ledger resource types: `aws_lambda_function`.
+- Ledger resource types: `aws_lambda_function`
 - Provider errors: map Lambda authorization failures to AWS access-denied codes, missing `aws_lambda_function` records to not-found codes, duplicate imports to conflict/already-exists, invalid mapped fields to validation errors, backend saturation to throttle/quota responses, and unexpected `aws/lambda` failures to provider internal-error shapes with request ids.
 - Pagination/idempotency/tags: list/read calls expose provider tokens where the API has them; mutating calls persist idempotency keys or operation ids; tags/labels round-trip on `aws_lambda_function`.
 
@@ -22,7 +22,7 @@ Expose the smallest AWS Lambda-compatible surface needed to migrate the ledger r
 ## Authz Model
 
 - Principal: HomePort subject mapped from AWS user/role/service account/managed identity/session token.
-- Actions: lambda:CreateFunction, lambda:GetFunction, lambda:Invoke, lambda:UpdateFunctionCode, lambda:DeleteFunction.
+- Actions: lambda:CreateFunction, lambda:GetFunction, lambda:ListFunctions, lambda:Invoke, lambda:UpdateFunctionCode, lambda:DeleteFunction, lambda:ListTags, lambda:TagResource, lambda:UntagResource.
 - Resource: arn:aws:lambda:{region}:{account}:lambda/{id}.
 - Context: evaluate Lambda calls with tenant/project/account, provider region/location, `arn:aws:lambda:{region}:{account}:lambda/{id}`, source IP, request id, user agent, tags/labels on `aws_lambda_function`, credential age, and MFA/managed-identity claims when the source provider supplies them.
 - Evaluation: call `Authorize(principal, action, resource, context)` before each mutating operation and each data-plane read/write.
@@ -46,13 +46,14 @@ Expose the smallest AWS Lambda-compatible surface needed to migrate the ledger r
 ## Contract Tests
 
 - AWS SDK for Go v2 exercises CreateFunction -> GetFunction -> Invoke -> UpdateFunctionCode -> DeleteFunction against `/compat/aws/lambda` and asserts provider-shaped request, response, error, authz, retry, and pagination behavior.
+- Terraform applies and destroys `aws_lambda_function` with tags through a provider Lambda endpoint override.
 - Fixture import covers `aws_lambda_function` from `aws/lambda`.
 - Negative cases: denied principal, missing resource, malformed request, duplicate/conflict, expired credential, backend timeout, and quota/throttle.
 - Cross-service case: one allowed and one denied call pass through the central authorization engine and emit audit events.
 
 ## Compatibility Level
 
-- Current level: L3 - ledger migration path is complete; provider SDK/REST conformance still blocks L4.
+- Current level: L3 seed - AWS SDK, AWS CLI, and Terraform endpoint-override checks cover the local Lambda adapter, but OpenFaaS execution and full acceptance gates still block L4.
 - Target level: L4 after `test/conformance/services/aws-lambda.yaml` passes in CI.
 - Blocking gaps: `test/conformance/services/aws-lambda.yaml` must prove provider error, pagination, idempotency, authz, quota, and audit behavior before promotion.
 - Path to close gaps: generate backend artifacts, implement the endpoint mapping above, add `test/conformance/services/aws-lambda.yaml`, then promote only when that manifest passes in CI.

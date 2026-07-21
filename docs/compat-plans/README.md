@@ -2,6 +2,13 @@
 
 HomePort compatibility plans define how every provider service in the coverage ledger moves from generated migration artifacts to a provider-grade compatibility layer.
 
+For AWS plans generated before 2026-07-21, the compatibility mechanism in
+`docs/coverage/services.yaml` takes precedence over any endpoint/SDK language
+in an individual plan. See
+[`aws-api-compatibility-audit-2026-07-21.md`](../coverage/aws-api-compatibility-audit-2026-07-21.md)
+for the service-by-service boundary: `generated_patch` and `no_change` do not
+imply an AWS endpoint adapter.
+
 The coverage ledger remains the operational source of truth for current status. These plans define the target contract for adapters, backends, security semantics, and contract tests before a service can claim strong API compatibility.
 
 ## Compatibility Model
@@ -11,7 +18,9 @@ All services use the same levels:
 - L0: generated migration only, no compatibility API.
 - L1: real provisioning of the open-source or sovereign backend.
 - L2: partial API adapter for common calls.
-- L3: contractual API compatibility tested with the official provider SDK.
+- L3: contractual compatibility evidenced by the selected strategy: official
+  provider SDK tests for an endpoint adapter, or mapper/application
+  conformance where no provider API is exposed.
 - L4: advanced compatibility with fine-grained authz, provider-like errors, pagination, idempotency, lifecycle support, and reasonable quotas.
 
 Service targets:

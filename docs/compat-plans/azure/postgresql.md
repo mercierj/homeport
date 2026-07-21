@@ -8,13 +8,13 @@ Expose the smallest Azure PostgreSQL-compatible surface needed to migrate the le
 
 - Initial supported surface: Microsoft.DBforPostgreSQL/flexibleServers/read, Microsoft.DBforPostgreSQL/flexibleServers/write, Microsoft.DBforPostgreSQL/flexibleServers/delete.
 - Actions explicitly not supported first: PostgreSQL console-only workflows, account billing, quota purchase flows, and managed cross-region failover controls outside `Microsoft.DBforPostgreSQL/flexibleServers/read` and its paired read/list calls.
-- Ledger resource types: `azurerm_postgresql_flexible_server`.
+- Ledger resource types: `azurerm_postgresql_flexible_server`
 - Provider errors: map PostgreSQL authorization failures to Azure access-denied codes, missing `azurerm_postgresql_flexible_server` records to not-found codes, duplicate imports to conflict/already-exists, invalid mapped fields to validation errors, backend saturation to throttle/quota responses, and unexpected `azure/postgresql` failures to provider internal-error shapes with request ids.
 - Pagination/idempotency/tags: list/read calls expose provider tokens where the API has them; mutating calls persist idempotency keys or operation ids; tags/labels round-trip on `azurerm_postgresql_flexible_server`.
 
 ## Backend
 
-- Backend: PostgreSQL.
+- Backend: Not selected in `docs/coverage/services.yaml`.
 - Storage and metadata: PostgreSQL state lives in `PostgreSQL`; HomePort stores provider identifiers for `azurerm_postgresql_flexible_server`, source import ids, authz bindings, generated artifact checksums, backup references, and audit events.
 - Secrets/keys/tokens: issue HomePort-scoped credentials from the identity/secrets layer; store provider source credentials only as encrypted migration inputs.
 - Runtime/provisioning: provision `PostgreSQL` with generated `artifacts/compat/azure/postgresql/backend.yaml`, health endpoint, persistence volume, backup job, endpoint route, and teardown script for `azure/postgresql`.

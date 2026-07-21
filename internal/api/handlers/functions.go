@@ -71,6 +71,10 @@ func NewFunctionsHandler() (*FunctionsHandler, error) {
 	return &FunctionsHandler{service: svc}, nil
 }
 
+// Service exposes the local application service for composition by internal
+// handlers. HTTP handlers continue to own request validation.
+func (h *FunctionsHandler) Service() *functions.Service { return h.service }
+
 // CreateFunctionRequest represents the request body for creating a function.
 type CreateFunctionRequest struct {
 	Name           string            `json:"name"`

@@ -8,7 +8,7 @@ Expose the smallest GCP Apigee-compatible surface needed to migrate the ledger r
 
 - Initial supported surface: apigee.organizations.get -> apigee.organizations.environments.list -> apigee.organizations.apis.list.
 - Actions explicitly not supported first: Apigee console-only workflows, account billing, quota purchase flows, and managed cross-region failover controls outside `apigee.organizations.get` and its paired read/list calls.
-- Ledger resource types: `google_apigee_organization`.
+- Ledger resource types: `google_apigee_organization`
 - Provider errors: map Apigee authorization failures to GCP access-denied codes, missing `google_apigee_organization` records to not-found codes, duplicate imports to conflict/already-exists, invalid mapped fields to validation errors, backend saturation to throttle/quota responses, and unexpected `gcp/apigee` failures to provider internal-error shapes with request ids.
 - Pagination/idempotency/tags: list/read calls expose provider tokens where the API has them; mutating calls persist idempotency keys or operation ids; tags/labels round-trip on `google_apigee_organization`.
 

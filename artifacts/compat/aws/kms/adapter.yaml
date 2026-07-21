@@ -1,0 +1,28 @@
+adapter:
+  provider: aws
+  service: kms
+  route: /compat/aws/kms
+  actions:
+    create: kms:CreateKey
+    describe: kms:DescribeKey
+    list: kms:ListKeys
+    schedule_delete: kms:ScheduleKeyDeletion
+  resource:
+    pattern: arn:aws:kms:{region}:{account}:kms/{key}
+  errors:
+    AccessDeniedException: denied authorization decision
+    NotFoundException: missing key resource
+    AlreadyExistsException: duplicate key import or conflicting alias
+    InvalidRequestException: malformed request or invalid key state
+    LimitExceededException: key quota or backend saturation exceeded
+    KMSInternalException: unexpected adapter failure
+  pagination:
+    limit: Limit
+    marker: Marker
+  idempotency:
+    header: X-Idempotency-Key
+    methods:
+      - CreateKey
+      - ScheduleKeyDeletion
+  quota:
+    max_keys_default: 10000

@@ -1,0 +1,14 @@
+backend:
+  provider: aws
+  service: efs
+  target: nfs
+  runtime:
+    image: itsthenetwork/nfs-server-alpine:latest
+  persistence:
+    volume: efs-data
+    mount_path: /nfsshare
+  backup:
+    schedule: daily
+    command: tar -C /nfsshare -cf - .
+  endpoint:
+    route: /compat/aws/efs

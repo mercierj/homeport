@@ -8,7 +8,7 @@ Expose the smallest GCP Cloud Functions-compatible surface needed to migrate the
 
 - Initial supported surface: cloudfunctions.projects.locations.functions.create -> cloudfunctions.projects.locations.functions.get -> cloudfunctions.projects.locations.functions.list -> cloudfunctions.projects.locations.functions.patch -> cloudfunctions.projects.locations.functions.delete.
 - Actions explicitly not supported first: Cloud Functions console-only workflows, account billing, quota purchase flows, and managed cross-region failover controls outside `cloudfunctions.projects.locations.functions.create` and its paired read/list calls.
-- Ledger resource types: `google_cloudfunctions_function`.
+- Ledger resource types: `google_cloudfunctions_function`
 - Provider errors: map Cloud Functions authorization failures to GCP access-denied codes, missing `google_cloudfunctions_function` records to not-found codes, duplicate imports to conflict/already-exists, invalid mapped fields to validation errors, backend saturation to throttle/quota responses, and unexpected `gcp/cloud-functions` failures to provider internal-error shapes with request ids.
 - Pagination/idempotency/tags: list/read calls expose provider tokens where the API has them; mutating calls persist idempotency keys or operation ids; tags/labels round-trip on `google_cloudfunctions_function`.
 

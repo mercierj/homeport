@@ -8,7 +8,7 @@ Expose the smallest AWS SQS-compatible surface needed to migrate the ledger reso
 
 - Initial supported surface: sqs:CreateQueue, sqs:GetQueueAttributes, sqs:SendMessage, sqs:ReceiveMessage, sqs:DeleteQueue.
 - Actions explicitly not supported first: SQS console-only workflows, account billing, quota purchase flows, and managed cross-region failover controls outside `sqs:CreateQueue` and its paired read/list calls.
-- Ledger resource types: `aws_sqs_queue`.
+- Ledger resource types: `aws_sqs_queue`
 - Provider errors: map SQS authorization failures to AWS access-denied codes, missing `aws_sqs_queue` records to not-found codes, duplicate imports to conflict/already-exists, invalid mapped fields to validation errors, backend saturation to throttle/quota responses, and unexpected `aws/sqs` failures to provider internal-error shapes with request ids.
 - Pagination/idempotency/tags: list/read calls expose provider tokens where the API has them; mutating calls persist idempotency keys or operation ids; tags/labels round-trip on `aws_sqs_queue`.
 
@@ -45,14 +45,14 @@ Expose the smallest AWS SQS-compatible surface needed to migrate the ledger reso
 
 ## Contract Tests
 
-- AWS SDK for Go v2 exercises CreateQueue -> GetQueueAttributes -> SendMessage -> ReceiveMessage -> DeleteQueue against `/compat/aws/sqs` and asserts provider-shaped request, response, error, authz, retry, and pagination behavior.
+- AWS SDK for Go v2 exercises CreateQueue -> GetQueueAttributes -> SendMessage -> ReceiveMessage -> DeleteQueue against `/compat/aws/sqs` and asserts provider-shaped request, response, error, authz, retry, and pagination behavior; Terraform applies and destroys `aws_sqs_queue` through an AWS provider SQS endpoint override.
 - Fixture import covers `aws_sqs_queue` from `aws/sqs`.
 - Negative cases: denied principal, missing resource, malformed request, duplicate/conflict, expired credential, backend timeout, and quota/throttle.
 - Cross-service case: one allowed and one denied call pass through the central authorization engine and emit audit events.
 
 ## Compatibility Level
 
-- Current level: L3 - ledger migration path is complete; provider SDK/REST conformance still blocks L4.
+- Current level: L3 seed - AWS SDK, AWS CLI, and Terraform endpoint-override checks cover the local SQS adapter, but real RabbitMQ-backed durability and full acceptance gates still block L4.
 - Target level: L4 after `test/conformance/services/aws-sqs.yaml` passes in CI.
 - Blocking gaps: `test/conformance/services/aws-sqs.yaml` must prove provider error, pagination, idempotency, authz, quota, and audit behavior before promotion.
 - Path to close gaps: generate backend artifacts, implement the endpoint mapping above, add `test/conformance/services/aws-sqs.yaml`, then promote only when that manifest passes in CI.

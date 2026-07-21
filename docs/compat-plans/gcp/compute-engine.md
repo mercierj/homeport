@@ -8,13 +8,13 @@ Expose the smallest GCP Compute Engine-compatible surface needed to migrate the 
 
 - Initial supported surface: compute.instances.insert -> compute.instances.get -> compute.instances.list -> compute.instances.setMetadata -> compute.instances.delete.
 - Actions explicitly not supported first: Compute Engine console-only workflows, account billing, quota purchase flows, and managed cross-region failover controls outside `compute.instances.insert` and its paired read/list calls.
-- Ledger resource types: `google_compute_instance`.
+- Ledger resource types: `google_compute_instance`
 - Provider errors: map Compute Engine authorization failures to GCP access-denied codes, missing `google_compute_instance` records to not-found codes, duplicate imports to conflict/already-exists, invalid mapped fields to validation errors, backend saturation to throttle/quota responses, and unexpected `gcp/compute-engine` failures to provider internal-error shapes with request ids.
 - Pagination/idempotency/tags: list/read calls expose provider tokens where the API has them; mutating calls persist idempotency keys or operation ids; tags/labels round-trip on `google_compute_instance`.
 
 ## Backend
 
-- Backend: Incus or libvirt virtual machines.
+- Backend: Docker Compose container with generated Compute Engine client patch.
 - Storage and metadata: Compute Engine state lives in `Incus or libvirt virtual machines`; HomePort stores provider identifiers for `google_compute_instance`, source import ids, authz bindings, generated artifact checksums, backup references, and audit events.
 - Secrets/keys/tokens: issue HomePort-scoped credentials from the identity/secrets layer; store provider source credentials only as encrypted migration inputs.
 - Runtime/provisioning: provision `Incus or libvirt virtual machines` with generated `artifacts/compat/gcp/compute-engine/backend.yaml`, health endpoint, persistence volume, backup job, endpoint route, and teardown script for `gcp/compute-engine`.

@@ -8,7 +8,7 @@ Expose the smallest Azure Log Analytics-compatible surface needed to migrate the
 
 - Initial supported surface: Microsoft.OperationalInsights/workspaces/read, Microsoft.OperationalInsights/workspaces/write, Microsoft.OperationalInsights/workspaces/delete.
 - Actions explicitly not supported first: Log Analytics console-only workflows, account billing, quota purchase flows, and managed cross-region failover controls outside `Microsoft.OperationalInsights/workspaces/read` and its paired read/list calls.
-- Ledger resource types: no resource type currently modeled in the ledger.
+- Ledger resource types: `azurerm_log_analytics_workspace`
 - First concrete resource model to add: service-specific model with import id, region/location, labels/tags, backend target id, lifecycle state, and owner principal.
 - Provider errors: map Log Analytics authorization failures to Azure access-denied codes, missing `planned resource model` records to not-found codes, duplicate imports to conflict/already-exists, invalid mapped fields to validation errors, backend saturation to throttle/quota responses, and unexpected `azure/log-analytics` failures to provider internal-error shapes with request ids.
 - Pagination/idempotency/tags: list/read calls expose provider tokens where the API has them; mutating calls persist idempotency keys or operation ids; tags/labels round-trip on planned resource model.

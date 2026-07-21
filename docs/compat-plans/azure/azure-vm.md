@@ -8,13 +8,13 @@ Expose the smallest Azure Azure VM-compatible surface needed to migrate the ledg
 
 - Initial supported surface: Microsoft.Compute/virtualMachines/read, Microsoft.Compute/virtualMachines/write, Microsoft.Compute/virtualMachines/delete.
 - Actions explicitly not supported first: Azure VM console-only workflows, account billing, quota purchase flows, and managed cross-region failover controls outside `Microsoft.Compute/virtualMachines/read` and its paired read/list calls.
-- Ledger resource types: `azurerm_linux_virtual_machine`, `azurerm_windows_virtual_machine`.
+- Ledger resource types: `azurerm_linux_virtual_machine`, `azurerm_windows_virtual_machine`
 - Provider errors: map Azure VM authorization failures to Azure access-denied codes, missing `azurerm_linux_virtual_machine` records to not-found codes, duplicate imports to conflict/already-exists, invalid mapped fields to validation errors, backend saturation to throttle/quota responses, and unexpected `azure/azure-vm` failures to provider internal-error shapes with request ids.
 - Pagination/idempotency/tags: list/read calls expose provider tokens where the API has them; mutating calls persist idempotency keys or operation ids; tags/labels round-trip on `azurerm_linux_virtual_machine`.
 
 ## Backend
 
-- Backend: Incus or libvirt virtual machines.
+- Backend: Docker Compose container runtime.
 - Storage and metadata: Azure VM state lives in `Incus or libvirt virtual machines`; HomePort stores provider identifiers for `azurerm_linux_virtual_machine`, source import ids, authz bindings, generated artifact checksums, backup references, and audit events.
 - Secrets/keys/tokens: issue HomePort-scoped credentials from the identity/secrets layer; store provider source credentials only as encrypted migration inputs.
 - Runtime/provisioning: provision `Incus or libvirt virtual machines` with generated `artifacts/compat/azure/azure-vm/backend.yaml`, health endpoint, persistence volume, backup job, endpoint route, and teardown script for `azure/azure-vm`.

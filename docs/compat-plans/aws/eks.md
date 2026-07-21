@@ -8,7 +8,7 @@ Expose the smallest AWS EKS-compatible surface needed to migrate the ledger reso
 
 - Initial supported surface: eks:CreateCluster, eks:DescribeCluster, eks:ListClusters, eks:UpdateClusterConfig, eks:DeleteCluster.
 - Actions explicitly not supported first: EKS console-only workflows, account billing, quota purchase flows, and managed cross-region failover controls outside `eks:CreateCluster` and its paired read/list calls.
-- Ledger resource types: `aws_eks_cluster`.
+- Ledger resource types: `aws_eks_cluster`
 - Provider errors: map EKS authorization failures to AWS access-denied codes, missing `aws_eks_cluster` records to not-found codes, duplicate imports to conflict/already-exists, invalid mapped fields to validation errors, backend saturation to throttle/quota responses, and unexpected `aws/eks` failures to provider internal-error shapes with request ids.
 - Pagination/idempotency/tags: list/read calls expose provider tokens where the API has them; mutating calls persist idempotency keys or operation ids; tags/labels round-trip on `aws_eks_cluster`.
 
@@ -23,10 +23,10 @@ Expose the smallest AWS EKS-compatible surface needed to migrate the ledger reso
 
 - Principal: HomePort subject mapped from AWS user/role/service account/managed identity/session token.
 - Actions: eks:CreateCluster, eks:DescribeCluster, eks:ListClusters, eks:UpdateClusterConfig, eks:DeleteCluster.
-- Resource: arn:aws:eks:{region}:{account}:eks/{id}.
-- Context: evaluate EKS calls with tenant/project/account, provider region/location, `arn:aws:eks:{region}:{account}:eks/{id}`, source IP, request id, user agent, tags/labels on `aws_eks_cluster`, credential age, and MFA/managed-identity claims when the source provider supplies them.
+- Resource: arn:aws:eks:{region}:{account}:cluster/{id}.
+- Context: evaluate EKS calls with tenant/project/account, provider region/location, `arn:aws:eks:{region}:{account}:cluster/{id}`, source IP, request id, user agent, tags/labels on `aws_eks_cluster`, credential age, and MFA/managed-identity claims when the source provider supplies them.
 - Evaluation: call `Authorize(principal, action, resource, context)` before each mutating operation and each data-plane read/write.
-- Conditions: support exact/wildcard matches for the listed EKS actions, `arn:aws:eks:{region}:{account}:eks/{id}` prefix checks, tag/label equality on `aws_eks_cluster`, requested region/location, source IP CIDR, time window, and principal attributes.
+- Conditions: support exact/wildcard matches for the listed EKS actions, `arn:aws:eks:{region}:{account}:cluster/{id}` prefix checks, tag/label equality on `aws_eks_cluster`, requested region/location, source IP CIDR, time window, and principal attributes.
 
 ## Adapter
 

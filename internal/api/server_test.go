@@ -23,3 +23,18 @@ func TestCORSAllowsPatch(t *testing.T) {
 		t.Fatalf("Access-Control-Allow-Methods = %q, want PATCH", got)
 	}
 }
+
+func TestServerRegistersAWSOperationsRoutes(t *testing.T) {
+	server, err := NewServer(Config{})
+	if err != nil {
+		t.Fatal(err)
+	}
+	req := httptest.NewRequest(http.MethodGet, "/api/v1/aws/operations/workspaces", nil)
+	rec := httptest.NewRecorder()
+
+	server.Router().ServeHTTP(rec, req)
+
+	if rec.Code != http.StatusOK {
+		t.Fatalf("GET AWS operations workspaces status = %d, want %d", rec.Code, http.StatusOK)
+	}
+}

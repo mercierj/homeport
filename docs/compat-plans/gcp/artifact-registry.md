@@ -8,7 +8,7 @@ Expose the smallest GCP Artifact Registry-compatible surface needed to migrate t
 
 - Initial supported surface: artifactregistry.projects.locations.repositories.create -> artifactregistry.projects.locations.repositories.get -> artifactregistry.projects.locations.repositories.list -> artifactregistry.projects.locations.repositories.patch -> artifactregistry.projects.locations.repositories.delete.
 - Actions explicitly not supported first: Artifact Registry console-only workflows, account billing, quota purchase flows, and managed cross-region failover controls outside `artifactregistry.projects.locations.repositories.create` and its paired read/list calls.
-- Ledger resource types: `google_artifact_registry_repository`.
+- Ledger resource types: `google_artifact_registry_repository`
 - Provider errors: map Artifact Registry authorization failures to GCP access-denied codes, missing `google_artifact_registry_repository` records to not-found codes, duplicate imports to conflict/already-exists, invalid mapped fields to validation errors, backend saturation to throttle/quota responses, and unexpected `gcp/artifact-registry` failures to provider internal-error shapes with request ids.
 - Pagination/idempotency/tags: list/read calls expose provider tokens where the API has them; mutating calls persist idempotency keys or operation ids; tags/labels round-trip on `google_artifact_registry_repository`.
 

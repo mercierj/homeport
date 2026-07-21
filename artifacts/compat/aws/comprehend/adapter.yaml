@@ -1,0 +1,13 @@
+version: 1
+provider: aws
+service: comprehend
+route: /compat/aws/comprehend
+actions:
+  create: comprehend:CreateDocumentClassifier
+  describe: comprehend:DescribeDocumentClassifier
+  list: comprehend:ListDocumentClassifiers
+  delete: comprehend:DeleteDocumentClassifier
+pagination:
+  token: NextToken
+  methods: [ListDocumentClassifiers]
+status: local-seed-only

@@ -1,0 +1,16 @@
+backend:
+  provider: aws
+  service: dynamodb
+  target: scylladb-alternator
+  runtime:
+    image: scylladb/scylla:latest
+    command: --alternator-port 8000
+  persistence:
+    volume: dynamodb-scylla-data
+    mount_path: /var/lib/scylla
+  backup:
+    schedule: daily
+    command: nodetool snapshot
+  endpoint:
+    route: /compat/aws/dynamodb
+    alternator_port: "8000"

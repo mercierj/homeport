@@ -8,7 +8,7 @@ Expose the smallest GCP Speech-to-Text-compatible surface needed to migrate the 
 
 - Initial supported surface: speech.recognizers.create -> speech.recognizers.get -> speech.recognizers.list -> speech.recognizers.recognize -> speech.recognizers.batchRecognize -> speech.recognizers.delete.
 - Actions explicitly not supported first: Speech-to-Text console-only workflows, account billing, quota purchase flows, and managed cross-region failover controls outside `speech.recognizers.create` and its paired read/list calls.
-- Ledger resource types: no resource type currently modeled in the ledger.
+- Ledger resource types: `google_speech_custom_class`, `google_speech_phrase_set`
 - First concrete resource model to add: service-specific model with import id, region/location, labels/tags, backend target id, lifecycle state, and owner principal.
 - Provider errors: map Speech-to-Text authorization failures to GCP access-denied codes, missing `planned resource model` records to not-found codes, duplicate imports to conflict/already-exists, invalid mapped fields to validation errors, backend saturation to throttle/quota responses, and unexpected `gcp/speech-to-text` failures to provider internal-error shapes with request ids.
 - Pagination/idempotency/tags: list/read calls expose provider tokens where the API has them; mutating calls persist idempotency keys or operation ids; tags/labels round-trip on the planned resource model.

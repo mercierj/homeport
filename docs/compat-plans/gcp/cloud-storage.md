@@ -2,22 +2,22 @@
 
 ## Goal
 
-Expose the smallest GCP Cloud Storage-compatible surface needed to migrate the ledger resources to `MinIO` without claiming managed-service parity outside the contract tests below.
+Expose the smallest GCP Cloud Storage-compatible surface needed to migrate the ledger resources to `MinIO with generated Cloud Storage client patch` without claiming managed-service parity outside the contract tests below.
 
 ## Provider API Surface
 
 - Initial supported surface: storage.buckets.insert -> storage.buckets.get -> storage.buckets.list -> storage.buckets.patch -> storage.buckets.delete.
 - Actions explicitly not supported first: Cloud Storage console-only workflows, account billing, quota purchase flows, and managed cross-region failover controls outside `storage.buckets.insert` and its paired read/list calls.
-- Ledger resource types: `google_storage_bucket`.
+- Ledger resource types: `google_storage_bucket`
 - Provider errors: map Cloud Storage authorization failures to GCP access-denied codes, missing `google_storage_bucket` records to not-found codes, duplicate imports to conflict/already-exists, invalid mapped fields to validation errors, backend saturation to throttle/quota responses, and unexpected `gcp/cloud-storage` failures to provider internal-error shapes with request ids.
 - Pagination/idempotency/tags: list/read calls expose provider tokens where the API has them; mutating calls persist idempotency keys or operation ids; tags/labels round-trip on `google_storage_bucket`.
 
 ## Backend
 
-- Backend: MinIO.
-- Storage and metadata: Cloud Storage state lives in `MinIO`; HomePort stores provider identifiers for `google_storage_bucket`, source import ids, authz bindings, generated artifact checksums, backup references, and audit events.
+- Backend: MinIO with generated Cloud Storage client patch.
+- Storage and metadata: Cloud Storage state lives in `MinIO with generated Cloud Storage client patch`; HomePort stores provider identifiers for `google_storage_bucket`, source import ids, authz bindings, generated artifact checksums, backup references, and audit events.
 - Secrets/keys/tokens: issue HomePort-scoped credentials from the identity/secrets layer; store provider source credentials only as encrypted migration inputs.
-- Runtime/provisioning: provision `MinIO` with generated `artifacts/compat/gcp/cloud-storage/backend.yaml`, health endpoint, persistence volume, backup job, endpoint route, and teardown script for `gcp/cloud-storage`.
+- Runtime/provisioning: provision `MinIO with generated Cloud Storage client patch` with generated `artifacts/compat/gcp/cloud-storage/backend.yaml`, health endpoint, persistence volume, backup job, endpoint route, and teardown script for `gcp/cloud-storage`.
 
 ## Authz Model
 
@@ -32,13 +32,13 @@ Expose the smallest GCP Cloud Storage-compatible surface needed to migrate the l
 
 - Endpoints exposed: `/compat/gcp/cloud-storage` for the actions above.
 - SDK used in tests: Google Cloud REST client configured with endpoint override and HomePort credentials.
-- Request mapping: Cloud Storage provider names, locations, tags/labels, and request bodies map to HomePort `google_storage_bucket` records and `MinIO` configuration; backend-only knobs are omitted from provider responses.
+- Request mapping: Cloud Storage provider names, locations, tags/labels, and request bodies map to HomePort `google_storage_bucket` records and `MinIO with generated Cloud Storage client patch` configuration; backend-only knobs are omitted from provider responses.
 - Response mapping: return Cloud Storage provider ids, `google_storage_bucket` lifecycle state, operation ids, etags/versions where the source API exposes them, list pagination tokens, and HomePort audit timestamps without exposing backend-only fields.
 - Error mapping: translate `gcp/cloud-storage` backend auth, missing `google_storage_bucket`, duplicate import, malformed request, timeout, quota, and dependency failures to the provider-shaped access-denied/not-found/conflict/validation/throttle/internal-error responses with retry hints.
 
 ## Generated Artifacts
 
-- `artifacts/compat/gcp/cloud-storage/backend.yaml` for `MinIO` runtime, network, persistence, health check, and backup policy.
+- `artifacts/compat/gcp/cloud-storage/backend.yaml` for `MinIO with generated Cloud Storage client patch` runtime, network, persistence, health check, and backup policy.
 - `artifacts/compat/gcp/cloud-storage/adapter.yaml` for endpoint routes, authz action/resource mappings, error mappings, pagination/idempotency settings, and quota defaults.
 - `artifacts/compat/gcp/cloud-storage/migration.md` with source import ids, unsupported actions, operator decisions, rollback, and cutover steps.
 - `test/conformance/services/gcp-cloud-storage.yaml` containing the SDK contract cases listed below.

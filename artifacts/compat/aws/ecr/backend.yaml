@@ -1,0 +1,17 @@
+version: 1
+provider: aws
+service: ecr
+target: oci-distribution
+status: seed-only
+runtime:
+  image: registry:2
+  port: 5000
+  healthcheck: /v2/
+persistence:
+  volume: ecr-data
+  mount_path: /var/lib/registry
+backup:
+  schedule: daily
+  command: tar -C /var/lib/registry -cf - .
+endpoint:
+  route: /compat/aws/ecr

@@ -1,0 +1,18 @@
+backend:
+  provider: aws
+  service: kinesis
+  target: redpanda
+  runtime:
+    image: docker.redpanda.com/redpandadata/redpanda:latest
+    command: redpanda start --mode dev-container --overprovisioned
+    health_path: /v1/status/ready
+  persistence:
+    volume: kinesis-redpanda-data
+    mount_path: /var/lib/redpanda/data
+  backup:
+    schedule: daily
+    command: rpk cluster partitions balancer-status && rpk topic list
+  endpoint:
+    route: /compat/aws/kinesis
+    kafka_port: "9092"
+    admin_port: "9644"

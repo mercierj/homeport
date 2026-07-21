@@ -2,16 +2,8 @@ provider: aws
 service: ALB
 checks:
   discover: GOCACHE=/private/tmp/exit-gafam-go-build go test ./internal/infrastructure/mapper/networking -run TestALBConformanceManagedAToZ
-  cost: GOCACHE=/private/tmp/exit-gafam-go-build go test ./internal/infrastructure/mapper/networking -run TestALBConformanceManagedAToZ
-  provision: GOCACHE=/private/tmp/exit-gafam-go-build go test ./internal/infrastructure/mapper/networking -run TestALBConformanceManagedAToZ
-  migrate: GOCACHE=/private/tmp/exit-gafam-go-build go test ./internal/infrastructure/mapper/networking -run TestALBConformanceManagedAToZ
-  api_compat: GOCACHE=/private/tmp/exit-gafam-go-build go test ./internal/infrastructure/mapper/networking -run TestALBConformanceManagedAToZ
-  env_dns: GOCACHE=/private/tmp/exit-gafam-go-build go test ./internal/infrastructure/mapper/networking -run TestALBConformanceManagedAToZ
-  ha: GOCACHE=/private/tmp/exit-gafam-go-build go test ./internal/infrastructure/mapper/networking -run TestALBConformanceManagedAToZ
-  backup: GOCACHE=/private/tmp/exit-gafam-go-build go test ./internal/infrastructure/mapper/networking -run TestALBConformanceManagedAToZ
-  validate: GOCACHE=/private/tmp/exit-gafam-go-build go test ./internal/infrastructure/mapper/networking -run TestALBConformanceManagedAToZ
-  cutover: GOCACHE=/private/tmp/exit-gafam-go-build go test ./internal/infrastructure/mapper/networking -run TestALBConformanceManagedAToZ
-  rollback: GOCACHE=/private/tmp/exit-gafam-go-build go test ./internal/infrastructure/mapper/networking -run TestALBConformanceManagedAToZ
+  api_compat: GOCACHE=/private/tmp/exit-gafam-go-build go test ./test/compat -run TestALBCompatibilityAdapter -count=1
 evidence:
-  target: Traefik
-  app_change_mode: no_change
+  target: Traefik with HomePort ALB compatibility adapter seed
+  app_change_mode: local adapter seed
+  api_compat_covers: sdk_lifecycle,pagination,authz,audit,quota,validation,post_only

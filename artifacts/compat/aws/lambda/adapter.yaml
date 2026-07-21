@@ -1,0 +1,23 @@
+adapter:
+  provider: aws
+  service: lambda
+  route: /compat/aws/lambda
+  target: openfaas
+  actions:
+    - CreateFunction
+    - GetFunction
+    - ListFunctions
+    - ListVersionsByFunction
+    - Invoke
+    - UpdateFunctionCode
+    - DeleteFunction
+    - ListTags
+    - TagResource
+    - UntagResource
+  errors:
+    AccessDenied: denied authorization decision
+    ResourceConflictException: duplicate function
+    ResourceNotFoundException: missing function resource
+    ServiceException: unexpected adapter failure
+  pagination:
+    functions: [Marker, MaxItems]

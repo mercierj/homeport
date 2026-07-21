@@ -1,64 +1,64 @@
 | PROVIDER | SERVICE | STATUS | RESOURCES |
 | --- | --- | --- | --- |
-| aws | ALB | full | aws_lb |
-| aws | ACM | full | aws_acm_certificate |
-| aws | API Gateway | full | aws_api_gateway_rest_api |
-| aws | AppSync | full | aws_appsync_graphql_api |
-| aws | Athena | full | aws_athena_workgroup |
-| aws | Bedrock | full | aws_bedrock_inference_profile |
-| aws | CloudFront | full | aws_cloudfront_distribution |
-| aws | CloudWatch | full | aws_cloudwatch_metric_alarm, aws_cloudwatch_log_group, aws_cloudwatch_dashboard |
-| aws | CodeBuild | full | aws_codebuild_project |
-| aws | CodePipeline | full | aws_codepipeline |
-| aws | Cognito | full | aws_cognito_user_pool |
-| aws | DynamoDB | full | aws_dynamodb_table |
-| aws | EBS | full | aws_ebs_volume |
-| aws | EC2 | full | aws_instance |
-| aws | ECR | full | aws_ecr_repository |
-| aws | ECS | full | aws_ecs_service, aws_ecs_task_definition |
-| aws | EFS | full | aws_efs_file_system |
-| aws | EKS | full | aws_eks_cluster |
-| aws | EMR | full | aws_emr_cluster |
-| aws | ElastiCache | full | aws_elasticache_cluster |
-| aws | EventBridge | full | aws_cloudwatch_event_rule |
-| aws | Glue | full | aws_glue_catalog_database |
-| aws | GuardDuty | full | aws_guardduty_detector |
-| aws | IAM | full | aws_iam_role |
-| aws | KMS | full | aws_kms_key |
-| aws | Kinesis | full | aws_kinesis_stream |
-| aws | Lambda | full | aws_lambda_function |
-| aws | MSK | full | aws_msk_cluster |
-| aws | OpenSearch | full | aws_opensearch_domain |
-| aws | RDS | full | aws_db_instance, aws_rds_cluster |
-| aws | Redshift | full | aws_redshift_cluster |
-| aws | Route 53 | full | aws_route53_zone |
-| aws | S3 | full | aws_s3_bucket |
-| aws | SES | full | aws_ses_domain_identity |
-| aws | SNS | full | aws_sns_topic |
-| aws | SQS | full | aws_sqs_queue |
-| aws | SageMaker | full | aws_sagemaker_endpoint |
-| aws | Secrets Manager | full | aws_secretsmanager_secret |
-| aws | Step Functions | full | aws_sfn_state_machine |
-| aws | VPC | full | aws_vpc |
-| aws | WAF | full | aws_wafv2_web_acl |
-| aws | X-Ray | full | aws_xray_sampling_rule |
-| aws | Lake Formation | full | aws_lakeformation_permissions |
-| aws | QuickSight | full | aws_quicksight_dashboard |
-| aws | MQ | full | aws_mq_broker |
-| aws | IoT Core | full | aws_iot_thing |
-| aws | App Mesh | full | aws_appmesh_mesh |
-| aws | CodeDeploy | full | aws_codedeploy_app |
-| aws | CloudFormation full import | full | aws_cloudformation_stack |
-| aws | Shield | full | aws_shield_protection |
-| aws | Security Hub | full | aws_securityhub_account |
-| aws | Config | full | aws_config_config_rule |
-| aws | Organizations | full | aws_organizations_organization |
-| aws | Control Tower | full | aws_controltower_control |
-| aws | Textract | full | aws_textract_adapter |
-| aws | Transcribe | full | aws_transcribe_vocabulary |
-| aws | Translate | full | aws_translate_text |
-| aws | Rekognition | full | aws_rekognition_collection |
-| aws | Comprehend | full | aws_comprehend_document_classifier |
+| aws | ALB | mapped | aws_lb |
+| aws | ACM | mapped | aws_acm_certificate |
+| aws | API Gateway | guided | aws_api_gateway_rest_api |
+| aws | AppSync | guided | aws_appsync_graphql_api |
+| aws | Athena | mapped | aws_athena_workgroup |
+| aws | Bedrock | mapped | aws_bedrock_inference_profile |
+| aws | CloudFront | mapped | aws_cloudfront_distribution |
+| aws | CloudWatch | guided | aws_cloudwatch_metric_alarm, aws_cloudwatch_log_group, aws_cloudwatch_dashboard |
+| aws | CodeBuild | guided | aws_codebuild_project |
+| aws | CodePipeline | mapped | aws_codepipeline |
+| aws | Cognito | mapped | aws_cognito_user_pool |
+| aws | DynamoDB | mapped | aws_dynamodb_table |
+| aws | EBS | mapped | aws_ebs_volume |
+| aws | EC2 | mapped | aws_instance |
+| aws | ECR | mapped | aws_ecr_repository |
+| aws | ECS | mapped | aws_ecs_service, aws_ecs_task_definition |
+| aws | EFS | mapped | aws_efs_file_system |
+| aws | EKS | mapped | aws_eks_cluster |
+| aws | EMR | mapped | aws_emr_cluster |
+| aws | ElastiCache | mapped | aws_elasticache_cluster |
+| aws | EventBridge | mapped | aws_cloudwatch_event_rule |
+| aws | Glue | mapped | aws_glue_catalog_database |
+| aws | GuardDuty | mapped | aws_guardduty_detector |
+| aws | IAM | mapped | aws_iam_role |
+| aws | KMS | mapped | aws_kms_key |
+| aws | Kinesis | mapped | aws_kinesis_stream |
+| aws | Lambda | mapped | aws_lambda_function |
+| aws | MSK | mapped | aws_msk_cluster |
+| aws | OpenSearch | mapped | aws_opensearch_domain |
+| aws | RDS | mapped | aws_db_instance, aws_rds_cluster |
+| aws | Redshift | mapped | aws_redshift_cluster |
+| aws | Route 53 | mapped | aws_route53_zone |
+| aws | S3 | guided | aws_s3_bucket |
+| aws | SES | mapped | aws_ses_domain_identity |
+| aws | SNS | guided | aws_sns_topic |
+| aws | SQS | mapped | aws_sqs_queue |
+| aws | SageMaker | mapped | aws_sagemaker_endpoint |
+| aws | Secrets Manager | guided | aws_secretsmanager_secret |
+| aws | Step Functions | guided | aws_sfn_state_machine |
+| aws | VPC | mapped | aws_vpc |
+| aws | WAF | mapped | aws_wafv2_web_acl |
+| aws | X-Ray | mapped | aws_xray_sampling_rule |
+| aws | Lake Formation | mapped | aws_lakeformation_permissions |
+| aws | QuickSight | mapped | aws_quicksight_dashboard |
+| aws | MQ | mapped | aws_mq_broker |
+| aws | IoT Core | mapped | aws_iot_thing |
+| aws | App Mesh | mapped | aws_appmesh_mesh |
+| aws | CodeDeploy | mapped | aws_codedeploy_app |
+| aws | CloudFormation full import | mapped | aws_cloudformation_stack |
+| aws | Shield | mapped | aws_shield_protection |
+| aws | Security Hub | mapped | aws_securityhub_account |
+| aws | Config | mapped | aws_config_config_rule |
+| aws | Organizations | mapped | aws_organizations_organization |
+| aws | Control Tower | mapped | aws_controltower_control |
+| aws | Textract | mapped | aws_textract_adapter |
+| aws | Transcribe | mapped | aws_transcribe_vocabulary |
+| aws | Translate | mapped | aws_translate_text |
+| aws | Rekognition | mapped | aws_rekognition_collection |
+| aws | Comprehend | mapped | aws_comprehend_document_classifier |
 | gcp | Apigee | full | google_apigee_organization |
 | gcp | App Engine | full | google_app_engine_application |
 | gcp | Artifact Registry | full | google_artifact_registry_repository |

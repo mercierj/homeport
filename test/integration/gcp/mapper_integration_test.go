@@ -443,8 +443,8 @@ func TestCloudSQL_GeneratesMigrationScript(t *testing.T) {
 	}
 }
 
-// TestPubSubToRabbitMQ_BasicMapping tests Pub/Sub to RabbitMQ mapping.
-func TestPubSubToRabbitMQ_BasicMapping(t *testing.T) {
+// TestPubSubToNATS_BasicMapping tests Pub/Sub to NATS JetStream mapping.
+func TestPubSubToNATS_BasicMapping(t *testing.T) {
 	m := messaging.NewPubSubMapper()
 	ctx := context.Background()
 
@@ -469,41 +469,30 @@ func TestPubSubToRabbitMQ_BasicMapping(t *testing.T) {
 		t.Fatal("Expected non-nil Docker service")
 	}
 
-	// Check image contains rabbitmq
-	if !containsString(svc.Image, "rabbitmq") {
-		t.Errorf("Expected rabbitmq image, got %s", svc.Image)
+	if !containsString(svc.Image, "nats") {
+		t.Errorf("Expected nats image, got %s", svc.Image)
 	}
 
-	// Check management plugin is included
-	if !containsString(svc.Image, "management") {
-		t.Errorf("Expected management image variant, got %s", svc.Image)
-	}
-
-	// Check ports (AMQP and Management)
-	amqpPortFound := false
-	mgmtPortFound := false
+	clientPortFound := false
+	monitorPortFound := false
 	for _, port := range svc.Ports {
-		if containsString(port, "5672") {
-			amqpPortFound = true
+		if containsString(port, "4222") {
+			clientPortFound = true
 		}
-		if containsString(port, "15672") {
-			mgmtPortFound = true
+		if containsString(port, "8222") {
+			monitorPortFound = true
 		}
 	}
 
-	if !amqpPortFound {
-		t.Error("Expected AMQP port 5672")
+	if !clientPortFound {
+		t.Error("Expected NATS client port 4222")
 	}
-	if !mgmtPortFound {
-		t.Error("Expected Management port 15672")
+	if !monitorPortFound {
+		t.Error("Expected NATS monitoring port 8222")
 	}
 
-	// Check environment
-	if svc.Environment["RABBITMQ_DEFAULT_USER"] == "" {
-		t.Error("Expected RABBITMQ_DEFAULT_USER environment variable")
-	}
-	if svc.Environment["RABBITMQ_DEFAULT_PASS"] == "" {
-		t.Error("Expected RABBITMQ_DEFAULT_PASS environment variable")
+	if svc.Environment["NATS_CLUSTER_NAME"] == "" {
+		t.Error("Expected NATS_CLUSTER_NAME environment variable")
 	}
 
 	// Check labels
@@ -517,8 +506,8 @@ func TestPubSubToRabbitMQ_BasicMapping(t *testing.T) {
 	t.Logf("Pub/Sub topic mapped to: %s", svc.Image)
 }
 
-// TestPubSubToRabbitMQ_GeneratesDefinitions tests RabbitMQ definitions generation.
-func TestPubSubToRabbitMQ_GeneratesDefinitions(t *testing.T) {
+// TestPubSubToNATS_GeneratesStreamConfig tests JetStream config generation.
+func TestPubSubToNATS_GeneratesStreamConfig(t *testing.T) {
 	m := messaging.NewPubSubMapper()
 	ctx := context.Background()
 
@@ -534,26 +523,26 @@ func TestPubSubToRabbitMQ_GeneratesDefinitions(t *testing.T) {
 		t.Fatalf("Failed to map: %v", err)
 	}
 
-	// Check for RabbitMQ definitions config
+	// Check for the generated JetStream config.
 	if len(result.Configs) == 0 {
-		t.Error("Expected RabbitMQ definitions config")
+		t.Error("Expected NATS JetStream config")
 	}
 
-	foundDefinitions := false
+	foundStream := false
 	for path := range result.Configs {
-		if containsString(path, "definitions") {
-			foundDefinitions = true
+		if containsString(path, "pubsub-stream.json") {
+			foundStream = true
 			break
 		}
 	}
 
-	if !foundDefinitions {
-		t.Error("Expected definitions.json config file")
+	if !foundStream {
+		t.Error("Expected pubsub-stream.json config file")
 	}
 }
 
-// TestPubSubToRabbitMQ_MessageOrdering tests handling of message ordering.
-func TestPubSubToRabbitMQ_MessageOrdering(t *testing.T) {
+// TestPubSubToNATS_MessageOrdering tests handling of message ordering.
+func TestPubSubToNATS_MessageOrdering(t *testing.T) {
 	m := messaging.NewPubSubMapper()
 	ctx := context.Background()
 

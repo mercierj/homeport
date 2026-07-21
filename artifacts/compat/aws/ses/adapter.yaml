@@ -1,0 +1,18 @@
+adapter:
+  provider: aws
+  service: ses
+  route: /compat/aws/ses
+  actions:
+    verify: ses:VerifyDomainIdentity
+    get: ses:GetIdentityVerificationAttributes
+    list: ses:ListIdentities
+    delete: ses:DeleteIdentity
+    send: ses:SendEmail
+  resource:
+    pattern: arn:aws:ses:{region}:{account}:identity/{identity}
+  errors:
+    AccessDenied: denied authorization decision
+    NotFound: missing identity
+    AlreadyExists: duplicate identity
+    InvalidParameterValue: malformed request
+    InternalFailure: unexpected adapter failure

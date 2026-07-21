@@ -1,0 +1,15 @@
+backend:
+  provider: aws
+  service: eks
+  target: k3s
+  runtime:
+    image: rancher/k3s:latest
+    health_path: /healthz
+  persistence:
+    volume: eks-data
+    mount_path: /var/lib/rancher/k3s
+  backup:
+    schedule: daily
+    command: k3s etcd-snapshot save
+  endpoint:
+    route: /compat/aws/eks

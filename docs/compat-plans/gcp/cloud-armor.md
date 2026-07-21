@@ -8,7 +8,7 @@ Expose the smallest GCP Cloud Armor-compatible surface needed to migrate the led
 
 - Initial supported surface: compute.securityPolicies.insert -> compute.securityPolicies.get -> compute.securityPolicies.list -> compute.securityPolicies.patch -> compute.securityPolicies.delete.
 - Actions explicitly not supported first: Cloud Armor console-only workflows, account billing, quota purchase flows, and managed cross-region failover controls outside `compute.securityPolicies.insert` and its paired read/list calls.
-- Ledger resource types: `google_compute_security_policy`.
+- Ledger resource types: `google_compute_security_policy`
 - Provider errors: map Cloud Armor authorization failures to GCP access-denied codes, missing `google_compute_security_policy` records to not-found codes, duplicate imports to conflict/already-exists, invalid mapped fields to validation errors, backend saturation to throttle/quota responses, and unexpected `gcp/cloud-armor` failures to provider internal-error shapes with request ids.
 - Pagination/idempotency/tags: list/read calls expose provider tokens where the API has them; mutating calls persist idempotency keys or operation ids; tags/labels round-trip on `google_compute_security_policy`.
 

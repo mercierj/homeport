@@ -1,0 +1,19 @@
+adapter:
+  provider: aws
+  service: appsync
+  route: /compat/aws/appsync
+  protocol: rest-json
+  actions:
+    create: appsync:CreateGraphqlApi
+    get: appsync:GetGraphqlApi
+    list: appsync:ListGraphqlApis
+    update: appsync:UpdateGraphqlApi
+    delete: appsync:DeleteGraphqlApi
+  resource:
+    pattern: arn:aws:appsync:us-east-1:000000000000:apis/{id}
+  errors:
+    BadRequestException: invalid request
+    NotFoundException: missing API
+    AccessDeniedException: denied authorization decision
+    InternalFailureException: authorizer failure
+  unsupported: [graphql_execution, schema, resolvers, data_sources, api_keys, tags, xray, pagination]

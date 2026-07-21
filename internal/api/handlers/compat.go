@@ -2,6 +2,7 @@ package handlers
 
 import (
 	"net/http"
+	"strings"
 
 	"github.com/go-chi/chi/v5"
 	"github.com/go-chi/render"
@@ -19,6 +20,7 @@ func NewCompatHandler(registry *appcompat.Registry) *CompatHandler {
 func (h *CompatHandler) RegisterRoutes(r chi.Router) {
 	r.Get("/compat", h.HandleList)
 	r.Handle("/compat/{provider}/{service}", h)
+	r.Handle("/compat/{provider}/{service}/*", h)
 }
 
 func (h *CompatHandler) HandleList(w http.ResponseWriter, r *http.Request) {
@@ -51,5 +53,21 @@ func (h *CompatHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		render.JSON(w, r, map[string]string{"message": err.Error()})
 		return
 	}
-	adapter.ServeHTTP(w, r)
+	adapter.ServeHTTP(w, trimCompatAdapterPrefix(r, chi.URLParam(r, "provider"), chi.URLParam(r, "service")))
+}
+
+func trimCompatAdapterPrefix(r *http.Request, provider, service string) *http.Request {
+	prefix := "/compat/" + provider + "/" + service
+	if !strings.HasPrefix(r.URL.Path, prefix) {
+		return r
+	}
+	clone := r.Clone(r.Context())
+	urlCopy := *r.URL
+	urlCopy.Path = strings.TrimPrefix(r.URL.Path, prefix)
+	if urlCopy.Path == "" {
+		urlCopy.Path = "/"
+	}
+	urlCopy.RawPath = ""
+	clone.URL = &urlCopy
+	return clone
 }

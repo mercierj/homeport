@@ -1,0 +1,21 @@
+adapter:
+  provider: aws
+  service: efs
+  route: /compat/aws/efs
+  actions:
+    create: efs:CreateFileSystem
+    describe: efs:DescribeFileSystems
+    update: efs:UpdateFileSystem
+    delete: efs:DeleteFileSystem
+  resource:
+    pattern: arn:aws:elasticfilesystem:{region}:{account}:file-system/{id}
+  errors:
+    AccessDenied: denied authorization decision
+    FileSystemNotFound: missing file system
+    FileSystemAlreadyExists: duplicate create
+    BadRequest: malformed request
+    InternalServerError: unexpected adapter failure
+  idempotency:
+    field: CreationToken
+    methods:
+      - CreateFileSystem

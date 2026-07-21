@@ -1,0 +1,19 @@
+adapter:
+  provider: aws
+  service: dynamodb
+  route: /compat/aws/dynamodb
+  actions:
+    create: dynamodb:CreateTable
+    describe: dynamodb:DescribeTable
+    list: dynamodb:ListTables
+    put: dynamodb:PutItem
+    get: dynamodb:GetItem
+    delete: dynamodb:DeleteTable
+  resource:
+    pattern: arn:aws:dynamodb:{region}:{account}:table/{name}
+  errors:
+    AccessDeniedException: denied authorization decision
+    ResourceNotFoundException: missing table
+    ResourceInUseException: duplicate create
+    ValidationException: malformed request
+    InternalServerError: unexpected adapter failure

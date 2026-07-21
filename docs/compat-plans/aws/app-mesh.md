@@ -8,7 +8,7 @@ Expose the smallest AWS App Mesh-compatible surface needed to migrate the ledger
 
 - Initial supported surface: appmesh:CreateMesh, appmesh:DescribeMesh, appmesh:ListMeshes, appmesh:UpdateMesh, appmesh:DeleteMesh.
 - Actions explicitly not supported first: App Mesh console-only workflows, account billing, quota purchase flows, and managed cross-region failover controls outside `appmesh:CreateMesh` and its paired read/list calls.
-- Ledger resource types: `aws_appmesh_mesh`.
+- Ledger resource types: `aws_appmesh_mesh`
 - Provider errors: map App Mesh authorization failures to AWS access-denied codes, missing `aws_appmesh_mesh` records to not-found codes, duplicate imports to conflict/already-exists, invalid mapped fields to validation errors, backend saturation to throttle/quota responses, and unexpected `aws/app-mesh` failures to provider internal-error shapes with request ids.
 - Pagination/idempotency/tags: list/read calls expose provider tokens where the API has them; mutating calls persist idempotency keys or operation ids; tags/labels round-trip on `aws_appmesh_mesh`.
 

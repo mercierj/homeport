@@ -6,9 +6,9 @@ Expose the smallest AWS EFS-compatible surface needed to migrate the ledger reso
 
 ## Provider API Surface
 
-- Initial supported surface: efs:CreateFileSystem, efs:DescribeFileSystems, efs:UpdateFileSystem, efs:DeleteFileSystem.
+- Initial supported surface: efs:CreateFileSystem, efs:DescribeFileSystems, efs:UpdateFileSystem, efs:DeleteFileSystem, efs:DescribeLifecycleConfiguration, efs:PutFileSystemPolicy, efs:DescribeFileSystemPolicy, efs:DeleteFileSystemPolicy, efs:CreateMountTarget, efs:DescribeMountTargets, efs:DeleteMountTarget, efs:CreateAccessPoint, efs:DescribeAccessPoints, efs:DeleteAccessPoint.
 - Actions explicitly not supported first: EFS console-only workflows, account billing, quota purchase flows, and managed cross-region failover controls outside `efs:CreateFileSystem` and its paired read/list calls.
-- Ledger resource types: `aws_efs_file_system`.
+- Ledger resource types: `aws_efs_file_system`
 - Provider errors: map EFS authorization failures to AWS access-denied codes, missing `aws_efs_file_system` records to not-found codes, duplicate imports to conflict/already-exists, invalid mapped fields to validation errors, backend saturation to throttle/quota responses, and unexpected `aws/efs` failures to provider internal-error shapes with request ids.
 - Pagination/idempotency/tags: list/read calls expose provider tokens where the API has them; mutating calls persist idempotency keys or operation ids; tags/labels round-trip on `aws_efs_file_system`.
 
@@ -22,7 +22,7 @@ Expose the smallest AWS EFS-compatible surface needed to migrate the ledger reso
 ## Authz Model
 
 - Principal: HomePort subject mapped from AWS user/role/service account/managed identity/session token.
-- Actions: efs:CreateFileSystem, efs:DescribeFileSystems, efs:UpdateFileSystem, efs:DeleteFileSystem.
+- Actions: efs:CreateFileSystem, efs:DescribeFileSystems, efs:UpdateFileSystem, efs:DeleteFileSystem, efs:DescribeLifecycleConfiguration, efs:PutFileSystemPolicy, efs:DescribeFileSystemPolicy, efs:DeleteFileSystemPolicy, efs:CreateMountTarget, efs:DescribeMountTargets, efs:DeleteMountTarget, efs:CreateAccessPoint, efs:DescribeAccessPoints, efs:DeleteAccessPoint.
 - Resource: arn:aws:efs:{region}:{account}:efs/{id}.
 - Context: evaluate EFS calls with tenant/project/account, provider region/location, `arn:aws:efs:{region}:{account}:efs/{id}`, source IP, request id, user agent, tags/labels on `aws_efs_file_system`, credential age, and MFA/managed-identity claims when the source provider supplies them.
 - Evaluation: call `Authorize(principal, action, resource, context)` before each mutating operation and each data-plane read/write.
@@ -46,13 +46,14 @@ Expose the smallest AWS EFS-compatible surface needed to migrate the ledger reso
 ## Contract Tests
 
 - AWS SDK for Go v2 exercises CreateFileSystem -> DescribeFileSystems -> UpdateFileSystem -> DeleteFileSystem against `/compat/aws/efs` and asserts provider-shaped request, response, error, authz, retry, and pagination behavior.
+- Terraform applies and destroys `aws_efs_file_system` with tags through a provider EFS endpoint override, including lifecycle-configuration read-back.
 - Fixture import covers `aws_efs_file_system` from `aws/efs`.
 - Negative cases: denied principal, missing resource, malformed request, duplicate/conflict, expired credential, backend timeout, and quota/throttle.
 - Cross-service case: one allowed and one denied call pass through the central authorization engine and emit audit events.
 
 ## Compatibility Level
 
-- Current level: L3 - ledger migration path is complete; provider SDK/REST conformance still blocks L4.
+- Current level: L3 seed - AWS SDK, AWS CLI, and Terraform endpoint-override checks cover the local EFS adapter, but NFS durability and full acceptance gates still block L4.
 - Target level: L4 after `test/conformance/services/aws-efs.yaml` passes in CI.
 - Blocking gaps: `test/conformance/services/aws-efs.yaml` must prove provider error, pagination, idempotency, authz, quota, and audit behavior before promotion.
 - Path to close gaps: generate backend artifacts, implement the endpoint mapping above, add `test/conformance/services/aws-efs.yaml`, then promote only when that manifest passes in CI.

@@ -1,0 +1,14 @@
+backend:
+  provider: aws
+  service: ses
+  target: postal
+  runtime:
+    image: postalserver/postal:latest
+  persistence:
+    volume: ses-postal-data
+    mount_path: /opt/postal/app/storage
+  backup:
+    schedule: daily
+    command: postal backup
+  endpoint:
+    route: /compat/aws/ses

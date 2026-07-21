@@ -1,0 +1,18 @@
+adapter:
+  provider: aws
+  service: iam
+  route: /compat/aws/iam
+  actions:
+    create: iam:CreateRole
+    get: iam:GetRole
+    list: iam:ListRoles
+    update: iam:UpdateRole
+    delete: iam:DeleteRole
+  resource:
+    pattern: arn:aws:iam::{account}:role/{name}
+  errors:
+    AccessDenied: denied authorization decision
+    NoSuchEntity: missing role
+    EntityAlreadyExists: duplicate create
+    MalformedPolicyDocument: malformed request
+    InternalFailure: unexpected adapter failure

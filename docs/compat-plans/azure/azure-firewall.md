@@ -8,7 +8,7 @@ Expose the smallest Azure Azure Firewall-compatible surface needed to migrate th
 
 - Initial supported surface: Microsoft.Network/azureFirewalls/read, Microsoft.Network/azureFirewalls/write, Microsoft.Network/azureFirewalls/delete.
 - Actions explicitly not supported first: Azure Firewall console-only workflows, account billing, quota purchase flows, and managed cross-region failover controls outside `Microsoft.Network/azureFirewalls/read` and its paired read/list calls.
-- Ledger resource types: `azurerm_firewall`.
+- Ledger resource types: `azurerm_firewall`
 - Provider errors: map Azure Firewall authorization failures to Azure access-denied codes, missing `azurerm_firewall` records to not-found codes, duplicate imports to conflict/already-exists, invalid mapped fields to validation errors, backend saturation to throttle/quota responses, and unexpected `azure/azure-firewall` failures to provider internal-error shapes with request ids.
 - Pagination/idempotency/tags: list/read calls expose provider tokens where the API has them; mutating calls persist idempotency keys or operation ids; tags/labels round-trip on `azurerm_firewall`.
 

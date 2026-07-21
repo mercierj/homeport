@@ -8,7 +8,7 @@ Expose the smallest GCP Document AI-compatible surface needed to migrate the led
 
 - Initial supported surface: documentai.projects.locations.processors.create -> documentai.projects.locations.processors.get -> documentai.projects.locations.processors.list -> documentai.projects.locations.processors.process -> documentai.projects.locations.processors.delete.
 - Actions explicitly not supported first: Document AI console-only workflows, account billing, quota purchase flows, and managed cross-region failover controls outside `documentai.projects.locations.processors.create` and its paired read/list calls.
-- Ledger resource types: no resource type currently modeled in the ledger.
+- Ledger resource types: `google_document_ai_processor`
 - First concrete resource model to add: service-specific model with import id, region/location, labels/tags, backend target id, lifecycle state, and owner principal.
 - Provider errors: map Document AI authorization failures to GCP access-denied codes, missing `planned resource model` records to not-found codes, duplicate imports to conflict/already-exists, invalid mapped fields to validation errors, backend saturation to throttle/quota responses, and unexpected `gcp/document-ai` failures to provider internal-error shapes with request ids.
 - Pagination/idempotency/tags: list/read calls expose provider tokens where the API has them; mutating calls persist idempotency keys or operation ids; tags/labels round-trip on the planned resource model.

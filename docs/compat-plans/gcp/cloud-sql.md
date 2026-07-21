@@ -8,7 +8,7 @@ Expose the smallest GCP Cloud SQL-compatible surface needed to migrate the ledge
 
 - Initial supported surface: sqladmin.instances.insert -> sqladmin.instances.get -> sqladmin.instances.list -> sqladmin.instances.patch -> sqladmin.instances.delete.
 - Actions explicitly not supported first: Cloud SQL console-only workflows, account billing, quota purchase flows, and managed cross-region failover controls outside `sqladmin.instances.insert` and its paired read/list calls.
-- Ledger resource types: `google_sql_database_instance`.
+- Ledger resource types: `google_sql_database_instance`
 - Provider errors: map Cloud SQL authorization failures to GCP access-denied codes, missing `google_sql_database_instance` records to not-found codes, duplicate imports to conflict/already-exists, invalid mapped fields to validation errors, backend saturation to throttle/quota responses, and unexpected `gcp/cloud-sql` failures to provider internal-error shapes with request ids.
 - Pagination/idempotency/tags: list/read calls expose provider tokens where the API has them; mutating calls persist idempotency keys or operation ids; tags/labels round-trip on `google_sql_database_instance`.
 

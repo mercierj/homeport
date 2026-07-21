@@ -8,7 +8,7 @@ Expose the smallest GCP Cloud Load Balancing-compatible surface needed to migrat
 
 - Initial supported surface: compute.backendServices.insert -> compute.backendServices.get -> compute.backendServices.list -> compute.backendServices.patch -> compute.backendServices.delete.
 - Actions explicitly not supported first: Cloud Load Balancing console-only workflows, account billing, quota purchase flows, and managed cross-region failover controls outside `compute.backendServices.insert` and its paired read/list calls.
-- Ledger resource types: `google_compute_backend_service`.
+- Ledger resource types: `google_compute_backend_service`
 - Provider errors: map Cloud Load Balancing authorization failures to GCP access-denied codes, missing `google_compute_backend_service` records to not-found codes, duplicate imports to conflict/already-exists, invalid mapped fields to validation errors, backend saturation to throttle/quota responses, and unexpected `gcp/cloud-load-balancing` failures to provider internal-error shapes with request ids.
 - Pagination/idempotency/tags: list/read calls expose provider tokens where the API has them; mutating calls persist idempotency keys or operation ids; tags/labels round-trip on `google_compute_backend_service`.
 

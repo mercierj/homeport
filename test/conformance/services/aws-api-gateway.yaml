@@ -1,17 +1,8 @@
 provider: aws
 service: API Gateway
 checks:
-  discover: GOCACHE=/private/tmp/exit-gafam-go-build go test ./internal/infrastructure/mapper/networking -run TestAPIGatewayConformanceManagedAToZ
-  cost: GOCACHE=/private/tmp/exit-gafam-go-build go test ./internal/infrastructure/mapper/networking -run TestAPIGatewayConformanceManagedAToZ
-  provision: GOCACHE=/private/tmp/exit-gafam-go-build go test ./internal/infrastructure/mapper/networking -run TestAPIGatewayConformanceManagedAToZ
-  migrate: GOCACHE=/private/tmp/exit-gafam-go-build go test ./internal/infrastructure/mapper/networking -run TestAPIGatewayConformanceManagedAToZ
-  api_compat: GOCACHE=/private/tmp/exit-gafam-go-build go test ./internal/infrastructure/mapper/networking -run TestAPIGatewayConformanceManagedAToZ
-  env_dns: GOCACHE=/private/tmp/exit-gafam-go-build go test ./internal/infrastructure/mapper/networking -run TestAPIGatewayConformanceManagedAToZ
-  ha: GOCACHE=/private/tmp/exit-gafam-go-build go test ./internal/infrastructure/mapper/networking -run TestAPIGatewayConformanceManagedAToZ
-  backup: GOCACHE=/private/tmp/exit-gafam-go-build go test ./internal/infrastructure/mapper/networking -run TestAPIGatewayConformanceManagedAToZ
-  validate: GOCACHE=/private/tmp/exit-gafam-go-build go test ./internal/infrastructure/mapper/networking -run TestAPIGatewayConformanceManagedAToZ
-  cutover: GOCACHE=/private/tmp/exit-gafam-go-build go test ./internal/infrastructure/mapper/networking -run TestAPIGatewayConformanceManagedAToZ
-  rollback: GOCACHE=/private/tmp/exit-gafam-go-build go test ./internal/infrastructure/mapper/networking -run TestAPIGatewayConformanceManagedAToZ
+  api_compat: GOCACHE=/private/tmp/exit-gafam-go-build go test ./test/compat -run APIGateway
 evidence:
-  target: Kong
-  app_change_mode: no_change
+  target: local API Gateway compatibility adapter seed; Kong is not deployed
+  app_change_mode: local adapter seed
+  api_compat_covers: sdk_lifecycle,aws_cli_smoke,terraform_smoke,boto3_smoke,rest_api_lifecycle,resources,methods,integrations,deployments,stages,stage_update,custom_domains,tags,pagination,quota,authz,audit

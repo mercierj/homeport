@@ -8,7 +8,7 @@ Expose the smallest AWS Translate-compatible surface needed to migrate the ledge
 
 - Initial supported surface: translate:TranslateText, translate:StartTextTranslationJob, translate:DescribeTextTranslationJob, translate:ListTextTranslationJobs.
 - Actions explicitly not supported first: Translate console-only workflows, account billing, quota purchase flows, and managed cross-region failover controls outside `translate:TranslateText` and its paired read/list calls.
-- Ledger resource types: `aws_translate_text`.
+- Ledger resource types: `aws_translate_text`
 - Provider errors: map Translate authorization failures to AWS access-denied codes, missing `aws_translate_text` records to not-found codes, duplicate imports to conflict/already-exists, invalid mapped fields to validation errors, backend saturation to throttle/quota responses, and unexpected `aws/translate` failures to provider internal-error shapes with request ids.
 - Pagination/idempotency/tags: list/read calls expose provider tokens where the API has them; mutating calls persist idempotency keys or operation ids; tags/labels round-trip on `aws_translate_text`.
 

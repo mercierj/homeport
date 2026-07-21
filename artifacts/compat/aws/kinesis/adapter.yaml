@@ -1,0 +1,32 @@
+adapter:
+  provider: aws
+  service: kinesis
+  route: /compat/aws/kinesis
+  actions:
+    create: kinesis:CreateStream
+    describe: kinesis:DescribeStream
+    list: kinesis:ListStreams
+    list_shards: kinesis:ListShards
+    ingest_batch: kinesis:PutRecords
+    update_shards: kinesis:UpdateShardCount
+    delete: kinesis:DeleteStream
+  resource:
+    pattern: arn:aws:kinesis:{region}:{account}:stream/{stream}
+  errors:
+    AccessDeniedException: denied authorization decision
+    ResourceNotFoundException: missing stream resource
+    ResourceInUseException: duplicate stream create or conflicting stream state
+    InvalidArgumentException: malformed request or invalid mapped field
+    LimitExceededException: stream or shard quota exceeded
+    InternalFailure: unexpected adapter failure
+  pagination:
+    limit: Limit
+    exclusive_start_stream_name: ExclusiveStartStreamName
+  idempotency:
+    header: X-Idempotency-Key
+    methods:
+      - CreateStream
+      - UpdateShardCount
+  quota:
+    max_streams_default: 500
+    max_shards_default: 1000

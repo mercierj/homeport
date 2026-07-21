@@ -7,6 +7,8 @@ import (
 	"strings"
 
 	compataws "github.com/homeport/homeport/internal/app/compat/aws"
+	compatazure "github.com/homeport/homeport/internal/app/compat/azure"
+	compatgcp "github.com/homeport/homeport/internal/app/compat/gcp"
 )
 
 type Adapter interface {
@@ -29,22 +31,10 @@ func NewRegistry() *Registry {
 func NewDefaultRegistry() *Registry {
 	registry := NewRegistry()
 	for _, adapter := range []Adapter{
-		NativeAdapter("aws", "s3", map[string]string{
-			"AWS_ENDPOINT_URL_S3":      "http://minio:9000",
-			"AWS_ACCESS_KEY_ID":        "${MINIO_ROOT_USER}",
-			"AWS_SECRET_ACCESS_KEY":    "${MINIO_ROOT_PASSWORD}",
-			"AWS_REGION":               "us-east-1",
-			"AWS_S3_FORCE_PATH_STYLE":  "true",
-			"HOMEPORT_COMPAT_BACKEND":  "minio",
-			"HOMEPORT_COMPAT_PROTOCOL": "s3",
-		}, "put-object", "get-object"),
-		NativeAdapter("aws", "dynamodb", map[string]string{
-			"AWS_ENDPOINT_URL_DYNAMODB": "http://scylladb:8000",
-			"AWS_ACCESS_KEY_ID":         "homeport",
-			"AWS_SECRET_ACCESS_KEY":     "homeport",
-			"AWS_REGION":                "us-east-1",
-			"HOMEPORT_COMPAT_BACKEND":   "scylla-alternator",
-		}, "put-item", "get-item"),
+		compataws.NewALBAdapter(),
+		compataws.NewComprehendAdapter(),
+		compataws.NewS3Adapter(),
+		compataws.NewDynamoDBAdapter(),
 		NativeAdapter("aws", "redis", map[string]string{
 			"REDIS_HOST":               "redis",
 			"REDIS_PORT":               "6379",
@@ -63,6 +53,22 @@ func NewDefaultRegistry() *Registry {
 		compataws.NewSecretsAdapter(),
 		compataws.NewKMSAdapter(),
 		compataws.NewCloudWatchLogsAdapter(),
+		compataws.NewLambdaAdapter(),
+		compataws.NewEventBridgeAdapter(),
+		compataws.NewACMAdapter(),
+		compataws.NewSESAdapter(),
+		compataws.NewCognitoAdapter(),
+		compataws.NewECSAdapter(),
+		compataws.NewAPIGatewayAdapter(),
+		compataws.NewEFSAdapter(),
+		compataws.NewEKSAdapter(),
+		compataws.NewIAMAdapter(),
+		compataws.NewECRAdapter(),
+		compataws.NewStepFunctionsAdapter(),
+		compataws.NewCodeBuildAdapter(),
+		compataws.NewAppSyncAdapter(),
+		compatgcp.NewPubSubAdapter(),
+		compatazure.NewServiceBusAdapter(),
 	} {
 		mustRegister(registry, adapter)
 	}

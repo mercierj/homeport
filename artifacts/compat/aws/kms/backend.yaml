@@ -1,0 +1,20 @@
+backend:
+  provider: aws
+  service: kms
+  target: vault-transit
+  runtime:
+    image: hashicorp/vault:latest
+    command: server -dev -dev-listen-address=0.0.0.0:8200
+    health_path: /v1/sys/health
+    environment:
+      VAULT_DEV_ROOT_TOKEN_ID: homeport
+  persistence:
+    volume: kms-vault-data
+    mount_path: /vault/file
+  backup:
+    schedule: daily
+    command: vault operator raft snapshot save /backup/kms-vault.snap
+  endpoint:
+    route: /compat/aws/kms
+    vault_port: "8200"
+    transit_mount: transit

@@ -15,7 +15,7 @@ Expose the smallest Azure Monitor-compatible surface needed to migrate the ledge
 
 ## Backend
 
-- Backend: Prometheus, Alertmanager, and Grafana.
+- Backend: Not selected in `docs/coverage/services.yaml`.
 - Storage and metadata: Monitor state lives in `Prometheus, Alertmanager, and Grafana`; HomePort stores provider identifiers for `planned resource model`, source import ids, authz bindings, generated artifact checksums, backup references, and audit events.
 - Secrets/keys/tokens: issue HomePort-scoped credentials from the identity/secrets layer; store provider source credentials only as encrypted migration inputs.
 - Runtime/provisioning: provision `Prometheus, Alertmanager, and Grafana` with generated `artifacts/compat/azure/monitor/backend.yaml`, health endpoint, persistence volume, backup job, endpoint route, and teardown script for `azure/monitor`.

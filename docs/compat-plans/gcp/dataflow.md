@@ -8,7 +8,7 @@ Expose the smallest GCP Dataflow-compatible surface needed to migrate the ledger
 
 - Initial supported surface: dataflow.projects.locations.jobs.create -> dataflow.projects.locations.jobs.get -> dataflow.projects.locations.jobs.list -> dataflow.projects.locations.jobs.update -> dataflow.projects.locations.jobs.drain/cancel.
 - Actions explicitly not supported first: Dataflow console-only workflows, account billing, quota purchase flows, and managed cross-region failover controls outside `dataflow.projects.locations.jobs.create` and its paired read/list calls.
-- Ledger resource types: no resource type currently modeled in the ledger.
+- Ledger resource types: `google_dataflow_job`
 - First concrete resource model to add: service-specific model with import id, region/location, labels/tags, backend target id, lifecycle state, and owner principal.
 - Provider errors: map Dataflow authorization failures to GCP access-denied codes, missing `planned resource model` records to not-found codes, duplicate imports to conflict/already-exists, invalid mapped fields to validation errors, backend saturation to throttle/quota responses, and unexpected `gcp/dataflow` failures to provider internal-error shapes with request ids.
 - Pagination/idempotency/tags: list/read calls expose provider tokens where the API has them; mutating calls persist idempotency keys or operation ids; tags/labels round-trip on the planned resource model.

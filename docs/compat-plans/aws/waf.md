@@ -8,7 +8,7 @@ Expose the smallest AWS WAF-compatible surface needed to migrate the ledger reso
 
 - Initial supported surface: wafv2:CreateWebACL, wafv2:GetWebACL, wafv2:ListWebACLs, wafv2:UpdateWebACL, wafv2:DeleteWebACL.
 - Actions explicitly not supported first: WAF console-only workflows, account billing, quota purchase flows, and managed cross-region failover controls outside `wafv2:CreateWebACL` and its paired read/list calls.
-- Ledger resource types: `aws_wafv2_web_acl`.
+- Ledger resource types: `aws_wafv2_web_acl`
 - Provider errors: map WAF authorization failures to AWS access-denied codes, missing `aws_wafv2_web_acl` records to not-found codes, duplicate imports to conflict/already-exists, invalid mapped fields to validation errors, backend saturation to throttle/quota responses, and unexpected `aws/waf` failures to provider internal-error shapes with request ids.
 - Pagination/idempotency/tags: list/read calls expose provider tokens where the API has them; mutating calls persist idempotency keys or operation ids; tags/labels round-trip on `aws_wafv2_web_acl`.
 

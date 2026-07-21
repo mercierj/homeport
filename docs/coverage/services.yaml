@@ -5,26 +5,27 @@ services:
     resource_types:
       - aws_lb
     target: Traefik
-    api_compatibility_strategy: no_change
-    manual_steps_resolved: true
-    discover: true
-    cost: true
-    provision: true
-    migrate: true
+    api_compatibility_strategy: local adapter seed
+    compatibility_level: L3
+    discover: false
+    cost: false
+    provision: false
+    migrate: false
     api_compat: true
-    env_dns: true
-    ha: true
-    backup: true
-    validate: true
-    cutover: true
-    rollback: true
-    status: full
+    env_dns: false
+    ha: false
+    backup: false
+    validate: false
+    cutover: false
+    rollback: false
+    status: mapped
   - provider: aws
     service: ACM
     resource_types:
       - aws_acm_certificate
     target: Traefik ACME
-    api_compatibility_strategy: no_change
+    api_compatibility_strategy: adapter
+    compatibility_level: L3
     manual_steps_resolved: true
     discover: true
     cost: true
@@ -37,51 +38,56 @@ services:
     validate: true
     cutover: true
     rollback: true
-    status: full
+    status: mapped
   - provider: aws
     service: API Gateway
     resource_types:
       - aws_api_gateway_rest_api
     target: Kong
-    api_compatibility_strategy: no_change
-    manual_steps_resolved: true
+    api_compatibility_strategy: local adapter seed
+    compatibility_level: L3
+    manual_steps_resolved: false
     discover: true
     cost: true
-    provision: true
-    migrate: true
+    provision: false
+    migrate: false
     api_compat: true
-    env_dns: true
-    ha: true
-    backup: true
-    validate: true
-    cutover: true
-    rollback: true
-    status: full
+    env_dns: false
+    ha: false
+    backup: false
+    validate: false
+    cutover: false
+    rollback: false
+    status: guided
+    blocker: persistent Kong backend, resource-scoped authorization proof beyond creation, cutover, and rollback are not proven
   - provider: aws
     service: AppSync
     resource_types:
       - aws_appsync_graphql_api
     target: Hasura GraphQL Engine
-    api_compatibility_strategy: no_change
-    manual_steps_resolved: true
+    api_compatibility_strategy: local adapter seed
+    compatibility_level: L3
+    manual_steps_resolved: false
     discover: true
     cost: true
-    provision: true
-    migrate: true
+    provision: false
+    migrate: false
     api_compat: true
-    env_dns: true
-    ha: true
-    backup: true
-    validate: true
-    cutover: true
-    rollback: true
-    status: full
+    env_dns: false
+    ha: false
+    backup: false
+    validate: false
+    cutover: false
+    rollback: false
+    status: guided
+    blocker: persistent backend, GraphQL validation, cutover, and rollback are not proven
   - provider: aws
     service: Athena
     resource_types:
       - aws_athena_workgroup
     target: Trino
     api_compatibility_strategy: generated_patch
+    compatibility_level: L3
     manual_steps_resolved: true
     discover: true
     cost: true
@@ -94,13 +100,14 @@ services:
     validate: true
     cutover: true
     rollback: true
-    status: full
+    status: mapped
   - provider: aws
     service: Bedrock
     resource_types:
       - aws_bedrock_inference_profile
     target: Ollama Bedrock adapter
-    api_compatibility_strategy: adapter
+    api_compatibility_strategy: generated_patch
+    compatibility_level: L3
     manual_steps_resolved: true
     discover: true
     cost: true
@@ -113,13 +120,14 @@ services:
     validate: true
     cutover: true
     rollback: true
-    status: full
+    status: mapped
   - provider: aws
     service: CloudFront
     resource_types:
       - aws_cloudfront_distribution
     target: Caddy and Varnish CDN
     api_compatibility_strategy: no_change
+    compatibility_level: L3
     manual_steps_resolved: true
     discover: true
     cost: true
@@ -132,7 +140,7 @@ services:
     validate: true
     cutover: true
     rollback: true
-    status: full
+    status: mapped
   - provider: aws
     service: CloudWatch
     resource_types:
@@ -140,45 +148,50 @@ services:
       - aws_cloudwatch_log_group
       - aws_cloudwatch_dashboard
     target: Loki, Prometheus, Alertmanager, and Grafana
-    api_compatibility_strategy: generated_patch
-    manual_steps_resolved: true
+    api_compatibility_strategy: local adapter seed
+    compatibility_level: L3
+    manual_steps_resolved: false
     discover: true
     cost: true
-    provision: true
-    migrate: true
+    provision: false
+    migrate: false
     api_compat: true
-    env_dns: true
-    ha: true
-    backup: true
-    validate: true
-    cutover: true
-    rollback: true
-    status: full
+    env_dns: false
+    ha: false
+    backup: false
+    validate: false
+    cutover: false
+    rollback: false
+    status: guided
+    blocker: persistent Loki backend, metrics/dashboard compatibility, cutover, and rollback are not proven
   - provider: aws
     service: CodeBuild
     resource_types:
       - aws_codebuild_project
     target: GitLab Runner and GitLab CI
-    api_compatibility_strategy: generated_patch
-    manual_steps_resolved: true
+    api_compatibility_strategy: local adapter seed
+    compatibility_level: L3
+    manual_steps_resolved: false
     discover: true
     cost: true
-    provision: true
-    migrate: true
+    provision: false
+    migrate: false
     api_compat: true
-    env_dns: true
-    ha: true
-    backup: true
-    validate: true
-    cutover: true
-    rollback: true
-    status: full
+    env_dns: false
+    ha: false
+    backup: false
+    validate: false
+    cutover: false
+    rollback: false
+    status: guided
+    blocker: persistent backend, build validation, cutover, and rollback are not proven
   - provider: aws
     service: CodePipeline
     resource_types:
       - aws_codepipeline
     target: GitLab Runner and GitLab CI
     api_compatibility_strategy: generated_patch
+    compatibility_level: L3
     manual_steps_resolved: true
     discover: true
     cost: true
@@ -191,13 +204,14 @@ services:
     validate: true
     cutover: true
     rollback: true
-    status: full
+    status: mapped
   - provider: aws
     service: Cognito
     resource_types:
       - aws_cognito_user_pool
     target: Keycloak OIDC
-    api_compatibility_strategy: generated_patch
+    api_compatibility_strategy: adapter
+    compatibility_level: L3
     manual_steps_resolved: true
     discover: true
     cost: true
@@ -210,13 +224,14 @@ services:
     validate: true
     cutover: true
     rollback: true
-    status: full
+    status: mapped
   - provider: aws
     service: DynamoDB
     resource_types:
       - aws_dynamodb_table
     target: ScyllaDB Alternator
     api_compatibility_strategy: adapter
+    compatibility_level: L3
     manual_steps_resolved: true
     discover: true
     cost: true
@@ -229,13 +244,14 @@ services:
     validate: true
     cutover: true
     rollback: true
-    status: full
+    status: mapped
   - provider: aws
     service: EBS
     resource_types:
       - aws_ebs_volume
     target: Docker local volume
     api_compatibility_strategy: generated_patch
+    compatibility_level: L3
     manual_steps_resolved: true
     discover: true
     cost: true
@@ -248,13 +264,14 @@ services:
     validate: true
     cutover: true
     rollback: true
-    status: full
+    status: mapped
   - provider: aws
     service: EC2
     resource_types:
       - aws_instance
     target: Docker Compose container
     api_compatibility_strategy: generated_patch
+    compatibility_level: L3
     manual_steps_resolved: true
     discover: true
     cost: true
@@ -267,13 +284,14 @@ services:
     validate: true
     cutover: true
     rollback: true
-    status: full
+    status: mapped
   - provider: aws
     service: ECR
     resource_types:
       - aws_ecr_repository
     target: OCI Distribution registry
-    api_compatibility_strategy: generated_patch
+    api_compatibility_strategy: adapter
+    compatibility_level: L3
     manual_steps_resolved: true
     discover: true
     cost: true
@@ -286,14 +304,15 @@ services:
     validate: true
     cutover: true
     rollback: true
-    status: full
+    status: mapped
   - provider: aws
     service: ECS
     resource_types:
       - aws_ecs_service
       - aws_ecs_task_definition
     target: Docker Compose services
-    api_compatibility_strategy: generated_patch
+    api_compatibility_strategy: adapter
+    compatibility_level: L3
     manual_steps_resolved: true
     discover: true
     cost: true
@@ -306,13 +325,14 @@ services:
     validate: true
     cutover: true
     rollback: true
-    status: full
+    status: mapped
   - provider: aws
     service: EFS
     resource_types:
       - aws_efs_file_system
     target: NFS server
-    api_compatibility_strategy: generated_patch
+    api_compatibility_strategy: adapter
+    compatibility_level: L3
     manual_steps_resolved: true
     discover: true
     cost: true
@@ -325,13 +345,14 @@ services:
     validate: true
     cutover: true
     rollback: true
-    status: full
+    status: mapped
   - provider: aws
     service: EKS
     resource_types:
       - aws_eks_cluster
     target: K3s
-    api_compatibility_strategy: generated_patch
+    api_compatibility_strategy: adapter
+    compatibility_level: L3
     manual_steps_resolved: true
     discover: true
     cost: true
@@ -344,13 +365,14 @@ services:
     validate: true
     cutover: true
     rollback: true
-    status: full
+    status: mapped
   - provider: aws
     service: EMR
     resource_types:
       - aws_emr_cluster
     target: Apache Spark
     api_compatibility_strategy: generated_patch
+    compatibility_level: L3
     manual_steps_resolved: true
     discover: true
     cost: true
@@ -363,13 +385,14 @@ services:
     validate: true
     cutover: true
     rollback: true
-    status: full
+    status: mapped
   - provider: aws
     service: ElastiCache
     resource_types:
       - aws_elasticache_cluster
     target: Redis
     api_compatibility_strategy: generated_patch
+    compatibility_level: L3
     manual_steps_resolved: true
     discover: true
     cost: true
@@ -382,13 +405,14 @@ services:
     validate: true
     cutover: true
     rollback: true
-    status: full
+    status: mapped
   - provider: aws
     service: EventBridge
     resource_types:
       - aws_cloudwatch_event_rule
     target: n8n
-    api_compatibility_strategy: generated_patch
+    api_compatibility_strategy: adapter
+    compatibility_level: L3
     manual_steps_resolved: true
     discover: true
     cost: true
@@ -401,13 +425,14 @@ services:
     validate: true
     cutover: true
     rollback: true
-    status: full
+    status: mapped
   - provider: aws
     service: Glue
     resource_types:
       - aws_glue_catalog_database
     target: Hive Metastore
     api_compatibility_strategy: generated_patch
+    compatibility_level: L3
     manual_steps_resolved: true
     discover: true
     cost: true
@@ -420,13 +445,14 @@ services:
     validate: true
     cutover: true
     rollback: true
-    status: full
+    status: mapped
   - provider: aws
     service: GuardDuty
     resource_types:
       - aws_guardduty_detector
     target: Wazuh
     api_compatibility_strategy: generated_patch
+    compatibility_level: L3
     manual_steps_resolved: true
     discover: true
     cost: true
@@ -439,13 +465,14 @@ services:
     validate: true
     cutover: true
     rollback: true
-    status: full
+    status: mapped
   - provider: aws
     service: IAM
     resource_types:
       - aws_iam_role
     target: Keycloak
-    api_compatibility_strategy: generated_patch
+    api_compatibility_strategy: adapter
+    compatibility_level: L3
     manual_steps_resolved: true
     discover: true
     cost: true
@@ -458,13 +485,14 @@ services:
     validate: true
     cutover: true
     rollback: true
-    status: full
+    status: mapped
   - provider: aws
     service: KMS
     resource_types:
       - aws_kms_key
     target: Vault Transit
     api_compatibility_strategy: adapter
+    compatibility_level: L3
     manual_steps_resolved: true
     discover: true
     cost: true
@@ -477,13 +505,14 @@ services:
     validate: true
     cutover: true
     rollback: true
-    status: full
+    status: mapped
   - provider: aws
     service: Kinesis
     resource_types:
       - aws_kinesis_stream
     target: Redpanda with HomePort Kinesis adapter
     api_compatibility_strategy: adapter
+    compatibility_level: L3
     manual_steps_resolved: true
     discover: true
     cost: true
@@ -496,13 +525,14 @@ services:
     validate: true
     cutover: true
     rollback: true
-    status: full
+    status: mapped
   - provider: aws
     service: Lambda
     resource_types:
       - aws_lambda_function
     target: OpenFaaS-compatible container with HomePort Lambda adapter
     api_compatibility_strategy: adapter
+    compatibility_level: L3
     manual_steps_resolved: true
     discover: true
     cost: true
@@ -515,13 +545,14 @@ services:
     validate: true
     cutover: true
     rollback: true
-    status: full
+    status: mapped
   - provider: aws
     service: MSK
     resource_types:
       - aws_msk_cluster
     target: Redpanda Kafka-compatible cluster
     api_compatibility_strategy: no_change
+    compatibility_level: L3
     manual_steps_resolved: true
     discover: true
     cost: true
@@ -534,13 +565,14 @@ services:
     validate: true
     cutover: true
     rollback: true
-    status: full
+    status: mapped
   - provider: aws
     service: OpenSearch
     resource_types:
       - aws_opensearch_domain
     target: OpenSearch self-hosted cluster
     api_compatibility_strategy: generated_patch
+    compatibility_level: L3
     manual_steps_resolved: true
     discover: true
     cost: true
@@ -553,7 +585,7 @@ services:
     validate: true
     cutover: true
     rollback: true
-    status: full
+    status: mapped
   - provider: aws
     service: RDS
     resource_types:
@@ -561,6 +593,7 @@ services:
       - aws_rds_cluster
     target: PostgreSQL or MySQL self-hosted database
     api_compatibility_strategy: generated_patch
+    compatibility_level: L3
     manual_steps_resolved: true
     discover: true
     cost: true
@@ -573,13 +606,14 @@ services:
     validate: true
     cutover: true
     rollback: true
-    status: full
+    status: mapped
   - provider: aws
     service: Redshift
     resource_types:
       - aws_redshift_cluster
     target: ClickHouse analytical database
     api_compatibility_strategy: generated_patch
+    compatibility_level: L3
     manual_steps_resolved: true
     discover: true
     cost: true
@@ -592,13 +626,14 @@ services:
     validate: true
     cutover: true
     rollback: true
-    status: full
+    status: mapped
   - provider: aws
     service: Route 53
     resource_types:
       - aws_route53_zone
     target: CoreDNS
     api_compatibility_strategy: generated_patch
+    compatibility_level: L3
     manual_steps_resolved: true
     discover: true
     cost: true
@@ -611,70 +646,75 @@ services:
     validate: true
     cutover: true
     rollback: true
-    status: full
+    status: mapped
   - provider: aws
     service: S3
     resource_types:
       - aws_s3_bucket
     target: MinIO
-    api_compatibility_strategy: adapter
-    manual_steps_resolved: true
+    api_compatibility_strategy: local adapter seed
+    compatibility_level: L3
+    manual_steps_resolved: false
     discover: true
     cost: true
-    provision: true
-    migrate: true
+    provision: false
+    migrate: false
     api_compat: true
-    env_dns: true
-    ha: true
-    backup: true
-    validate: true
-    cutover: true
-    rollback: true
-    status: full
+    env_dns: false
+    ha: false
+    backup: false
+    validate: false
+    cutover: false
+    rollback: false
+    status: guided
+    blocker: persistent MinIO backend, cutover, and rollback are not proven
   - provider: aws
     service: SES
     resource_types:
       - aws_ses_domain_identity
-    target: Postal
-    api_compatibility_strategy: generated_patch
-    manual_steps_resolved: true
-    discover: true
-    cost: true
-    provision: true
-    migrate: true
+    target: Postal with HomePort SES compatibility adapter
+    api_compatibility_strategy: adapter
+    compatibility_level: L3
+    discover: false
+    cost: false
+    provision: false
+    migrate: false
     api_compat: true
-    env_dns: true
-    ha: true
-    backup: true
-    validate: true
-    cutover: true
-    rollback: true
-    status: full
+    env_dns: false
+    ha: false
+    backup: false
+    validate: false
+    cutover: false
+    rollback: false
+    status: mapped
   - provider: aws
     service: SNS
     resource_types:
       - aws_sns_topic
     target: NATS
-    api_compatibility_strategy: adapter
-    manual_steps_resolved: true
+    api_compatibility_strategy: local adapter seed
+    compatibility_level: L3
+    manual_steps_resolved: false
     discover: true
     cost: true
-    provision: true
-    migrate: true
+    provision: false
+    migrate: false
     api_compat: true
-    env_dns: true
-    ha: true
-    backup: true
-    validate: true
-    cutover: true
-    rollback: true
-    status: full
+    env_dns: false
+    ha: false
+    backup: false
+    validate: false
+    cutover: false
+    rollback: false
+    status: guided
+    blocker: persistent NATS backend, cutover, and rollback are not proven
   - provider: aws
     service: SQS
     resource_types:
       - aws_sqs_queue
     target: RabbitMQ
     api_compatibility_strategy: adapter
+    compatibility_level: L3
     manual_steps_resolved: true
     discover: true
     cost: true
@@ -687,13 +727,14 @@ services:
     validate: true
     cutover: true
     rollback: true
-    status: full
+    status: mapped
   - provider: aws
     service: SageMaker
     resource_types:
       - aws_sagemaker_endpoint
     target: Triton
     api_compatibility_strategy: generated_patch
+    compatibility_level: L3
     manual_steps_resolved: true
     discover: true
     cost: true
@@ -706,51 +747,56 @@ services:
     validate: true
     cutover: true
     rollback: true
-    status: full
+    status: mapped
   - provider: aws
     service: Secrets Manager
     resource_types:
       - aws_secretsmanager_secret
     target: Vault
-    api_compatibility_strategy: adapter
-    manual_steps_resolved: true
+    api_compatibility_strategy: local adapter seed
+    compatibility_level: L3
+    manual_steps_resolved: false
     discover: true
     cost: true
-    provision: true
-    migrate: true
+    provision: false
+    migrate: false
     api_compat: true
-    env_dns: true
-    ha: true
-    backup: true
-    validate: true
-    cutover: true
-    rollback: true
-    status: full
+    env_dns: false
+    ha: false
+    backup: false
+    validate: false
+    cutover: false
+    rollback: false
+    status: guided
+    blocker: persistent Vault backend, cutover, and rollback are not proven
   - provider: aws
     service: Step Functions
     resource_types:
       - aws_sfn_state_machine
     target: Temporal
-    api_compatibility_strategy: generated_patch
-    manual_steps_resolved: true
+    api_compatibility_strategy: adapter
+    compatibility_level: L3
+    manual_steps_resolved: false
     discover: true
     cost: true
     provision: true
     migrate: true
     api_compat: true
     env_dns: true
-    ha: true
-    backup: true
-    validate: true
-    cutover: true
-    rollback: true
-    status: full
+    ha: false
+    backup: false
+    validate: false
+    cutover: false
+    rollback: false
+    status: guided
+    blocker: Temporal backend, persistence, validation, cutover, and rollback require external infrastructure
   - provider: aws
     service: VPC
     resource_types:
       - aws_vpc
     target: Docker networks
     api_compatibility_strategy: generated_patch
+    compatibility_level: L3
     manual_steps_resolved: true
     discover: true
     cost: true
@@ -763,13 +809,14 @@ services:
     validate: true
     cutover: true
     rollback: true
-    status: full
+    status: mapped
   - provider: aws
     service: WAF
     resource_types:
       - aws_wafv2_web_acl
     target: ModSecurity
     api_compatibility_strategy: generated_patch
+    compatibility_level: L3
     manual_steps_resolved: true
     discover: true
     cost: true
@@ -782,13 +829,14 @@ services:
     validate: true
     cutover: true
     rollback: true
-    status: full
+    status: mapped
   - provider: aws
     service: X-Ray
     resource_types:
       - aws_xray_sampling_rule
     target: OpenTelemetry
     api_compatibility_strategy: generated_patch
+    compatibility_level: L3
     manual_steps_resolved: true
     discover: true
     cost: true
@@ -801,15 +849,19 @@ services:
     validate: true
     cutover: true
     rollback: true
-    status: full
+    status: mapped
   - provider: aws
     service: Lake Formation
     category: analytics/data
     source_api: lakeformation
-    resource_types: [aws_lakeformation_permissions]
-    terraform_resource_types: [aws_lakeformation_data_lake_settings, aws_lakeformation_permissions]
+    resource_types:
+      - aws_lakeformation_permissions
+    terraform_resource_types:
+      - aws_lakeformation_data_lake_settings
+      - aws_lakeformation_permissions
     target: Apache Ranger
     api_compatibility_strategy: generated_patch
+    compatibility_level: L3
     manual_steps_resolved: true
     discover: true
     cost: true
@@ -822,15 +874,19 @@ services:
     validate: true
     cutover: true
     rollback: true
-    status: full
+    status: mapped
   - provider: aws
     service: QuickSight
     category: analytics/data
     source_api: quicksight
-    resource_types: [aws_quicksight_dashboard]
-    terraform_resource_types: [aws_quicksight_data_source, aws_quicksight_dashboard]
+    resource_types:
+      - aws_quicksight_dashboard
+    terraform_resource_types:
+      - aws_quicksight_data_source
+      - aws_quicksight_dashboard
     target: Apache Superset
     api_compatibility_strategy: generated_patch
+    compatibility_level: L3
     manual_steps_resolved: true
     discover: true
     cost: true
@@ -843,15 +899,18 @@ services:
     validate: true
     cutover: true
     rollback: true
-    status: full
+    status: mapped
   - provider: aws
     service: MQ
     category: app/integration
     source_api: mq
-    resource_types: [aws_mq_broker]
-    terraform_resource_types: [aws_mq_broker]
+    resource_types:
+      - aws_mq_broker
+    terraform_resource_types:
+      - aws_mq_broker
     target: RabbitMQ
     api_compatibility_strategy: generated_patch
+    compatibility_level: L3
     manual_steps_resolved: true
     discover: true
     cost: true
@@ -864,15 +923,19 @@ services:
     validate: true
     cutover: true
     rollback: true
-    status: full
+    status: mapped
   - provider: aws
     service: IoT Core
     category: app/integration
     source_api: iot
-    resource_types: [aws_iot_thing]
-    terraform_resource_types: [aws_iot_thing, aws_iot_topic_rule]
+    resource_types:
+      - aws_iot_thing
+    terraform_resource_types:
+      - aws_iot_thing
+      - aws_iot_topic_rule
     target: EMQX
     api_compatibility_strategy: generated_patch
+    compatibility_level: L3
     manual_steps_resolved: true
     discover: true
     cost: true
@@ -885,15 +948,19 @@ services:
     validate: true
     cutover: true
     rollback: true
-    status: full
+    status: mapped
   - provider: aws
     service: App Mesh
     category: app/integration
     source_api: appmesh
-    resource_types: [aws_appmesh_mesh]
-    terraform_resource_types: [aws_appmesh_mesh, aws_appmesh_virtual_node]
+    resource_types:
+      - aws_appmesh_mesh
+    terraform_resource_types:
+      - aws_appmesh_mesh
+      - aws_appmesh_virtual_node
     target: Istio
     api_compatibility_strategy: generated_patch
+    compatibility_level: L3
     manual_steps_resolved: true
     discover: true
     cost: true
@@ -906,15 +973,19 @@ services:
     validate: true
     cutover: true
     rollback: true
-    status: full
+    status: mapped
   - provider: aws
     service: CodeDeploy
     category: devops
     source_api: codedeploy
-    resource_types: [aws_codedeploy_app]
-    terraform_resource_types: [aws_codedeploy_app, aws_codedeploy_deployment_group]
+    resource_types:
+      - aws_codedeploy_app
+    terraform_resource_types:
+      - aws_codedeploy_app
+      - aws_codedeploy_deployment_group
     target: Argo Rollouts
     api_compatibility_strategy: generated_patch
+    compatibility_level: L3
     manual_steps_resolved: true
     discover: true
     cost: true
@@ -927,15 +998,18 @@ services:
     validate: true
     cutover: true
     rollback: true
-    status: full
+    status: mapped
   - provider: aws
     service: CloudFormation full import
     category: devops
     source_api: cloudformation
-    resource_types: [aws_cloudformation_stack]
-    terraform_resource_types: [aws_cloudformation_stack]
+    resource_types:
+      - aws_cloudformation_stack
+    terraform_resource_types:
+      - aws_cloudformation_stack
     target: OpenTofu import
     api_compatibility_strategy: generated_patch
+    compatibility_level: L3
     manual_steps_resolved: true
     discover: true
     cost: true
@@ -948,15 +1022,18 @@ services:
     validate: true
     cutover: true
     rollback: true
-    status: full
+    status: mapped
   - provider: aws
     service: Shield
     category: security/governance
     source_api: shield
-    resource_types: [aws_shield_protection]
-    terraform_resource_types: [aws_shield_protection]
+    resource_types:
+      - aws_shield_protection
+    terraform_resource_types:
+      - aws_shield_protection
     target: edge WAF and DDoS provider controls
     api_compatibility_strategy: generated_patch
+    compatibility_level: L3
     manual_steps_resolved: true
     discover: true
     cost: true
@@ -969,15 +1046,19 @@ services:
     validate: true
     cutover: true
     rollback: true
-    status: full
+    status: mapped
   - provider: aws
     service: Security Hub
     category: security/governance
     source_api: securityhub
-    resource_types: [aws_securityhub_account]
-    terraform_resource_types: [aws_securityhub_account, aws_securityhub_standards_subscription]
+    resource_types:
+      - aws_securityhub_account
+    terraform_resource_types:
+      - aws_securityhub_account
+      - aws_securityhub_standards_subscription
     target: Wazuh
     api_compatibility_strategy: generated_patch
+    compatibility_level: L3
     manual_steps_resolved: true
     discover: true
     cost: true
@@ -990,15 +1071,19 @@ services:
     validate: true
     cutover: true
     rollback: true
-    status: full
+    status: mapped
   - provider: aws
     service: Config
     category: security/governance
     source_api: config
-    resource_types: [aws_config_config_rule]
-    terraform_resource_types: [aws_config_configuration_recorder, aws_config_config_rule]
+    resource_types:
+      - aws_config_config_rule
+    terraform_resource_types:
+      - aws_config_configuration_recorder
+      - aws_config_config_rule
     target: Open Policy Agent
     api_compatibility_strategy: generated_patch
+    compatibility_level: L3
     manual_steps_resolved: true
     discover: true
     cost: true
@@ -1011,15 +1096,19 @@ services:
     validate: true
     cutover: true
     rollback: true
-    status: full
+    status: mapped
   - provider: aws
     service: Organizations
     category: security/governance
     source_api: organizations
-    resource_types: [aws_organizations_organization]
-    terraform_resource_types: [aws_organizations_organization, aws_organizations_account]
+    resource_types:
+      - aws_organizations_organization
+    terraform_resource_types:
+      - aws_organizations_organization
+      - aws_organizations_account
     target: OpenTofu workspaces and policy-as-code
     api_compatibility_strategy: generated_patch
+    compatibility_level: L3
     manual_steps_resolved: true
     discover: true
     cost: true
@@ -1032,15 +1121,18 @@ services:
     validate: true
     cutover: true
     rollback: true
-    status: full
+    status: mapped
   - provider: aws
     service: Control Tower
     category: security/governance
     source_api: controltower
-    resource_types: [aws_controltower_control]
-    terraform_resource_types: [aws_controltower_control]
+    resource_types:
+      - aws_controltower_control
+    terraform_resource_types:
+      - aws_controltower_control
     target: Crossplane and Open Policy Agent
     api_compatibility_strategy: generated_patch
+    compatibility_level: L3
     manual_steps_resolved: true
     discover: true
     cost: true
@@ -1053,15 +1145,18 @@ services:
     validate: true
     cutover: true
     rollback: true
-    status: full
+    status: mapped
   - provider: aws
     service: Textract
     category: ai/ml
     source_api: textract
-    resource_types: [aws_textract_adapter]
-    terraform_resource_types: [aws_textract_adapter]
+    resource_types:
+      - aws_textract_adapter
+    terraform_resource_types:
+      - aws_textract_adapter
     target: Tesseract OCR
     api_compatibility_strategy: generated_patch
+    compatibility_level: L3
     manual_steps_resolved: true
     discover: true
     cost: true
@@ -1074,15 +1169,19 @@ services:
     validate: true
     cutover: true
     rollback: true
-    status: full
+    status: mapped
   - provider: aws
     service: Transcribe
     category: ai/ml
     source_api: transcribe
-    resource_types: [aws_transcribe_vocabulary]
-    terraform_resource_types: [aws_transcribe_vocabulary, aws_transcribe_language_model]
+    resource_types:
+      - aws_transcribe_vocabulary
+    terraform_resource_types:
+      - aws_transcribe_vocabulary
+      - aws_transcribe_language_model
     target: Whisper
     api_compatibility_strategy: generated_patch
+    compatibility_level: L3
     manual_steps_resolved: true
     discover: true
     cost: true
@@ -1095,15 +1194,16 @@ services:
     validate: true
     cutover: true
     rollback: true
-    status: full
+    status: mapped
   - provider: aws
     service: Translate
     category: ai/ml
     source_api: translate
-    resource_types: [aws_translate_text]
-    terraform_resource_types: []
+    resource_types:
+      - aws_translate_text
     target: LibreTranslate
     api_compatibility_strategy: generated_patch
+    compatibility_level: L3
     manual_steps_resolved: true
     discover: true
     cost: true
@@ -1116,15 +1216,19 @@ services:
     validate: true
     cutover: true
     rollback: true
-    status: full
+    status: mapped
   - provider: aws
     service: Rekognition
     category: ai/ml
     source_api: rekognition
-    resource_types: [aws_rekognition_collection]
-    terraform_resource_types: [aws_rekognition_collection, aws_rekognition_project]
+    resource_types:
+      - aws_rekognition_collection
+    terraform_resource_types:
+      - aws_rekognition_collection
+      - aws_rekognition_project
     target: OpenCV
     api_compatibility_strategy: generated_patch
+    compatibility_level: L3
     manual_steps_resolved: true
     discover: true
     cost: true
@@ -1137,36 +1241,44 @@ services:
     validate: true
     cutover: true
     rollback: true
-    status: full
+    status: mapped
   - provider: aws
     service: Comprehend
     category: ai/ml
     source_api: comprehend
-    resource_types: [aws_comprehend_document_classifier]
-    terraform_resource_types: [aws_comprehend_document_classifier, aws_comprehend_entity_recognizer]
+    resource_types:
+      - aws_comprehend_document_classifier
+    terraform_resource_types:
+      - aws_comprehend_document_classifier
+      - aws_comprehend_entity_recognizer
     target: spaCy
-    api_compatibility_strategy: generated_patch
-    manual_steps_resolved: true
+    api_compatibility_strategy: local adapter seed
+    compatibility_level: L3
+    manual_steps_resolved: false
     discover: true
     cost: true
-    provision: true
-    migrate: true
+    provision: false
+    migrate: false
     api_compat: true
-    env_dns: true
-    ha: true
-    backup: true
-    validate: true
-    cutover: true
-    rollback: true
-    status: full
-
+    env_dns: false
+    ha: false
+    backup: false
+    validate: false
+    cutover: false
+    rollback: false
+    status: guided
+    blocker: durable spaCy backend, source import, backup restoration, production validation, cutover, and rollback are not proven
   # GCP
   - provider: gcp
     service: Apigee
-    resource_types: [google_apigee_organization]
-    terraform_resource_types: [google_apigee_organization, google_apigee_environment]
+    resource_types:
+      - google_apigee_organization
+    terraform_resource_types:
+      - google_apigee_organization
+      - google_apigee_environment
     target: Kong
     api_compatibility_strategy: generated_patch
+    compatibility_level: L3
     manual_steps_resolved: true
     discover: true
     cost: true
@@ -1186,6 +1298,7 @@ services:
       - google_app_engine_application
     target: Docker
     api_compatibility_strategy: generated_patch
+    compatibility_level: L3
     manual_steps_resolved: true
     discover: true
     cost: true
@@ -1201,10 +1314,13 @@ services:
     status: full
   - provider: gcp
     service: Artifact Registry
-    resource_types: [google_artifact_registry_repository]
-    terraform_resource_types: [google_artifact_registry_repository]
+    resource_types:
+      - google_artifact_registry_repository
+    terraform_resource_types:
+      - google_artifact_registry_repository
     target: OCI Distribution Registry
     api_compatibility_strategy: generated_patch
+    compatibility_level: L3
     manual_steps_resolved: true
     discover: true
     cost: true
@@ -1220,10 +1336,13 @@ services:
     status: full
   - provider: gcp
     service: BigQuery
-    resource_types: [google_bigquery_dataset]
-    terraform_resource_types: [google_bigquery_dataset]
+    resource_types:
+      - google_bigquery_dataset
+    terraform_resource_types:
+      - google_bigquery_dataset
     target: Trino with Iceberg catalog
     api_compatibility_strategy: generated_patch
+    compatibility_level: L3
     manual_steps_resolved: true
     discover: true
     cost: true
@@ -1241,9 +1360,11 @@ services:
     service: Bigtable
     resource_types:
       - google_bigtable_instance
-    terraform_resource_types: [google_bigtable_instance]
+    terraform_resource_types:
+      - google_bigtable_instance
     target: Cassandra with Bigtable API adapter
     api_compatibility_strategy: adapter
+    compatibility_level: L3
     manual_steps_resolved: true
     discover: true
     cost: true
@@ -1261,9 +1382,11 @@ services:
     service: Cloud Armor
     resource_types:
       - google_compute_security_policy
-    terraform_resource_types: [google_compute_security_policy]
+    terraform_resource_types:
+      - google_compute_security_policy
     target: ModSecurity CRS with nginx
     api_compatibility_strategy: generated_patch
+    compatibility_level: L3
     manual_steps_resolved: true
     discover: true
     cost: true
@@ -1279,10 +1402,13 @@ services:
     status: full
   - provider: gcp
     service: Cloud Build
-    resource_types: [google_cloudbuild_trigger]
-    terraform_resource_types: [google_cloudbuild_trigger]
+    resource_types:
+      - google_cloudbuild_trigger
+    terraform_resource_types:
+      - google_cloudbuild_trigger
     target: GitLab Runner and GitLab CI
     api_compatibility_strategy: generated_patch
+    compatibility_level: L3
     manual_steps_resolved: true
     discover: true
     cost: true
@@ -1300,9 +1426,11 @@ services:
     service: Cloud CDN
     resource_types:
       - google_compute_backend_bucket
-    terraform_resource_types: [google_compute_backend_bucket]
+    terraform_resource_types:
+      - google_compute_backend_bucket
     target: Varnish CDN
     api_compatibility_strategy: generated_patch
+    compatibility_level: L2
     manual_steps_resolved: true
     discover: true
     cost: true
@@ -1320,9 +1448,11 @@ services:
     service: Cloud DNS
     resource_types:
       - google_dns_managed_zone
-    terraform_resource_types: [google_dns_managed_zone]
+    terraform_resource_types:
+      - google_dns_managed_zone
     target: CoreDNS
     api_compatibility_strategy: generated_patch
+    compatibility_level: L2
     manual_steps_resolved: true
     discover: true
     cost: true
@@ -1340,9 +1470,11 @@ services:
     service: Cloud Functions
     resource_types:
       - google_cloudfunctions_function
-    terraform_resource_types: [google_cloudfunctions_function]
+    terraform_resource_types:
+      - google_cloudfunctions_function
     target: Docker function runtime
     api_compatibility_strategy: generated_patch
+    compatibility_level: L2
     manual_steps_resolved: true
     discover: true
     cost: true
@@ -1360,9 +1492,11 @@ services:
     service: Cloud Load Balancing
     resource_types:
       - google_compute_backend_service
-    terraform_resource_types: [google_compute_backend_service]
+    terraform_resource_types:
+      - google_compute_backend_service
     target: Traefik
     api_compatibility_strategy: generated_patch
+    compatibility_level: L2
     manual_steps_resolved: true
     discover: true
     cost: true
@@ -1380,9 +1514,11 @@ services:
     service: Cloud Run
     resource_types:
       - google_cloud_run_service
-    terraform_resource_types: [google_cloud_run_service]
+    terraform_resource_types:
+      - google_cloud_run_service
     target: Docker container service
     api_compatibility_strategy: generated_patch
+    compatibility_level: L2
     manual_steps_resolved: true
     discover: true
     cost: true
@@ -1400,9 +1536,11 @@ services:
     service: Cloud Scheduler
     resource_types:
       - google_cloud_scheduler_job
-    terraform_resource_types: [google_cloud_scheduler_job]
+    terraform_resource_types:
+      - google_cloud_scheduler_job
     target: Ofelia cron scheduler with file lock single-fire coordination
     api_compatibility_strategy: generated_patch
+    compatibility_level: L2
     manual_steps_resolved: true
     discover: true
     cost: true
@@ -1420,9 +1558,11 @@ services:
     service: Cloud SQL
     resource_types:
       - google_sql_database_instance
-    terraform_resource_types: [google_sql_database_instance]
+    terraform_resource_types:
+      - google_sql_database_instance
     target: PostgreSQL or MySQL
     api_compatibility_strategy: generated_patch
+    compatibility_level: L2
     manual_steps_resolved: true
     discover: true
     cost: true
@@ -1440,9 +1580,11 @@ services:
     service: Cloud Storage
     resource_types:
       - google_storage_bucket
-    terraform_resource_types: [google_storage_bucket]
+    terraform_resource_types:
+      - google_storage_bucket
     target: MinIO with generated Cloud Storage client patch
     api_compatibility_strategy: generated_patch
+    compatibility_level: L2
     manual_steps_resolved: true
     discover: true
     cost: true
@@ -1460,9 +1602,11 @@ services:
     service: Cloud Tasks
     resource_types:
       - google_cloud_tasks_queue
-    terraform_resource_types: [google_cloud_tasks_queue]
+    terraform_resource_types:
+      - google_cloud_tasks_queue
     target: Celery and Redis with generated Cloud Tasks client patch
     api_compatibility_strategy: generated_patch
+    compatibility_level: L2
     manual_steps_resolved: true
     discover: true
     cost: true
@@ -1480,9 +1624,11 @@ services:
     service: Compute Engine
     resource_types:
       - google_compute_instance
-    terraform_resource_types: [google_compute_instance]
+    terraform_resource_types:
+      - google_compute_instance
     target: Docker Compose container with generated Compute Engine client patch
     api_compatibility_strategy: generated_patch
+    compatibility_level: L2
     manual_steps_resolved: true
     discover: true
     cost: true
@@ -1500,9 +1646,11 @@ services:
     service: Composer
     resource_types:
       - google_composer_environment
-    terraform_resource_types: [google_composer_environment]
+    terraform_resource_types:
+      - google_composer_environment
     target: Apache Airflow
     api_compatibility_strategy: generated_patch
+    compatibility_level: L0
     manual_steps_resolved: true
     discover: true
     cost: true
@@ -1520,9 +1668,11 @@ services:
     service: Dataflow
     resource_types:
       - google_dataflow_job
-    terraform_resource_types: [google_dataflow_job]
+    terraform_resource_types:
+      - google_dataflow_job
     target: Apache Beam on Flink
     api_compatibility_strategy: generated_patch
+    compatibility_level: L0
     manual_steps_resolved: true
     discover: true
     cost: true
@@ -1540,9 +1690,11 @@ services:
     service: Dataproc
     resource_types:
       - google_dataproc_cluster
-    terraform_resource_types: [google_dataproc_cluster]
+    terraform_resource_types:
+      - google_dataproc_cluster
     target: Apache Spark
     api_compatibility_strategy: generated_patch
+    compatibility_level: L0
     manual_steps_resolved: true
     discover: true
     cost: true
@@ -1560,9 +1712,11 @@ services:
     service: Eventarc
     resource_types:
       - google_eventarc_trigger
-    terraform_resource_types: [google_eventarc_trigger]
+    terraform_resource_types:
+      - google_eventarc_trigger
     target: n8n
     api_compatibility_strategy: generated_patch
+    compatibility_level: L0
     manual_steps_resolved: true
     discover: true
     cost: true
@@ -1580,9 +1734,11 @@ services:
     service: Filestore
     resource_types:
       - google_filestore_instance
-    terraform_resource_types: [google_filestore_instance]
+    terraform_resource_types:
+      - google_filestore_instance
     target: NFS server
     api_compatibility_strategy: generated_patch
+    compatibility_level: L2
     manual_steps_resolved: true
     discover: true
     cost: true
@@ -1600,9 +1756,11 @@ services:
     service: Firestore
     resource_types:
       - google_firestore_database
-    terraform_resource_types: [google_firestore_database]
+    terraform_resource_types:
+      - google_firestore_database
     target: MongoDB
     api_compatibility_strategy: generated_patch
+    compatibility_level: L2
     manual_steps_resolved: true
     discover: true
     cost: true
@@ -1620,9 +1778,11 @@ services:
     service: GKE
     resource_types:
       - google_container_cluster
-    terraform_resource_types: [google_container_cluster]
+    terraform_resource_types:
+      - google_container_cluster
     target: K3s
     api_compatibility_strategy: generated_patch
+    compatibility_level: L2
     manual_steps_resolved: true
     discover: true
     cost: true
@@ -1640,9 +1800,11 @@ services:
     service: IAM
     resource_types:
       - google_project_iam_member
-    terraform_resource_types: [google_project_iam_member]
+    terraform_resource_types:
+      - google_project_iam_member
     target: Keycloak
     api_compatibility_strategy: generated_patch
+    compatibility_level: L2
     manual_steps_resolved: true
     discover: true
     cost: true
@@ -1660,9 +1822,11 @@ services:
     service: Identity Platform
     resource_types:
       - google_identity_platform_config
-    terraform_resource_types: [google_identity_platform_config]
+    terraform_resource_types:
+      - google_identity_platform_config
     target: Keycloak
     api_compatibility_strategy: generated_patch
+    compatibility_level: L2
     manual_steps_resolved: true
     discover: true
     cost: true
@@ -1680,9 +1844,11 @@ services:
     service: Logging
     resource_types:
       - google_logging_project_sink
-    terraform_resource_types: [google_logging_project_sink]
+    terraform_resource_types:
+      - google_logging_project_sink
     target: Loki and Promtail
     api_compatibility_strategy: generated_patch
+    compatibility_level: L0
     manual_steps_resolved: true
     discover: true
     cost: true
@@ -1700,9 +1866,11 @@ services:
     service: Memorystore
     resource_types:
       - google_redis_instance
-    terraform_resource_types: [google_redis_instance]
+    terraform_resource_types:
+      - google_redis_instance
     target: Redis
     api_compatibility_strategy: generated_patch
+    compatibility_level: L2
     manual_steps_resolved: true
     discover: true
     cost: true
@@ -1721,9 +1889,12 @@ services:
     resource_types:
       - google_monitoring_alert_policy
       - google_monitoring_dashboard
-    terraform_resource_types: [google_monitoring_alert_policy, google_monitoring_dashboard]
+    terraform_resource_types:
+      - google_monitoring_alert_policy
+      - google_monitoring_dashboard
     target: Prometheus, Alertmanager, and Grafana
     api_compatibility_strategy: generated_patch
+    compatibility_level: L0
     manual_steps_resolved: true
     discover: true
     cost: true
@@ -1741,9 +1912,11 @@ services:
     service: Persistent Disk
     resource_types:
       - google_compute_disk
-    terraform_resource_types: [google_compute_disk]
+    terraform_resource_types:
+      - google_compute_disk
     target: Docker volumes
     api_compatibility_strategy: generated_patch
+    compatibility_level: L2
     manual_steps_resolved: true
     discover: true
     cost: true
@@ -1762,9 +1935,12 @@ services:
     resource_types:
       - google_pubsub_topic
       - google_pubsub_subscription
-    terraform_resource_types: [google_pubsub_topic, google_pubsub_subscription]
-    target: RabbitMQ with generated Pub/Sub client patch
-    api_compatibility_strategy: generated_patch
+    terraform_resource_types:
+      - google_pubsub_topic
+      - google_pubsub_subscription
+    target: NATS JetStream with HomePort Pub/Sub compatibility adapter
+    api_compatibility_strategy: adapter
+    compatibility_level: L2
     manual_steps_resolved: true
     discover: true
     cost: true
@@ -1782,9 +1958,11 @@ services:
     service: Secret Manager
     resource_types:
       - google_secret_manager_secret
-    terraform_resource_types: [google_secret_manager_secret]
+    terraform_resource_types:
+      - google_secret_manager_secret
     target: HashiCorp Vault
     api_compatibility_strategy: generated_patch
+    compatibility_level: L2
     manual_steps_resolved: true
     discover: true
     cost: true
@@ -1802,9 +1980,11 @@ services:
     service: Spanner
     resource_types:
       - google_spanner_instance
-    terraform_resource_types: [google_spanner_instance]
+    terraform_resource_types:
+      - google_spanner_instance
     target: CockroachDB with generated PostgreSQL client patch
     api_compatibility_strategy: generated_patch
+    compatibility_level: L2
     manual_steps_resolved: true
     discover: true
     cost: true
@@ -1822,9 +2002,11 @@ services:
     service: Trace
     resource_types:
       - google_project_service
-    terraform_resource_types: [google_project_service]
+    terraform_resource_types:
+      - google_project_service
     target: OpenTelemetry Collector and Jaeger
     api_compatibility_strategy: generated_patch
+    compatibility_level: L0
     manual_steps_resolved: true
     discover: true
     cost: true
@@ -1844,6 +2026,7 @@ services:
       - google_compute_network
     target: Docker networks
     api_compatibility_strategy: generated_patch
+    compatibility_level: L2
     manual_steps_resolved: true
     discover: true
     cost: true
@@ -1863,6 +2046,7 @@ services:
       - google_vertex_ai_endpoint
     target: vLLM OpenAI-compatible API
     api_compatibility_strategy: generated_patch
+    compatibility_level: L0
     manual_steps_resolved: true
     discover: true
     cost: true
@@ -1882,6 +2066,7 @@ services:
       - google_workflows_workflow
     target: Temporal
     api_compatibility_strategy: generated_patch
+    compatibility_level: L0
     manual_steps_resolved: true
     discover: true
     cost: true
@@ -1902,9 +2087,12 @@ services:
     resource_types:
       - google_dataplex_lake
       - google_dataplex_zone
-    terraform_resource_types: [google_dataplex_lake, google_dataplex_zone]
+    terraform_resource_types:
+      - google_dataplex_lake
+      - google_dataplex_zone
     target: Apache Atlas
     api_compatibility_strategy: generated_patch
+    compatibility_level: L0
     manual_steps_resolved: true
     discover: true
     cost: true
@@ -1924,9 +2112,11 @@ services:
     source_api: looker
     resource_types:
       - google_looker_instance
-    terraform_resource_types: [google_looker_instance]
+    terraform_resource_types:
+      - google_looker_instance
     target: Apache Superset
     api_compatibility_strategy: generated_patch
+    compatibility_level: L0
     manual_steps_resolved: true
     discover: true
     cost: true
@@ -1947,9 +2137,12 @@ services:
     resource_types:
       - google_clouddeploy_delivery_pipeline
       - google_clouddeploy_target
-    terraform_resource_types: [google_clouddeploy_delivery_pipeline, google_clouddeploy_target]
+    terraform_resource_types:
+      - google_clouddeploy_delivery_pipeline
+      - google_clouddeploy_target
     target: Argo CD
     api_compatibility_strategy: generated_patch
+    compatibility_level: L0
     manual_steps_resolved: true
     discover: true
     cost: true
@@ -1969,9 +2162,9 @@ services:
     source_api: clouderrorreporting
     resource_types:
       - google_error_reporting_service
-    terraform_resource_types: []
     target: Sentry
     api_compatibility_strategy: generated_patch
+    compatibility_level: L0
     manual_steps_resolved: true
     discover: true
     cost: true
@@ -1991,9 +2184,9 @@ services:
     source_api: cloudprofiler
     resource_types:
       - google_profiler_service
-    terraform_resource_types: []
     target: Pyroscope
     api_compatibility_strategy: generated_patch
+    compatibility_level: L0
     manual_steps_resolved: true
     discover: true
     cost: true
@@ -2014,9 +2207,12 @@ services:
     resource_types:
       - google_tpu_node
       - google_tpu_v2_vm
-    terraform_resource_types: [google_tpu_node, google_tpu_v2_vm]
+    terraform_resource_types:
+      - google_tpu_node
+      - google_tpu_v2_vm
     target: Kubernetes GPU/accelerator scheduling
     api_compatibility_strategy: generated_patch
+    compatibility_level: L0
     manual_steps_resolved: true
     discover: true
     cost: true
@@ -2036,9 +2232,11 @@ services:
     source_api: documentai
     resource_types:
       - google_document_ai_processor
-    terraform_resource_types: [google_document_ai_processor]
+    terraform_resource_types:
+      - google_document_ai_processor
     target: Tesseract OCR
     api_compatibility_strategy: generated_patch
+    compatibility_level: L0
     impossibility_notes: Document AI processor output parity is not guaranteed
     manual_steps_resolved: true
     discover: true
@@ -2059,9 +2257,9 @@ services:
     source_api: visionai
     resource_types:
       - google_vision_ai_service
-    terraform_resource_types: []
     target: OpenCV
     api_compatibility_strategy: generated_patch
+    compatibility_level: L0
     impossibility_notes: Vision model behavior cannot be replicated exactly
     manual_steps_resolved: true
     discover: true
@@ -2083,9 +2281,12 @@ services:
     resource_types:
       - google_speech_custom_class
       - google_speech_phrase_set
-    terraform_resource_types: [google_speech_custom_class, google_speech_phrase_set]
+    terraform_resource_types:
+      - google_speech_custom_class
+      - google_speech_phrase_set
     target: Whisper
     api_compatibility_strategy: generated_patch
+    compatibility_level: L0
     impossibility_notes: Speech-to-Text API and recognition parity are not proven
     manual_steps_resolved: true
     discover: true
@@ -2106,9 +2307,9 @@ services:
     source_api: translate
     resource_types:
       - google_translation_service
-    terraform_resource_types: []
     target: LibreTranslate
     api_compatibility_strategy: generated_patch
+    compatibility_level: L0
     impossibility_notes: Translation API compatibility and language quality parity are not proven
     manual_steps_resolved: true
     discover: true
@@ -2123,15 +2324,16 @@ services:
     cutover: true
     rollback: true
     status: full
-
   # Azure
   - provider: azure
     service: AI Search
     resource_types:
       - azurerm_search_service
-    terraform_resource_types: [azurerm_search_service]
+    terraform_resource_types:
+      - azurerm_search_service
     target: OpenSearch
     api_compatibility_strategy: generated_patch
+    compatibility_level: L0
     manual_steps_resolved: true
     discover: true
     cost: true
@@ -2151,6 +2353,7 @@ services:
       - azurerm_kubernetes_cluster
     target: K3s
     api_compatibility_strategy: generated_patch
+    compatibility_level: L2
     manual_steps_resolved: true
     discover: true
     cost: true
@@ -2168,9 +2371,11 @@ services:
     service: API Management
     resource_types:
       - azurerm_api_management
-    terraform_resource_types: [azurerm_api_management]
+    terraform_resource_types:
+      - azurerm_api_management
     target: Kong Gateway
     api_compatibility_strategy: generated_patch
+    compatibility_level: L0
     manual_steps_resolved: true
     discover: true
     cost: true
@@ -2190,6 +2395,7 @@ services:
       - azurerm_application_gateway
     target: Traefik
     api_compatibility_strategy: generated_patch
+    compatibility_level: L2
     manual_steps_resolved: true
     discover: true
     cost: true
@@ -2211,6 +2417,7 @@ services:
       - azurerm_application_insights
     target: OpenTelemetry Collector with Grafana Tempo and Prometheus
     api_compatibility_strategy: generated OTLP exporter patch and dashboard datasource handoff
+    compatibility_level: L0
     impossibility_notes: Application Insights query and sampling semantics are provider-specific
     manual_steps_resolved: true
     discover: true
@@ -2231,6 +2438,7 @@ services:
       - azurerm_app_service
     target: Docker Compose or K3s app runtime
     api_compatibility_strategy: generated app hosting patch and environment handoff
+    compatibility_level: L2
     manual_steps_resolved: true
     discover: true
     cost: true
@@ -2250,6 +2458,7 @@ services:
       - azurerm_aadb2c_directory
     target: Keycloak with realm-per-tenant mapping
     api_compatibility_strategy: generated OIDC client patch and realm import
+    compatibility_level: L2
     manual_steps_resolved: true
     discover: true
     cost: true
@@ -2269,6 +2478,7 @@ services:
       - azurerm_redis_cache
     target: Redis or Valkey
     api_compatibility_strategy: generated Redis connection patch and RDB/RIOT migration
+    compatibility_level: L2
     manual_steps_resolved: true
     discover: true
     cost: true
@@ -2288,6 +2498,7 @@ services:
       - azurerm_cdn_profile
     target: Caddy with Varnish cache
     api_compatibility_strategy: generated CDN endpoint patch and cache purge handoff
+    compatibility_level: L2
     manual_steps_resolved: true
     discover: true
     cost: true
@@ -2307,6 +2518,7 @@ services:
       - azurerm_dns_zone
     target: CoreDNS
     api_compatibility_strategy: generated zone patch and nameserver cutover handoff
+    compatibility_level: L2
     manual_steps_resolved: true
     discover: true
     cost: true
@@ -2326,6 +2538,7 @@ services:
       - azurerm_firewall
     target: nftables with Suricata policy inspection
     api_compatibility_strategy: generated firewall policy patch and traffic cutover
+    compatibility_level: L2
     manual_steps_resolved: true
     discover: true
     cost: true
@@ -2345,6 +2558,7 @@ services:
       - azurerm_function_app
     target: OpenFaaS or Docker Compose function runtime
     api_compatibility_strategy: generated function endpoint patch and runtime handoff
+    compatibility_level: L2
     manual_steps_resolved: true
     discover: true
     cost: true
@@ -2364,6 +2578,7 @@ services:
       - azurerm_lb
     target: HAProxy or MetalLB
     api_compatibility_strategy: generated Traefik/HAProxy route patch and cutover handoff
+    compatibility_level: L2
     manual_steps_resolved: true
     discover: true
     cost: true
@@ -2383,6 +2598,7 @@ services:
       - azurerm_mssql_database
     target: SQL Server container with generated BACPAC handoff
     api_compatibility_strategy: generated SQL connection patch and dump/restore migration
+    compatibility_level: L2
     manual_steps_resolved: true
     discover: true
     cost: true
@@ -2404,6 +2620,7 @@ services:
       - azurerm_storage_share
     target: Azurite, MinIO, and Samba
     api_compatibility_strategy: generated Azure Storage connection patch and object/file sync handoff
+    compatibility_level: L2
     manual_steps_resolved: true
     discover: true
     cost: true
@@ -2423,6 +2640,7 @@ services:
       - azurerm_virtual_network
     target: Docker bridge networks
     api_compatibility_strategy: generated network attachment patch and DNS/firewall handoff
+    compatibility_level: L2
     manual_steps_resolved: true
     discover: true
     cost: true
@@ -2443,6 +2661,7 @@ services:
       - azurerm_windows_virtual_machine
     target: Docker Compose container runtime
     api_compatibility_strategy: generated container target patch and VM runtime handoff
+    compatibility_level: L2
     manual_steps_resolved: true
     discover: true
     cost: true
@@ -2462,6 +2681,7 @@ services:
       - azurerm_container_app
     target: Knative Serving or Docker Compose container runtime
     api_compatibility_strategy: generated Container Apps URL patch and Knative service handoff
+    compatibility_level: L0
     manual_steps_resolved: true
     discover: true
     cost: true
@@ -2481,6 +2701,7 @@ services:
       - azurerm_container_group
     target: Docker Compose container runtime
     api_compatibility_strategy: generated container target patch and compose lifecycle handoff
+    compatibility_level: L2
     manual_steps_resolved: true
     discover: true
     cost: true
@@ -2500,6 +2721,7 @@ services:
       - azurerm_container_registry
     target: OCI Distribution registry
     api_compatibility_strategy: generated image reference patch and registry mirror handoff
+    compatibility_level: L0
     manual_steps_resolved: true
     discover: true
     cost: true
@@ -2519,6 +2741,7 @@ services:
       - azurerm_cosmosdb_account
     target: MongoDB-compatible target with generated Cosmos DB handoff
     api_compatibility_strategy: generated MongoDB connection patch and dump/restore migration
+    compatibility_level: L2
     manual_steps_resolved: true
     discover: true
     cost: true
@@ -2538,6 +2761,7 @@ services:
       - azurerm_data_factory
     target: Apache Airflow
     api_compatibility_strategy: generated workflow trigger patch and Airflow DAG handoff
+    compatibility_level: L0
     manual_steps_resolved: true
     discover: true
     cost: true
@@ -2557,6 +2781,7 @@ services:
       - azurerm_databricks_workspace
     target: Apache Spark
     api_compatibility_strategy: generated Spark launcher patch and Databricks jobs handoff
+    compatibility_level: L0
     manual_steps_resolved: true
     discover: true
     cost: true
@@ -2576,6 +2801,7 @@ services:
       - azurerm_eventgrid_topic
     target: n8n webhook workflow
     api_compatibility_strategy: generated Event Grid webhook patch and delivery validation
+    compatibility_level: L2
     manual_steps_resolved: true
     discover: true
     cost: true
@@ -2595,6 +2821,7 @@ services:
       - azurerm_eventhub
     target: Redpanda Kafka-compatible topic
     api_compatibility_strategy: generated Kafka client settings with explicit consumer group, offset, retention, and replay validation
+    compatibility_level: L2
     manual_steps_resolved: true
     discover: true
     cost: true
@@ -2614,6 +2841,7 @@ services:
       - azurerm_cognitive_account
     target: vLLM OpenAI-compatible API
     api_compatibility_strategy: generated OpenAI-compatible client patch and model handoff validation
+    compatibility_level: L0
     manual_steps_resolved: true
     discover: true
     cost: true
@@ -2633,6 +2861,7 @@ services:
       - azurerm_frontdoor
     target: Traefik and Varnish edge cache
     api_compatibility_strategy: generated edge routing, cache, app-change, and cutover artifacts
+    compatibility_level: L2
     manual_steps_resolved: true
     discover: true
     cost: true
@@ -2652,6 +2881,7 @@ services:
       - azurerm_iothub
     target: EMQX MQTT broker
     api_compatibility_strategy: generated MQTT topic routes, device app-change patch, and EMQX validation
+    compatibility_level: L0
     manual_steps_resolved: true
     discover: true
     cost: true
@@ -2671,6 +2901,7 @@ services:
       - azurerm_key_vault
     target: HashiCorp Vault
     api_compatibility_strategy: generated Vault policy, secret migration, app-change, and cutover artifacts
+    compatibility_level: L2
     manual_steps_resolved: true
     discover: true
     cost: true
@@ -2690,6 +2921,7 @@ services:
       - azurerm_log_analytics_workspace
     target: Loki with OpenTelemetry Collector
     api_compatibility_strategy: generated collector config, Loki import, app-change, and cutover artifacts
+    compatibility_level: L0
     manual_steps_resolved: true
     discover: true
     cost: true
@@ -2709,6 +2941,7 @@ services:
       - azurerm_logic_app_workflow
     target: n8n webhook workflow
     api_compatibility_strategy: generated n8n workflow, webhook handoff, app-change, and cutover artifacts
+    compatibility_level: L2
     manual_steps_resolved: true
     discover: true
     cost: true
@@ -2803,7 +3036,7 @@ services:
     cutover: false
     rollback: false
     status: guided
-    blocker: no Azure Service Bus-compatible local API adapter exists yet
+    blocker: partial Service Bus queue adapter seed exists; backend artifacts and provider conformance are incomplete
   - provider: azure
     service: SignalR
     resource_types: []
@@ -2857,10 +3090,22 @@ services:
     category: analytics/data
     source_api: storage
     resource_types: []
-    terraform_resource_types: [azurerm_storage_data_lake_gen2_filesystem]
+    terraform_resource_types:
+      - azurerm_storage_data_lake_gen2_filesystem
     target: MinIO and lakeFS
     api_compatibility_strategy: migrate ADLS Gen2 namespaces into S3-compatible object storage with catalog metadata
     impossibility_notes: hierarchical namespace and ACL parity require guided validation
+    discover: false
+    cost: false
+    provision: false
+    migrate: false
+    api_compat: false
+    env_dns: false
+    ha: false
+    backup: false
+    validate: false
+    cutover: false
+    rollback: false
     status: missing
     blocker: not modeled yet
   - provider: azure
@@ -2868,10 +3113,20 @@ services:
     category: analytics/data
     source_api: fabric
     resource_types: []
-    terraform_resource_types: []
     target: Apache Superset and Trino
     api_compatibility_strategy: decompose Fabric workspaces into BI, lakehouse, and SQL migration targets
     impossibility_notes: Fabric workspace/runtime API compatibility is not modeled
+    discover: false
+    cost: false
+    provision: false
+    migrate: false
+    api_compat: false
+    env_dns: false
+    ha: false
+    backup: false
+    validate: false
+    cutover: false
+    rollback: false
     status: missing
     blocker: not modeled yet
   - provider: azure
@@ -2879,10 +3134,22 @@ services:
     category: analytics/data
     source_api: powerbi
     resource_types: []
-    terraform_resource_types: [azurerm_powerbi_embedded_capacity]
+    terraform_resource_types:
+      - azurerm_powerbi_embedded_capacity
     target: Apache Superset
     api_compatibility_strategy: export reports and datasets into open BI dashboards
     impossibility_notes: Power BI report rendering parity requires guided replacement
+    discover: false
+    cost: false
+    provision: false
+    migrate: false
+    api_compat: false
+    env_dns: false
+    ha: false
+    backup: false
+    validate: false
+    cutover: false
+    rollback: false
     status: missing
     blocker: not modeled yet
   - provider: azure
@@ -2890,10 +3157,23 @@ services:
     category: app/integration
     source_api: logic
     resource_types: []
-    terraform_resource_types: [azurerm_logic_app_workflow, azurerm_logic_app_trigger_http_request]
+    terraform_resource_types:
+      - azurerm_logic_app_workflow
+      - azurerm_logic_app_trigger_http_request
     target: n8n or Temporal
     api_compatibility_strategy: convert advanced connectors and workflows into open orchestration definitions
     impossibility_notes: proprietary managed connectors require guided replacement
+    discover: false
+    cost: false
+    provision: false
+    migrate: false
+    api_compat: false
+    env_dns: false
+    ha: false
+    backup: false
+    validate: false
+    cutover: false
+    rollback: false
     status: missing
     blocker: not modeled yet
   - provider: azure
@@ -2901,10 +3181,23 @@ services:
     category: app/integration
     source_api: notificationhubs
     resource_types: []
-    terraform_resource_types: [azurerm_notification_hub_namespace, azurerm_notification_hub]
+    terraform_resource_types:
+      - azurerm_notification_hub_namespace
+      - azurerm_notification_hub
     target: UnifiedPush gateway
     api_compatibility_strategy: migrate registrations and route push delivery through open notification adapters
     impossibility_notes: platform push-provider contracts still depend on Apple/Google endpoints
+    discover: false
+    cost: false
+    provision: false
+    migrate: false
+    api_compat: false
+    env_dns: false
+    ha: false
+    backup: false
+    validate: false
+    cutover: false
+    rollback: false
     status: missing
     blocker: not modeled yet
   - provider: azure
@@ -2912,10 +3205,23 @@ services:
     category: devops
     source_api: azuredevops
     resource_types: []
-    terraform_resource_types: [azuredevops_build_definition, azuredevops_release_definition]
+    terraform_resource_types:
+      - azuredevops_build_definition
+      - azuredevops_release_definition
     target: GitLab CI or Tekton
     api_compatibility_strategy: translate pipeline definitions, variables, and environments into open CI workflows
     impossibility_notes: Azure DevOps task ecosystem parity requires guided migration
+    discover: false
+    cost: false
+    provision: false
+    migrate: false
+    api_compat: false
+    env_dns: false
+    ha: false
+    backup: false
+    validate: false
+    cutover: false
+    rollback: false
     status: missing
     blocker: not modeled yet
   - provider: azure
@@ -2923,10 +3229,23 @@ services:
     category: observability/governance
     source_api: automation
     resource_types: []
-    terraform_resource_types: [azurerm_automation_account, azurerm_automation_runbook]
+    terraform_resource_types:
+      - azurerm_automation_account
+      - azurerm_automation_runbook
     target: Rundeck
     api_compatibility_strategy: export runbooks and schedules into open automation jobs
     impossibility_notes: Hybrid worker and managed identity behavior require guided replacement
+    discover: false
+    cost: false
+    provision: false
+    migrate: false
+    api_compat: false
+    env_dns: false
+    ha: false
+    backup: false
+    validate: false
+    cutover: false
+    rollback: false
     status: missing
     blocker: not modeled yet
   - provider: azure
@@ -2934,10 +3253,22 @@ services:
     category: observability/governance
     source_api: purview
     resource_types: []
-    terraform_resource_types: [azurerm_purview_account]
+    terraform_resource_types:
+      - azurerm_purview_account
     target: Apache Atlas
     api_compatibility_strategy: export catalogs, classifications, and lineage into open governance metadata
     impossibility_notes: Purview scanner and lineage parity is not modeled
+    discover: false
+    cost: false
+    provision: false
+    migrate: false
+    api_compat: false
+    env_dns: false
+    ha: false
+    backup: false
+    validate: false
+    cutover: false
+    rollback: false
     status: missing
     blocker: not modeled yet
   - provider: azure
@@ -2945,10 +3276,22 @@ services:
     category: ai/ml
     source_api: machinelearningservices
     resource_types: []
-    terraform_resource_types: [azurerm_machine_learning_workspace]
+    terraform_resource_types:
+      - azurerm_machine_learning_workspace
     target: MLflow
     api_compatibility_strategy: migrate workspaces, experiments, and model registry metadata to open ML tooling
     impossibility_notes: Azure ML managed endpoint compatibility requires guided replacement
+    discover: false
+    cost: false
+    provision: false
+    migrate: false
+    api_compat: false
+    env_dns: false
+    ha: false
+    backup: false
+    validate: false
+    cutover: false
+    rollback: false
     status: missing
     blocker: not modeled yet
   - provider: azure
@@ -2956,10 +3299,22 @@ services:
     category: ai/ml
     source_api: cognitiveservices
     resource_types: []
-    terraform_resource_types: [azurerm_cognitive_account]
+    terraform_resource_types:
+      - azurerm_cognitive_account
     target: Tesseract OCR
     api_compatibility_strategy: replace document extraction calls with open OCR/NLP pipelines
     impossibility_notes: model output parity is not guaranteed
+    discover: false
+    cost: false
+    provision: false
+    migrate: false
+    api_compat: false
+    env_dns: false
+    ha: false
+    backup: false
+    validate: false
+    cutover: false
+    rollback: false
     status: missing
     blocker: not modeled yet
   - provider: azure
@@ -2967,10 +3322,22 @@ services:
     category: ai/ml
     source_api: cognitiveservices
     resource_types: []
-    terraform_resource_types: [azurerm_cognitive_account]
+    terraform_resource_types:
+      - azurerm_cognitive_account
     target: Whisper
     api_compatibility_strategy: route speech jobs to open transcription and synthesis adapters
     impossibility_notes: Speech API and voice parity are not proven
+    discover: false
+    cost: false
+    provision: false
+    migrate: false
+    api_compat: false
+    env_dns: false
+    ha: false
+    backup: false
+    validate: false
+    cutover: false
+    rollback: false
     status: missing
     blocker: not modeled yet
   - provider: azure
@@ -2978,9 +3345,21 @@ services:
     category: ai/ml
     source_api: cognitiveservices
     resource_types: []
-    terraform_resource_types: [azurerm_cognitive_account]
+    terraform_resource_types:
+      - azurerm_cognitive_account
     target: LibreTranslate
     api_compatibility_strategy: replace translation calls with adapter-backed open translation endpoints
     impossibility_notes: Translator API compatibility and language quality parity are not proven
+    discover: false
+    cost: false
+    provision: false
+    migrate: false
+    api_compat: false
+    env_dns: false
+    ha: false
+    backup: false
+    validate: false
+    cutover: false
+    rollback: false
     status: missing
     blocker: not modeled yet

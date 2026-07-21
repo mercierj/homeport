@@ -1,0 +1,29 @@
+adapter:
+  provider: azure
+  service: service-bus
+  route: /compat/azure/service-bus
+  actions:
+    read: Microsoft.ServiceBus/namespaces/queues/read
+    write: Microsoft.ServiceBus/namespaces/queues/write
+    delete: Microsoft.ServiceBus/namespaces/queues/delete
+  resource:
+    pattern: /subscriptions/{subscription}/resourceGroups/{group}/providers/Microsoft.ServiceBus/namespaces/{namespace}/queues/{queue}
+  errors:
+    AuthorizationFailed: denied authorization decision
+    ResourceNotFound: missing queue resource
+    Conflict: duplicate queue create
+    BadRequest: malformed request or invalid mapped field
+    TooManyRequests: queue quota exceeded
+    InternalError: unexpected adapter failure
+  pagination:
+    top: $top
+    skip: $skip
+    skiptoken: $skiptoken
+    next_link: nextLink
+  idempotency:
+    header: Repeatability-Request-ID
+    methods:
+      - PUT
+      - DELETE
+  quota:
+    max_queues_default: 1000

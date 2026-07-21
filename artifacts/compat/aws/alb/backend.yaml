@@ -1,0 +1,17 @@
+version: 1
+provider: aws
+service: alb
+target: traefik
+status: seed-only
+runtime:
+  image: traefik:v3.0
+  port: 80
+  healthcheck: /ping
+persistence:
+  volume: traefik-data
+  mount_path: /data
+backup:
+  schedule: daily
+  command: tar -C /data -cf - .
+endpoint:
+  route: /compat/aws/alb

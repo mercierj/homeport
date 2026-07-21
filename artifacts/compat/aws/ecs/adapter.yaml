@@ -1,0 +1,22 @@
+adapter:
+  provider: aws
+  service: ecs
+  route: /compat/aws/ecs
+  actions:
+    create: ecs:CreateService
+    describe: ecs:DescribeServices
+    list: ecs:ListServices
+    update: ecs:UpdateService
+    delete: ecs:DeleteService
+  resource:
+    pattern: arn:aws:ecs:{region}:{account}:service/{cluster}/{service}
+  errors:
+    AccessDenied: denied authorization decision
+    ServiceNotFoundException: missing service
+    ServiceAlreadyExistsException: duplicate service create
+    InvalidParameterException: malformed request
+    ServerException: unexpected adapter failure
+  idempotency:
+    field: ClientToken
+    methods:
+      - CreateService

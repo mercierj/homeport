@@ -8,7 +8,7 @@ Expose the smallest Azure Azure DNS-compatible surface needed to migrate the led
 
 - Initial supported surface: Microsoft.Network/dnsZones/read, Microsoft.Network/dnsZones/write, Microsoft.Network/dnsZones/delete.
 - Actions explicitly not supported first: Azure DNS console-only workflows, account billing, quota purchase flows, and managed cross-region failover controls outside `Microsoft.Network/dnsZones/read` and its paired read/list calls.
-- Ledger resource types: `azurerm_dns_zone`.
+- Ledger resource types: `azurerm_dns_zone`
 - Provider errors: map Azure DNS authorization failures to Azure access-denied codes, missing `azurerm_dns_zone` records to not-found codes, duplicate imports to conflict/already-exists, invalid mapped fields to validation errors, backend saturation to throttle/quota responses, and unexpected `azure/azure-dns` failures to provider internal-error shapes with request ids.
 - Pagination/idempotency/tags: list/read calls expose provider tokens where the API has them; mutating calls persist idempotency keys or operation ids; tags/labels round-trip on `azurerm_dns_zone`.
 

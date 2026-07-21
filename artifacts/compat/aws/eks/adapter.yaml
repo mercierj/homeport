@@ -1,0 +1,27 @@
+adapter:
+  provider: aws
+  service: eks
+  route: /compat/aws/eks
+  actions:
+    create: eks:CreateCluster
+    describe: eks:DescribeCluster
+    list: eks:ListClusters
+    update: eks:UpdateClusterConfig
+    delete: eks:DeleteCluster
+  resource:
+    pattern: arn:aws:eks:{region}:{account}:cluster/{id}
+  errors:
+    AccessDenied: denied authorization decision
+    ResourceNotFoundException: missing cluster
+    ResourceInUseException: duplicate cluster
+    InvalidParameterException: invalid request
+    ResourceLimitExceededException: cluster quota exceeded
+    ServerException: unexpected adapter failure
+  pagination:
+    token: nextToken
+  idempotency:
+    field: clientRequestToken
+    methods:
+      - CreateCluster
+  quota:
+    max_clusters_default: 100

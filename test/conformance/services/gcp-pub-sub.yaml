@@ -1,17 +1,18 @@
 provider: gcp
 service: Pub/Sub
 checks:
-  discover: GOCACHE=/private/tmp/exit-gafam-go-build go test ./internal/infrastructure/mapper/gcp/messaging -run TestPubSubConformanceManagedAToZ
-  cost: GOCACHE=/private/tmp/exit-gafam-go-build go test ./internal/infrastructure/mapper/gcp/messaging -run TestPubSubConformanceManagedAToZ
-  provision: GOCACHE=/private/tmp/exit-gafam-go-build go test ./internal/infrastructure/mapper/gcp/messaging -run TestPubSubConformanceManagedAToZ
-  migrate: GOCACHE=/private/tmp/exit-gafam-go-build go test ./internal/infrastructure/mapper/gcp/messaging -run TestPubSubConformanceManagedAToZ
-  api_compat: GOCACHE=/private/tmp/exit-gafam-go-build go test ./internal/infrastructure/mapper/gcp/messaging -run TestPubSubConformanceManagedAToZ
-  env_dns: GOCACHE=/private/tmp/exit-gafam-go-build go test ./internal/infrastructure/mapper/gcp/messaging -run TestPubSubConformanceManagedAToZ
-  ha: GOCACHE=/private/tmp/exit-gafam-go-build go test ./internal/infrastructure/mapper/gcp/messaging -run TestPubSubConformanceManagedAToZ
-  backup: GOCACHE=/private/tmp/exit-gafam-go-build go test ./internal/infrastructure/mapper/gcp/messaging -run TestPubSubConformanceManagedAToZ
-  validate: GOCACHE=/private/tmp/exit-gafam-go-build go test ./internal/infrastructure/mapper/gcp/messaging -run TestPubSubConformanceManagedAToZ
-  cutover: GOCACHE=/private/tmp/exit-gafam-go-build go test ./internal/infrastructure/mapper/gcp/messaging -run TestPubSubConformanceManagedAToZ
-  rollback: GOCACHE=/private/tmp/exit-gafam-go-build go test ./internal/infrastructure/mapper/gcp/messaging -run TestPubSubConformanceManagedAToZ
+  discover: GOCACHE=/private/tmp/exit-gafam-go-build go test ./internal/infrastructure/mapper/gcp/messaging -run TestPubSubConformanceGeneratedArtifacts
+  cost: GOCACHE=/private/tmp/exit-gafam-go-build go test ./internal/infrastructure/mapper/gcp/messaging -run TestPubSubConformanceGeneratedArtifacts
+  provision: GOCACHE=/private/tmp/exit-gafam-go-build go test ./internal/infrastructure/mapper/gcp/messaging -run TestPubSubConformanceGeneratedArtifacts
+  migrate: GOCACHE=/private/tmp/exit-gafam-go-build go test ./internal/infrastructure/mapper/gcp/messaging -run TestPubSubConformanceGeneratedArtifacts
+  api_compat: GOCACHE=/private/tmp/exit-gafam-go-build go test ./test/compat -run TestGCPPubSubCompatibilityAdapter
+  env_dns: GOCACHE=/private/tmp/exit-gafam-go-build go test ./internal/infrastructure/mapper/gcp/messaging -run TestPubSubConformanceGeneratedArtifacts
+  ha: GOCACHE=/private/tmp/exit-gafam-go-build go test ./internal/infrastructure/mapper/gcp/messaging -run TestPubSubConformanceGeneratedArtifacts
+  backup: GOCACHE=/private/tmp/exit-gafam-go-build go test ./internal/infrastructure/mapper/gcp/messaging -run TestPubSubConformanceGeneratedArtifacts
+  validate: GOCACHE=/private/tmp/exit-gafam-go-build go test ./internal/infrastructure/mapper/gcp/messaging -run TestPubSubConformanceGeneratedArtifacts
+  cutover: GOCACHE=/private/tmp/exit-gafam-go-build go test ./internal/infrastructure/mapper/gcp/messaging -run TestPubSubConformanceGeneratedArtifacts
+  rollback: GOCACHE=/private/tmp/exit-gafam-go-build go test ./internal/infrastructure/mapper/gcp/messaging -run TestPubSubConformanceGeneratedArtifacts
 evidence:
-  target: RabbitMQ with generated Pub/Sub client patch
-  app_change_mode: generated_patch
+  target: NATS JetStream with HomePort Pub/Sub compatibility adapter
+  app_change_mode: adapter
+  api_compat_covers: provider_errors,pagination,idempotency,authz,quota,audit,expired_credential,credential_age,principal_attributes,claims

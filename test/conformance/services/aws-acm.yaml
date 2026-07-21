@@ -5,7 +5,7 @@ checks:
   cost: GOCACHE=/private/tmp/exit-gafam-go-build go test ./internal/infrastructure/mapper/security -run TestACMConformanceManagedAToZ
   provision: GOCACHE=/private/tmp/exit-gafam-go-build go test ./internal/infrastructure/mapper/security -run TestACMConformanceManagedAToZ
   migrate: GOCACHE=/private/tmp/exit-gafam-go-build go test ./internal/infrastructure/mapper/security -run TestACMConformanceManagedAToZ
-  api_compat: GOCACHE=/private/tmp/exit-gafam-go-build go test ./internal/infrastructure/mapper/security -run TestACMConformanceManagedAToZ
+  api_compat: GOCACHE=/private/tmp/exit-gafam-go-build go test ./test/compat -run ACM
   env_dns: GOCACHE=/private/tmp/exit-gafam-go-build go test ./internal/infrastructure/mapper/security -run TestACMConformanceManagedAToZ
   ha: GOCACHE=/private/tmp/exit-gafam-go-build go test ./internal/infrastructure/mapper/security -run TestACMConformanceManagedAToZ
   backup: GOCACHE=/private/tmp/exit-gafam-go-build go test ./internal/infrastructure/mapper/security -run TestACMConformanceManagedAToZ
@@ -14,4 +14,5 @@ checks:
   rollback: GOCACHE=/private/tmp/exit-gafam-go-build go test ./internal/infrastructure/mapper/security -run TestACMConformanceManagedAToZ
 evidence:
   target: Traefik ACME
-  app_change_mode: no_change
+  app_change_mode: adapter
+  api_compat_covers: sdk_lifecycle,aws_cli_smoke,terraform_smoke,boto3_smoke,certificate_lifecycle,domain_validation,tags,pagination,idempotency,certificate_quota,authz,audit

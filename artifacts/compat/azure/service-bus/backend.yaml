@@ -1,0 +1,19 @@
+backend:
+  provider: azure
+  service: service-bus
+  target: rabbitmq-amqp
+  runtime:
+    image: rabbitmq:3-management
+    health_path: /api/health/checks/alarms
+    environment:
+      RABBITMQ_DEFAULT_USER: homeport
+      RABBITMQ_DEFAULT_PASS: homeport
+  persistence:
+    volume: servicebus-rabbitmq-data
+    mount_path: /var/lib/rabbitmq
+  backup:
+    schedule: daily
+    command: rabbitmq-dump-queues
+  endpoint:
+    route: /compat/azure/service-bus
+    amqp_port: "5672"

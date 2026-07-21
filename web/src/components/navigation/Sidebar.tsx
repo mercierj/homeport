@@ -1,4 +1,5 @@
 import { useEffect } from 'react';
+import { useQuery } from '@tanstack/react-query';
 import { Link } from 'react-router-dom';
 import {
   Home,
@@ -22,16 +23,26 @@ import {
   PanelLeft,
   Sun,
   Moon,
+  CloudCog,
 } from 'lucide-react';
 import { cn } from '../../lib/utils';
 import { useSidebarStore } from '../../stores/sidebar';
 import { useThemeStore } from '../../stores/theme';
 import { SidebarItem } from './SidebarItem';
 import { SidebarSection } from './SidebarSection';
+import { listAWSOperationsWorkspaces } from '../../lib/aws-operations-api';
 
 export function Sidebar() {
   const { isCollapsed, toggle, setCollapsed } = useSidebarStore();
   const { theme, setTheme } = useThemeStore();
+  const awsWorkspaces = useQuery({
+    queryKey: ['aws-operations', 'workspaces'],
+    queryFn: listAWSOperationsWorkspaces,
+    staleTime: 30_000,
+  });
+  const hasAWSOperations = awsWorkspaces.data?.workspaces?.some((workspace) =>
+    Object.values(workspace.services).some((service) => service?.status === 'available')
+  ) ?? false;
 
   const toggleTheme = () => {
     setTheme(theme === 'dark' ? 'light' : 'dark');
@@ -104,6 +115,12 @@ export function Sidebar() {
         <div className="space-y-0.5">
           <SidebarItem icon={ArrowRightLeft} href="/migrate" label="Migrate" variant="primary" />
         </div>
+
+        {hasAWSOperations && (
+          <SidebarSection label="AWS operations">
+            <SidebarItem icon={CloudCog} href="/aws" label="Operations" />
+          </SidebarSection>
+        )}
 
         {/* Compute & Functions */}
         <SidebarSection label="Compute">

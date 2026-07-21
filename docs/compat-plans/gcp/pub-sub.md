@@ -8,13 +8,13 @@ Expose the smallest GCP Pub/Sub-compatible surface needed to migrate the ledger 
 
 - Initial supported surface: pubsub.projects.topics.create -> pubsub.projects.topics.get -> pubsub.projects.topics.list -> pubsub.projects.topics.delete; pubsub.projects.subscriptions.create -> pubsub.projects.subscriptions.get -> pubsub.projects.subscriptions.list -> pubsub.projects.subscriptions.delete.
 - Actions explicitly not supported first: Pub/Sub console-only workflows, account billing, quota purchase flows, and managed cross-region failover controls outside `pubsub.projects.topics.create` and its paired read/list calls.
-- Ledger resource types: `google_pubsub_topic`, `google_pubsub_subscription`.
+- Ledger resource types: `google_pubsub_topic`, `google_pubsub_subscription`
 - Provider errors: map Pub/Sub authorization failures to GCP access-denied codes, missing `google_pubsub_topic` records to not-found codes, duplicate imports to conflict/already-exists, invalid mapped fields to validation errors, backend saturation to throttle/quota responses, and unexpected `gcp/pub-sub` failures to provider internal-error shapes with request ids.
 - Pagination/idempotency/tags: list/read calls expose provider tokens where the API has them; mutating calls persist idempotency keys or operation ids; tags/labels round-trip on `google_pubsub_topic` and `google_pubsub_subscription`.
 
 ## Backend
 
-- Backend: NATS JetStream.
+- Backend: NATS JetStream with HomePort Pub/Sub compatibility adapter.
 - Storage and metadata: Pub/Sub state lives in `NATS JetStream`; HomePort stores provider identifiers for `google_pubsub_topic`, source import ids, authz bindings, generated artifact checksums, backup references, and audit events.
 - Secrets/keys/tokens: issue HomePort-scoped credentials from the identity/secrets layer; store provider source credentials only as encrypted migration inputs.
 - Runtime/provisioning: provision `NATS JetStream` with generated `artifacts/compat/gcp/pub-sub/backend.yaml`, health endpoint, persistence volume, backup job, endpoint route, and teardown script for `gcp/pub-sub`.
@@ -52,7 +52,7 @@ Expose the smallest GCP Pub/Sub-compatible surface needed to migrate the ledger 
 
 ## Compatibility Level
 
-- Current level: L2 - resource mapping exists, but backend selection and provider contract tests are incomplete.
-- Target level: L3 after backend artifacts, adapter mappings, and conformance tests are implemented.
-- Blocking gaps: no Pub/Sub-compatible local API adapter exists yet; `test/conformance/services/gcp-pub-sub.yaml` must prove provider error, pagination, idempotency, authz, quota, and audit behavior before promotion.
-- Path to close gaps: generate backend artifacts, implement the endpoint mapping above, add `test/conformance/services/gcp-pub-sub.yaml`, then promote only when that manifest passes in CI.
+- Current level: L2 - resource mapping, a local API adapter seed, NATS JetStream mapper artifacts, and partial provider-shaped REST tests exist, but live backend integration and full provider contract tests are incomplete.
+- Target level: L3 after live backend integration, adapter mappings, and conformance tests are implemented.
+- Blocking gaps: `test/conformance/services/gcp-pub-sub.yaml` must prove live JetStream durability plus provider error, pagination, idempotency, authz, quota, and audit behavior before promotion.
+- Path to close gaps: wire the adapter state to NATS JetStream, extend `test/conformance/services/gcp-pub-sub.yaml` to exercise the provider contract against that backend, then promote only when that manifest passes in CI.

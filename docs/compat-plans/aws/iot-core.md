@@ -8,7 +8,7 @@ Expose the smallest AWS IoT Core-compatible surface needed to migrate the ledger
 
 - Initial supported surface: iot:CreateThing, iot:DescribeThing, iot:ListThings, iot:UpdateThing, iot:DeleteThing.
 - Actions explicitly not supported first: IoT Core console-only workflows, account billing, quota purchase flows, and managed cross-region failover controls outside `iot:CreateThing` and its paired read/list calls.
-- Ledger resource types: `aws_iot_thing`.
+- Ledger resource types: `aws_iot_thing`
 - Provider errors: map IoT Core authorization failures to AWS access-denied codes, missing `aws_iot_thing` records to not-found codes, duplicate imports to conflict/already-exists, invalid mapped fields to validation errors, backend saturation to throttle/quota responses, and unexpected `aws/iot-core` failures to provider internal-error shapes with request ids.
 - Pagination/idempotency/tags: list/read calls expose provider tokens where the API has them; mutating calls persist idempotency keys or operation ids; tags/labels round-trip on `aws_iot_thing`.
 

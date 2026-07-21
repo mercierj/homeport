@@ -8,13 +8,13 @@ Expose the smallest Azure App Gateway-compatible surface needed to migrate the l
 
 - Initial supported surface: Microsoft.Network/applicationGateways/read, Microsoft.Network/applicationGateways/write, Microsoft.Network/applicationGateways/delete.
 - Actions explicitly not supported first: App Gateway console-only workflows, account billing, quota purchase flows, and managed cross-region failover controls outside `Microsoft.Network/applicationGateways/read` and its paired read/list calls.
-- Ledger resource types: `azurerm_application_gateway`.
+- Ledger resource types: `azurerm_application_gateway`
 - Provider errors: map App Gateway authorization failures to Azure access-denied codes, missing `azurerm_application_gateway` records to not-found codes, duplicate imports to conflict/already-exists, invalid mapped fields to validation errors, backend saturation to throttle/quota responses, and unexpected `azure/app-gateway` failures to provider internal-error shapes with request ids.
 - Pagination/idempotency/tags: list/read calls expose provider tokens where the API has them; mutating calls persist idempotency keys or operation ids; tags/labels round-trip on `azurerm_application_gateway`.
 
 ## Backend
 
-- Backend: Traefik ingress gateway.
+- Backend: Traefik.
 - Storage and metadata: App Gateway state lives in `Traefik ingress gateway`; HomePort stores provider identifiers for `azurerm_application_gateway`, source import ids, authz bindings, generated artifact checksums, backup references, and audit events.
 - Secrets/keys/tokens: issue HomePort-scoped credentials from the identity/secrets layer; store provider source credentials only as encrypted migration inputs.
 - Runtime/provisioning: provision `Traefik ingress gateway` with generated `artifacts/compat/azure/app-gateway/backend.yaml`, health endpoint, persistence volume, backup job, endpoint route, and teardown script for `azure/app-gateway`.

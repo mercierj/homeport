@@ -8,7 +8,7 @@ Expose the smallest AWS Transcribe-compatible surface needed to migrate the ledg
 
 - Initial supported surface: transcribe:StartTranscriptionJob, transcribe:GetTranscriptionJob, transcribe:ListTranscriptionJobs, transcribe:DeleteTranscriptionJob.
 - Actions explicitly not supported first: Transcribe console-only workflows, account billing, quota purchase flows, and managed cross-region failover controls outside `transcribe:StartTranscriptionJob` and its paired read/list calls.
-- Ledger resource types: `aws_transcribe_vocabulary`.
+- Ledger resource types: `aws_transcribe_vocabulary`
 - Provider errors: map Transcribe authorization failures to AWS access-denied codes, missing `aws_transcribe_vocabulary` records to not-found codes, duplicate imports to conflict/already-exists, invalid mapped fields to validation errors, backend saturation to throttle/quota responses, and unexpected `aws/transcribe` failures to provider internal-error shapes with request ids.
 - Pagination/idempotency/tags: list/read calls expose provider tokens where the API has them; mutating calls persist idempotency keys or operation ids; tags/labels round-trip on `aws_transcribe_vocabulary`.
 

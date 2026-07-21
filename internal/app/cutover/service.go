@@ -27,6 +27,28 @@ type CutoverExecution struct {
 	cancel    context.CancelFunc
 }
 
+// CutoverExecutionSnapshot is an immutable view of a cutover execution.
+type CutoverExecutionSnapshot struct {
+	Plan      CutoverPlanSnapshot
+	StartedAt *time.Time
+	Logs      []string
+}
+
+type CutoverPlanSnapshot struct {
+	Status domaincutover.CutoverStatus
+	Error  string
+	DryRun bool
+	Steps  []CutoverStepSnapshot
+}
+
+type CutoverStepSnapshot struct {
+	Order       int
+	Type        domaincutover.CutoverStepType
+	Description string
+	Status      domaincutover.CutoverStepStatus
+	Error       string
+}
+
 // NewService creates a new cutover service.
 func NewService() *Service {
 	return &Service{
@@ -79,7 +101,7 @@ func (s *Service) CreatePlan(req *CreatePlanRequest) (*domaincutover.CutoverPlan
 }
 
 // GetPlan returns a cutover plan by ID.
-func (s *Service) GetPlan(planID string) (*CutoverExecution, error) {
+func (s *Service) GetPlan(planID string) (*CutoverExecutionSnapshot, error) {
 	s.mu.RLock()
 	defer s.mu.RUnlock()
 
@@ -87,7 +109,33 @@ func (s *Service) GetPlan(planID string) (*CutoverExecution, error) {
 	if !ok {
 		return nil, fmt.Errorf("cutover plan not found: %s", planID)
 	}
-	return exec, nil
+	return snapshotExecution(exec), nil
+}
+
+func snapshotExecution(exec *CutoverExecution) *CutoverExecutionSnapshot {
+	snapshot := &CutoverExecutionSnapshot{
+		Plan: CutoverPlanSnapshot{
+			Status: exec.Plan.Status,
+			Error:  exec.Plan.Error,
+			DryRun: exec.Plan.DryRun,
+			Steps:  make([]CutoverStepSnapshot, len(exec.Plan.Steps)),
+		},
+		Logs: append([]string(nil), exec.Logs...),
+	}
+	if exec.StartedAt != nil {
+		startedAt := *exec.StartedAt
+		snapshot.StartedAt = &startedAt
+	}
+	for i, step := range exec.Plan.Steps {
+		snapshot.Plan.Steps[i] = CutoverStepSnapshot{
+			Order:       step.Order,
+			Type:        step.Type,
+			Description: step.Description,
+			Status:      step.Status,
+			Error:       step.Error,
+		}
+	}
+	return snapshot
 }
 
 // CutoverCallback is called when a cutover event occurs.
@@ -154,10 +202,12 @@ func (s *Service) executePlan(ctx context.Context, exec *CutoverExecution, callb
 		default:
 		}
 
+		s.mu.Lock()
 		plan.CurrentStepIndex = i
 		step.Status = domaincutover.CutoverStepStatusRunning
 		now := time.Now()
 		step.StartedAt = &now
+		s.mu.Unlock()
 
 		addLog(fmt.Sprintf("Starting step %d: %s", i+1, step.Description))
 
@@ -208,12 +258,16 @@ func (s *Service) executePlan(ctx context.Context, exec *CutoverExecution, callb
 		}
 
 		endTime := time.Now()
+		s.mu.Lock()
 		step.CompletedAt = &endTime
 		step.Duration = endTime.Sub(*step.StartedAt)
+		s.mu.Unlock()
 
 		if stepErr != nil {
+			s.mu.Lock()
 			step.Status = domaincutover.CutoverStepStatusFailed
 			step.Error = stepErr.Error()
+			s.mu.Unlock()
 			addLog(fmt.Sprintf("Step %d failed: %s", i+1, stepErr))
 
 			if callback != nil {
@@ -244,7 +298,9 @@ func (s *Service) executePlan(ctx context.Context, exec *CutoverExecution, callb
 				return
 			}
 		} else {
+			s.mu.Lock()
 			step.Status = domaincutover.CutoverStepStatusCompleted
+			s.mu.Unlock()
 			addLog(fmt.Sprintf("Step %d completed", i+1))
 
 			if callback != nil {

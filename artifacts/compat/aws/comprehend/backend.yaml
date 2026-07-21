@@ -1,0 +1,7 @@
+version: 1
+provider: aws
+service: comprehend
+target: spacy
+status: seed-only
+endpoint:
+  route: /compat/aws/comprehend

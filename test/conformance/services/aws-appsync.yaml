@@ -1,17 +1,7 @@
 provider: aws
 service: AppSync
 checks:
-  discover: GOCACHE=/private/tmp/exit-gafam-go-build go test ./internal/infrastructure/mapper/networking -run TestAppSyncMapperConformanceManagedAToZ
-  cost: GOCACHE=/private/tmp/exit-gafam-go-build go test ./internal/infrastructure/mapper/networking -run TestAppSyncMapperConformanceManagedAToZ
-  provision: GOCACHE=/private/tmp/exit-gafam-go-build go test ./internal/infrastructure/mapper/networking -run TestAppSyncMapperConformanceManagedAToZ
-  migrate: GOCACHE=/private/tmp/exit-gafam-go-build go test ./internal/infrastructure/mapper/networking -run TestAppSyncMapperConformanceManagedAToZ
-  api_compat: GOCACHE=/private/tmp/exit-gafam-go-build go test ./internal/infrastructure/mapper/networking -run TestAppSyncMapperConformanceManagedAToZ
-  env_dns: GOCACHE=/private/tmp/exit-gafam-go-build go test ./internal/infrastructure/mapper/networking -run TestAppSyncMapperConformanceManagedAToZ
-  ha: GOCACHE=/private/tmp/exit-gafam-go-build go test ./internal/infrastructure/mapper/networking -run TestAppSyncMapperConformanceManagedAToZ
-  backup: GOCACHE=/private/tmp/exit-gafam-go-build go test ./internal/infrastructure/mapper/networking -run TestAppSyncMapperConformanceManagedAToZ
-  validate: GOCACHE=/private/tmp/exit-gafam-go-build go test ./internal/infrastructure/mapper/networking -run TestAppSyncMapperConformanceManagedAToZ
-  cutover: GOCACHE=/private/tmp/exit-gafam-go-build go test ./internal/infrastructure/mapper/networking -run TestAppSyncMapperConformanceManagedAToZ
-  rollback: GOCACHE=/private/tmp/exit-gafam-go-build go test ./internal/infrastructure/mapper/networking -run TestAppSyncMapperConformanceManagedAToZ
+  api_compat: GOCACHE=/private/tmp/exit-gafam-go-build go test ./test/compat -run AppSync
 evidence:
-  target: Hasura GraphQL Engine
-  app_change_mode: no_change
+  target: local AppSync compatibility adapter seed; Hasura is not deployed
+  app_change_mode: local adapter seed

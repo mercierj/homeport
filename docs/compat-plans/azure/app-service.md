@@ -8,13 +8,13 @@ Expose the smallest Azure App Service-compatible surface needed to migrate the l
 
 - Initial supported surface: Microsoft.Web/sites/read, Microsoft.Web/sites/write, Microsoft.Web/sites/delete.
 - Actions explicitly not supported first: App Service console-only workflows, account billing, quota purchase flows, and managed cross-region failover controls outside `Microsoft.Web/sites/read` and its paired read/list calls.
-- Ledger resource types: `azurerm_app_service`.
+- Ledger resource types: `azurerm_app_service`
 - Provider errors: map App Service authorization failures to Azure access-denied codes, missing `azurerm_app_service` records to not-found codes, duplicate imports to conflict/already-exists, invalid mapped fields to validation errors, backend saturation to throttle/quota responses, and unexpected `azure/app-service` failures to provider internal-error shapes with request ids.
 - Pagination/idempotency/tags: list/read calls expose provider tokens where the API has them; mutating calls persist idempotency keys or operation ids; tags/labels round-trip on `azurerm_app_service`.
 
 ## Backend
 
-- Backend: Dokku or Cloud Foundry buildpacks.
+- Backend: Docker Compose or K3s app runtime.
 - Storage and metadata: App Service state lives in `Dokku or Cloud Foundry buildpacks`; HomePort stores provider identifiers for `azurerm_app_service`, source import ids, authz bindings, generated artifact checksums, backup references, and audit events.
 - Secrets/keys/tokens: issue HomePort-scoped credentials from the identity/secrets layer; store provider source credentials only as encrypted migration inputs.
 - Runtime/provisioning: provision `Dokku or Cloud Foundry buildpacks` with generated `artifacts/compat/azure/app-service/backend.yaml`, health endpoint, persistence volume, backup job, endpoint route, and teardown script for `azure/app-service`.

@@ -6,53 +6,52 @@ Expose the smallest AWS EventBridge-compatible surface needed to migrate the led
 
 ## Provider API Surface
 
-- Initial supported surface: events:PutRule, events:DescribeRule, events:ListRules, events:DeleteRule.
+- Initial supported surface: events:PutRule, events:DescribeRule, events:ListRules, events:PutEvents, events:PutTargets, events:ListTargetsByRule, events:ListRuleNamesByTarget, events:RemoveTargets, events:EnableRule, events:DisableRule, events:DeleteRule, events:TagResource, events:ListTagsForResource, events:UntagResource.
 - Actions explicitly not supported first: EventBridge console-only workflows, account billing, quota purchase flows, and managed cross-region failover controls outside `events:PutRule` and its paired read/list calls.
-- Ledger resource types: `aws_cloudwatch_event_rule`.
-- Provider errors: map EventBridge authorization failures to AWS access-denied codes, missing `aws_cloudwatch_event_rule` records to not-found codes, duplicate imports to conflict/already-exists, invalid mapped fields to validation errors, backend saturation to throttle/quota responses, and unexpected `aws/eventbridge` failures to provider internal-error shapes with request ids.
-- Pagination/idempotency/tags: list/read calls expose provider tokens where the API has them; mutating calls persist idempotency keys or operation ids; tags/labels round-trip on `aws_cloudwatch_event_rule`.
+- Ledger resource types: `aws_cloudwatch_event_rule`
+- Provider errors: map authorization to `AccessDeniedException`, missing rules to `ResourceNotFoundException`, invalid requests to `ValidationException`, invalid pagination to `InvalidToken`, configured limits to `LimitExceededException`, unsupported calls to `UnsupportedOperation`, and authorizer failures to `InternalException`.
+- Pagination/tags: list calls expose provider tokens and rule tags round-trip; idempotency tokens and operation IDs are not supported by this local seed.
 
 ## Backend
 
 - Backend: n8n.
-- Storage and metadata: EventBridge state lives in `n8n`; HomePort stores provider identifiers for `aws_cloudwatch_event_rule`, source import ids, authz bindings, generated artifact checksums, backup references, and audit events.
-- Secrets/keys/tokens: issue HomePort-scoped credentials from the identity/secrets layer; store provider source credentials only as encrypted migration inputs.
-- Runtime/provisioning: provision `n8n` with generated Compose/Kubernetes/OpenTofu, health checks, backup hooks, endpoint routing, and teardown scripts.
+- Storage and metadata: generated artifacts target `n8n`; the local adapter keeps rules and targets in memory and emits audit decisions.
+- Secrets/keys/tokens: compatibility credentials are accepted by the local endpoint; credential issuance and encrypted source inputs are outside this seed.
+- Runtime/provisioning: `backend.yaml` records the n8n target, health path, persistence volume, and backup command; provisioning and teardown are outside this local seed.
 
 ## Authz Model
 
 - Principal: HomePort subject mapped from AWS user/role/service account/managed identity/session token.
-- Actions: events:PutRule, events:DescribeRule, events:ListRules, events:DeleteRule.
-- Resource: arn:aws:events:{region}:{account}:eventbridge/{id}.
-- Context: evaluate EventBridge calls with tenant/project/account, provider region/location, `arn:aws:events:{region}:{account}:eventbridge/{id}`, source IP, request id, user agent, tags/labels on `aws_cloudwatch_event_rule`, credential age, and MFA/managed-identity claims when the source provider supplies them.
+- Actions: events:PutRule, events:DescribeRule, events:ListRules, events:PutEvents, events:PutTargets, events:ListTargetsByRule, events:ListRuleNamesByTarget, events:RemoveTargets, events:EnableRule, events:DisableRule, events:DeleteRule, events:TagResource, events:ListTagsForResource, events:UntagResource.
+- Resource: `arn:aws:events:us-east-1:000000000000:rule/{id}` for the default bus, or `arn:aws:events:us-east-1:000000000000:rule/{event-bus}/{id}` for a named bus.
+- Context: the adapter forwards provider, service, method, request ID, source IP, current time, user agent, optional credential headers, and header-derived principal attributes/claims to the injected authorizer.
 - Evaluation: call `Authorize(principal, action, resource, context)` before each mutating operation and each data-plane read/write.
-- Conditions: support exact/wildcard matches for the listed EventBridge actions, `arn:aws:events:{region}:{account}:eventbridge/{id}` prefix checks, tag/label equality on `aws_cloudwatch_event_rule`, requested region/location, source IP CIDR, time window, and principal attributes.
+- Conditions: the injected authorizer defines policy matching; the adapter does not implement region, tag, CIDR, or time conditions itself.
 
 ## Adapter
 
 - Endpoints exposed: `/compat/aws/eventbridge` for the actions above.
 - SDK used in tests: AWS SDK for Go v2 configured with endpoint override and HomePort credentials.
-- Request mapping: EventBridge provider names, locations, tags/labels, and request bodies map to HomePort `aws_cloudwatch_event_rule` records and `n8n` configuration; backend-only knobs are omitted from provider responses.
-- Response mapping: return EventBridge provider ids, `aws_cloudwatch_event_rule` lifecycle state, operation ids, etags/versions where the source API exposes them, list pagination tokens, and HomePort audit timestamps without exposing backend-only fields.
-- Error mapping: translate `aws/eventbridge` backend auth, missing `aws_cloudwatch_event_rule`, duplicate import, malformed request, timeout, quota, and dependency failures to the provider-shaped access-denied/not-found/conflict/validation/throttle/internal-error responses with retry hints.
+- Request mapping: EventBridge request bodies map to in-memory rule, target, event, and tag records; no n8n configuration is applied by the adapter.
+- Response mapping: return local EventBridge-compatible rule, target, event, tag, and pagination shapes; operation IDs, ETags, audit timestamps, and retry hints are not emitted.
+- Error mapping: return the local provider-shaped authorization, not-found, validation, token, configured-limit, unsupported-operation, and authorizer-failure errors; backend timeout and dependency mapping are outside this seed.
 
 ## Generated Artifacts
 
-- `artifacts/compat/aws/eventbridge/backend.yaml` for `n8n` configuration, network, persistence, health checks, and backup policy.
-- `artifacts/compat/aws/eventbridge/adapter.yaml` for endpoint routes, authz action/resource mappings, error mappings, pagination/idempotency settings, and quota defaults.
+- `artifacts/compat/aws/eventbridge/backend.yaml` records the n8n target, persistence, health check, and backup intent.
+- `artifacts/compat/aws/eventbridge/adapter.yaml` records endpoint routes, authz action/resource mappings, errors, pagination, and the configurable quota option.
 - `artifacts/compat/aws/eventbridge/migration.md` with source import ids, unsupported actions, operator decisions, rollback, and cutover steps.
 - `test/conformance/services/aws-eventbridge.yaml` containing the SDK contract cases listed below.
 
 ## Contract Tests
 
-- AWS SDK for Go v2 exercises PutRule -> DescribeRule -> ListRules -> DeleteRule against `/compat/aws/eventbridge` and asserts provider-shaped request, response, error, authz, retry, and pagination behavior.
-- Fixture import covers `aws_cloudwatch_event_rule` from `aws/eventbridge`.
-- Negative cases: denied principal, missing resource, malformed request, duplicate/conflict, expired credential, backend timeout, and quota/throttle.
-- Cross-service case: one allowed and one denied call pass through the central authorization engine and emit audit events.
+- AWS SDK for Go v2 exercises rules, events, targets, tags, pagination, configured quotas, and authorization/audit against `/compat/aws/eventbridge`.
+- AWS CLI, Terraform, and boto3 smoke tests are available for the supported endpoint override path when their local binaries are installed.
+- Fixture import, credential-expiry enforcement, backend timeout/retry behavior, and cross-service IAM parity remain outside this seed.
 
 ## Compatibility Level
 
-- Current level: L3 - ledger migration path is complete; provider SDK/REST conformance still blocks L4.
+- Current level: L3 seed - AWS SDK, AWS CLI, and Terraform endpoint-override checks cover the local EventBridge adapter. SDK contracts also cover rule and target lifecycle, target-to-rule lookup, pagination, rule and target quotas, and centralized authz/audit, but n8n delivery and full acceptance gates still block L4.
 - Target level: L4 after `test/conformance/services/aws-eventbridge.yaml` passes in CI.
-- Blocking gaps: `test/conformance/services/aws-eventbridge.yaml` must prove provider error, pagination, idempotency, authz, quota, and audit behavior before promotion.
+- Blocking gaps: `test/conformance/services/aws-eventbridge.yaml` must still prove broader provider-error parity, idempotency, and real n8n delivery before promotion.
 - Path to close gaps: generate backend artifacts, implement the endpoint mapping above, add `test/conformance/services/aws-eventbridge.yaml`, then promote only when that manifest passes in CI.

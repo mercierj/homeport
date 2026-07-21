@@ -1,0 +1,7 @@
+backend:
+  provider: aws
+  service: s3
+  target: minio
+  status: proposed-seed
+  endpoint:
+    route: /compat/aws/s3

@@ -5,7 +5,7 @@ checks:
   cost: GOCACHE=/private/tmp/exit-gafam-go-build go test ./internal/infrastructure/mapper/compute -run TestComprehendConformanceManagedAToZ
   provision: GOCACHE=/private/tmp/exit-gafam-go-build go test ./internal/infrastructure/mapper/compute -run TestComprehendConformanceManagedAToZ
   migrate: GOCACHE=/private/tmp/exit-gafam-go-build go test ./internal/infrastructure/mapper/compute -run TestComprehendConformanceManagedAToZ
-  api_compat: GOCACHE=/private/tmp/exit-gafam-go-build go test ./internal/infrastructure/mapper/compute -run TestComprehendConformanceManagedAToZ
+  api_compat: GOCACHE=/private/tmp/exit-gafam-go-build go test ./test/compat -run TestComprehendCompatibilityAdapter -count=1
   env_dns: GOCACHE=/private/tmp/exit-gafam-go-build go test ./internal/infrastructure/mapper/compute -run TestComprehendConformanceManagedAToZ
   ha: GOCACHE=/private/tmp/exit-gafam-go-build go test ./internal/infrastructure/mapper/compute -run TestComprehendConformanceManagedAToZ
   backup: GOCACHE=/private/tmp/exit-gafam-go-build go test ./internal/infrastructure/mapper/compute -run TestComprehendConformanceManagedAToZ
@@ -14,4 +14,5 @@ checks:
   rollback: GOCACHE=/private/tmp/exit-gafam-go-build go test ./internal/infrastructure/mapper/compute -run TestComprehendConformanceManagedAToZ
 evidence:
   target: spaCy
-  app_change_mode: generated_patch
+  app_change_mode: local adapter seed
+  api_compat_covers: sdk_lifecycle,pagination,authz,audit,validation,duplicate,quota

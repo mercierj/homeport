@@ -8,14 +8,14 @@ Expose the smallest GCP Trace-compatible surface needed to migrate the ledger re
 
 - Initial supported surface: cloudtrace.projects.traces.patch -> cloudtrace.projects.traces.get -> cloudtrace.projects.traces.list; cloudtrace.projects.traces.batchWrite.
 - Actions explicitly not supported first: Trace console-only workflows, account billing, quota purchase flows, and managed cross-region failover controls outside `cloudtrace.projects.traces.patch` and its paired read/list calls.
-- Ledger resource types: no resource type currently modeled in the ledger.
+- Ledger resource types: `google_project_service`
 - First concrete resource model to add: service-specific model with import id, region/location, labels/tags, backend target id, lifecycle state, and owner principal.
 - Provider errors: map Trace authorization failures to GCP access-denied codes, missing `planned resource model` records to not-found codes, duplicate imports to conflict/already-exists, invalid mapped fields to validation errors, backend saturation to throttle/quota responses, and unexpected `gcp/trace` failures to provider internal-error shapes with request ids.
 - Pagination/idempotency/tags: list/read calls expose provider tokens where the API has them; mutating calls persist idempotency keys or operation ids; tags/labels round-trip on the planned resource model.
 
 ## Backend
 
-- Backend: Grafana Tempo.
+- Backend: OpenTelemetry Collector and Jaeger.
 - Storage and metadata: Trace state lives in `Grafana Tempo`; HomePort stores provider identifiers for `planned resource model`, source import ids, authz bindings, generated artifact checksums, backup references, and audit events.
 - Secrets/keys/tokens: issue HomePort-scoped credentials from the identity/secrets layer; store provider source credentials only as encrypted migration inputs.
 - Runtime/provisioning: provision `Grafana Tempo` with generated `artifacts/compat/gcp/trace/backend.yaml`, health endpoint, persistence volume, backup job, endpoint route, and teardown script for `gcp/trace`.

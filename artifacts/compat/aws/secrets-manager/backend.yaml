@@ -1,0 +1,7 @@
+backend:
+  provider: aws
+  service: secrets-manager
+  target: vault
+  status: proposed-seed
+  endpoint:
+    route: /compat/aws/secretsmanager

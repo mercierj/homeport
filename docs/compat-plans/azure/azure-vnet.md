@@ -8,13 +8,13 @@ Expose the smallest Azure Azure VNet-compatible surface needed to migrate the le
 
 - Initial supported surface: Microsoft.Network/virtualNetworks/read, Microsoft.Network/virtualNetworks/write, Microsoft.Network/virtualNetworks/delete.
 - Actions explicitly not supported first: Azure VNet console-only workflows, account billing, quota purchase flows, and managed cross-region failover controls outside `Microsoft.Network/virtualNetworks/read` and its paired read/list calls.
-- Ledger resource types: `azurerm_virtual_network`.
+- Ledger resource types: `azurerm_virtual_network`
 - Provider errors: map Azure VNet authorization failures to Azure access-denied codes, missing `azurerm_virtual_network` records to not-found codes, duplicate imports to conflict/already-exists, invalid mapped fields to validation errors, backend saturation to throttle/quota responses, and unexpected `azure/azure-vnet` failures to provider internal-error shapes with request ids.
 - Pagination/idempotency/tags: list/read calls expose provider tokens where the API has them; mutating calls persist idempotency keys or operation ids; tags/labels round-trip on `azurerm_virtual_network`.
 
 ## Backend
 
-- Backend: Cilium and Linux bridge networking.
+- Backend: Docker bridge networks.
 - Storage and metadata: Azure VNet state lives in `Cilium and Linux bridge networking`; HomePort stores provider identifiers for `azurerm_virtual_network`, source import ids, authz bindings, generated artifact checksums, backup references, and audit events.
 - Secrets/keys/tokens: issue HomePort-scoped credentials from the identity/secrets layer; store provider source credentials only as encrypted migration inputs.
 - Runtime/provisioning: provision `Cilium and Linux bridge networking` with generated `artifacts/compat/azure/azure-vnet/backend.yaml`, health endpoint, persistence volume, backup job, endpoint route, and teardown script for `azure/azure-vnet`.

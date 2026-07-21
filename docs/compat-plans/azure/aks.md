@@ -8,13 +8,13 @@ Expose the smallest Azure AKS-compatible surface needed to migrate the ledger re
 
 - Initial supported surface: Microsoft.ContainerService/managedClusters/read, Microsoft.ContainerService/managedClusters/write, Microsoft.ContainerService/managedClusters/delete.
 - Actions explicitly not supported first: AKS console-only workflows, account billing, quota purchase flows, and managed cross-region failover controls outside `Microsoft.ContainerService/managedClusters/read` and its paired read/list calls.
-- Ledger resource types: `azurerm_kubernetes_cluster`.
+- Ledger resource types: `azurerm_kubernetes_cluster`
 - Provider errors: map AKS authorization failures to Azure access-denied codes, missing `azurerm_kubernetes_cluster` records to not-found codes, duplicate imports to conflict/already-exists, invalid mapped fields to validation errors, backend saturation to throttle/quota responses, and unexpected `azure/aks` failures to provider internal-error shapes with request ids.
 - Pagination/idempotency/tags: list/read calls expose provider tokens where the API has them; mutating calls persist idempotency keys or operation ids; tags/labels round-trip on `azurerm_kubernetes_cluster`.
 
 ## Backend
 
-- Backend: K3s or upstream Kubernetes.
+- Backend: K3s.
 - Storage and metadata: AKS state lives in `K3s or upstream Kubernetes`; HomePort stores provider identifiers for `azurerm_kubernetes_cluster`, source import ids, authz bindings, generated artifact checksums, backup references, and audit events.
 - Secrets/keys/tokens: issue HomePort-scoped credentials from the identity/secrets layer; store provider source credentials only as encrypted migration inputs.
 - Runtime/provisioning: provision `K3s or upstream Kubernetes` with generated `artifacts/compat/azure/aks/backend.yaml`, health endpoint, persistence volume, backup job, endpoint route, and teardown script for `azure/aks`.

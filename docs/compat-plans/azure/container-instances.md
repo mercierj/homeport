@@ -8,13 +8,13 @@ Expose the smallest Azure Container Instances-compatible surface needed to migra
 
 - Initial supported surface: Microsoft.ContainerInstance/containerGroups/read, Microsoft.ContainerInstance/containerGroups/write, Microsoft.ContainerInstance/containerGroups/delete.
 - Actions explicitly not supported first: Container Instances console-only workflows, account billing, quota purchase flows, and managed cross-region failover controls outside `Microsoft.ContainerInstance/containerGroups/read` and its paired read/list calls.
-- Ledger resource types: `azurerm_container_group`.
+- Ledger resource types: `azurerm_container_group`
 - Provider errors: map Container Instances authorization failures to Azure access-denied codes, missing `azurerm_container_group` records to not-found codes, duplicate imports to conflict/already-exists, invalid mapped fields to validation errors, backend saturation to throttle/quota responses, and unexpected `azure/container-instances` failures to provider internal-error shapes with request ids.
 - Pagination/idempotency/tags: list/read calls expose provider tokens where the API has them; mutating calls persist idempotency keys or operation ids; tags/labels round-trip on `azurerm_container_group`.
 
 ## Backend
 
-- Backend: Kubernetes Jobs and Pods.
+- Backend: Docker Compose container runtime.
 - Storage and metadata: Container Instances state lives in `Kubernetes Jobs and Pods`; HomePort stores provider identifiers for `azurerm_container_group`, source import ids, authz bindings, generated artifact checksums, backup references, and audit events.
 - Secrets/keys/tokens: issue HomePort-scoped credentials from the identity/secrets layer; store provider source credentials only as encrypted migration inputs.
 - Runtime/provisioning: provision `Kubernetes Jobs and Pods` with generated `artifacts/compat/azure/container-instances/backend.yaml`, health endpoint, persistence volume, backup job, endpoint route, and teardown script for `azure/container-instances`.

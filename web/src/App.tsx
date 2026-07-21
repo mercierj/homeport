@@ -20,6 +20,10 @@ import { Secrets } from './pages/Secrets';
 import { Identity } from './pages/Identity';
 import { DNS } from './pages/DNS';
 import Policies from './pages/Policies';
+import { AWSOperations } from './pages/AWSOperations';
+import { AWSLambda } from './pages/AWSLambda';
+import { AWSSQS } from './pages/AWSSQS';
+import { AWSService } from './pages/AWSService';
 
 // Components
 import { Sidebar } from './components/navigation/Sidebar';
@@ -79,6 +83,12 @@ function AppRoutes() {
 
         {/* Migration - Hero Feature */}
         <Route path="/migrate" element={<Migrate />} />
+
+        {/* Post-cutover AWS operations (never part of migration) */}
+        <Route path="/aws" element={<AWSOperations />} />
+        <Route path="/aws/lambda" element={<AWSLambda />} />
+        <Route path="/aws/sqs" element={<AWSSQS />} />
+        <Route path="/aws/:service" element={<AWSService />} />
 
         {/* Compute & Functions */}
         <Route path="/deploy" element={<Navigate to="/migrate" replace />} />

@@ -1,0 +1,15 @@
+backend:
+  provider: aws
+  service: eventbridge
+  target: n8n
+  runtime:
+    image: n8nio/n8n:latest
+    health_path: /healthz
+  persistence:
+    volume: eventbridge-n8n-data
+    mount_path: /home/node/.n8n
+  backup:
+    schedule: daily
+    command: tar -czf /backup/n8n.tgz /home/node/.n8n
+  endpoint:
+    route: /compat/aws/eventbridge

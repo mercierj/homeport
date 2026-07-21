@@ -71,7 +71,7 @@ services:
 
 func TestManagedSummaryCountsNonFullRows(t *testing.T) {
 	catalog := Catalog{Services: []domaincoverage.ServiceCoverage{
-		{Provider: "aws", Service: "S3", ResourceTypes: []string{"aws_s3_bucket"}, Target: "MinIO", APICompatibilityStrategy: "adapter", Status: domaincoverage.StatusFull, ManualStepsResolved: true, Discover: true, Cost: true, Provision: true, Migrate: true, APICompat: true, EnvDNS: true, HA: true, Backup: true, Validate: true, Cutover: true, Rollback: true},
+		{Provider: "aws", Service: "S3", ResourceTypes: []string{"aws_s3_bucket"}, Target: "MinIO", APICompatibilityStrategy: "adapter", CompatibilityLevel: domaincoverage.CompatibilityLevelL4, Status: domaincoverage.StatusFull, ManualStepsResolved: true, Discover: true, Cost: true, Provision: true, Migrate: true, APICompat: true, EnvDNS: true, HA: true, Backup: true, Validate: true, Cutover: true, Rollback: true},
 		{Provider: "aws", Service: "Athena", Status: domaincoverage.StatusMissing, Blocker: "not modeled yet"},
 		{Provider: "gcp", Service: "Cloud Storage", Status: domaincoverage.StatusGuided, Blocker: "adapter required"},
 		{Provider: "azure", Service: "Azure VM", Status: domaincoverage.StatusMapped},
@@ -84,6 +84,21 @@ func TestManagedSummaryCountsNonFullRows(t *testing.T) {
 	}
 	if summary.ByProvider["aws"].NotFull != 1 || summary.ByProvider["gcp"].NotFull != 1 || summary.ByProvider["azure"].NotFull != 1 {
 		t.Fatalf("provider summary = %#v", summary.ByProvider)
+	}
+}
+
+func TestPromoteFullRequiresL4CompatibilityLevel(t *testing.T) {
+	withConformanceManifest(t, "aws", "S3")
+	catalog := Catalog{Services: []domaincoverage.ServiceCoverage{{
+		Provider: "aws", Service: "S3", ResourceTypes: []string{"aws_s3_bucket"}, Status: domaincoverage.StatusMapped, ManualStepsResolved: true,
+		Target: "MinIO", APICompatibilityStrategy: "adapter", CompatibilityLevel: domaincoverage.CompatibilityLevelL3,
+		Discover: true, Cost: true, Provision: true, Migrate: true, APICompat: true,
+		EnvDNS: true, HA: true, Backup: true, Validate: true, Cutover: true, Rollback: true,
+	}}}
+
+	err := catalog.Promote("aws", "S3", domaincoverage.StatusFull)
+	if err == nil || !strings.Contains(err.Error(), "L4") {
+		t.Fatalf("Promote() error = %v, want L4 requirement", err)
 	}
 }
 
@@ -156,6 +171,35 @@ func TestDefaultCatalogMatchesDocsLedger(t *testing.T) {
 	}
 }
 
+func TestDefaultCatalogHasNoProviderGradeFullClaimsWithoutL4Evidence(t *testing.T) {
+	catalog, err := LoadDefaultCatalog()
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	summary := NewService(*catalog).ManagedSummary()
+	if summary.Full != 0 {
+		t.Fatalf("default catalog reports %d full managed services without L4 evidence", summary.Full)
+	}
+}
+
+func TestDefaultCatalogFullRowsHaveExplicitCompatibilityLevels(t *testing.T) {
+	catalog, err := LoadDefaultCatalog()
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	missing := []string{}
+	for _, row := range catalog.Services {
+		if row.Status == domaincoverage.StatusFull && row.CompatibilityLevel == "" {
+			missing = append(missing, row.Provider+"/"+row.Service)
+		}
+	}
+	if len(missing) != 0 {
+		t.Fatalf("full rows missing compatibility_level: %s", strings.Join(missing, ", "))
+	}
+}
+
 func TestFindDriftMarshalsEmptyDriftListsAsArrays(t *testing.T) {
 	service := NewService(Catalog{})
 	catalog := Catalog{}
@@ -215,7 +259,7 @@ func TestPromoteRejectsFullUntilManualStepsResolved(t *testing.T) {
 	catalog := Catalog{Services: []domaincoverage.ServiceCoverage{
 		{
 			Provider: "aws", Service: "S3", ResourceTypes: []string{"aws_s3_bucket"}, Status: domaincoverage.StatusMapped,
-			Target: "MinIO", APICompatibilityStrategy: "adapter",
+			Target: "MinIO", APICompatibilityStrategy: "adapter", CompatibilityLevel: domaincoverage.CompatibilityLevelL4,
 			Discover: true, Cost: true, Provision: true, Migrate: true, APICompat: true,
 			EnvDNS: true, HA: true, Backup: true, Validate: true, Cutover: true, Rollback: true,
 		},
@@ -231,7 +275,7 @@ func TestPromoteRejectsFullWithoutConformanceManifest(t *testing.T) {
 	withConformanceDir(t, t.TempDir())
 	catalog := Catalog{Services: []domaincoverage.ServiceCoverage{{
 		Provider: "aws", Service: "S3", ResourceTypes: []string{"aws_s3_bucket"}, Status: domaincoverage.StatusMapped, ManualStepsResolved: true,
-		Target: "MinIO", APICompatibilityStrategy: "adapter",
+		Target: "MinIO", APICompatibilityStrategy: "adapter", CompatibilityLevel: domaincoverage.CompatibilityLevelL4,
 		Discover: true, Cost: true, Provision: true, Migrate: true, APICompat: true,
 		EnvDNS: true, HA: true, Backup: true, Validate: true, Cutover: true, Rollback: true,
 	}}}
@@ -246,7 +290,7 @@ func TestPromoteRejectsFullWhenManualStepsOnlyProvidedAsFlag(t *testing.T) {
 	catalog := Catalog{Services: []domaincoverage.ServiceCoverage{
 		{
 			Provider: "aws", Service: "S3", ResourceTypes: []string{"aws_s3_bucket"}, Status: domaincoverage.StatusMapped,
-			Target: "MinIO", APICompatibilityStrategy: "adapter",
+			Target: "MinIO", APICompatibilityStrategy: "adapter", CompatibilityLevel: domaincoverage.CompatibilityLevelL4,
 			Discover: true, Cost: true, Provision: true, Migrate: true, APICompat: true,
 			EnvDNS: true, HA: true, Backup: true, Validate: true, Cutover: true, Rollback: true,
 		},
@@ -276,7 +320,7 @@ func TestPromoteAllowsFullWhenManualStepsResolved(t *testing.T) {
 	catalog := Catalog{Services: []domaincoverage.ServiceCoverage{
 		{
 			Provider: "aws", Service: "S3", ResourceTypes: []string{"aws_s3_bucket"}, Status: domaincoverage.StatusMapped, ManualStepsResolved: true,
-			Target: "MinIO", APICompatibilityStrategy: "adapter",
+			Target: "MinIO", APICompatibilityStrategy: "adapter", CompatibilityLevel: domaincoverage.CompatibilityLevelL4,
 			Discover: true, Cost: true, Provision: true, Migrate: true, APICompat: true,
 			EnvDNS: true, HA: true, Backup: true, Validate: true, Cutover: true, Rollback: true,
 		},

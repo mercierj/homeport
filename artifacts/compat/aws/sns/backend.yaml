@@ -1,0 +1,7 @@
+backend:
+  provider: aws
+  service: sns
+  target: nats
+  status: proposed-seed
+  endpoint:
+    route: /compat/aws/sns

@@ -8,7 +8,7 @@ Expose the smallest AWS CodePipeline-compatible surface needed to migrate the le
 
 - Initial supported surface: codepipeline:CreatePipeline, codepipeline:GetPipeline, codepipeline:ListPipelines, codepipeline:UpdatePipeline, codepipeline:DeletePipeline.
 - Actions explicitly not supported first: CodePipeline console-only workflows, account billing, quota purchase flows, and managed cross-region failover controls outside `codepipeline:CreatePipeline` and its paired read/list calls.
-- Ledger resource types: `aws_codepipeline`.
+- Ledger resource types: `aws_codepipeline`
 - Provider errors: map CodePipeline authorization failures to AWS access-denied codes, missing `aws_codepipeline` records to not-found codes, duplicate imports to conflict/already-exists, invalid mapped fields to validation errors, backend saturation to throttle/quota responses, and unexpected `aws/codepipeline` failures to provider internal-error shapes with request ids.
 - Pagination/idempotency/tags: list/read calls expose provider tokens where the API has them; mutating calls persist idempotency keys or operation ids; tags/labels round-trip on `aws_codepipeline`.
 

@@ -8,13 +8,13 @@ Expose the smallest Azure Azure Functions-compatible surface needed to migrate t
 
 - Initial supported surface: Microsoft.Web/sites/functions/read, Microsoft.Web/sites/functions/write, Microsoft.Web/sites/functions/delete.
 - Actions explicitly not supported first: Azure Functions console-only workflows, account billing, quota purchase flows, and managed cross-region failover controls outside `Microsoft.Web/sites/functions/read` and its paired read/list calls.
-- Ledger resource types: `azurerm_function_app`.
+- Ledger resource types: `azurerm_function_app`
 - Provider errors: map Azure Functions authorization failures to Azure access-denied codes, missing `azurerm_function_app` records to not-found codes, duplicate imports to conflict/already-exists, invalid mapped fields to validation errors, backend saturation to throttle/quota responses, and unexpected `azure/azure-functions` failures to provider internal-error shapes with request ids.
 - Pagination/idempotency/tags: list/read calls expose provider tokens where the API has them; mutating calls persist idempotency keys or operation ids; tags/labels round-trip on `azurerm_function_app`.
 
 ## Backend
 
-- Backend: OpenFaaS.
+- Backend: OpenFaaS or Docker Compose function runtime.
 - Storage and metadata: Azure Functions state lives in `OpenFaaS`; HomePort stores provider identifiers for `azurerm_function_app`, source import ids, authz bindings, generated artifact checksums, backup references, and audit events.
 - Secrets/keys/tokens: issue HomePort-scoped credentials from the identity/secrets layer; store provider source credentials only as encrypted migration inputs.
 - Runtime/provisioning: provision `OpenFaaS` with generated `artifacts/compat/azure/azure-functions/backend.yaml`, health endpoint, persistence volume, backup job, endpoint route, and teardown script for `azure/azure-functions`.

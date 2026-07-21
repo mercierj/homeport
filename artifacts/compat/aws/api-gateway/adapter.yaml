@@ -1,0 +1,21 @@
+adapter:
+  provider: aws
+  service: api-gateway
+  route: /compat/aws/apigateway
+  protocol: rest-json
+  actions:
+    - CreateRestApi
+    - GetRestApi
+    - GetRestApis
+    - UpdateRestApi
+    - DeleteRestApi
+  errors:
+    AccessDenied: denied authorization decision
+    NotFoundException: missing REST API
+    ConflictException: duplicate create
+    BadRequestException: malformed request
+    InternalFailure: authorizer failure
+  unsupported:
+    - persistent_kong_backend
+    - cutover
+    - rollback

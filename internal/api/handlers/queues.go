@@ -21,7 +21,7 @@ const (
 
 var (
 	queueNameRegex  = regexp.MustCompile(`^[a-zA-Z0-9][a-zA-Z0-9_.\-]*$`)
-	messageIDRegex  = regexp.MustCompile(`^[a-zA-Z0-9\-_]+$`)
+	messageIDRegex = regexp.MustCompile(`^[a-zA-Z0-9\-_]+$`)
 )
 
 func validateQueueName(name string) error {
@@ -78,6 +78,10 @@ func NewQueuesHandler(cfg queues.Config) (*QueuesHandler, error) {
 	}
 	return &QueuesHandler{service: svc}, nil
 }
+
+// Service exposes the local application service for composition by internal
+// handlers. HTTP handlers continue to own request validation.
+func (h *QueuesHandler) Service() *queues.Service { return h.service }
 
 // Close closes the handler's service connection.
 func (h *QueuesHandler) Close() error {

@@ -1,0 +1,30 @@
+adapter:
+  provider: aws
+  service: sqs
+  route: /compat/aws/sqs
+  actions:
+    create: sqs:CreateQueue
+    attributes: sqs:GetQueueAttributes
+    send: sqs:SendMessage
+    receive: sqs:ReceiveMessage
+    delete: sqs:DeleteQueue
+  resource:
+    pattern: arn:aws:sqs:{region}:{account}:{queue}
+  errors:
+    AccessDenied: denied authorization decision
+    QueueDoesNotExist: missing queue resource
+    QueueNameExists: duplicate queue create with incompatible attributes
+    InvalidParameterValue: malformed request or invalid mapped field
+    RequestThrottled: queue or message quota exceeded
+    InternalError: unexpected adapter failure
+  pagination:
+    max_results: MaxResults
+    next_token: NextToken
+  idempotency:
+    field: ClientToken
+    methods:
+      - CreateQueue
+      - SendMessage
+  quota:
+    max_queues_default: 1000
+    max_messages_default: 100000

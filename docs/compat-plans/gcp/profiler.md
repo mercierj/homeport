@@ -8,7 +8,7 @@ Expose the smallest GCP Profiler-compatible surface needed to migrate the ledger
 
 - Initial supported surface: cloudprofiler.projects.profiles.create -> profiles.patch -> profiles.list.
 - Actions explicitly not supported first: Profiler console-only workflows, account billing, quota purchase flows, and managed cross-region failover controls outside `cloudprofiler.projects.profiles.create` and its paired read/list calls.
-- Ledger resource types: no resource type currently modeled in the ledger.
+- Ledger resource types: `google_profiler_service`
 - First concrete resource model to add: service-specific model with import id, region/location, labels/tags, backend target id, lifecycle state, and owner principal.
 - Provider errors: map Profiler authorization failures to GCP access-denied codes, missing `planned resource model` records to not-found codes, duplicate imports to conflict/already-exists, invalid mapped fields to validation errors, backend saturation to throttle/quota responses, and unexpected `gcp/profiler` failures to provider internal-error shapes with request ids.
 - Pagination/idempotency/tags: list/read calls expose provider tokens where the API has them; mutating calls persist idempotency keys or operation ids; tags/labels round-trip on the planned resource model.

@@ -8,13 +8,13 @@ Expose the smallest Azure Logic Apps-compatible surface needed to migrate the le
 
 - Initial supported surface: Microsoft.Logic/workflows/read, Microsoft.Logic/workflows/write, Microsoft.Logic/workflows/delete.
 - Actions explicitly not supported first: Logic Apps console-only workflows, account billing, quota purchase flows, and managed cross-region failover controls outside `Microsoft.Logic/workflows/read` and its paired read/list calls.
-- Ledger resource types: `azurerm_logic_app_workflow`.
+- Ledger resource types: `azurerm_logic_app_workflow`
 - Provider errors: map Logic Apps authorization failures to Azure access-denied codes, missing `azurerm_logic_app_workflow` records to not-found codes, duplicate imports to conflict/already-exists, invalid mapped fields to validation errors, backend saturation to throttle/quota responses, and unexpected `azure/logic-apps` failures to provider internal-error shapes with request ids.
 - Pagination/idempotency/tags: list/read calls expose provider tokens where the API has them; mutating calls persist idempotency keys or operation ids; tags/labels round-trip on `azurerm_logic_app_workflow`.
 
 ## Backend
 
-- Backend: Temporal workflows.
+- Backend: n8n webhook workflow.
 - Storage and metadata: Logic Apps state lives in `Temporal workflows`; HomePort stores provider identifiers for `azurerm_logic_app_workflow`, source import ids, authz bindings, generated artifact checksums, backup references, and audit events.
 - Secrets/keys/tokens: issue HomePort-scoped credentials from the identity/secrets layer; store provider source credentials only as encrypted migration inputs.
 - Runtime/provisioning: provision `Temporal workflows` with generated `artifacts/compat/azure/logic-apps/backend.yaml`, health endpoint, persistence volume, backup job, endpoint route, and teardown script for `azure/logic-apps`.

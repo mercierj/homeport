@@ -8,14 +8,14 @@ Expose the smallest Azure Foundry/OpenAI-compatible surface needed to migrate th
 
 - Initial supported surface: Microsoft.CognitiveServices/accounts/read, Microsoft.CognitiveServices/accounts/write, Microsoft.CognitiveServices/accounts/delete.
 - Actions explicitly not supported first: Foundry/OpenAI console-only workflows, account billing, quota purchase flows, and managed cross-region failover controls outside `Microsoft.CognitiveServices/accounts/read` and its paired read/list calls.
-- Ledger resource types: no resource type currently modeled in the ledger.
+- Ledger resource types: `azurerm_cognitive_account`
 - First concrete resource model to add: service-specific model with import id, region/location, labels/tags, backend target id, lifecycle state, and owner principal.
 - Provider errors: map Foundry/OpenAI authorization failures to Azure access-denied codes, missing `planned resource model` records to not-found codes, duplicate imports to conflict/already-exists, invalid mapped fields to validation errors, backend saturation to throttle/quota responses, and unexpected `azure/foundry-openai` failures to provider internal-error shapes with request ids.
 - Pagination/idempotency/tags: list/read calls expose provider tokens where the API has them; mutating calls persist idempotency keys or operation ids; tags/labels round-trip on planned resource model.
 
 ## Backend
 
-- Backend: Ollama with OpenAI-compatible gateway.
+- Backend: vLLM OpenAI-compatible API.
 - Storage and metadata: Foundry/OpenAI state lives in `Ollama with OpenAI-compatible gateway`; HomePort stores provider identifiers for `planned resource model`, source import ids, authz bindings, generated artifact checksums, backup references, and audit events.
 - Secrets/keys/tokens: issue HomePort-scoped credentials from the identity/secrets layer; store provider source credentials only as encrypted migration inputs.
 - Runtime/provisioning: provision `Ollama with OpenAI-compatible gateway` with generated `artifacts/compat/azure/foundry-openai/backend.yaml`, health endpoint, persistence volume, backup job, endpoint route, and teardown script for `azure/foundry-openai`.

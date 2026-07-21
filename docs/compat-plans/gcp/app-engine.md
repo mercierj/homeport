@@ -8,7 +8,7 @@ Expose the smallest GCP App Engine-compatible surface needed to migrate the ledg
 
 - Initial supported surface: appengine.apps.get -> appengine.apps.patch -> appengine.apps.services.list.
 - Actions explicitly not supported first: App Engine console-only workflows, account billing, quota purchase flows, and managed cross-region failover controls outside `appengine.apps.get` and its paired read/list calls.
-- Ledger resource types: `google_app_engine_application`.
+- Ledger resource types: `google_app_engine_application`
 - Provider errors: map App Engine authorization failures to GCP access-denied codes, missing `google_app_engine_application` records to not-found codes, duplicate imports to conflict/already-exists, invalid mapped fields to validation errors, backend saturation to throttle/quota responses, and unexpected `gcp/app-engine` failures to provider internal-error shapes with request ids.
 - Pagination/idempotency/tags: list/read calls expose provider tokens where the API has them; mutating calls persist idempotency keys or operation ids; tags/labels round-trip on `google_app_engine_application`.
 

@@ -15,7 +15,7 @@ Expose the smallest Azure VM Scale Sets-compatible surface needed to migrate the
 
 ## Backend
 
-- Backend: Kubernetes Cluster Autoscaler with node pools.
+- Backend: Not selected in `docs/coverage/services.yaml`.
 - Storage and metadata: VM Scale Sets state lives in `Kubernetes Cluster Autoscaler with node pools`; HomePort stores provider identifiers for `planned resource model`, source import ids, authz bindings, generated artifact checksums, backup references, and audit events.
 - Secrets/keys/tokens: issue HomePort-scoped credentials from the identity/secrets layer; store provider source credentials only as encrypted migration inputs.
 - Runtime/provisioning: provision `Kubernetes Cluster Autoscaler with node pools` with generated `artifacts/compat/azure/vm-scale-sets/backend.yaml`, health endpoint, persistence volume, backup job, endpoint route, and teardown script for `azure/vm-scale-sets`.

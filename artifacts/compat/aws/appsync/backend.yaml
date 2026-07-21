@@ -1,0 +1,7 @@
+backend:
+  provider: aws
+  service: appsync
+  target: hasura
+  status: proposed-seed
+  endpoint:
+    route: /compat/aws/appsync

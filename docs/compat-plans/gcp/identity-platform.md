@@ -8,7 +8,7 @@ Expose the smallest GCP Identity Platform-compatible surface needed to migrate t
 
 - Initial supported surface: identitytoolkit.projects.getConfig -> identitytoolkit.projects.updateConfig.
 - Actions explicitly not supported first: Identity Platform console-only workflows, account billing, quota purchase flows, and managed cross-region failover controls outside `identitytoolkit.projects.getConfig` and its paired read/list calls.
-- Ledger resource types: `google_identity_platform_config`.
+- Ledger resource types: `google_identity_platform_config`
 - Provider errors: map Identity Platform authorization failures to GCP access-denied codes, missing `google_identity_platform_config` records to not-found codes, duplicate imports to conflict/already-exists, invalid mapped fields to validation errors, backend saturation to throttle/quota responses, and unexpected `gcp/identity-platform` failures to provider internal-error shapes with request ids.
 - Pagination/idempotency/tags: list/read calls expose provider tokens where the API has them; mutating calls persist idempotency keys or operation ids; tags/labels round-trip on `google_identity_platform_config`.
 

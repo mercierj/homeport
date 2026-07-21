@@ -8,14 +8,14 @@ Expose the smallest GCP Eventarc-compatible surface needed to migrate the ledger
 
 - Initial supported surface: eventarc.projects.locations.triggers.create -> eventarc.projects.locations.triggers.get -> eventarc.projects.locations.triggers.list -> eventarc.projects.locations.triggers.patch -> eventarc.projects.locations.triggers.delete.
 - Actions explicitly not supported first: Eventarc console-only workflows, account billing, quota purchase flows, and managed cross-region failover controls outside `eventarc.projects.locations.triggers.create` and its paired read/list calls.
-- Ledger resource types: no resource type currently modeled in the ledger.
+- Ledger resource types: `google_eventarc_trigger`
 - First concrete resource model to add: service-specific model with import id, region/location, labels/tags, backend target id, lifecycle state, and owner principal.
 - Provider errors: map Eventarc authorization failures to GCP access-denied codes, missing `planned resource model` records to not-found codes, duplicate imports to conflict/already-exists, invalid mapped fields to validation errors, backend saturation to throttle/quota responses, and unexpected `gcp/eventarc` failures to provider internal-error shapes with request ids.
 - Pagination/idempotency/tags: list/read calls expose provider tokens where the API has them; mutating calls persist idempotency keys or operation ids; tags/labels round-trip on the planned resource model.
 
 ## Backend
 
-- Backend: Knative Eventing.
+- Backend: n8n.
 - Storage and metadata: Eventarc state lives in `Knative Eventing`; HomePort stores provider identifiers for `planned resource model`, source import ids, authz bindings, generated artifact checksums, backup references, and audit events.
 - Secrets/keys/tokens: issue HomePort-scoped credentials from the identity/secrets layer; store provider source credentials only as encrypted migration inputs.
 - Runtime/provisioning: provision `Knative Eventing` with generated `artifacts/compat/gcp/eventarc/backend.yaml`, health endpoint, persistence volume, backup job, endpoint route, and teardown script for `gcp/eventarc`.

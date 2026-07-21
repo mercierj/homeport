@@ -42,6 +42,8 @@ tags:
     description: S3-compatible object storage (MinIO)
   - name: Database
     description: PostgreSQL database operations
+  - name: AWS Operations
+    description: Post-cutover local operations for migrated AWS resources. These endpoints never call AWS.
 
 paths:
   # Health Endpoints
@@ -1026,6 +1028,247 @@ paths:
               schema:
                 $ref: '#/components/schemas/ErrorResponse'
 
+  /api/v1/aws/operations/workspaces:
+    get:
+      tags: [AWS Operations]
+      summary: List post-cutover AWS operation workspaces
+      operationId: listAWSOperationsWorkspaces
+      responses:
+        '200':
+          description: Persisted AWS workspaces. The array is always present, including when empty.
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [workspaces]
+                properties:
+                  workspaces:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/AWSOperationsWorkspace'
+
+  /api/v1/aws/operations/workspaces/{workspaceID}:
+    get:
+      tags: [AWS Operations]
+      summary: Get a post-cutover AWS operation workspace
+      operationId: getAWSOperationsWorkspace
+      parameters:
+        - $ref: '#/components/parameters/awsOperationsWorkspaceID'
+      responses:
+        '200':
+          description: AWS workspace and its local migrated-resource bindings.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AWSOperationsWorkspace'
+        '404':
+          description: Workspace does not exist.
+
+  /api/v1/aws/operations/workspaces/{workspaceID}/services:
+    get:
+      tags: [AWS Operations]
+      summary: List services activated for an AWS workspace
+      description: Capabilities are authoritative. `available` means a post-cutover local backend is eligible for management; it does not imply AWS is reachable.
+      operationId: listAWSOperationsServices
+      parameters:
+        - $ref: '#/components/parameters/awsOperationsWorkspaceID'
+      responses:
+        '200':
+          description: Service states and explicitly supported capabilities.
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [workspace_id, services]
+                properties:
+                  workspace_id:
+                    type: string
+                  services:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/AWSOperationsService'
+        '404':
+          description: Workspace does not exist.
+
+  /api/v1/aws/operations/workspaces/{workspaceID}/services/{service}:
+    get:
+      tags: [AWS Operations]
+      summary: Get server-owned metadata and capability state for a migrated AWS service
+      operationId: getAWSOperationsService
+      parameters:
+        - $ref: '#/components/parameters/awsOperationsWorkspaceID'
+        - $ref: '#/components/parameters/awsOperationsServiceKey'
+      responses:
+        '200':
+          description: Metadata, target, health state, and authoritative capabilities for one visible service.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AWSOperationsServiceDetail'
+        '404': {description: Workspace or migrated service does not exist.}
+
+  /api/v1/aws/operations/workspaces/{workspaceID}/services/{service}/health:
+    get:
+      tags: [AWS Operations]
+      summary: Get local target health for a migrated AWS service
+      operationId: getAWSOperationsServiceHealth
+      parameters:
+        - $ref: '#/components/parameters/awsOperationsWorkspaceID'
+        - $ref: '#/components/parameters/awsOperationsServiceKey'
+      responses:
+        '200':
+          description: Local target health; no AWS endpoint is called.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AWSOperationsServiceHealth'
+        '404': {description: Workspace or migrated service does not exist.}
+
+  /api/v1/aws/operations/workspaces/{workspaceID}/services/{service}/resources:
+    get:
+      tags: [AWS Operations]
+      summary: List attested local resources for any migrated AWS service
+      operationId: listAWSOperationsServiceResources
+      parameters:
+        - $ref: '#/components/parameters/awsOperationsWorkspaceID'
+        - $ref: '#/components/parameters/awsOperationsServiceKey'
+      responses:
+        '200':
+          description: Resources remain visible when no local operation is available; arrays are never null.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AWSOperationsResourcesResponse'
+        '404': {description: Workspace or migrated service does not exist.}
+
+  /api/v1/aws/operations/workspaces/{workspaceID}/services/{service}/resources/{resourceID}:
+    get:
+      tags: [AWS Operations]
+      summary: Get an attested migrated resource projection for any service
+      operationId: getAWSOperationsServiceResource
+      parameters:
+        - $ref: '#/components/parameters/awsOperationsWorkspaceID'
+        - $ref: '#/components/parameters/awsOperationsServiceKey'
+        - name: resourceID
+          in: path
+          required: true
+          schema: {type: string}
+          description: Imported resource identity, validated against the persisted workspace binding.
+      responses:
+        '200':
+          description: Bound resource projection, including truthful unavailable state when no local driver exists.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AWSOperationsResourceResponse'
+        '404': {description: Workspace, service, or persisted resource binding does not exist.}
+
+  /api/v1/aws/operations/workspaces/{workspaceID}/services/lambda/resources:
+    get:
+      tags: [AWS Operations]
+      summary: List migrated Lambda resources available for local management
+      operationId: listAWSOperationsLambdaResources
+      parameters:
+        - $ref: '#/components/parameters/awsOperationsWorkspaceID'
+      responses:
+        '200':
+          description: Bound Lambda resources. The array is always present.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AWSOperationsResourcesResponse'
+        '404':
+          description: Workspace is unknown.
+        '409':
+          description: Lambda is unavailable, degraded, or its local backend cannot serve operations.
+
+  /api/v1/aws/operations/workspaces/{workspaceID}/services/sqs/resources:
+    get:
+      tags: [AWS Operations]
+      summary: List migrated SQS resources available for local management
+      operationId: listAWSOperationsSQSResources
+      parameters:
+        - $ref: '#/components/parameters/awsOperationsWorkspaceID'
+      responses:
+        '200':
+          description: Bound SQS resources. The array is always present.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AWSOperationsResourcesResponse'
+        '404':
+          description: Workspace is unknown.
+        '409':
+          description: SQS is unavailable, degraded, or its local backend cannot serve operations.
+
+  /api/v1/aws/operations/workspaces/{workspaceID}/services/lambda/resources/{resourceID}:
+    get:
+      tags: [AWS Operations]
+      summary: Get one bound local Lambda resource
+      operationId: getAWSOperationsLambdaResource
+      parameters: [{$ref: '#/components/parameters/awsOperationsWorkspaceID'}, {$ref: '#/components/parameters/awsOperationsResourceID'}]
+      responses: {'200': {description: Bound Lambda resource, content: {application/json: {schema: {$ref: '#/components/schemas/AWSOperationsResourceResponse'}}}}, '403': {description: Resource is not bound}, '404': {description: Workspace is unknown}, '409': {description: Service unavailable or degraded}}
+    put:
+      tags: [AWS Operations]
+      summary: Update one bound local Lambda resource
+      operationId: updateAWSOperationsLambdaResource
+      parameters: [{$ref: '#/components/parameters/awsOperationsWorkspaceID'}, {$ref: '#/components/parameters/awsOperationsResourceID'}]
+      requestBody: {required: true, content: {application/json: {schema: {$ref: '#/components/schemas/AWSLambdaUpdateRequest'}}}}
+      responses: {'200': {description: Updated resource, content: {application/json: {schema: {$ref: '#/components/schemas/AWSOperationsResourceResponse'}}}}, '403': {description: Resource is not bound}, '409': {description: Capability unavailable or service degraded}}
+    delete:
+      tags: [AWS Operations]
+      summary: Delete one bound local Lambda resource
+      operationId: deleteAWSOperationsLambdaResource
+      parameters: [{$ref: '#/components/parameters/awsOperationsWorkspaceID'}, {$ref: '#/components/parameters/awsOperationsResourceID'}]
+      responses: {'200': {description: Deletion result, content: {application/json: {schema: {$ref: '#/components/schemas/AWSOperationsActionResponse'}}}}, '403': {description: Resource is not bound}, '409': {description: Capability unavailable or service degraded}}
+
+  /api/v1/aws/operations/workspaces/{workspaceID}/services/lambda/resources/{resourceID}/invoke:
+    post:
+      tags: [AWS Operations]
+      summary: Invoke one bound local Lambda resource
+      operationId: invokeAWSOperationsLambdaResource
+      parameters: [{$ref: '#/components/parameters/awsOperationsWorkspaceID'}, {$ref: '#/components/parameters/awsOperationsResourceID'}]
+      requestBody: {required: false, content: {application/json: {schema: {type: object}}}}
+      responses: {'200': {description: Invocation result, content: {application/json: {schema: {$ref: '#/components/schemas/AWSOperationsActionResponse'}}}}, '403': {description: Resource is not bound}, '409': {description: Capability unavailable or service degraded}}
+
+  /api/v1/aws/operations/workspaces/{workspaceID}/services/lambda/resources/{resourceID}/logs:
+    get:
+      tags: [AWS Operations]
+      summary: List local logs for one bound Lambda resource
+      operationId: listAWSOperationsLambdaLogs
+      parameters: [{$ref: '#/components/parameters/awsOperationsWorkspaceID'}, {$ref: '#/components/parameters/awsOperationsResourceID'}]
+      responses: {'200': {description: Local log records, content: {application/json: {schema: {$ref: '#/components/schemas/AWSOperationsLogsResponse'}}}}, '403': {description: Resource is not bound}, '409': {description: Capability unavailable or service degraded}}
+
+  /api/v1/aws/operations/workspaces/{workspaceID}/services/sqs/resources/{resourceID}/messages:
+    get:
+      tags: [AWS Operations]
+      summary: List messages for one bound local SQS resource
+      operationId: listAWSOperationsSQSMessages
+      parameters: [{$ref: '#/components/parameters/awsOperationsWorkspaceID'}, {$ref: '#/components/parameters/awsOperationsResourceID'}]
+      responses: {'200': {description: Local queue messages, content: {application/json: {schema: {$ref: '#/components/schemas/AWSOperationsMessagesResponse'}}}}, '403': {description: Resource is not bound}, '409': {description: Capability unavailable or service degraded}}
+    delete:
+      tags: [AWS Operations]
+      summary: Purge messages of a status from one bound local SQS resource
+      operationId: purgeAWSOperationsSQSResource
+      parameters: [{$ref: '#/components/parameters/awsOperationsWorkspaceID'}, {$ref: '#/components/parameters/awsOperationsResourceID'}]
+      responses: {'200': {description: Purge result, content: {application/json: {schema: {$ref: '#/components/schemas/AWSOperationsActionResponse'}}}}, '403': {description: Resource is not bound}, '409': {description: Capability unavailable or service degraded}}
+
+  /api/v1/aws/operations/workspaces/{workspaceID}/services/sqs/resources/{resourceID}/messages/{messageID}/retry:
+    post:
+      tags: [AWS Operations]
+      summary: Retry one message in a bound local SQS resource
+      operationId: retryAWSOperationsSQSMessage
+      parameters: [{$ref: '#/components/parameters/awsOperationsWorkspaceID'}, {$ref: '#/components/parameters/awsOperationsResourceID'}, {$ref: '#/components/parameters/awsOperationsMessageID'}]
+      responses: {'200': {description: Retry result, content: {application/json: {schema: {$ref: '#/components/schemas/AWSOperationsActionResponse'}}}}, '403': {description: Resource is not bound}, '409': {description: Capability unavailable or service degraded}}
+
+  /api/v1/aws/operations/workspaces/{workspaceID}/services/sqs/resources/{resourceID}/messages/{messageID}:
+    delete:
+      tags: [AWS Operations]
+      summary: Delete one message from a bound local SQS resource
+      operationId: deleteAWSOperationsSQSMessage
+      parameters: [{$ref: '#/components/parameters/awsOperationsWorkspaceID'}, {$ref: '#/components/parameters/awsOperationsResourceID'}, {$ref: '#/components/parameters/awsOperationsMessageID'}]
+      responses: {'200': {description: Deletion result, content: {application/json: {schema: {$ref: '#/components/schemas/AWSOperationsActionResponse'}}}}, '403': {description: Resource is not bound}, '409': {description: Capability unavailable or service degraded}}
+
 components:
   securitySchemes:
     bearerAuth:
@@ -1039,6 +1282,34 @@ components:
       description: Session cookie from login
 
   parameters:
+    awsOperationsWorkspaceID:
+      name: workspaceID
+      in: path
+      required: true
+      description: Persisted post-cutover AWS operation workspace identifier.
+      schema:
+        type: string
+
+    awsOperationsServiceKey:
+      name: service
+      in: path
+      required: true
+      description: Canonical key from the server-generated AWS coverage registry.
+      schema:
+        $ref: '#/components/schemas/AWSOperationsServiceKey'
+
+    awsOperationsResourceID:
+      name: resourceID
+      in: path
+      required: true
+      schema: {type: string}
+
+    awsOperationsMessageID:
+      name: messageID
+      in: path
+      required: true
+      schema: {type: string}
+
     stackId:
       name: stackId
       in: path
@@ -1081,6 +1352,236 @@ components:
         pattern: '^[a-zA-Z_][a-zA-Z0-9_]*$'
 
   schemas:
+    AWSOperationsServiceKey:
+      type: string
+      description: Canonical AWS service key generated from the coverage catalogue. New catalogue entries are exposed without a browser-only route.
+      enum: [acm, alb, api-gateway, app-mesh, appsync, athena, bedrock, cloudformation-full-import, cloudfront, cloudwatch, codebuild, codedeploy, codepipeline, cognito, comprehend, config, control-tower, dynamodb, ebs, ec2, ecr, ecs, efs, eks, elasticache, emr, eventbridge, glue, guardduty, iam, iot-core, kinesis, kms, lake-formation, lambda, mq, msk, opensearch, organizations, quicksight, rds, redshift, rekognition, route-53, s3, sagemaker, secrets-manager, security-hub, ses, shield, sns, sqs, step-functions, textract, transcribe, translate, vpc, waf, x-ray]
+
+    AWSOperationsWorkspace:
+      type: object
+      required: [id, discovery_id, name, provider, cutover_completed_at, services, bindings]
+      properties:
+        id:
+          type: string
+        discovery_id:
+          type: string
+        name:
+          type: string
+        provider:
+          type: string
+          enum: [aws]
+        cutover_completed_at:
+          type: string
+          format: date-time
+        services:
+          type: object
+          additionalProperties:
+            $ref: '#/components/schemas/AWSOperationsServiceState'
+        bindings:
+          type: array
+          items:
+            $ref: '#/components/schemas/AWSResourceBinding'
+
+    AWSOperationsService:
+      type: object
+      required: [service, status, capabilities]
+      properties:
+        service:
+          type: string
+          $ref: '#/components/schemas/AWSOperationsServiceKey'
+        status:
+          type: string
+          enum: [available, unavailable, degraded]
+        capabilities:
+          type: array
+          description: Authoritative list of actions supported by the local backend.
+          items:
+            type: string
+          enum: [list, read, update, delete, invoke, logs, purge, retry]
+        reason:
+          type: string
+
+    AWSOperationsServiceDetail:
+      allOf:
+        - $ref: '#/components/schemas/AWSOperationsService'
+        - type: object
+          required: [display_name, target, family, panel_kind]
+          properties:
+            display_name: {type: string}
+            target: {type: string}
+            family: {type: string}
+            panel_kind: {type: string}
+
+    AWSOperationsServiceHealth:
+      type: object
+      required: [service, target, status]
+      properties:
+        service: {$ref: '#/components/schemas/AWSOperationsServiceKey'}
+        target: {type: string}
+        status: {type: string, enum: [available, unavailable, degraded]}
+        reason: {type: string}
+
+    AWSOperationsServiceState:
+      type: object
+      required: [status, capabilities]
+      properties:
+        status:
+          type: string
+          enum: [available, unavailable, degraded]
+        capabilities:
+          type: array
+          items:
+            type: string
+            enum: [list, read, update, delete, invoke, logs, purge, retry]
+        reason:
+          type: string
+
+    AWSResourceBinding:
+      type: object
+      required: [imported_resource_id, service, local_resource_id, local_stack_id, name]
+      properties:
+        imported_resource_id:
+          type: string
+        service:
+          $ref: '#/components/schemas/AWSOperationsServiceKey'
+        local_resource_id:
+          type: string
+        local_stack_id:
+          type: string
+          description: Server-validated local stack identity selected during successful cutover.
+        name:
+          type: string
+        region:
+          type: string
+        tags:
+          type: object
+          additionalProperties:
+            type: string
+
+    AWSOperationsResourcesResponse:
+      type: object
+      required: [workspace_id, service, resources]
+      properties:
+        workspace_id:
+          type: string
+        service:
+          $ref: '#/components/schemas/AWSOperationsServiceKey'
+        resources:
+          type: array
+          items:
+            oneOf:
+              - $ref: '#/components/schemas/AWSLambdaResource'
+              - $ref: '#/components/schemas/AWSSQSResource'
+              - $ref: '#/components/schemas/AWSUnavailableResource'
+
+    AWSUnavailableResource:
+      allOf:
+        - $ref: '#/components/schemas/AWSResourceBinding'
+        - type: object
+          required: [target, status, reason]
+          properties:
+            target: {type: string}
+            status: {type: string, enum: [unavailable, degraded]}
+            reason: {type: string}
+
+    AWSLambdaResource:
+      allOf:
+        - $ref: '#/components/schemas/AWSResourceBinding'
+        - type: object
+          required: [id, runtime, handler, memory_mb, timeout_seconds, status, invocation_count, created_at, updated_at]
+          properties:
+            id: {type: string}
+            runtime: {type: string}
+            handler: {type: string}
+            memory_mb: {type: integer}
+            timeout_seconds: {type: integer}
+            environment: {type: object, additionalProperties: {type: string}}
+            status: {type: string}
+            invocation_count: {type: integer, format: int64}
+            last_invoked: {type: string, format: date-time}
+            created_at: {type: string, format: date-time}
+            updated_at: {type: string, format: date-time}
+
+    AWSSQSResource:
+      allOf:
+        - $ref: '#/components/schemas/AWSResourceBinding'
+        - type: object
+          required: [pending_count, active_count, completed_count, failed_count, total_count]
+          properties:
+            pending_count: {type: integer, format: int64}
+            active_count: {type: integer, format: int64}
+            completed_count: {type: integer, format: int64}
+            failed_count: {type: integer, format: int64}
+            total_count: {type: integer, format: int64}
+
+    AWSLambdaUpdateRequest:
+      type: object
+      required: [name, runtime, handler]
+      properties:
+        name: {type: string}
+        runtime: {type: string}
+        handler: {type: string}
+        memory_mb: {type: integer}
+        timeout_seconds: {type: integer}
+        environment: {type: object, additionalProperties: {type: string}}
+        description: {type: string}
+
+    AWSOperationsResourceResponse:
+      type: object
+      required: [workspace_id, service, resource]
+      properties:
+        workspace_id: {type: string}
+        service: {$ref: '#/components/schemas/AWSOperationsServiceKey'}
+        resource:
+          oneOf: [{$ref: '#/components/schemas/AWSLambdaResource'}, {$ref: '#/components/schemas/AWSSQSResource'}, {$ref: '#/components/schemas/AWSUnavailableResource'}]
+
+    AWSOperationsActionResponse:
+      type: object
+      required: [workspace_id, service, resource_id, status]
+      properties:
+        workspace_id: {type: string}
+        service: {type: string, enum: [lambda, sqs]}
+        resource_id: {type: string}
+        status: {type: string, enum: [deleted, invoked, retried, purged]}
+        result: {type: object}
+
+    AWSOperationsLogsResponse:
+      type: object
+      required: [workspace_id, service, resource_id, logs]
+      properties:
+        workspace_id: {type: string}
+        service: {type: string, enum: [lambda]}
+        resource_id: {type: string}
+        logs: {type: array, items: {$ref: '#/components/schemas/AWSOperationsLogRecord'}}
+
+    AWSOperationsLogRecord:
+      type: object
+      properties:
+        timestamp: {type: string, format: date-time}
+        level: {type: string}
+        message: {type: string}
+        request_id: {type: string}
+
+    AWSOperationsMessagesResponse:
+      type: object
+      required: [workspace_id, service, resource_id, messages]
+      properties:
+        workspace_id: {type: string}
+        service: {type: string, enum: [sqs]}
+        resource_id: {type: string}
+        messages: {type: array, items: {$ref: '#/components/schemas/AWSOperationsMessage'}}
+
+    AWSOperationsMessage:
+      type: object
+      properties:
+        id: {type: string}
+        queue_name: {type: string}
+        status: {type: string}
+        data: {type: object}
+        attempts: {type: integer}
+        max_attempts: {type: integer}
+        error: {type: string}
+
     ErrorResponse:
       type: object
       properties:

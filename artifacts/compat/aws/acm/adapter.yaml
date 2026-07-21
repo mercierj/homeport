@@ -1,0 +1,28 @@
+adapter:
+  provider: aws
+  service: acm
+  route: /compat/aws/acm
+  target: traefik-acme
+  resource:
+    pattern: arn:aws:acm:us-east-1:000000000000:certificate/{id}
+  actions:
+    - RequestCertificate
+    - DescribeCertificate
+    - ListCertificates
+    - DeleteCertificate
+    - ListTagsForCertificate
+    - AddTagsToCertificate
+    - RemoveTagsFromCertificate
+  errors:
+    AccessDenied: denied authorization decision
+    ResourceNotFoundException: missing certificate resource
+    LimitExceededException: certificate quota exceeded
+    ValidationException: invalid certificate request or pagination field
+    UnsupportedOperation: unsupported ACM action
+    InternalFailure: unexpected adapter failure
+  pagination:
+    certificates: [MaxItems, NextToken]
+  idempotency:
+    request_certificate: IdempotencyToken
+  quota:
+    option: WithACMCertificateQuota

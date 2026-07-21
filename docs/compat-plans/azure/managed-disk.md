@@ -8,13 +8,13 @@ Expose the smallest Azure Managed Disk-compatible surface needed to migrate the 
 
 - Initial supported surface: Microsoft.Compute/disks/read, Microsoft.Compute/disks/write, Microsoft.Compute/disks/delete.
 - Actions explicitly not supported first: Managed Disk console-only workflows, account billing, quota purchase flows, and managed cross-region failover controls outside `Microsoft.Compute/disks/read` and its paired read/list calls.
-- Ledger resource types: `azurerm_managed_disk`.
+- Ledger resource types: `azurerm_managed_disk`
 - Provider errors: map Managed Disk authorization failures to Azure access-denied codes, missing `azurerm_managed_disk` records to not-found codes, duplicate imports to conflict/already-exists, invalid mapped fields to validation errors, backend saturation to throttle/quota responses, and unexpected `azure/managed-disk` failures to provider internal-error shapes with request ids.
 - Pagination/idempotency/tags: list/read calls expose provider tokens where the API has them; mutating calls persist idempotency keys or operation ids; tags/labels round-trip on `azurerm_managed_disk`.
 
 ## Backend
 
-- Backend: Longhorn block volumes.
+- Backend: Not selected in `docs/coverage/services.yaml`.
 - Storage and metadata: Managed Disk state lives in `Longhorn block volumes`; HomePort stores provider identifiers for `azurerm_managed_disk`, source import ids, authz bindings, generated artifact checksums, backup references, and audit events.
 - Secrets/keys/tokens: issue HomePort-scoped credentials from the identity/secrets layer; store provider source credentials only as encrypted migration inputs.
 - Runtime/provisioning: provision `Longhorn block volumes` with generated `artifacts/compat/azure/managed-disk/backend.yaml`, health endpoint, persistence volume, backup job, endpoint route, and teardown script for `azure/managed-disk`.

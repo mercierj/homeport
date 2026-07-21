@@ -1,0 +1,19 @@
+backend:
+  provider: aws
+  service: sqs
+  target: rabbitmq
+  runtime:
+    image: rabbitmq:3-management
+    health_path: /api/health/checks/alarms
+    environment:
+      RABBITMQ_DEFAULT_USER: homeport
+      RABBITMQ_DEFAULT_PASS: homeport
+  persistence:
+    volume: sqs-rabbitmq-data
+    mount_path: /var/lib/rabbitmq
+  backup:
+    schedule: daily
+    command: rabbitmq-dump-queues
+  endpoint:
+    route: /compat/aws/sqs
+    amqp_port: "5672"

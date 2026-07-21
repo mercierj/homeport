@@ -8,7 +8,7 @@ Expose the smallest GCP Cloud Deploy-compatible surface needed to migrate the le
 
 - Initial supported surface: clouddeploy.projects.locations.deliveryPipelines.create -> clouddeploy.projects.locations.deliveryPipelines.get -> clouddeploy.projects.locations.deliveryPipelines.list -> clouddeploy.projects.locations.deliveryPipelines.patch -> clouddeploy.projects.locations.deliveryPipelines.delete.
 - Actions explicitly not supported first: Cloud Deploy console-only workflows, account billing, quota purchase flows, and managed cross-region failover controls outside `clouddeploy.projects.locations.deliveryPipelines.create` and its paired read/list calls.
-- Ledger resource types: no resource type currently modeled in the ledger.
+- Ledger resource types: `google_clouddeploy_delivery_pipeline`, `google_clouddeploy_target`
 - First concrete resource model to add: service-specific model with import id, region/location, labels/tags, backend target id, lifecycle state, and owner principal.
 - Provider errors: map Cloud Deploy authorization failures to GCP access-denied codes, missing `planned resource model` records to not-found codes, duplicate imports to conflict/already-exists, invalid mapped fields to validation errors, backend saturation to throttle/quota responses, and unexpected `gcp/cloud-deploy` failures to provider internal-error shapes with request ids.
 - Pagination/idempotency/tags: list/read calls expose provider tokens where the API has them; mutating calls persist idempotency keys or operation ids; tags/labels round-trip on the planned resource model.

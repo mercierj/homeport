@@ -8,7 +8,7 @@ Expose the smallest AWS Comprehend-compatible surface needed to migrate the ledg
 
 - Initial supported surface: comprehend:CreateDocumentClassifier, comprehend:DescribeDocumentClassifier, comprehend:ListDocumentClassifiers, comprehend:DeleteDocumentClassifier.
 - Actions explicitly not supported first: Comprehend console-only workflows, account billing, quota purchase flows, and managed cross-region failover controls outside `comprehend:CreateDocumentClassifier` and its paired read/list calls.
-- Ledger resource types: `aws_comprehend_document_classifier`.
+- Ledger resource types: `aws_comprehend_document_classifier`
 - Provider errors: map Comprehend authorization failures to AWS access-denied codes, missing `aws_comprehend_document_classifier` records to not-found codes, duplicate imports to conflict/already-exists, invalid mapped fields to validation errors, backend saturation to throttle/quota responses, and unexpected `aws/comprehend` failures to provider internal-error shapes with request ids.
 - Pagination/idempotency/tags: list/read calls expose provider tokens where the API has them; mutating calls persist idempotency keys or operation ids; tags/labels round-trip on `aws_comprehend_document_classifier`.
 
@@ -52,7 +52,6 @@ Expose the smallest AWS Comprehend-compatible surface needed to migrate the ledg
 
 ## Compatibility Level
 
-- Current level: L3 - ledger migration path is complete; provider SDK/REST conformance still blocks L4.
-- Target level: L4 after `test/conformance/services/aws-comprehend.yaml` passes in CI.
-- Blocking gaps: `test/conformance/services/aws-comprehend.yaml` must prove provider error, pagination, idempotency, authz, quota, and audit behavior before promotion.
-- Path to close gaps: generate backend artifacts, implement the endpoint mapping above, add `test/conformance/services/aws-comprehend.yaml`, then promote only when that manifest passes in CI.
+- Current level: L3 local seed. The AWS SDK v2 endpoint-override contract covers document-classifier create, describe, list, delete, list pagination, and centralized authorization/audit.
+- Target level: L4 only after a durable spaCy integration and external migration gates are proved.
+- Blocking gaps: deployed spaCy model persistence, source import, backup restoration, production validation, cutover, and rollback are not proven.

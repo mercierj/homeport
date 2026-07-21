@@ -8,14 +8,14 @@ Expose the smallest GCP Logging-compatible surface needed to migrate the ledger 
 
 - Initial supported surface: logging.sinks.create -> logging.sinks.get -> logging.sinks.list -> logging.sinks.update -> logging.sinks.delete; logging.entries.write/list.
 - Actions explicitly not supported first: Logging console-only workflows, account billing, quota purchase flows, and managed cross-region failover controls outside `logging.sinks.create` and its paired read/list calls.
-- Ledger resource types: no resource type currently modeled in the ledger.
+- Ledger resource types: `google_logging_project_sink`
 - First concrete resource model to add: service-specific model with import id, region/location, labels/tags, backend target id, lifecycle state, and owner principal.
 - Provider errors: map Logging authorization failures to GCP access-denied codes, missing `planned resource model` records to not-found codes, duplicate imports to conflict/already-exists, invalid mapped fields to validation errors, backend saturation to throttle/quota responses, and unexpected `gcp/logging` failures to provider internal-error shapes with request ids.
 - Pagination/idempotency/tags: list/read calls expose provider tokens where the API has them; mutating calls persist idempotency keys or operation ids; tags/labels round-trip on the planned resource model.
 
 ## Backend
 
-- Backend: Loki with OpenTelemetry Collector.
+- Backend: Loki and Promtail.
 - Storage and metadata: Logging state lives in `Loki with OpenTelemetry Collector`; HomePort stores provider identifiers for `planned resource model`, source import ids, authz bindings, generated artifact checksums, backup references, and audit events.
 - Secrets/keys/tokens: issue HomePort-scoped credentials from the identity/secrets layer; store provider source credentials only as encrypted migration inputs.
 - Runtime/provisioning: provision `Loki with OpenTelemetry Collector` with generated `artifacts/compat/gcp/logging/backend.yaml`, health endpoint, persistence volume, backup job, endpoint route, and teardown script for `gcp/logging`.

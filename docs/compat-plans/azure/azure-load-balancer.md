@@ -8,7 +8,7 @@ Expose the smallest Azure Azure Load Balancer-compatible surface needed to migra
 
 - Initial supported surface: Microsoft.Network/loadBalancers/read, Microsoft.Network/loadBalancers/write, Microsoft.Network/loadBalancers/delete.
 - Actions explicitly not supported first: Azure Load Balancer console-only workflows, account billing, quota purchase flows, and managed cross-region failover controls outside `Microsoft.Network/loadBalancers/read` and its paired read/list calls.
-- Ledger resource types: `azurerm_lb`.
+- Ledger resource types: `azurerm_lb`
 - Provider errors: map Azure Load Balancer authorization failures to Azure access-denied codes, missing `azurerm_lb` records to not-found codes, duplicate imports to conflict/already-exists, invalid mapped fields to validation errors, backend saturation to throttle/quota responses, and unexpected `azure/azure-load-balancer` failures to provider internal-error shapes with request ids.
 - Pagination/idempotency/tags: list/read calls expose provider tokens where the API has them; mutating calls persist idempotency keys or operation ids; tags/labels round-trip on `azurerm_lb`.
 

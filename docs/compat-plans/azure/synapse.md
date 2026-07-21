@@ -15,7 +15,7 @@ Expose the smallest Azure Synapse-compatible surface needed to migrate the ledge
 
 ## Backend
 
-- Backend: Apache Spark with Trino and Iceberg catalog.
+- Backend: Not selected in `docs/coverage/services.yaml`.
 - Storage and metadata: Synapse state lives in `Apache Spark with Trino and Iceberg catalog`; HomePort stores provider identifiers for `planned resource model`, source import ids, authz bindings, generated artifact checksums, backup references, and audit events.
 - Secrets/keys/tokens: issue HomePort-scoped credentials from the identity/secrets layer; store provider source credentials only as encrypted migration inputs.
 - Runtime/provisioning: provision `Apache Spark with Trino and Iceberg catalog` with generated `artifacts/compat/azure/synapse/backend.yaml`, health endpoint, persistence volume, backup job, endpoint route, and teardown script for `azure/synapse`.

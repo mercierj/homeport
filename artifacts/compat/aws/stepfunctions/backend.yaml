@@ -1,0 +1,12 @@
+backend:
+  provider: aws
+  service: stepfunctions
+  target: temporal
+  status: proposed-seed
+  runtime:
+    image: temporalio/auto-setup:latest
+    health_path: /health
+  persistence:
+    volume: stepfunctions-temporal-data
+  endpoint:
+    route: /compat/aws/stepfunctions

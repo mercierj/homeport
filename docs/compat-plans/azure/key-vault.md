@@ -8,7 +8,7 @@ Expose the smallest Azure Key Vault-compatible surface needed to migrate the led
 
 - Initial supported surface: Microsoft.KeyVault/vaults/read, Microsoft.KeyVault/vaults/write, Microsoft.KeyVault/vaults/delete.
 - Actions explicitly not supported first: Key Vault console-only workflows, account billing, quota purchase flows, and managed cross-region failover controls outside `Microsoft.KeyVault/vaults/read` and its paired read/list calls.
-- Ledger resource types: `azurerm_key_vault`.
+- Ledger resource types: `azurerm_key_vault`
 - Provider errors: map Key Vault authorization failures to Azure access-denied codes, missing `azurerm_key_vault` records to not-found codes, duplicate imports to conflict/already-exists, invalid mapped fields to validation errors, backend saturation to throttle/quota responses, and unexpected `azure/key-vault` failures to provider internal-error shapes with request ids.
 - Pagination/idempotency/tags: list/read calls expose provider tokens where the API has them; mutating calls persist idempotency keys or operation ids; tags/labels round-trip on `azurerm_key_vault`.
 

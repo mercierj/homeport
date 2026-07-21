@@ -108,6 +108,9 @@ func (c *Catalog) Promote(provider, service string, status domaincoverage.Status
 			if strings.TrimSpace(row.Target) == "" || strings.TrimSpace(row.APICompatibilityStrategy) == "" {
 				return fmt.Errorf("cannot promote %s/%s to full until target and API compatibility strategy are set", provider, service)
 			}
+			if row.CompatibilityLevel != domaincoverage.CompatibilityLevelL4 {
+				return fmt.Errorf("cannot promote %s/%s to full until compatibility_level is L4", provider, service)
+			}
 			if !mappedResourceTypes(*row, registeredMapperSet()) {
 				return fmt.Errorf("cannot promote %s/%s to full until registered resource mappers are present", provider, service)
 			}

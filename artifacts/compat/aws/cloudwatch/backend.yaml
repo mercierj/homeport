@@ -1,0 +1,7 @@
+backend:
+  provider: aws
+  service: cloudwatch
+  target: loki
+  status: proposed-seed
+  endpoint:
+    route: /compat/aws/cloudwatchlogs

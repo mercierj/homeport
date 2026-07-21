@@ -1,0 +1,25 @@
+version: 1
+provider: aws
+service: alb
+route: /compat/aws/alb
+actions:
+  create: elasticloadbalancing:CreateLoadBalancer
+  describe: elasticloadbalancing:DescribeLoadBalancers
+  modify_attributes: elasticloadbalancing:ModifyLoadBalancerAttributes
+  delete: elasticloadbalancing:DeleteLoadBalancer
+resource:
+  pattern: arn:aws:elasticloadbalancing:{region}:{account}:loadbalancer/app/{id}
+errors:
+  AccessDenied: denied authorization decision
+  DuplicateLoadBalancerName: duplicate load balancer name
+  LoadBalancerNotFound: missing load balancer
+  ValidationError: invalid request or pagination token
+  TooManyLoadBalancers: load balancer quota exceeded
+  InternalFailure: unexpected adapter failure
+pagination:
+  marker: Marker
+  next_marker: NextMarker
+  methods:
+    - DescribeLoadBalancers
+quota:
+  max_load_balancers_default: unlimited

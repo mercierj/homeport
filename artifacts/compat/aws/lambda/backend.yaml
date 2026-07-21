@@ -1,0 +1,15 @@
+backend:
+  provider: aws
+  service: lambda
+  target: openfaas
+  runtime:
+    image: ghcr.io/openfaas/faas:latest
+    health_path: /healthz
+  persistence:
+    volume: lambda-openfaas-data
+    mount_path: /var/lib/openfaas
+  backup:
+    schedule: daily
+    command: tar -czf /backup/openfaas-lambda.tgz /var/lib/openfaas
+  endpoint:
+    route: /compat/aws/lambda

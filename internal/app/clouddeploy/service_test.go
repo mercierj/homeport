@@ -34,6 +34,26 @@ func TestUnzipTerraformWritesMainTF(t *testing.T) {
 	}
 }
 
+func TestGetReturnsJobSnapshot(t *testing.T) {
+	service := NewService(t.TempDir())
+	service.jobs["job-1"] = &Job{ID: "job-1", Status: StatusPending, Logs: []string{"original"}}
+
+	job, err := service.Get("job-1")
+	if err != nil {
+		t.Fatal(err)
+	}
+	job.Status = StatusFailed
+	job.Logs[0] = "changed"
+
+	fresh, err := service.Get("job-1")
+	if err != nil {
+		t.Fatal(err)
+	}
+	if fresh.Status != StatusPending || fresh.Logs[0] != "original" {
+		t.Fatalf("Get exposed mutable job state: %#v", fresh)
+	}
+}
+
 func TestStartContinuesAfterCallerContextCancelled(t *testing.T) {
 	binDir := t.TempDir()
 	callsPath := filepath.Join(t.TempDir(), "terraform-calls.log")

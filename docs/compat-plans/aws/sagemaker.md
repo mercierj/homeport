@@ -8,7 +8,7 @@ Expose the smallest AWS SageMaker-compatible surface needed to migrate the ledge
 
 - Initial supported surface: sagemaker:CreateEndpoint, sagemaker:DescribeEndpoint, sagemaker:ListEndpoints, sagemaker:UpdateEndpoint, sagemaker:DeleteEndpoint.
 - Actions explicitly not supported first: SageMaker console-only workflows, account billing, quota purchase flows, and managed cross-region failover controls outside `sagemaker:CreateEndpoint` and its paired read/list calls.
-- Ledger resource types: `aws_sagemaker_endpoint`.
+- Ledger resource types: `aws_sagemaker_endpoint`
 - Provider errors: map SageMaker authorization failures to AWS access-denied codes, missing `aws_sagemaker_endpoint` records to not-found codes, duplicate imports to conflict/already-exists, invalid mapped fields to validation errors, backend saturation to throttle/quota responses, and unexpected `aws/sagemaker` failures to provider internal-error shapes with request ids.
 - Pagination/idempotency/tags: list/read calls expose provider tokens where the API has them; mutating calls persist idempotency keys or operation ids; tags/labels round-trip on `aws_sagemaker_endpoint`.
 

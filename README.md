@@ -48,6 +48,26 @@ make build-with-web
 | **Security** | Identity management, SSL certificates, secrets vault, RBAC policies |
 | **Networking** | DNS zone management, load balancer configuration |
 | **Monitoring** | Real-time metrics, log search, alerting |
+
+### AWS post-cutover operations
+
+After a successful cutover, Homeport records the migrated AWS catalogue
+services and opens the Homeport AWS operations area at `/aws`. Services whose
+local target has no proven operation remain visible with their attested
+resources and an explicit unavailable reason; only server-advertised
+capabilities are actionable.
+
+The area manages only the local Homeport targets that were bound during
+cutover. Lambda supports listing, reading, updating, deleting, invoking and
+viewing logs when those capabilities are available. SQS supports queue and
+message reads, retrying messages and purging a message status when available;
+it does not create or delete queues. Every mutation is workspace-bound,
+authorized and audited.
+
+Trusted bindings and pending activation are persisted by cutover code, not an
+SSE/browser subscription. This is a Homeport interface for the local runtime,
+not the AWS Console and not an AWS control-plane proxy. It never uses AWS
+credentials or calls AWS APIs.
 | **Backup** | Scheduled backups, point-in-time recovery |
 
 ### Development Mode

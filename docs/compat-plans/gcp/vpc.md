@@ -8,13 +8,13 @@ Expose the smallest GCP VPC-compatible surface needed to migrate the ledger reso
 
 - Initial supported surface: compute.networks.insert -> compute.networks.get -> compute.networks.list -> compute.networks.patch -> compute.networks.delete.
 - Actions explicitly not supported first: VPC console-only workflows, account billing, quota purchase flows, and managed cross-region failover controls outside `compute.networks.insert` and its paired read/list calls.
-- Ledger resource types: `google_compute_network`.
+- Ledger resource types: `google_compute_network`
 - Provider errors: map VPC authorization failures to GCP access-denied codes, missing `google_compute_network` records to not-found codes, duplicate imports to conflict/already-exists, invalid mapped fields to validation errors, backend saturation to throttle/quota responses, and unexpected `gcp/vpc` failures to provider internal-error shapes with request ids.
 - Pagination/idempotency/tags: list/read calls expose provider tokens where the API has them; mutating calls persist idempotency keys or operation ids; tags/labels round-trip on `google_compute_network`.
 
 ## Backend
 
-- Backend: Cilium and Linux bridge networking.
+- Backend: Docker networks.
 - Storage and metadata: VPC state lives in `Cilium and Linux bridge networking`; HomePort stores provider identifiers for `google_compute_network`, source import ids, authz bindings, generated artifact checksums, backup references, and audit events.
 - Secrets/keys/tokens: issue HomePort-scoped credentials from the identity/secrets layer; store provider source credentials only as encrypted migration inputs.
 - Runtime/provisioning: provision `Cilium and Linux bridge networking` with generated `artifacts/compat/gcp/vpc/backend.yaml`, health endpoint, persistence volume, backup job, endpoint route, and teardown script for `gcp/vpc`.

@@ -1,0 +1,15 @@
+backend:
+  provider: aws
+  service: cognito
+  target: keycloak
+  runtime:
+    image: quay.io/keycloak/keycloak:latest
+    health_path: /health/ready
+  persistence:
+    volume: cognito-keycloak-data
+    mount_path: /opt/keycloak/data
+  backup:
+    schedule: daily
+    command: kc.sh export --dir /backup
+  endpoint:
+    route: /compat/aws/cognito

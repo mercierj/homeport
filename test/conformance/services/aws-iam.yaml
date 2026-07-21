@@ -5,7 +5,7 @@ checks:
   cost: GOCACHE=/private/tmp/exit-gafam-go-build go test ./internal/infrastructure/mapper/security -run TestIAMConformanceManagedAToZ
   provision: GOCACHE=/private/tmp/exit-gafam-go-build go test ./internal/infrastructure/mapper/security -run TestIAMConformanceManagedAToZ
   migrate: GOCACHE=/private/tmp/exit-gafam-go-build go test ./internal/infrastructure/mapper/security -run TestIAMConformanceManagedAToZ
-  api_compat: GOCACHE=/private/tmp/exit-gafam-go-build go test ./internal/infrastructure/mapper/security -run TestIAMConformanceManagedAToZ
+  api_compat: GOCACHE=/private/tmp/exit-gafam-go-build go test ./test/compat -run IAM
   env_dns: GOCACHE=/private/tmp/exit-gafam-go-build go test ./internal/infrastructure/mapper/security -run TestIAMConformanceManagedAToZ
   ha: GOCACHE=/private/tmp/exit-gafam-go-build go test ./internal/infrastructure/mapper/security -run TestIAMConformanceManagedAToZ
   backup: GOCACHE=/private/tmp/exit-gafam-go-build go test ./internal/infrastructure/mapper/security -run TestIAMConformanceManagedAToZ
@@ -13,5 +13,6 @@ checks:
   cutover: GOCACHE=/private/tmp/exit-gafam-go-build go test ./internal/infrastructure/mapper/security -run TestIAMConformanceManagedAToZ
   rollback: GOCACHE=/private/tmp/exit-gafam-go-build go test ./internal/infrastructure/mapper/security -run TestIAMConformanceManagedAToZ
 evidence:
-  target: Keycloak
-  app_change_mode: generated_patch
+  target: Keycloak with HomePort IAM compatibility adapter
+  app_change_mode: adapter
+  api_compat_covers: sdk_lifecycle,aws_cli_smoke,terraform_smoke,boto3_smoke,role_tags,inline_policies,managed_policies,managed_policy_existence,policy_versions,instance_profiles,pagination,dependency_lifecycle,authz,audit

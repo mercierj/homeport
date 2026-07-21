@@ -8,7 +8,7 @@ Expose the smallest AWS MQ-compatible surface needed to migrate the ledger resou
 
 - Initial supported surface: mq:CreateBroker, mq:DescribeBroker, mq:ListBrokers, mq:UpdateBroker, mq:DeleteBroker.
 - Actions explicitly not supported first: MQ console-only workflows, account billing, quota purchase flows, and managed cross-region failover controls outside `mq:CreateBroker` and its paired read/list calls.
-- Ledger resource types: `aws_mq_broker`.
+- Ledger resource types: `aws_mq_broker`
 - Provider errors: map MQ authorization failures to AWS access-denied codes, missing `aws_mq_broker` records to not-found codes, duplicate imports to conflict/already-exists, invalid mapped fields to validation errors, backend saturation to throttle/quota responses, and unexpected `aws/mq` failures to provider internal-error shapes with request ids.
 - Pagination/idempotency/tags: list/read calls expose provider tokens where the API has them; mutating calls persist idempotency keys or operation ids; tags/labels round-trip on `aws_mq_broker`.
 

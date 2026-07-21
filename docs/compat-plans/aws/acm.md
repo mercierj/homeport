@@ -6,9 +6,9 @@ Expose the smallest AWS ACM-compatible surface needed to migrate the ledger reso
 
 ## Provider API Surface
 
-- Initial supported surface: acm:RequestCertificate, acm:DescribeCertificate, acm:ListCertificates, acm:DeleteCertificate.
+- Initial supported surface: acm:RequestCertificate, acm:DescribeCertificate, acm:ListCertificates, acm:DeleteCertificate, acm:ListTagsForCertificate, acm:AddTagsToCertificate, acm:RemoveTagsFromCertificate.
 - Actions explicitly not supported first: ACM console-only workflows, account billing, quota purchase flows, and managed cross-region failover controls outside `acm:RequestCertificate` and its paired read/list calls.
-- Ledger resource types: `aws_acm_certificate`.
+- Ledger resource types: `aws_acm_certificate`
 - Provider errors: map ACM authorization failures to AWS access-denied codes, missing `aws_acm_certificate` records to not-found codes, duplicate imports to conflict/already-exists, invalid mapped fields to validation errors, backend saturation to throttle/quota responses, and unexpected `aws/acm` failures to provider internal-error shapes with request ids.
 - Pagination/idempotency/tags: list/read calls expose provider tokens where the API has them; mutating calls persist idempotency keys or operation ids; tags/labels round-trip on `aws_acm_certificate`.
 
@@ -22,7 +22,7 @@ Expose the smallest AWS ACM-compatible surface needed to migrate the ledger reso
 ## Authz Model
 
 - Principal: HomePort subject mapped from AWS user/role/service account/managed identity/session token.
-- Actions: acm:RequestCertificate, acm:DescribeCertificate, acm:ListCertificates, acm:DeleteCertificate.
+- Actions: acm:RequestCertificate, acm:DescribeCertificate, acm:ListCertificates, acm:DeleteCertificate, acm:ListTagsForCertificate, acm:AddTagsToCertificate, acm:RemoveTagsFromCertificate.
 - Resource: arn:aws:acm:{region}:{account}:acm/{id}.
 - Context: evaluate ACM calls with tenant/project/account, provider region/location, `arn:aws:acm:{region}:{account}:acm/{id}`, source IP, request id, user agent, tags/labels on `aws_acm_certificate`, credential age, and MFA/managed-identity claims when the source provider supplies them.
 - Evaluation: call `Authorize(principal, action, resource, context)` before each mutating operation and each data-plane read/write.
@@ -46,13 +46,14 @@ Expose the smallest AWS ACM-compatible surface needed to migrate the ledger reso
 ## Contract Tests
 
 - AWS SDK for Go v2 exercises RequestCertificate -> DescribeCertificate -> ListCertificates -> DeleteCertificate against `/compat/aws/acm` and asserts provider-shaped request, response, error, authz, retry, and pagination behavior.
+- Terraform applies and destroys `aws_acm_certificate` with tags through a provider ACM endpoint override.
 - Fixture import covers `aws_acm_certificate` from `aws/acm`.
 - Negative cases: denied principal, missing resource, malformed request, duplicate/conflict, expired credential, backend timeout, and quota/throttle.
 - Cross-service case: one allowed and one denied call pass through the central authorization engine and emit audit events.
 
 ## Compatibility Level
 
-- Current level: L3 - ledger migration path is complete; provider SDK/REST conformance still blocks L4.
+- Current level: L3 seed - AWS SDK, AWS CLI, and Terraform endpoint-override checks cover the local ACM adapter, including certificate/tag lifecycle, authorization/audit, list pagination, and certificate quotas; Traefik ACME durability and full acceptance gates still block L4.
 - Target level: L4 after `test/conformance/services/aws-acm.yaml` passes in CI.
 - Blocking gaps: `test/conformance/services/aws-acm.yaml` must prove provider error, pagination, idempotency, authz, quota, and audit behavior before promotion.
 - Path to close gaps: generate backend artifacts, implement the endpoint mapping above, add `test/conformance/services/aws-acm.yaml`, then promote only when that manifest passes in CI.

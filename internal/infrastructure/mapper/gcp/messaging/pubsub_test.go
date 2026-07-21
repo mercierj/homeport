@@ -20,7 +20,7 @@ func TestNewPubSubMapper(t *testing.T) {
 	}
 }
 
-func TestPubSubConformanceManagedAToZ(t *testing.T) {
+func TestPubSubConformanceGeneratedArtifacts(t *testing.T) {
 	tests := []struct {
 		name   string
 		mapper interface {
@@ -44,9 +44,9 @@ func TestPubSubConformanceManagedAToZ(t *testing.T) {
 					"dead_letter_topic":        "projects/demo/topics/orders-dlq",
 				},
 			},
-			configs: []string{"config/rabbitmq/definitions.json", "config/rabbitmq/rabbitmq.conf", "config/pubsub/app-change.env"},
-			scripts: []string{"setup_rabbitmq_pubsub.sh", "validate_pubsub_rabbitmq.sh", "backup_pubsub_rabbitmq.sh"},
-			runbook: "validate-pubsub-rabbitmq",
+			configs: []string{"config/nats/nats.conf", "config/nats/pubsub-stream.json", "config/pubsub/app-change.env"},
+			scripts: []string{"setup_nats_pubsub.sh", "validate_pubsub_adapter.sh", "backup_pubsub_nats.sh", "cutover_pubsub_adapter.sh"},
+			runbook: "validate-pubsub-adapter",
 		},
 		{
 			name:   "subscription",
@@ -65,9 +65,9 @@ func TestPubSubConformanceManagedAToZ(t *testing.T) {
 					"filter":                       `attributes.kind="order"`,
 				},
 			},
-			configs: []string{"config/rabbitmq/definitions.json", "config/rabbitmq/rabbitmq.conf", "config/pubsub/app-change.env"},
-			scripts: []string{"scripts/migrate-pubsub-subscription.sh", "scripts/validate-pubsub-subscription.sh", "scripts/backup-pubsub-subscription.sh"},
-			runbook: "validate-pubsub-subscription",
+			configs: []string{"config/nats/nats.conf", "config/nats/pubsub-consumer.json", "config/pubsub/app-change.env"},
+			scripts: []string{"scripts/migrate-pubsub-subscription.sh", "scripts/validate-pubsub-subscription.sh", "scripts/backup-pubsub-subscription.sh", "scripts/cutover-pubsub-subscription.sh"},
+			runbook: "validate-pubsub-subscription-adapter",
 		},
 	}
 
@@ -80,8 +80,11 @@ func TestPubSubConformanceManagedAToZ(t *testing.T) {
 			if len(result.ManualSteps) != 0 {
 				t.Fatalf("manual steps = %#v, want generated Pub/Sub migration", result.ManualSteps)
 			}
-			if result.DockerService.Deploy == nil || result.DockerService.Deploy.Replicas < 2 {
-				t.Fatalf("RabbitMQ service is not HA: %#v", result.DockerService)
+			if tt.name == "topic" && (result.DockerService.Image != "nats:2.10-alpine" || result.DockerService.Deploy == nil || result.DockerService.Deploy.Replicas < 3) {
+				t.Fatalf("NATS JetStream service is not HA: %#v", result.DockerService)
+			}
+			if tt.name == "subscription" && (result.DockerService.Image != "nats:2.10-alpine" || result.DockerService.Deploy == nil || result.DockerService.Deploy.Replicas < 3) {
+				t.Fatalf("subscription NATS JetStream service is not HA: %#v", result.DockerService)
 			}
 			for _, file := range tt.configs {
 				content, ok := result.Configs[file]
@@ -93,8 +96,11 @@ func TestPubSubConformanceManagedAToZ(t *testing.T) {
 				}
 			}
 			appEnv := string(result.Configs["config/pubsub/app-change.env"])
-			if !strings.Contains(appEnv, "APP_CHANGE_MODE=generated_patch") || !strings.Contains(appEnv, "TARGET_AMQP_URL=") {
-				t.Fatalf("app-change env missing generated AMQP target:\n%s", appEnv)
+			if tt.name == "topic" && (!strings.Contains(appEnv, "APP_CHANGE_MODE=adapter") || !strings.Contains(appEnv, "HOMEPORT_COMPAT_BACKEND=nats-jetstream") || !strings.Contains(appEnv, "PUBSUB_EMULATOR_HOST=http://homeport:8080/api/v1/compat/gcp/pub-sub")) {
+				t.Fatalf("app-change env missing NATS-backed Pub/Sub adapter target:\n%s", appEnv)
+			}
+			if tt.name == "subscription" && (!strings.Contains(appEnv, "APP_CHANGE_MODE=adapter") || !strings.Contains(appEnv, "HOMEPORT_COMPAT_BACKEND=nats-jetstream") || !strings.Contains(appEnv, "PUBSUB_EMULATOR_HOST=http://homeport:8080/api/v1/compat/gcp/pub-sub")) {
+				t.Fatalf("app-change env missing NATS-backed Pub/Sub adapter target:\n%s", appEnv)
 			}
 			for _, file := range tt.scripts {
 				if _, ok := result.Scripts[file]; !ok {
@@ -212,8 +218,8 @@ func TestPubSubMapper_Map(t *testing.T) {
 				if result.DockerService == nil {
 					t.Fatal("DockerService is nil")
 				}
-				if result.DockerService.Image != "rabbitmq:3.12-management-alpine" {
-					t.Errorf("Expected RabbitMQ image, got %s", result.DockerService.Image)
+				if result.DockerService.Image != "nats:2.10-alpine" {
+					t.Errorf("Expected NATS image, got %s", result.DockerService.Image)
 				}
 			},
 		},
@@ -296,7 +302,7 @@ func TestPubSubMapper_Map(t *testing.T) {
 	}
 }
 
-func TestPubSubMapper_generateRabbitMQDefinitions(t *testing.T) {
+func TestPubSubMapper_generateNATSJetStreamConfig(t *testing.T) {
 	m := NewPubSubMapper()
 
 	res := &resource.AWSResource{
@@ -307,16 +313,15 @@ func TestPubSubMapper_generateRabbitMQDefinitions(t *testing.T) {
 		},
 	}
 
-	definitions := m.generateRabbitMQDefinitions(res, "test-topic")
+	config := m.generateJetStreamConfig(res, "test-topic")
 
-	// Check that definitions contain expected content
-	if definitions == "" {
-		t.Error("generateRabbitMQDefinitions returned empty string")
+	if config == "" {
+		t.Error("generateJetStreamConfig returned empty string")
 	}
-	if !containsStr(definitions, "test-topic") {
-		t.Error("Definitions should contain topic name")
+	if !containsStr(config, "test-topic") {
+		t.Error("config should contain topic name")
 	}
-	if !containsStr(definitions, "exchanges") {
-		t.Error("Definitions should contain exchanges")
+	if !containsStr(config, "pubsub.test-topic") {
+		t.Error("config should contain Pub/Sub subject")
 	}
 }

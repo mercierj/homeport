@@ -111,6 +111,28 @@ Manage serverless functions:
 
 Access: **Dashboard → Functions**
 
+### AWS operations (post-cutover)
+
+The **AWS operations** area at `/aws` is a Homeport view of the local targets
+bound to an AWS migration. It appears only after a successful cutover creates
+an operations workspace. Every discovered AWS catalogue service is retained in
+that workspace: a target without a proven local operation remains visible with
+its attested resources, target state and an explicit reason. Its controls are
+not rendered as AWS-compatible actions.
+
+The capability list returned by the API is authoritative. Lambda can expose
+list, read, update, delete, invoke and logs for bound functions. SQS can expose
+list/read, retry and purge for bound queues and messages; queue creation and
+queue deletion are intentionally unavailable. Mutations are constrained to the
+persisted workspace binding, authorized, and written to the audit log.
+
+Trusted local bindings and pending activation are persisted by cutover code;
+SSE/browser subscriptions only observe progress and cannot activate a service.
+This is not the AWS Console and not an AWS control-plane proxy: it operates
+only local Homeport services and never calls AWS or uses AWS credentials.
+
+Access: **Dashboard → AWS operations** (after eligible service activation)
+
 ### Web Terminal
 
 Interactive shell access to containers:

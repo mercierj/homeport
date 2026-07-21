@@ -8,7 +8,7 @@ Expose the smallest AWS EC2-compatible surface needed to migrate the ledger reso
 
 - Initial supported surface: ec2:RunInstances, ec2:DescribeInstances, ec2:ModifyInstanceAttribute, ec2:TerminateInstances.
 - Actions explicitly not supported first: EC2 console-only workflows, account billing, quota purchase flows, and managed cross-region failover controls outside `ec2:RunInstances` and its paired read/list calls.
-- Ledger resource types: `aws_instance`.
+- Ledger resource types: `aws_instance`
 - Provider errors: map EC2 authorization failures to AWS access-denied codes, missing `aws_instance` records to not-found codes, duplicate imports to conflict/already-exists, invalid mapped fields to validation errors, backend saturation to throttle/quota responses, and unexpected `aws/ec2` failures to provider internal-error shapes with request ids.
 - Pagination/idempotency/tags: list/read calls expose provider tokens where the API has them; mutating calls persist idempotency keys or operation ids; tags/labels round-trip on `aws_instance`.
 

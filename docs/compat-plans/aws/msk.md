@@ -8,7 +8,7 @@ Expose the smallest AWS MSK-compatible surface needed to migrate the ledger reso
 
 - Initial supported surface: msk:CreateCluster, msk:DescribeCluster, msk:ListClustersV2, msk:UpdateClusterConfiguration, msk:DeleteCluster.
 - Actions explicitly not supported first: MSK console-only workflows, account billing, quota purchase flows, and managed cross-region failover controls outside `msk:CreateCluster` and its paired read/list calls.
-- Ledger resource types: `aws_msk_cluster`.
+- Ledger resource types: `aws_msk_cluster`
 - Provider errors: map MSK authorization failures to AWS access-denied codes, missing `aws_msk_cluster` records to not-found codes, duplicate imports to conflict/already-exists, invalid mapped fields to validation errors, backend saturation to throttle/quota responses, and unexpected `aws/msk` failures to provider internal-error shapes with request ids.
 - Pagination/idempotency/tags: list/read calls expose provider tokens where the API has them; mutating calls persist idempotency keys or operation ids; tags/labels round-trip on `aws_msk_cluster`.
 

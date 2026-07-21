@@ -1,0 +1,13 @@
+backend:
+  provider: aws
+  service: ecs
+  target: docker-compose
+  runtime:
+    command: docker compose up -d
+  persistence:
+    volume: ecs-compose-state
+  backup:
+    schedule: daily
+    command: docker compose config
+  endpoint:
+    route: /compat/aws/ecs

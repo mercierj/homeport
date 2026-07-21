@@ -8,7 +8,7 @@ Expose the smallest AWS Route 53-compatible surface needed to migrate the ledger
 
 - Initial supported surface: route53:CreateHostedZone, route53:GetHostedZone, route53:ListHostedZones, route53:ChangeResourceRecordSets, route53:DeleteHostedZone.
 - Actions explicitly not supported first: Route 53 console-only workflows, account billing, quota purchase flows, and managed cross-region failover controls outside `route53:CreateHostedZone` and its paired read/list calls.
-- Ledger resource types: `aws_route53_zone`.
+- Ledger resource types: `aws_route53_zone`
 - Provider errors: map Route 53 authorization failures to AWS access-denied codes, missing `aws_route53_zone` records to not-found codes, duplicate imports to conflict/already-exists, invalid mapped fields to validation errors, backend saturation to throttle/quota responses, and unexpected `aws/route-53` failures to provider internal-error shapes with request ids.
 - Pagination/idempotency/tags: list/read calls expose provider tokens where the API has them; mutating calls persist idempotency keys or operation ids; tags/labels round-trip on `aws_route53_zone`.
 

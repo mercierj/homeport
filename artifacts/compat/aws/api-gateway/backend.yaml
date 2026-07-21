@@ -1,0 +1,7 @@
+backend:
+  provider: aws
+  service: api-gateway
+  target: kong
+  status: proposed-seed
+  endpoint:
+    route: /compat/aws/apigateway

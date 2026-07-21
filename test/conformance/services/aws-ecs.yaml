@@ -5,7 +5,7 @@ checks:
   cost: GOCACHE=/private/tmp/exit-gafam-go-build go test ./internal/infrastructure/mapper/compute -run TestECSConformanceManagedAToZ
   provision: GOCACHE=/private/tmp/exit-gafam-go-build go test ./internal/infrastructure/mapper/compute -run TestECSConformanceManagedAToZ
   migrate: GOCACHE=/private/tmp/exit-gafam-go-build go test ./internal/infrastructure/mapper/compute -run TestECSConformanceManagedAToZ
-  api_compat: GOCACHE=/private/tmp/exit-gafam-go-build go test ./internal/infrastructure/mapper/compute -run TestECSConformanceManagedAToZ
+  api_compat: GOCACHE=/private/tmp/exit-gafam-go-build go test ./test/compat -run ECS
   env_dns: GOCACHE=/private/tmp/exit-gafam-go-build go test ./internal/infrastructure/mapper/compute -run TestECSConformanceManagedAToZ
   ha: GOCACHE=/private/tmp/exit-gafam-go-build go test ./internal/infrastructure/mapper/compute -run TestECSConformanceManagedAToZ
   backup: GOCACHE=/private/tmp/exit-gafam-go-build go test ./internal/infrastructure/mapper/compute -run TestECSConformanceManagedAToZ
@@ -14,4 +14,5 @@ checks:
   rollback: GOCACHE=/private/tmp/exit-gafam-go-build go test ./internal/infrastructure/mapper/compute -run TestECSConformanceManagedAToZ
 evidence:
   target: Docker Compose services
-  app_change_mode: generated_patch
+  app_change_mode: adapter
+  api_compat_covers: sdk_lifecycle,aws_cli_smoke,terraform_smoke,boto3_smoke,task_definitions,placement,deployment_configuration,tags,pagination,provider_errors,quota,authz,audit

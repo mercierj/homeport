@@ -7,7 +7,7 @@ import (
 	domaincoverage "github.com/homeport/homeport/internal/domain/coverage"
 )
 
-func TestAllAWSCoverageRowsAreFull(t *testing.T) {
+func TestAWSCoverageRowsDoNotClaimProviderGradeFullWithoutL4(t *testing.T) {
 	catalog, err := appcoverage.LoadDefaultCatalog()
 	if err != nil {
 		t.Fatal(err)
@@ -16,11 +16,11 @@ func TestAllAWSCoverageRowsAreFull(t *testing.T) {
 		if row.Provider != "aws" {
 			continue
 		}
-		if row.Status != domaincoverage.StatusFull || domaincoverage.ComputeStatus(row) != domaincoverage.StatusFull {
-			t.Fatalf("AWS %s is not full: status=%s blocker=%q", row.Service, row.Status, row.Blocker)
+		if row.CompatibilityLevel != domaincoverage.CompatibilityLevelL4 && row.Status == domaincoverage.StatusFull {
+			t.Fatalf("AWS %s claims provider-grade full without L4 evidence", row.Service)
 		}
-		if !row.ManualStepsResolved {
-			t.Fatalf("AWS %s manual steps are not resolved", row.Service)
+		if row.Status == domaincoverage.StatusFull && (domaincoverage.ComputeStatus(row) != domaincoverage.StatusFull || !row.ManualStepsResolved) {
+			t.Fatalf("AWS %s has an invalid full closure", row.Service)
 		}
 	}
 }

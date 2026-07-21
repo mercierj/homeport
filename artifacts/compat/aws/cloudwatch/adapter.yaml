@@ -1,0 +1,35 @@
+adapter:
+  provider: aws
+  service: cloudwatch
+  route: /compat/aws/cloudwatchlogs
+  protocol: aws-json
+  actions:
+    create_group: logs:CreateLogGroup
+    create_stream: logs:CreateLogStream
+    delete_stream: logs:DeleteLogStream
+    delete_group: logs:DeleteLogGroup
+    put_retention: logs:PutRetentionPolicy
+    delete_retention: logs:DeleteRetentionPolicy
+    list_tags: logs:ListTagsLogGroup
+    tag: logs:TagLogGroup
+    untag: logs:UntagLogGroup
+    list_resource_tags: logs:ListTagsForResource
+    tag_resource: logs:TagResource
+    untag_resource: logs:UntagResource
+    describe_groups: logs:DescribeLogGroups
+    put_events: logs:PutLogEvents
+    get_events: logs:GetLogEvents
+    describe_streams: logs:DescribeLogStreams
+  errors:
+    AccessDeniedException: denied authorization decision
+    ResourceNotFoundException: missing log resource
+    ResourceAlreadyExistsException: duplicate create
+    InvalidParameterException: malformed request
+    TooManyTagsException: more than 50 tags on a log resource
+    ServiceUnavailableException: authorizer failure
+  unsupported:
+    - metrics
+    - dashboards
+    - persistent_loki_backend
+    - cutover
+    - rollback

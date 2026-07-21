@@ -1,17 +1,8 @@
 provider: aws
 service: CloudWatch
 checks:
-  discover: GOCACHE=/private/tmp/exit-gafam-go-build go test ./internal/infrastructure/mapper/monitoring -run TestCloudWatchConformanceManagedAToZ
-  cost: GOCACHE=/private/tmp/exit-gafam-go-build go test ./internal/infrastructure/mapper/monitoring -run TestCloudWatchConformanceManagedAToZ
-  provision: GOCACHE=/private/tmp/exit-gafam-go-build go test ./internal/infrastructure/mapper/monitoring -run TestCloudWatchConformanceManagedAToZ
-  migrate: GOCACHE=/private/tmp/exit-gafam-go-build go test ./internal/infrastructure/mapper/monitoring -run TestCloudWatchConformanceManagedAToZ
-  api_compat: GOCACHE=/private/tmp/exit-gafam-go-build go test ./internal/infrastructure/mapper/monitoring -run TestCloudWatchConformanceManagedAToZ
-  env_dns: GOCACHE=/private/tmp/exit-gafam-go-build go test ./internal/infrastructure/mapper/monitoring -run TestCloudWatchConformanceManagedAToZ
-  ha: GOCACHE=/private/tmp/exit-gafam-go-build go test ./internal/infrastructure/mapper/monitoring -run TestCloudWatchConformanceManagedAToZ
-  backup: GOCACHE=/private/tmp/exit-gafam-go-build go test ./internal/infrastructure/mapper/monitoring -run TestCloudWatchConformanceManagedAToZ
-  validate: GOCACHE=/private/tmp/exit-gafam-go-build go test ./internal/infrastructure/mapper/monitoring -run TestCloudWatchConformanceManagedAToZ
-  cutover: GOCACHE=/private/tmp/exit-gafam-go-build go test ./internal/infrastructure/mapper/monitoring -run TestCloudWatchConformanceManagedAToZ
-  rollback: GOCACHE=/private/tmp/exit-gafam-go-build go test ./internal/infrastructure/mapper/monitoring -run TestCloudWatchConformanceManagedAToZ
+  api_compat: GOCACHE=/private/tmp/exit-gafam-go-build go test ./test/compat -run CloudWatchLogs
 evidence:
-  target: Loki, Prometheus, Alertmanager, and Grafana
-  app_change_mode: generated_patch
+  target: local CloudWatch Logs compatibility adapter seed; Loki is not deployed
+  app_change_mode: local adapter seed
+  api_compat_covers: provider_errors,pagination,quota,authz,audit,retention,tags,sdk_lifecycle,aws_cli_smoke,terraform_smoke,boto3_smoke

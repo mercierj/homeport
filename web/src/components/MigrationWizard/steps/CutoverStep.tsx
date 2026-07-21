@@ -45,7 +45,7 @@ interface HealthCheck {
   error?: string;
 }
 
-export function buildCutoverPreviewRequest(
+function buildCutoverPreviewRequest(
   bundleId: string | null,
   domain: string,
   targetIP: string

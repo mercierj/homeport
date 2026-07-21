@@ -4,6 +4,8 @@ import (
 	"context"
 	"fmt"
 	"net/http"
+	"os"
+	"path/filepath"
 	"time"
 
 	"github.com/go-chi/chi/v5"
@@ -11,6 +13,7 @@ import (
 	"github.com/go-chi/cors"
 	"github.com/go-chi/render"
 	"github.com/homeport/homeport/internal/api/handlers"
+	"github.com/homeport/homeport/internal/app/awsoperations"
 	"github.com/homeport/homeport/internal/app/backup"
 	"github.com/homeport/homeport/internal/app/cache"
 	"github.com/homeport/homeport/internal/app/clouddeploy"
@@ -18,6 +21,7 @@ import (
 	"github.com/homeport/homeport/internal/app/docker"
 	"github.com/homeport/homeport/internal/app/identity"
 	"github.com/homeport/homeport/internal/app/logs"
+	"github.com/homeport/homeport/internal/app/migrate"
 	appPolicy "github.com/homeport/homeport/internal/app/policy"
 	"github.com/homeport/homeport/internal/app/providers"
 	"github.com/homeport/homeport/internal/app/queues"
@@ -25,6 +29,7 @@ import (
 	"github.com/homeport/homeport/internal/app/secrets"
 	"github.com/homeport/homeport/internal/app/stacks"
 	appwizard "github.com/homeport/homeport/internal/app/wizard"
+	"github.com/homeport/homeport/internal/domain/authz"
 	"github.com/homeport/homeport/internal/pkg/logger"
 )
 
@@ -37,33 +42,34 @@ type Config struct {
 }
 
 type Server struct {
-	config             Config
-	router             *chi.Mux
-	httpServer         *http.Server
-	dockerService      *docker.Service
-	dockerHandler      *handlers.DockerHandler
-	metricsHandler     *handlers.MetricsHandler
-	logsHandler        *handlers.LogsHandler
-	identityService    *identity.Service
-	identityHandler    *handlers.IdentityHandler
-	functionsHandler   *handlers.FunctionsHandler
-	dnsHandler         *handlers.DNSHandler
-	queuesHandler      *handlers.QueuesHandler
-	cacheHandler       *handlers.CacheHandler
-	secretsHandler     *handlers.SecretsHandler
-	backupHandler      *handlers.BackupHandler
-	stacksHandler      *handlers.StacksHandler
-	terminalHandler    *handlers.TerminalHandler
-	policyHandler      *handlers.PolicyHandler
-	migrateHandler     *handlers.MigrateHandler
-	deployHandler      *handlers.DeployHandler
-	syncHandler        *handlers.SyncHandler
-	cutoverHandler     *handlers.CutoverHandler
-	providersHandler   *handlers.ProvidersHandler
-	runbookHandler     *handlers.RunbookHandler
-	compatHandler      *handlers.CompatHandler
-	wizardHandler      *handlers.WizardHandler
-	cloudDeployHandler *handlers.CloudDeployHandler
+	config               Config
+	router               *chi.Mux
+	httpServer           *http.Server
+	dockerService        *docker.Service
+	dockerHandler        *handlers.DockerHandler
+	metricsHandler       *handlers.MetricsHandler
+	logsHandler          *handlers.LogsHandler
+	identityService      *identity.Service
+	identityHandler      *handlers.IdentityHandler
+	functionsHandler     *handlers.FunctionsHandler
+	dnsHandler           *handlers.DNSHandler
+	queuesHandler        *handlers.QueuesHandler
+	cacheHandler         *handlers.CacheHandler
+	secretsHandler       *handlers.SecretsHandler
+	backupHandler        *handlers.BackupHandler
+	stacksHandler        *handlers.StacksHandler
+	terminalHandler      *handlers.TerminalHandler
+	policyHandler        *handlers.PolicyHandler
+	migrateHandler       *handlers.MigrateHandler
+	deployHandler        *handlers.DeployHandler
+	syncHandler          *handlers.SyncHandler
+	cutoverHandler       *handlers.CutoverHandler
+	awsOperationsHandler *handlers.AWSOperationsHandler
+	providersHandler     *handlers.ProvidersHandler
+	runbookHandler       *handlers.RunbookHandler
+	compatHandler        *handlers.CompatHandler
+	wizardHandler        *handlers.WizardHandler
+	cloudDeployHandler   *handlers.CloudDeployHandler
 }
 
 func NewServer(cfg Config) (*Server, error) {
@@ -148,8 +154,34 @@ func NewServer(cfg Config) (*Server, error) {
 	// Initialize Sync handler
 	s.syncHandler = handlers.NewSyncHandler()
 
-	// Initialize Cutover handler
-	s.cutoverHandler = handlers.NewCutoverHandler()
+	// Initialize the shared post-cutover AWS operations stores. Cutover writes this
+	// projection and the operations API reads the same persisted workspace data.
+	if discoveries, err := migrate.NewStateStore(""); err != nil {
+		logger.Warn("AWS operations discovery store not available", "error", err)
+	} else if workspaces, err := awsoperations.NewStore(""); err != nil {
+		logger.Warn("AWS operations workspace store not available", "error", err)
+	} else {
+		operations := awsoperations.NewService(discoveries, workspaces)
+		var drivers []awsoperations.Driver
+		if s.functionsHandler != nil {
+			drivers = append(drivers, awsoperations.NewLambdaDriver(awsoperations.NewFunctionsBackend(s.functionsHandler.Service())))
+		}
+		if s.queuesHandler != nil {
+			drivers = append(drivers, awsoperations.NewSQSDriver(awsoperations.NewQueuesBackend(s.queuesHandler.Service())))
+		}
+		var auditSink func(authz.Decision) error
+		if home, err := os.UserHomeDir(); err != nil {
+			logger.Warn("AWS operations audit log not available", "error", err)
+		} else {
+			auditLog := authz.NewFileAuditLog(filepath.Join(home, ".homeport", "aws-operations-audit.jsonl"))
+			auditSink = auditLog.Record
+		}
+		s.awsOperationsHandler = handlers.NewAWSOperationsHandlerWithAuthorization(operations, authz.AllowAll, auditSink, drivers...)
+		s.cutoverHandler = handlers.NewCutoverHandlerWithAWSOperations(operations)
+	}
+	if s.cutoverHandler == nil {
+		s.cutoverHandler = handlers.NewCutoverHandler()
+	}
 
 	// Initialize Runbook handler
 	s.runbookHandler = handlers.NewRunbookHandler(apprunbook.NewService("."))
@@ -345,6 +377,12 @@ func (s *Server) setupRoutes() {
 		// Cutover routes
 		if s.cutoverHandler != nil {
 			s.cutoverHandler.RegisterRoutes(r)
+		}
+
+		// AWS routes are intentionally available only for the post-cutover local
+		// workspace projection; no provider API clients are used here.
+		if s.awsOperationsHandler != nil {
+			r.Route("/aws/operations", s.awsOperationsHandler.RegisterRoutes)
 		}
 
 		// Runbook routes

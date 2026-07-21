@@ -8,7 +8,7 @@ Expose the smallest Azure Azure Cache-compatible surface needed to migrate the l
 
 - Initial supported surface: Microsoft.Cache/Redis/read, Microsoft.Cache/Redis/write, Microsoft.Cache/Redis/delete.
 - Actions explicitly not supported first: Azure Cache console-only workflows, account billing, quota purchase flows, and managed cross-region failover controls outside `Microsoft.Cache/Redis/read` and its paired read/list calls.
-- Ledger resource types: `azurerm_redis_cache`.
+- Ledger resource types: `azurerm_redis_cache`
 - Provider errors: map Azure Cache authorization failures to Azure access-denied codes, missing `azurerm_redis_cache` records to not-found codes, duplicate imports to conflict/already-exists, invalid mapped fields to validation errors, backend saturation to throttle/quota responses, and unexpected `azure/azure-cache` failures to provider internal-error shapes with request ids.
 - Pagination/idempotency/tags: list/read calls expose provider tokens where the API has them; mutating calls persist idempotency keys or operation ids; tags/labels round-trip on `azurerm_redis_cache`.
 

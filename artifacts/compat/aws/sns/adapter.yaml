@@ -1,0 +1,46 @@
+adapter:
+  provider: aws
+  service: sns
+  route: /compat/aws/sns
+  protocol: aws-query
+  actions:
+    create: sns:CreateTopic
+    attributes: sns:GetTopicAttributes
+    list: sns:ListTopics
+    set: sns:SetTopicAttributes
+    delete: sns:DeleteTopic
+    list_tags: sns:ListTagsForResource
+    tag: sns:TagResource
+    untag: sns:UntagResource
+    subscribe: sns:Subscribe
+    list_subscriptions: sns:ListSubscriptions
+    list_subscriptions_by_topic: sns:ListSubscriptionsByTopic
+    unsubscribe: sns:Unsubscribe
+    publish: sns:Publish
+  resource:
+    pattern: arn:aws:sns:{region}:{account}:{topic}
+  validation:
+    topic_name: 1-256 ASCII letters, digits, hyphens, or underscores; .fifo is allowed only as a suffix
+  errors:
+    AccessDenied: denied authorization decision
+    NotFound: missing topic resource
+    InvalidParameter: malformed request or invalid mapped field
+    Throttled: topic quota or backend saturation exceeded
+    InternalError: authorizer failure
+  pagination:
+    next_token: NextToken
+  idempotency:
+    fields:
+      CreateTopic: Name
+      DeleteTopic: TopicArn
+      Publish: MessageDeduplicationId
+    methods:
+      - CreateTopic
+      - DeleteTopic
+      - Publish
+  quota:
+    topic_quota: configurable; default unlimited
+  unsupported:
+    - persistent_nats_backend
+    - cutover
+    - rollback

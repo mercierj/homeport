@@ -61,9 +61,10 @@ func (s *Service) Start(ctx context.Context, id string, zipData []byte, apply bo
 	job := &Job{ID: id, Status: StatusPending, Apply: apply, WorkDir: filepath.Join(workDir, "terraform"), CreatedAt: time.Now().UTC()}
 	s.mu.Lock()
 	s.jobs[id] = job
+	result := cloneJob(job)
 	s.mu.Unlock()
 	go s.run(context.Background(), job)
-	return job, nil
+	return result, nil
 }
 
 func (s *Service) Get(id string) (*Job, error) {
@@ -73,7 +74,7 @@ func (s *Service) Get(id string) (*Job, error) {
 	if job == nil {
 		return nil, fmt.Errorf("cloud deploy job not found: %s", id)
 	}
-	return job, nil
+	return cloneJob(job), nil
 }
 
 func (s *Service) Apply(ctx context.Context, id string) (*Job, error) {
@@ -90,9 +91,19 @@ func (s *Service) Apply(ctx context.Context, id string) (*Job, error) {
 	job.Apply = true
 	job.Status = StatusRunning
 	job.Error = ""
+	result := cloneJob(job)
 	s.mu.Unlock()
 	go s.apply(context.Background(), job)
-	return job, nil
+	return result, nil
+}
+
+func cloneJob(job *Job) *Job {
+	if job == nil {
+		return nil
+	}
+	copy := *job
+	copy.Logs = append([]string(nil), job.Logs...)
+	return &copy
 }
 
 func (s *Service) run(ctx context.Context, job *Job) {
